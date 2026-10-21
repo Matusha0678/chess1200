@@ -48,89 +48,93 @@ export default function NotebookPage() {
     .slice(0, 3);
 
   return (
-    <main className="max-w-md mx-auto px-5 pt-8">
-      <div className="flex items-center justify-between mb-6">
+    <main className="px-5 pt-8 pb-8 md:px-12 md:pt-12 max-w-2xl">
+
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#444] mb-1">Записи</p>
-          <h1 className="text-3xl font-light tracking-tight">Тетрадь ошибок</h1>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#444] mb-3">Записи</p>
+          <h1 className="font-cormorant text-[56px] font-light italic leading-[0.9] text-[#EAE8E3]">
+            Тетрадь
+          </h1>
         </div>
         <button onClick={() => setShowForm(f => !f)}
-          className="p-2 border border-[#1E1E1E] rounded-lg text-[#888] hover:text-[#EFEFEF] hover:border-[#2A2A2A] transition-colors">
-          {showForm ? <X size={16} strokeWidth={1.5} /> : <Plus size={16} strokeWidth={1.5} />}
+          className="mt-4 p-2 border border-[#181818] text-[#555] hover:text-[#EAE8E3] hover:border-[#2A2A2A] transition-colors">
+          {showForm ? <X size={15} strokeWidth={1.5} /> : <Plus size={15} strokeWidth={1.5} />}
         </button>
       </div>
 
+      {/* Top errors this week */}
       {tagCounts.length > 0 && (
-        <div className="mb-5">
-          <p className="text-[10px] uppercase tracking-[0.15em] text-[#444] mb-2">Топ ошибок — неделя</p>
+        <div className="mb-6">
+          <p className="text-[10px] uppercase tracking-[0.15em] text-[#333] mb-3">Топ ошибок — неделя</p>
           <div className="flex gap-2 flex-wrap">
             {tagCounts.map(({ tag: t, count }) => (
-              <span key={t} className="text-[10px] tracking-wide border border-[#2A2A2A] text-[#666] px-2.5 py-1 rounded">
-                {TAG_LABELS[t]} {count}
+              <span key={t} className="text-[10px] tracking-wide border border-[#181818] text-[#555] px-2.5 py-1">
+                {TAG_LABELS[t]} · {count}
               </span>
             ))}
           </div>
         </div>
       )}
 
+      {/* Add form */}
       {showForm && (
-        <div className="border border-[#1E1E1E] rounded-lg p-4 mb-5">
-          <p className="text-[10px] uppercase tracking-[0.15em] text-[#444] mb-4">Новая запись</p>
-          <div className="space-y-4">
+        <div className="border border-[#181818] p-5 mb-6">
+          <p className="text-[10px] uppercase tracking-[0.15em] text-[#333] mb-5">Новая запись</p>
+          <div className="space-y-5">
             <div>
-              <label className="text-[10px] uppercase tracking-[0.12em] text-[#444] block mb-1.5">Ошибка</label>
+              <label className="text-[10px] uppercase tracking-[0.12em] text-[#333] block mb-2">Ошибка</label>
               <textarea value={mistake} onChange={e => setMistake(e.target.value)}
                 placeholder="Что пошло не так..." rows={2}
-                className="w-full bg-transparent border-b border-[#1E1E1E] pb-2 text-sm text-[#EFEFEF] placeholder-[#333] resize-none focus:outline-none focus:border-[#444] transition-colors" />
+                className="w-full bg-transparent border-b border-[#181818] pb-2 text-sm text-[#EAE8E3] placeholder-[#252525] resize-none focus:outline-none focus:border-[#333] transition-colors" />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-[0.12em] text-[#444] block mb-1.5">Что делать вместо</label>
+              <label className="text-[10px] uppercase tracking-[0.12em] text-[#333] block mb-2">Что делать вместо</label>
               <textarea value={better} onChange={e => setBetter(e.target.value)}
                 placeholder="Правильный ответ..." rows={2}
-                className="w-full bg-transparent border-b border-[#1E1E1E] pb-2 text-sm text-[#EFEFEF] placeholder-[#333] resize-none focus:outline-none focus:border-[#444] transition-colors" />
+                className="w-full bg-transparent border-b border-[#181818] pb-2 text-sm text-[#EAE8E3] placeholder-[#252525] resize-none focus:outline-none focus:border-[#333] transition-colors" />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-[0.12em] text-[#444] block mb-1.5">Тип</label>
+              <label className="text-[10px] uppercase tracking-[0.12em] text-[#333] block mb-2">Тип</label>
               <select value={tag} onChange={e => setTag(e.target.value)}
-                className="bg-transparent border-b border-[#1E1E1E] pb-2 text-sm text-[#888] focus:outline-none focus:border-[#444] transition-colors w-full">
-                {MISTAKE_TAGS.map(t => <option key={t} value={t} className="bg-[#111]">{TAG_LABELS[t]}</option>)}
+                className="bg-transparent border-b border-[#181818] pb-2 text-sm text-[#666] focus:outline-none focus:border-[#333] transition-colors w-full">
+                {MISTAKE_TAGS.map(t => <option key={t} value={t} className="bg-[#0D0D0D]">{TAG_LABELS[t]}</option>)}
               </select>
             </div>
           </div>
-          <div className="flex gap-2 mt-5">
+          <div className="flex gap-2 mt-6">
             <button onClick={save} disabled={saving || !mistake.trim() || !better.trim()}
-              className="flex-1 bg-[#EFEFEF] text-[#080808] text-sm font-medium py-2.5 rounded-lg hover:bg-white transition-colors disabled:opacity-30">
+              className="flex-1 bg-[#EAE8E3] text-[#0D0D0D] text-sm font-medium py-3 hover:bg-white transition-colors disabled:opacity-30">
               {saving ? 'Сохранение...' : 'Сохранить'}
             </button>
             <button onClick={() => setShowForm(false)}
-              className="px-4 border border-[#1E1E1E] text-[#555] text-sm rounded-lg hover:border-[#2A2A2A] transition-colors">
+              className="px-4 border border-[#181818] text-[#444] text-sm hover:border-[#2A2A2A] transition-colors">
               Отмена
             </button>
           </div>
         </div>
       )}
 
+      {/* Entries */}
       <div>
         {entries.length === 0 && !showForm && (
           <div className="text-center py-16">
-            <p className="text-[#333] text-sm">Записей нет</p>
-            <p className="text-[#222] text-xs mt-1">Добавь ошибку после партии</p>
+            <p className="font-cormorant text-2xl font-light text-[#252525] italic">Записей нет</p>
+            <p className="text-[10px] text-[#1E1E1E] uppercase tracking-widest mt-2">Добавь ошибку после партии</p>
           </div>
         )}
-        <div className="space-y-0">
-          {entries.map((entry, i) => (
-            <div key={entry.id} className={`py-4 ${i < entries.length - 1 ? 'border-b border-[#1A1A1A]' : ''}`}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] uppercase tracking-[0.12em] text-[#555] border border-[#1E1E1E] px-2 py-0.5 rounded">
-                  {TAG_LABELS[entry.tag] ?? entry.tag}
-                </span>
-                <span className="text-[10px] text-[#333]">{entry.date}</span>
-              </div>
-              <p className="text-sm text-[#7A4A4A] mb-1">{entry.mistake_text}</p>
-              <p className="text-sm text-[#4A7A5A]">{entry.better_move}</p>
+        {entries.map((entry, i) => (
+          <div key={entry.id} className={`py-4 ${i < entries.length - 1 ? 'border-b border-[#181818]' : ''}`}>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[9px] uppercase tracking-[0.15em] text-[#444] border border-[#181818] px-2 py-0.5">
+                {TAG_LABELS[entry.tag] ?? entry.tag}
+              </span>
+              <span className="text-[10px] text-[#2A2A2A]">{entry.date}</span>
             </div>
-          ))}
-        </div>
+            <p className="text-sm text-[#7A4A4A] mb-1.5 leading-relaxed">{entry.mistake_text}</p>
+            <p className="text-sm text-[#4A7A5A] leading-relaxed">{entry.better_move}</p>
+          </div>
+        ))}
       </div>
     </main>
   );

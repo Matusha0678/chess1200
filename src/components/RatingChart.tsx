@@ -34,7 +34,7 @@ export default function RatingChart({ data, currentDay }: Props) {
           dataKey="day"
           tick={{ fill: '#333', fontSize: 10 }}
           tickLine={false}
-          axisLine={{ stroke: '#1E1E1E' }}
+          axisLine={{ stroke: '#181818' }}
           interval={6}
         />
         <YAxis
@@ -44,21 +44,21 @@ export default function RatingChart({ data, currentDay }: Props) {
           domain={[780, 1250]}
         />
         <Tooltip
-          contentStyle={{ background: '#111', border: '1px solid #1E1E1E', borderRadius: 6, color: '#EFEFEF', fontSize: 12 }}
-          labelStyle={{ color: '#666' }}
+          contentStyle={{ background: '#0A0A0A', border: '1px solid #181818', borderRadius: 0, color: '#EAE8E3', fontSize: 12 }}
+          labelStyle={{ color: '#444' }}
           formatter={(value) => [value, 'Рейтинг']}
           labelFormatter={(l) => `День ${l}`}
         />
         {Object.entries(RATING_CHECKPOINTS).map(([d, [lo, hi]]) => (
           <ReferenceArea key={d} x1={parseInt(d) - 0.5} x2={parseInt(d) + 0.5} y1={lo} y2={hi}
-            fill="#A07840" fillOpacity={0.15} />
+            fill="#C9A96E" fillOpacity={0.1} />
         ))}
-        <ReferenceLine y={START_RATING} stroke="#1E1E1E" strokeDasharray="3 3" />
+        <ReferenceLine y={START_RATING} stroke="#181818" strokeDasharray="3 3" />
         <ReferenceLine y={1200} stroke="#2A3A2A" strokeDasharray="3 3" />
         <Line
-          type="monotone" dataKey="rating" stroke="#A07840" strokeWidth={1.5}
-          dot={{ r: 2.5, fill: '#A07840', strokeWidth: 0 }}
-          activeDot={{ r: 4, fill: '#A07840' }}
+          type="monotone" dataKey="rating" stroke="#C9A96E" strokeWidth={1.5}
+          dot={{ r: 2.5, fill: '#C9A96E', strokeWidth: 0 }}
+          activeDot={{ r: 4, fill: '#C9A96E' }}
           connectNulls={false}
         />
       </ComposedChart>

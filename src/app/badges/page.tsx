@@ -29,34 +29,38 @@ export default function BadgesPage() {
   const earnedKeys = new Set(earned.map(b => b.badge_key));
 
   return (
-    <main className="max-w-md mx-auto px-5 pt-8">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-[#444] mb-1">Достижения</p>
-      <h1 className="text-3xl font-light tracking-tight mb-1">Награды</h1>
-      <p className="text-sm text-[#444] mb-6">{earned.length} из {BADGE_DEFINITIONS.length}</p>
+    <main className="px-5 pt-8 pb-8 md:px-12 md:pt-12 max-w-2xl">
 
-      <div className="space-y-px">
-        {BADGE_DEFINITIONS.map(badge => {
+      <div className="mb-8">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-[#444] mb-3">Достижения</p>
+        <h1 className="font-cormorant text-[56px] font-light italic leading-[0.9] text-[#EAE8E3]">
+          Награды
+        </h1>
+        <p className="text-sm text-[#333] mt-3">{earned.length} из {BADGE_DEFINITIONS.length}</p>
+      </div>
+
+      <div>
+        {BADGE_DEFINITIONS.map((badge, i) => {
           const isEarned = earnedKeys.has(badge.key);
           const Icon = BADGE_ICONS[badge.key] ?? Star;
           const earnedAt = earned.find(b => b.badge_key === badge.key)?.earned_at;
           return (
             <div key={badge.key}
-              className={`flex items-center gap-4 p-4 border transition-colors rounded-lg mb-1
-                ${isEarned
-                  ? 'border-[#A07840]/30 bg-[#A07840]/5'
-                  : 'border-[#141414] opacity-40'}`}>
-              <div className={`w-9 h-9 rounded flex items-center justify-center flex-shrink-0
-                ${isEarned ? 'bg-[#A07840]/10' : 'bg-[#111]'}`}>
-                <Icon size={16} strokeWidth={1.5} className={isEarned ? 'text-[#A07840]' : 'text-[#333]'} />
+              className={`flex items-center gap-4 py-4 border-b border-[#181818] transition-opacity
+                ${i === BADGE_DEFINITIONS.length - 1 ? 'border-b-0' : ''}
+                ${isEarned ? '' : 'opacity-30'}`}>
+              <div className={`w-8 h-8 flex items-center justify-center flex-shrink-0 border
+                ${isEarned ? 'border-[#C9A96E]/30' : 'border-[#181818]'}`}>
+                <Icon size={15} strokeWidth={1.5} className={isEarned ? 'text-[#C9A96E]' : 'text-[#2A2A2A]'} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${isEarned ? 'text-[#EFEFEF]' : 'text-[#444]'}`}>
+                <p className={`text-sm font-light ${isEarned ? 'text-[#EAE8E3]' : 'text-[#333]'}`}>
                   {badge.label}
                 </p>
-                <p className="text-xs text-[#444] mt-0.5">{badge.description}</p>
+                <p className="text-xs text-[#333] mt-0.5">{badge.description}</p>
               </div>
               {isEarned && earnedAt && (
-                <p className="text-[10px] text-[#555] flex-shrink-0">
+                <p className="text-[10px] text-[#444] flex-shrink-0">
                   {new Date(earnedAt).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
                 </p>
               )}

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getCurrentDay } from '@/lib/day-utils';
-import { START_RATING } from '@/lib/constants';
+import { START_RATING, TARGET_RATING } from '@/lib/constants';
 import RatingChart from '@/components/RatingChart';
 import type { RatingPoint, DailyProgress, GameLog } from '@/types';
 
@@ -36,48 +36,59 @@ export default function ProgressPage() {
   const lateCastle = games.filter(g => g.castling_move !== null && (g.castling_move ?? 0) > 10).length;
   const blitzCount = games.filter(g => g.time_control === 'blitz' || g.time_control === 'bullet').length;
   const completedDays = allProgress.filter(p => p.day_complete).length;
+  const ratingDiff = latestRating - START_RATING;
 
   const stats = [
-    { label: 'Рейтинг', value: latestRating, color: 'text-[#EFEFEF]' },
-    { label: 'Прирост', value: `${latestRating - START_RATING >= 0 ? '+' : ''}${latestRating - START_RATING}`, color: latestRating >= START_RATING ? 'text-[#4A7A5A]' : 'text-[#7A4A4A]' },
-    { label: 'Дней завершено', value: completedDays, color: 'text-[#EFEFEF]' },
-    { label: 'Стрик', value: `${streak}д`, color: streak > 0 ? 'text-[#A07840]' : 'text-[#444]' },
-    { label: 'Рапид партий', value: totalGames, color: 'text-[#EFEFEF]' },
-    { label: 'Винрейт', value: `${winPct}%`, color: winPct >= 50 ? 'text-[#4A7A5A]' : 'text-[#7A4A4A]' },
-    { label: 'Поздняя рокировка', value: lateCastle, color: lateCastle > 0 ? 'text-[#7A4A4A]' : 'text-[#4A7A5A]' },
-    { label: 'Блиц / пуля', value: blitzCount, color: blitzCount > 0 ? 'text-[#7A4A4A]' : 'text-[#4A7A5A]' },
+    { label: 'Рейтинг',           value: String(latestRating),                              color: 'text-[#EAE8E3]' },
+    { label: 'Прирост',            value: `${ratingDiff >= 0 ? '+' : ''}${ratingDiff}`,      color: ratingDiff >= 0 ? 'text-[#4A7A5A]' : 'text-[#7A4A4A]' },
+    { label: 'Дней завершено',     value: String(completedDays),                             color: 'text-[#EAE8E3]' },
+    { label: 'Стрик',              value: streak > 0 ? `${streak} дн` : '—',                 color: streak > 0 ? 'text-[#C9A96E]' : 'text-[#444]' },
+    { label: 'Рапид партий',       value: String(totalGames),                                color: 'text-[#EAE8E3]' },
+    { label: 'Винрейт',            value: `${winPct}%`,                                      color: winPct >= 50 ? 'text-[#4A7A5A]' : 'text-[#7A4A4A]' },
+    { label: 'Поздняя рокировка',  value: String(lateCastle),                               color: lateCastle > 0 ? 'text-[#7A4A4A]' : 'text-[#4A7A5A]' },
+    { label: 'Блиц / пуля',        value: String(blitzCount),                               color: blitzCount > 0 ? 'text-[#7A4A4A]' : 'text-[#4A7A5A]' },
   ];
 
   return (
-    <main className="max-w-md mx-auto px-5 pt-8 pb-8">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-[#444] mb-1">Статистика</p>
-      <h1 className="text-3xl font-light tracking-tight mb-6">Прогресс</h1>
+    <main className="px-5 pt-8 pb-8 md:px-12 md:pt-12 max-w-2xl">
+
+      <div className="mb-8">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-[#444] mb-3">Статистика</p>
+        <h1 className="font-cormorant text-[56px] font-light italic leading-[0.9] text-[#EAE8E3]">
+          Прогресс
+        </h1>
+      </div>
 
       {/* Rating chart */}
-      <div className="border border-[#1E1E1E] rounded-lg p-4 mb-5">
+      <div className="border border-[#181818] p-5 mb-5">
         <div className="flex justify-between items-center mb-4">
-          <p className="text-[10px] uppercase tracking-[0.15em] text-[#444]">Рейтинг / 30 дней</p>
+          <p className="text-[10px] uppercase tracking-[0.15em] text-[#333]">Рейтинг / 30 дней</p>
           <div className="flex gap-3 text-[10px] text-[#333]">
-            <span className="flex items-center gap-1.5"><span className="w-4 h-px bg-[#A07840] inline-block" />Факт</span>
-            <span className="flex items-center gap-1.5"><span className="w-4 h-px bg-[#2A3A2A] inline-block" />1200</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-4 h-px bg-[#C9A96E] inline-block" />Факт
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-4 h-px bg-[#2A3A2A] inline-block" />{TARGET_RATING}
+            </span>
           </div>
         </div>
         <RatingChart data={ratings} currentDay={day} />
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-px bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#1E1E1E] mb-5">
-        {stats.map(({ label, value, color }) => (
-          <div key={label} className="bg-[#111] p-4">
-            <p className="text-[10px] uppercase tracking-[0.12em] text-[#444] mb-1.5">{label}</p>
-            <p className={`text-2xl font-light ${color}`}>{value}</p>
+      <div className="grid grid-cols-2 border border-[#181818] mb-5">
+        {stats.map(({ label, value, color }, i) => (
+          <div key={label}
+            className={`p-4 ${i % 2 === 0 ? 'border-r border-[#181818]' : ''} ${i < stats.length - 2 ? 'border-b border-[#181818]' : ''}`}>
+            <p className="text-[9px] uppercase tracking-[0.15em] text-[#333] mb-1.5">{label}</p>
+            <p className={`font-cormorant text-2xl font-light ${color}`}>{value}</p>
           </div>
         ))}
       </div>
 
       {/* Calendar heatmap */}
-      <div className="border border-[#1E1E1E] rounded-lg p-4">
-        <p className="text-[10px] uppercase tracking-[0.15em] text-[#444] mb-4">Календарь</p>
+      <div className="border border-[#181818] p-5">
+        <p className="text-[10px] uppercase tracking-[0.15em] text-[#333] mb-4">Календарь</p>
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: 30 }, (_, i) => {
             const d = i + 1;
@@ -89,20 +100,24 @@ export default function ProgressPage() {
               (prog.block_warmup || prog.block_theme || prog.block_game || prog.block_review);
             return (
               <div key={d}
-                className={`aspect-square rounded flex items-center justify-center text-[10px] transition-colors
-                  ${isFuture ? 'text-[#222]'
-                  : isDone ? 'bg-[#A07840]/20 text-[#A07840] border border-[#A07840]/30'
-                  : isPartial ? 'bg-[#1E1E1E] text-[#555]'
-                  : isCurrent ? 'border border-[#2A2A2A] text-[#888]'
-                  : 'text-[#2A2A2A]'}`}>
+                className={`aspect-square flex items-center justify-center text-[10px] transition-colors font-cormorant text-sm
+                  ${isFuture ? 'text-[#1E1E1E]'
+                  : isDone ? 'bg-[#C9A96E]/15 text-[#C9A96E] border border-[#C9A96E]/25'
+                  : isPartial ? 'bg-[#181818] text-[#444]'
+                  : isCurrent ? 'border border-[#2A2A2A] text-[#666]'
+                  : 'text-[#252525]'}`}>
                 {d}
               </div>
             );
           })}
         </div>
         <div className="flex gap-4 mt-3 text-[10px] text-[#333]">
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#A07840]/20 border border-[#A07840]/30 inline-block" />Готово</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#1E1E1E] inline-block" />Частично</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 bg-[#C9A96E]/15 border border-[#C9A96E]/25 inline-block" />Готово
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 bg-[#181818] inline-block" />Частично
+          </span>
         </div>
       </div>
     </main>

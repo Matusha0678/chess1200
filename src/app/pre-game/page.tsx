@@ -1,29 +1,13 @@
 'use client';
 import { useState } from 'react';
-import { Check, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { CHESS_LINKS } from '@/lib/constants';
 
 const CHECKLIST = [
-  {
-    id: 0,
-    label: 'Угроза соперника',
-    text: 'Что хочет соперник? Его последний ход: что он атакует, какая угроза?',
-  },
-  {
-    id: 1,
-    label: 'Шахи, взятия, угрозы',
-    text: 'Сначала мои (может, есть выигрыш?), потом его ответные.',
-  },
-  {
-    id: 2,
-    label: 'Безопасен ли ход?',
-    text: 'Поле, куда иду, — защищено? Не оставил ли я фигуру без защиты? Хожу ферзём — может ли его атаковать конь, слон или пешка?',
-  },
-  {
-    id: 3,
-    label: 'Лучший ход?',
-    text: 'Нашёл хороший ход — поищи ещё один.',
-  },
+  { id: 0, label: 'Угроза соперника',     text: 'Что хочет соперник? Его последний ход: что он атакует, какая угроза?' },
+  { id: 1, label: 'Шахи, взятия, угрозы', text: 'Сначала мои (может, есть выигрыш?), потом его ответные.' },
+  { id: 2, label: 'Безопасен ли ход?',    text: 'Поле, куда иду, — защищено? Не оставил ли я фигуру без защиты? Хожу ферзём — может ли его атаковать конь, слон или пешка?' },
+  { id: 3, label: 'Лучший ход?',          text: 'Нашёл хороший ход — поищи ещё один.' },
 ];
 
 const RULES = [
@@ -46,32 +30,34 @@ export default function PreGamePage() {
 
   const allChecked = checked.size === CHECKLIST.length;
 
-  function reset() {
-    setChecked(new Set());
-  }
-
   return (
-    <main className="max-w-md mx-auto px-5 pt-8">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-[#444] mb-1">Перед каждым ходом</p>
-      <h1 className="text-3xl font-light tracking-tight mb-1">Чек-лист</h1>
-      <p className="text-sm text-[#444] mb-6">10–20 секунд. Отметь все четыре.</p>
+    <main className="px-5 pt-8 pb-4 md:px-12 md:pt-12 max-w-2xl">
 
-      <div className="border border-[#1E1E1E] rounded-lg overflow-hidden mb-5">
+      <div className="mb-8">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-[#444] mb-3">Перед каждым ходом</p>
+        <h1 className="font-cormorant text-[56px] font-light italic leading-[0.9] text-[#EAE8E3]">
+          Чек-лист
+        </h1>
+        <p className="text-sm text-[#444] mt-3">10–20 секунд. Отметь все четыре.</p>
+      </div>
+
+      {/* Checklist */}
+      <div className="border border-[#181818] mb-6">
         {CHECKLIST.map((item) => {
           const done = checked.has(item.id);
           return (
             <button key={item.id} onClick={() => toggle(item.id)}
-              className={`w-full flex items-start gap-4 px-4 py-4 text-left transition-colors border-b border-[#1A1A1A] last:border-b-0
-                ${done ? 'bg-[#0F0F0F]' : 'bg-[#111] hover:bg-[#141414]'}`}>
-              <div className={`w-5 h-5 rounded border flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors
-                ${done ? 'bg-[#A07840] border-[#A07840]' : 'border-[#2A2A2A]'}`}>
-                {done && <Check size={11} strokeWidth={2.5} className="text-[#080808]" />}
+              className={`w-full flex items-start gap-4 px-4 py-4 text-left transition-colors border-b border-[#181818] last:border-b-0
+                ${done ? 'bg-[#0A0A0A]' : 'hover:bg-[#0F0F0F]'}`}>
+              <div className={`w-4 h-4 rounded-full border flex-shrink-0 mt-0.5 flex items-center justify-center transition-all
+                ${done ? 'bg-[#C9A96E] border-[#C9A96E]' : 'border-[#2A2A2A]'}`}>
+                {done && <span className="text-[7px] text-[#0D0D0D] leading-none">✓</span>}
               </div>
               <div className="flex-1">
-                <p className={`text-[10px] uppercase tracking-[0.12em] mb-0.5 transition-colors ${done ? 'text-[#333]' : 'text-[#555]'}`}>
+                <p className={`text-[10px] uppercase tracking-[0.15em] mb-0.5 transition-colors ${done ? 'text-[#2A2A2A]' : 'text-[#444]'}`}>
                   {item.label}
                 </p>
-                <p className={`text-sm leading-relaxed transition-colors ${done ? 'text-[#333] line-through' : 'text-[#BFBFBF]'}`}>
+                <p className={`text-sm leading-relaxed transition-colors ${done ? 'text-[#252525] line-through' : 'text-[#AAA]'}`}>
                   {item.text}
                 </p>
               </div>
@@ -80,36 +66,38 @@ export default function PreGamePage() {
         })}
       </div>
 
-      <div className="border border-[#1E1E1E] rounded-lg p-4 mb-6">
-        <p className="text-[10px] uppercase tracking-[0.15em] text-[#444] mb-3">Правила партии</p>
+      {/* Rules */}
+      <div className="border border-[#181818] p-4 mb-6">
+        <p className="text-[10px] uppercase tracking-[0.15em] text-[#333] mb-4">Правила партии</p>
         {RULES.map((r, i) => (
           <div key={i} className="flex items-start gap-3 py-1.5">
-            <div className="w-1 h-1 rounded-full bg-[#A07840] flex-shrink-0 mt-2" />
-            <p className="text-sm text-[#777] leading-relaxed">{r}</p>
+            <div className="w-px h-3 bg-[#C9A96E] mt-1.5 flex-shrink-0" />
+            <p className="text-sm text-[#555] leading-relaxed">{r}</p>
           </div>
         ))}
       </div>
 
-      <div className="flex gap-3 mb-4">
+      {/* CTA */}
+      <div className="flex gap-3">
         <a href={CHESS_LINKS.play} target="_blank" rel="noopener noreferrer"
           onClick={e => { if (!allChecked) e.preventDefault(); }}
-          className={`flex-1 flex items-center justify-between px-5 py-4 rounded-lg text-sm font-medium transition-all
+          className={`flex-1 flex items-center justify-between px-5 py-4 text-sm font-medium transition-all border
             ${allChecked
-              ? 'bg-[#EFEFEF] text-[#080808] hover:bg-white'
-              : 'bg-[#111] text-[#333] border border-[#1E1E1E] cursor-not-allowed'}`}>
+              ? 'bg-[#EAE8E3] text-[#0D0D0D] border-[#EAE8E3] hover:bg-white'
+              : 'bg-transparent text-[#333] border-[#181818] cursor-not-allowed'}`}>
           <span>{allChecked ? 'Готов — Играть' : `${checked.size} / ${CHECKLIST.length}`}</span>
           <ArrowRight size={16} strokeWidth={1.5} />
         </a>
         {checked.size > 0 && (
-          <button onClick={reset}
-            className="px-4 border border-[#1E1E1E] text-[#444] text-sm rounded-lg hover:border-[#2A2A2A] hover:text-[#666] transition-colors">
+          <button onClick={() => setChecked(new Set())}
+            className="px-4 border border-[#181818] text-[#444] text-sm hover:border-[#2A2A2A] hover:text-[#666] transition-colors">
             Сброс
           </button>
         )}
       </div>
 
       {!allChecked && (
-        <p className="text-center text-[10px] text-[#2A2A2A] tracking-wide">
+        <p className="text-center text-[10px] text-[#222] tracking-wide mt-4">
           Отметь все четыре пункта перед игрой
         </p>
       )}
