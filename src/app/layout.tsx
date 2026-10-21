@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Geist } from 'next/font/google';
 import './globals.css';
 import BottomNav from '@/components/BottomNav';
 
-const inter = Inter({ subsets: ['latin', 'cyrillic'] });
+const geist = Geist({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Chess 1200',
@@ -16,7 +16,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#0f172a',
+  themeColor: '#080808',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -24,13 +24,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru">
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        <script dangerouslySetInnerHTML={{ __html: `
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(() => {});
-          }
-        `}} />
+        <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}` }} />
       </head>
-      <body className={`${inter.className} bg-slate-950 text-slate-100 min-h-screen pb-20`}>
+      <body className={`${geist.className} bg-[#080808] text-[#EFEFEF] min-h-screen pb-[calc(4rem+env(safe-area-inset-bottom))]`}>
         {children}
         <BottomNav />
       </body>

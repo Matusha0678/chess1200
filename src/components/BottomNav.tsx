@@ -1,25 +1,28 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Sword, BookOpen, TrendingUp, Trophy } from 'lucide-react';
+import { Home, Swords, BookOpen, BarChart2, Award } from 'lucide-react';
 
 const tabs = [
-  { href: '/today',    icon: Home,       label: 'Сегодня'   },
-  { href: '/pre-game', icon: Sword,      label: 'Партия'    },
-  { href: '/notebook', icon: BookOpen,   label: 'Тетрадь'   },
-  { href: '/progress', icon: TrendingUp, label: 'Прогресс'  },
-  { href: '/badges',   icon: Trophy,     label: 'Награды'   },
+  { href: '/today',    icon: Home,       label: 'Сегодня'  },
+  { href: '/pre-game', icon: Swords,     label: 'Партия'   },
+  { href: '/notebook', icon: BookOpen,   label: 'Тетрадь'  },
+  { href: '/progress', icon: BarChart2,  label: 'Прогресс' },
+  { href: '/badges',   icon: Award,      label: 'Награды'  },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex z-50">
+    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-[#080808] border-t border-[#1E1E1E] flex z-50"
+         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {tabs.map(({ href, icon: Icon, label }) => {
         const active = pathname === href || (href === '/today' && pathname === '/');
         return (
-          <Link key={href} href={href} className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs transition-colors ${active ? 'text-amber-400' : 'text-slate-500 hover:text-slate-300'}`}>
-            <Icon size={20} />
+          <Link key={href} href={href}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] tracking-wide uppercase transition-colors duration-150
+              ${active ? 'text-[#EFEFEF]' : 'text-[#3A3A3A] hover:text-[#666]'}`}>
+            <Icon size={18} strokeWidth={active ? 1.75 : 1.5} />
             <span>{label}</span>
           </Link>
         );
