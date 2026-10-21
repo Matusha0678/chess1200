@@ -4,7 +4,7 @@ import { RefreshCw, AlertCircle, TrendingUp } from 'lucide-react';
 import DayBlock from '@/components/DayBlock';
 import { supabase } from '@/lib/supabase';
 import { getCurrentDay, isLightDay, getDayTheme } from '@/lib/day-utils';
-import { CHESS_LINKS, START_RATING, RATING_CHECKPOINTS } from '@/lib/constants';
+import { CHESS_LINKS, START_RATING, RATING_CHECKPOINTS, DAY_DATES, DAY_SPECIAL_TASKS, TAL_GAMES } from '@/lib/constants';
 import { getLevelInfo } from '@/lib/xp';
 import type { DailyProgress, SyncResult } from '@/types';
 
@@ -125,6 +125,9 @@ export default function TodayPage() {
   const checkpointEntry = Object.entries(RATING_CHECKPOINTS).find(([d]) => parseInt(d) >= day);
   const targetToday = checkpointEntry ? checkpointEntry[1][0] : 1200;
   const ratingDiff = currentRating ? currentRating - START_RATING : 0;
+  const specialTask = DAY_SPECIAL_TASKS[day] ?? null;
+  const talGame = TAL_GAMES[(day - 1) % TAL_GAMES.length];
+  const dayDate = DAY_DATES[day] ?? '';
 
   void START_RATING;
 
@@ -135,7 +138,7 @@ export default function TodayPage() {
       {/* Top header */}
       <div className="pt-8 pb-6 flex items-start justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#444] mb-1">Сегодня</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#444] mb-1">{dayDate}</p>
           <h1 className="text-4xl font-light tracking-tight text-[#EFEFEF]">День {day}<span className="text-[#333]">/30</span></h1>
           <p className="text-sm text-[#555] mt-1.5">{theme}</p>
         </div>
@@ -224,6 +227,32 @@ export default function TodayPage() {
           Сыграно рапид сегодня: {syncResult.gamesCount}
         </p>
       )}
+
+      {/* Special task */}
+      {specialTask && (
+        <div className="border border-[#1E1E1E] rounded-lg px-4 py-3 mb-3">
+          <p className="text-[10px] uppercase tracking-[0.15em] text-[#444] mb-1.5">Особое задание</p>
+          <p className="text-sm text-[#888]">{specialTask}</p>
+        </div>
+      )}
+
+      {/* Tal magic */}
+      <div className="border border-[#1A1A1A] rounded-lg px-4 py-3 mb-6">
+        <div className="flex items-baseline justify-between mb-1.5">
+          <p className="text-[10px] uppercase tracking-[0.15em] text-[#444]">Магия дня — 10 мин</p>
+          <span className="text-[10px] text-[#333]">Угадай ход</span>
+        </div>
+        <p className="text-sm text-[#666]">
+          {talGame.white} — {talGame.black}{talGame.year ? `, ${talGame.year}` : ''}{talGame.note ? `. ${talGame.note}` : ''}
+        </p>
+        <p className="text-xs text-[#333] mt-1.5">
+          Разыграй в Analysis. Перед каждым ходом белых — остановись и подумай: что бы ты сыграл?
+        </p>
+        <a href={CHESS_LINKS.games} target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-[10px] text-[#555] hover:text-[#888] transition-colors mt-2">
+          Открыть Analysis
+        </a>
+      </div>
     </main>
   );
 }
