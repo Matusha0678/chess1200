@@ -34,6 +34,7 @@ export default function TodayPage() {
   const [totalXP, setTotalXP] = useState(0);
   const [currentRating, setCurrentRating] = useState<number | null>(null);
   const [streak, setStreak] = useState(0);
+  const [magicDone, setMagicDone] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -97,7 +98,7 @@ export default function TodayPage() {
   const levelInfo = getLevelInfo(totalXP);
   const specialTask = DAY_SPECIAL_TASKS[day] ?? null;
   const talGame = TAL_GAMES[(day - 1) % TAL_GAMES.length];
-  const completedCount = blocks.filter(b => !!(progress?.[b.key])).length;
+  const completedCount = blocks.filter(b => !!(progress?.[b.key])).length + (magicDone ? 1 : 0);
   const totalBlocks = blocks.length + 1; // +1 for Магия дня
   const ringOffset = C - (C * completedCount) / totalBlocks;
   const left = totalBlocks - completedCount;
@@ -236,9 +237,9 @@ export default function TodayPage() {
             duration="10"
             description={`${talGame.white} — ${talGame.black}${talGame.year ? `, ${talGame.year}` : ''}${talGame.note ? `. ${talGame.note}` : ''}. Разыграй в Analysis. Перед каждым ходом белых — остановись и подумай.`}
             links={[{ label: 'Analysis', href: CHESS_LINKS.games }]}
-            isComplete={false}
+            isComplete={magicDone}
             isActive={completedCount === blocks.length}
-            onToggle={() => {}}
+            onToggle={() => setMagicDone(d => !d)}
           />
         </section>
 
