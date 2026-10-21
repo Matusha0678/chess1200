@@ -32,33 +32,33 @@ export default function RatingChart({ data, currentDay }: Props) {
       <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -28, bottom: 0 }}>
         <XAxis
           dataKey="day"
-          tick={{ fill: '#333', fontSize: 10 }}
+          tick={{ fill: '#8F887C', fontSize: 12 }}
           tickLine={false}
-          axisLine={{ stroke: '#181818' }}
+          axisLine={{ stroke: '#2A2722' }}
           interval={6}
         />
         <YAxis
-          tick={{ fill: '#333', fontSize: 10 }}
+          tick={{ fill: '#8F887C', fontSize: 12 }}
           tickLine={false}
           axisLine={false}
           domain={[780, 1250]}
         />
         <Tooltip
-          contentStyle={{ background: '#0A0A0A', border: '1px solid #181818', borderRadius: 0, color: '#EAE8E3', fontSize: 12 }}
-          labelStyle={{ color: '#444' }}
+          contentStyle={{ background: '#0D0C0A', border: '1px solid #2A2722', borderRadius: 10, color: '#F3EEE5', fontSize: 13, fontWeight: 600 }}
+          labelStyle={{ color: '#B3AC9F' }}
           formatter={(value) => [value, 'Рейтинг']}
           labelFormatter={(l) => `День ${l}`}
         />
         {Object.entries(RATING_CHECKPOINTS).map(([d, [lo, hi]]) => (
           <ReferenceArea key={d} x1={parseInt(d) - 0.5} x2={parseInt(d) + 0.5} y1={lo} y2={hi}
-            fill="#C9A96E" fillOpacity={0.1} />
+            fill="#D6B97E" fillOpacity={0.08} />
         ))}
-        <ReferenceLine y={START_RATING} stroke="#181818" strokeDasharray="3 3" />
-        <ReferenceLine y={1200} stroke="#2A3A2A" strokeDasharray="3 3" />
+        <ReferenceLine y={START_RATING} stroke="#2A2722" strokeDasharray="4 4" />
+        <ReferenceLine y={1200} stroke="#8F887C" strokeDasharray="6 6" />
         <Line
-          type="monotone" dataKey="rating" stroke="#C9A96E" strokeWidth={1.5}
-          dot={{ r: 2.5, fill: '#C9A96E', strokeWidth: 0 }}
-          activeDot={{ r: 4, fill: '#C9A96E' }}
+          type="monotone" dataKey="rating" stroke="#D6B97E" strokeWidth={2}
+          dot={{ r: 3, fill: '#D6B97E', strokeWidth: 0 }}
+          activeDot={{ r: 5, fill: '#D6B97E' }}
           connectNulls={false}
         />
       </ComposedChart>

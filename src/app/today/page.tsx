@@ -1,16 +1,15 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, AlertCircle } from 'lucide-react';
 import DayBlock from '@/components/DayBlock';
 import { supabase } from '@/lib/supabase';
 import { getCurrentDay, isLightDay, getDayTheme } from '@/lib/day-utils';
-import { CHESS_LINKS, START_RATING, TARGET_RATING, RATING_CHECKPOINTS, DAY_DATES, DAY_SPECIAL_TASKS, TAL_GAMES } from '@/lib/constants';
+import { CHESS_LINKS, START_RATING, TARGET_RATING, DAY_SPECIAL_TASKS, TAL_GAMES } from '@/lib/constants';
 import { getLevelInfo } from '@/lib/xp';
 import type { DailyProgress, SyncResult } from '@/types';
 
 const BLOCKS_NORMAL = [
   { key: 'block_warmup' as keyof DailyProgress, title: 'Разминка',  duration: '10', description: '5 задач «мат в 2» + 5 рейтинговых задач', links: [{ label: 'Задачи', href: CHESS_LINKS.puzzles }] },
-  { key: 'block_theme'  as keyof DailyProgress, title: 'Тема дня',  duration: '25', description: 'Урок + 15-20 задач по теме дня', links: [{ label: 'Уроки', href: CHESS_LINKS.lessons }, { label: 'Задачи', href: CHESS_LINKS.puzzles }] },
+  { key: 'block_theme'  as keyof DailyProgress, title: 'Тема дня',  duration: '25', description: 'Урок + 15–20 задач по теме дня', links: [{ label: 'Уроки', href: CHESS_LINKS.lessons }, { label: 'Задачи', href: CHESS_LINKS.puzzles }] },
   { key: 'block_game'   as keyof DailyProgress, title: 'Игра',      duration: '50', description: '3 партии в рапид 10 минут', links: [{ label: 'Играть рапид', href: CHESS_LINKS.play }] },
   { key: 'block_review' as keyof DailyProgress, title: 'Разбор',    duration: '20', description: 'Сначала сам, потом Game Review. Запиши главную ошибку.', links: [{ label: 'Game Review', href: CHESS_LINKS.review }, { label: 'Тетрадь', href: '/notebook' }] },
 ];
@@ -20,6 +19,8 @@ const BLOCKS_LIGHT = [
   { key: 'block_game'   as keyof DailyProgress, title: 'Игра',   duration: '30', description: '2 партии в рапид + просмотр Insights', links: [{ label: 'Играть рапид', href: CHESS_LINKS.play }, { label: 'Insights', href: CHESS_LINKS.insights }] },
 ];
 
+const C = 351.86;
+
 export default function TodayPage() {
   const day = getCurrentDay();
   const isLight = isLightDay(day);
@@ -27,6 +28,7 @@ export default function TodayPage() {
   const blocks = isLight ? BLOCKS_LIGHT : BLOCKS_NORMAL;
 
   const [progress, setProgress] = useState<DailyProgress | null>(null);
+  const [allProgress, setAllProgress] = useState<DailyProgress[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [totalXP, setTotalXP] = useState(0);
@@ -47,14 +49,16 @@ export default function TodayPage() {
       }).select().maybeSingle();
       if (created) setProgress(created as DailyProgress);
     }
-    const [{ data: xpData }, { data: ratingData }, { data: streakData }] = await Promise.all([
+    const [{ data: xpData }, { data: ratingData }, { data: streakData }, { data: allProg }] = await Promise.all([
       supabase.from('user_xp').select('*').eq('id', 1).maybeSingle(),
       supabase.from('rating_history').select('rating').order('date', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('streak').select('*').eq('id', 1).maybeSingle(),
+      supabase.from('daily_progress').select('day_number,day_complete,block_warmup,block_theme,block_game,block_review').order('day_number'),
     ]);
     if (xpData) setTotalXP((xpData as { total_xp?: number }).total_xp ?? 0);
     if (ratingData) setCurrentRating((ratingData as { rating: number }).rating);
     if (streakData) setStreak((streakData as { current_streak?: number })?.current_streak ?? 0);
+    if (allProg) setAllProgress(allProg as DailyProgress[]);
   }, [day, today]);
 
   useEffect(() => { loadProgress(); }, [loadProgress]);
@@ -91,108 +95,126 @@ export default function TodayPage() {
   }
 
   const levelInfo = getLevelInfo(totalXP);
-  const checkpointEntry = Object.entries(RATING_CHECKPOINTS).find(([d]) => parseInt(d) >= day);
-  const targetToday = checkpointEntry ? checkpointEntry[1][0] : 1200;
-  const ratingDiff = currentRating ? currentRating - START_RATING : 0;
   const specialTask = DAY_SPECIAL_TASKS[day] ?? null;
   const talGame = TAL_GAMES[(day - 1) % TAL_GAMES.length];
-  const dayDate = DAY_DATES[day] ?? '';
-
-  const firstIncompleteIdx = blocks.findIndex(b => !progress?.[b.key]);
   const completedCount = blocks.filter(b => !!(progress?.[b.key])).length;
+  const totalBlocks = blocks.length + 1; // +1 for Магия дня
+  const ringOffset = C - (C * completedCount) / totalBlocks;
+  const left = totalBlocks - completedCount;
+  const doneLabel = left === 0 ? 'День закрыт!' : `Осталось блоков: ${left}`;
+  const ratingDiff = currentRating ? currentRating - START_RATING : 0;
+  const displayRating = currentRating ?? START_RATING;
 
-  const circumference = 2 * Math.PI * 56;
-  const totalRange = TARGET_RATING - START_RATING;
-  const ratingProg = currentRating ? Math.max(0, Math.min(1, (currentRating - START_RATING) / totalRange)) : 0;
-  const dashOffset = circumference * (1 - ratingProg);
+  const dashIdx = theme.indexOf(' — ');
+  const titleText = dashIdx >= 0 ? theme.slice(0, dashIdx) : theme;
+  const subtitleText = dashIdx >= 0 ? theme.slice(dashIdx + 3) : '';
 
   return (
-    <div className="md:flex md:min-h-screen">
+    <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16">
 
-      {/* ── LEFT CONTENT ── */}
-      <main className="relative flex-1 px-5 pt-8 pb-4 md:px-12 md:pt-12 md:pb-12 md:border-r md:border-[#181818] overflow-hidden">
-
-        {/* Watermark */}
-        <div className="absolute right-0 top-4 leading-none text-[#EAE8E3] pointer-events-none select-none hidden md:block"
-          style={{ fontSize: '240px', opacity: 0.022, fontFamily: 'serif' }}>♞</div>
-
-        {/* Header */}
-        <div className="flex items-start justify-between mb-7">
-          <div className="flex-1 min-w-0 pr-4">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-[10px] uppercase tracking-[0.3em] text-[#444]">{dayDate}</span>
-              <span className="w-5 h-px bg-[#C9A96E] shrink-0" />
-              <span className="text-[10px] uppercase tracking-[0.2em] text-[#333]">День {day} / 30</span>
-            </div>
-            <h1 className="font-cormorant text-[48px] md:text-[64px] font-light italic leading-[0.92] text-[#EAE8E3]"
-              style={{ letterSpacing: '-0.01em' }}>
-              {theme}
-            </h1>
+      {/* ── HERO ── */}
+      <section className="flex flex-wrap gap-10 items-stretch">
+        {/* Left: eyebrow + title */}
+        <div className="flex-[999_1_560px] min-w-0 flex flex-col justify-end gap-[22px]">
+          <div className="flex items-center gap-[14px] text-[13px] font-semibold tracking-[0.16em] uppercase text-[#D6B97E]">
+            <span>День {String(day).padStart(2, '0')} из 30</span>
+            <span className="w-10 h-px bg-[#5A4C33]" />
+            <span className="text-[#B3AC9F]">Тема дня</span>
           </div>
-          <button onClick={doSync} disabled={syncing}
-            className="mt-1 p-2 text-[#333] hover:text-[#666] transition-colors disabled:opacity-30 shrink-0">
-            <RefreshCw size={15} strokeWidth={1.5} className={syncing ? 'animate-spin' : ''} />
-          </button>
-        </div>
-
-        {/* Mobile: rating strip */}
-        <div className="md:hidden grid grid-cols-3 divide-x divide-[#181818] border border-[#181818] mb-5">
-          <div className="px-4 py-3">
-            <p className="text-[9px] uppercase tracking-[0.15em] text-[#444] mb-1">Рейтинг</p>
-            <p className="font-cormorant text-2xl font-light text-[#EAE8E3]">{currentRating ?? '—'}</p>
-          </div>
-          <div className="px-4 py-3">
-            <p className="text-[9px] uppercase tracking-[0.15em] text-[#444] mb-1">Прирост</p>
-            <p className={`font-cormorant text-2xl font-light ${ratingDiff >= 0 ? 'text-[#4A7A5A]' : 'text-[#7A4A4A]'}`}>
-              {ratingDiff >= 0 ? '+' : ''}{ratingDiff}
+          <h1 className="m-0 font-cormorant font-[500] text-[56px] md:text-[96px] leading-[0.98] tracking-[-0.015em]">
+            {titleText}
+          </h1>
+          {subtitleText && (
+            <p className="m-0 font-cormorant italic text-[28px] md:text-[36px] leading-[1.2] text-[#D6B97E]">
+              {subtitleText}
             </p>
-          </div>
-          <div className="px-4 py-3">
-            <p className="text-[9px] uppercase tracking-[0.15em] text-[#444] mb-1">Цель</p>
-            <p className="font-cormorant text-2xl font-light text-[#C9A96E]">{targetToday}</p>
-          </div>
+          )}
         </div>
 
-        {/* Alerts */}
-        {syncResult?.lossStreakWarning && (
-          <div className="flex items-center gap-2 border border-[#3A2020] px-4 py-3 mb-3">
-            <AlertCircle size={13} strokeWidth={1.5} className="text-[#7A4A4A] shrink-0" />
-            <p className="text-xs text-[#7A4A4A]">Стоп игре — только задачи и разбор</p>
+        {/* Right: ring card */}
+        <div className="flex-[1_1_380px] bg-[#15130F] border border-[#2A2722] rounded-[28px] p-8 flex flex-col gap-7">
+          <div className="flex items-center gap-7">
+            <div className="relative w-[132px] h-[132px] shrink-0">
+              <svg width="132" height="132" viewBox="0 0 132 132" aria-hidden="true">
+                <circle cx="66" cy="66" r="56" fill="none" stroke="#2A2722" strokeWidth="8" />
+                <circle cx="66" cy="66" r="56" fill="none" stroke="#D6B97E" strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={C}
+                  strokeDashoffset={ringOffset}
+                  transform="rotate(-90 66 66)"
+                  style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-cormorant text-[44px] font-semibold leading-none">
+                  {completedCount}/{totalBlocks}
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-[6px]">
+              <span className="text-[13px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Сегодня</span>
+              <span className="text-[20px] font-semibold">{doneLabel}</span>
+              <span className="text-[15px] text-[#B3AC9F]">≈ {isLight ? '1 ч' : '1 ч 45 мин'} тренировки</span>
+            </div>
           </div>
-        )}
-        {syncResult?.blitzWarning && (
-          <div className="flex items-center gap-2 border border-[#3A3020] px-4 py-3 mb-3">
-            <AlertCircle size={13} strokeWidth={1.5} className="text-[#7A6A3A] shrink-0" />
-            <p className="text-xs text-[#7A6A3A]">Сыграна блиц/пуля — «Чистая неделя» потеряна</p>
-          </div>
-        )}
-        {syncResult && syncResult.latecastleGames.length > 0 && (
-          <div className="flex items-center gap-2 border border-[#2A2A1A] px-4 py-3 mb-3">
-            <AlertCircle size={13} strokeWidth={1.5} className="text-[#666655] shrink-0" />
-            <p className="text-xs text-[#666655]">Поздняя рокировка в {syncResult.latecastleGames.length} партии</p>
-          </div>
-        )}
 
-        {/* XP bar */}
-        <div className="mb-5">
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-[10px] uppercase tracking-[0.15em] text-[#333]">{levelInfo.name}</span>
-            <span className="text-[10px] text-[#333]">{totalXP} XP</span>
-          </div>
-          <div className="h-px bg-[#181818]">
-            <div className="h-full bg-[#C9A96E] transition-all duration-700"
-              style={{ width: `${levelInfo.progress}%` }} />
+          {/* 3 stats */}
+          <div className="grid grid-cols-3 gap-3 border-t border-[#2A2722] pt-6">
+            <div className="flex flex-col gap-1">
+              <span className="text-[13px] text-[#B3AC9F]">Рейтинг</span>
+              <span className="font-cormorant text-[34px] font-semibold leading-[1.1]">{displayRating}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[13px] text-[#B3AC9F]">Цель</span>
+              <span className="font-cormorant text-[34px] font-semibold leading-[1.1] text-[#D6B97E]">{TARGET_RATING}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[13px] text-[#B3AC9F]">Прирост</span>
+              <span className={`font-cormorant text-[34px] font-semibold leading-[1.1] ${ratingDiff >= 0 ? 'text-[#9BD3A6]' : 'text-[#D36B6B]'}`}>
+                {ratingDiff >= 0 ? '+' : ''}{ratingDiff}
+              </span>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Blocks header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#181818]">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-[#333]">Программа дня</span>
-          <span className="text-[10px] text-[#333]">{completedCount}/{blocks.length}</span>
+      {/* ── 30-DAY STRIP ── */}
+      <section aria-label="Месяц тренировок" className="mt-14 flex flex-col gap-[14px]">
+        <div className="flex justify-between text-[14px] text-[#B3AC9F]">
+          <span>Месяц тренировок</span>
+          <span>
+            <span className="text-[#F3EEE5] font-semibold">{allProgress.filter(p => p.day_complete).length || 1}</span>
+            {' / 30 дней'}
+          </span>
         </div>
+        <div className="flex gap-[6px]">
+          {Array.from({ length: 30 }, (_, i) => {
+            const d = i + 1;
+            const prog = allProgress.find(p => p.day_number === d);
+            const isToday = d === day;
+            const isDone = prog?.day_complete;
+            const isActive = isToday || isDone;
+            return (
+              <div
+                key={d}
+                className={`flex-1 h-[10px] rounded-full ${isActive ? 'bg-[#D6B97E]' : 'bg-[#24221D]'}`}
+                style={{ transition: 'background 0.3s' }}
+              />
+            );
+          })}
+        </div>
+      </section>
 
-        {/* Timeline blocks */}
-        <div className="relative py-1 before:content-[''] before:absolute before:left-[7px] before:top-6 before:bottom-6 before:w-px before:bg-[#181818]">
+      {/* ── PROGRAM + ASIDE ── */}
+      <div className="mt-[72px] flex flex-wrap gap-12 items-start">
+
+        {/* Program list */}
+        <section aria-label="Программа дня" className="flex-[999_1_560px] min-w-0">
+          <div className="flex items-baseline justify-between gap-4 pb-5">
+            <h2 className="m-0 font-cormorant font-[500] text-[44px] leading-[1.1]">Программа дня</h2>
+            <span className="text-[15px] text-[#B3AC9F]">{completedCount} из {totalBlocks} выполнено</span>
+          </div>
+
           {blocks.map((block, i) => (
             <DayBlock
               key={block.key}
@@ -202,114 +224,94 @@ export default function TodayPage() {
               description={block.description}
               links={block.links}
               isComplete={!!(progress?.[block.key])}
-              isActive={i === firstIncompleteIdx}
+              isActive={i === blocks.findIndex(b => !progress?.[b.key])}
               onToggle={() => toggleBlock(block.key)}
             />
           ))}
-          {/* Магия дня — 5th block, always */}
+
+          {/* Магия дня — always last */}
           <DayBlock
             index={blocks.length + 1}
             title="Магия дня"
             duration="10"
-            description={`${talGame.white} — ${talGame.black}${talGame.year ? `, ${talGame.year}` : ''}${talGame.note ? `. ${talGame.note}` : ''}. Разыграй в Analysis. Перед каждым ходом белых — остановись и подумай: что бы ты сыграл?`}
+            description={`${talGame.white} — ${talGame.black}${talGame.year ? `, ${talGame.year}` : ''}${talGame.note ? `. ${talGame.note}` : ''}. Разыграй в Analysis. Перед каждым ходом белых — остановись и подумай.`}
             links={[{ label: 'Analysis', href: CHESS_LINKS.games }]}
             isComplete={false}
             isActive={completedCount === blocks.length}
             onToggle={() => {}}
           />
-        </div>
+        </section>
 
-        {/* Special task (mobile only) */}
-        {specialTask && (
-          <div className="mt-5 border border-[#181818] px-4 py-3 md:hidden">
-            <p className="text-[10px] uppercase tracking-[0.15em] text-[#444] mb-1.5">Особое задание</p>
-            <p className="text-sm text-[#555] leading-relaxed">{specialTask}</p>
-          </div>
-        )}
+        {/* Aside */}
+        <aside className="flex-[1_1_340px] flex flex-col gap-5">
 
-        {syncResult && syncResult.gamesCount > 0 && (
-          <p className="text-center text-[10px] text-[#333] tracking-wide mt-4 md:hidden">
-            Рапид сегодня: {syncResult.gamesCount}
-          </p>
-        )}
-      </main>
-
-      {/* ── RIGHT PANEL (desktop only) ── */}
-      <aside className="hidden md:flex md:w-[360px] md:flex-col md:sticky md:top-0 md:h-screen md:overflow-y-auto md:p-10 bg-[#0A0A0A]">
-
-        {/* Ring chart */}
-        <div className="mb-8">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-[#333] mb-5">Прогресс к {TARGET_RATING}</p>
-          <div className="flex items-center gap-6">
-            <div className="relative w-[130px] h-[130px] shrink-0">
-              <svg width="130" height="130" viewBox="0 0 130 130" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="65" cy="65" r="56" fill="none" stroke="#181818" strokeWidth="5" />
-                <circle cx="65" cy="65" r="56" fill="none" stroke="#C9A96E" strokeWidth="5"
-                  strokeLinecap="butt"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={dashOffset}
-                  style={{ transition: 'stroke-dashoffset 1s ease' }} />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-cormorant text-[38px] font-light text-[#EAE8E3] leading-none">
-                  {currentRating ?? '—'}
-                </span>
-                <span className="text-[10px] text-[#444] mt-1 tracking-wider">→ {targetToday}</span>
+          {/* 2×2 stat tiles */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Стрик', value: streak > 0 ? streak : 0, unit: 'дней' },
+              { label: 'Уровень', value: levelInfo.name, unit: '' },
+              { label: 'Опыт', value: totalXP, unit: 'XP' },
+              { label: 'Партий', value: syncResult?.gamesCount ?? 0, unit: '' },
+            ].map(({ label, value, unit }) => (
+              <div key={label} className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-[22px]">
+                <div className="text-[13px] text-[#B3AC9F]">{label}</div>
+                <div className="font-cormorant text-[34px] md:text-[36px] font-semibold leading-[1.2]">
+                  {value}{unit && <span className="font-sans text-[15px] font-medium text-[#B3AC9F]"> {unit}</span>}
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="mb-4">
-                <p className="text-[9px] uppercase tracking-[0.2em] text-[#444] mb-1">Прирост</p>
-                <p className={`font-cormorant text-3xl font-light ${ratingDiff >= 0 ? 'text-[#4A7A5A]' : 'text-[#7A4A4A]'}`}>
-                  {ratingDiff >= 0 ? '+' : ''}{ratingDiff}
-                </p>
-              </div>
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.2em] text-[#444] mb-0.5">{levelInfo.name}</p>
-                <p className="text-[10px] text-[#333]">{totalXP} XP</p>
-              </div>
-            </div>
+            ))}
           </div>
-        </div>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 border border-[#181818] mb-8">
-          {[
-            { label: 'Стрик',   value: streak > 0 ? `${streak} д` : '—' },
-            { label: 'Уровень', value: levelInfo.name },
-            { label: 'Блоки',   value: `${completedCount}/${blocks.length}` },
-            { label: 'Партий',  value: syncResult?.gamesCount ? `${syncResult.gamesCount}` : '—' },
-          ].map(({ label, value }, i) => (
-            <div key={label}
-              className={`px-4 py-3 ${i % 2 === 0 ? 'border-r border-[#181818]' : ''} ${i < 2 ? 'border-b border-[#181818]' : ''}`}>
-              <p className="text-[9px] uppercase tracking-[0.2em] text-[#333] mb-1">{label}</p>
-              <p className="font-cormorant text-2xl font-light text-[#EAE8E3]">{value}</p>
+          {/* Special task */}
+          {specialTask && (
+            <div className="bg-[#1B1710] border border-[#4A3E28] rounded-[24px] p-7 flex flex-col gap-3">
+              <span className="text-[13px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">Особое задание</span>
+              <p className="m-0 font-cormorant text-[28px] font-[500] leading-[1.2]">{specialTask}</p>
             </div>
-          ))}
-        </div>
+          )}
 
-        {/* Special task */}
-        {specialTask && (
-          <div className="border border-[#181818] px-4 py-3 mb-6">
-            <p className="text-[10px] uppercase tracking-[0.15em] text-[#444] mb-1.5">Особое задание</p>
-            <p className="text-sm text-[#555] leading-relaxed">{specialTask}</p>
-          </div>
-        )}
+          {/* Sync button */}
+          <button
+            onClick={doSync}
+            disabled={syncing}
+            className="flex items-center justify-center gap-3 h-11 rounded-full border border-[#34302A] text-[#B3AC9F] text-[14px] font-medium hover:border-[#D6B97E] hover:text-[#F3EEE5] transition-colors disabled:opacity-40 cursor-pointer bg-transparent"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              className={syncing ? 'animate-spin' : ''} aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            {syncing ? 'Синхронизация...' : 'Обновить рейтинг'}
+          </button>
 
-        {syncResult && syncResult.gamesCount > 0 && (
-          <p className="text-[10px] text-[#333] tracking-wide mb-4">
-            Рапид сегодня: {syncResult.gamesCount}
-          </p>
-        )}
+          {syncResult && (syncResult.lossStreakWarning || syncResult.blitzWarning || syncResult.latecastleGames.length > 0) && (
+            <div className="flex flex-col gap-2">
+              {syncResult.lossStreakWarning && (
+                <div className="border border-[#5A2A2A] bg-[#1A0E0E] rounded-2xl px-4 py-3 text-[14px] text-[#D36B6B]">
+                  Стоп игре — только задачи и разбор
+                </div>
+              )}
+              {syncResult.blitzWarning && (
+                <div className="border border-[#5A4A1A] bg-[#1A160A] rounded-2xl px-4 py-3 text-[14px] text-[#D6A93E]">
+                  Сыграна блиц/пуля — «Чистая неделя» потеряна
+                </div>
+              )}
+              {syncResult.latecastleGames.length > 0 && (
+                <div className="border border-[#3A3A2A] bg-[#141411] rounded-2xl px-4 py-3 text-[14px] text-[#8F887C]">
+                  Поздняя рокировка в {syncResult.latecastleGames.length} {syncResult.latecastleGames.length === 1 ? 'партии' : 'партиях'}
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Tal quote */}
-        <div className="mt-auto pt-6 border-t border-[#181818]">
-          <p className="font-cormorant text-[17px] italic font-light text-[#555] leading-[1.65] mb-3">
-            &ldquo;You must take your opponent into a deep dark forest where 2+2=5.&rdquo;
-          </p>
-          <p className="text-[9px] uppercase tracking-[0.25em] text-[#2A2A2A]">Михаил Таль</p>
-        </div>
-      </aside>
-    </div>
+          {/* Tal quote */}
+          <figure className="m-0 mt-2 pt-7 border-t border-[#24221D]">
+            <blockquote className="m-0 font-cormorant italic text-[26px] md:text-[28px] leading-[1.3] text-[#E7E1D6]">
+              &ldquo;You must take your opponent into a deep dark forest where 2+2=5.&rdquo;
+            </blockquote>
+            <figcaption className="mt-[14px] text-[14px] text-[#B3AC9F]">— Михаил Таль</figcaption>
+          </figure>
+        </aside>
+      </div>
+    </main>
   );
 }

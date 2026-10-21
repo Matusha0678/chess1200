@@ -37,89 +37,141 @@ export default function ProgressPage() {
   const blitzCount = games.filter(g => g.time_control === 'blitz' || g.time_control === 'bullet').length;
   const completedDays = allProgress.filter(p => p.day_complete).length;
   const ratingDiff = latestRating - START_RATING;
+  const ratingPct = Math.round(Math.max(0, Math.min(100, ((latestRating - START_RATING) / (TARGET_RATING - START_RATING)) * 100)));
 
-  const stats = [
-    { label: 'Рейтинг',           value: String(latestRating),                              color: 'text-[#EAE8E3]' },
-    { label: 'Прирост',            value: `${ratingDiff >= 0 ? '+' : ''}${ratingDiff}`,      color: ratingDiff >= 0 ? 'text-[#4A7A5A]' : 'text-[#7A4A4A]' },
-    { label: 'Дней завершено',     value: String(completedDays),                             color: 'text-[#EAE8E3]' },
-    { label: 'Стрик',              value: streak > 0 ? `${streak} дн` : '—',                 color: streak > 0 ? 'text-[#C9A96E]' : 'text-[#444]' },
-    { label: 'Рапид партий',       value: String(totalGames),                                color: 'text-[#EAE8E3]' },
-    { label: 'Винрейт',            value: `${winPct}%`,                                      color: winPct >= 50 ? 'text-[#4A7A5A]' : 'text-[#7A4A4A]' },
-    { label: 'Поздняя рокировка',  value: String(lateCastle),                               color: lateCastle > 0 ? 'text-[#7A4A4A]' : 'text-[#4A7A5A]' },
-    { label: 'Блиц / пуля',        value: String(blitzCount),                               color: blitzCount > 0 ? 'text-[#7A4A4A]' : 'text-[#4A7A5A]' },
+  const tiles = [
+    { label: 'Дней завершено', value: completedDays, suffix: '/ 30' },
+    { label: 'Стрик',          value: streak > 0 ? streak : '—', suffix: streak > 0 ? 'дн' : '' },
+    { label: 'Рапид партий',   value: totalGames, suffix: '' },
+    { label: 'Винрейт',        value: totalGames ? `${winPct}%` : '0%', suffix: '' },
+    { label: 'Поздняя рокировка', value: lateCastle, suffix: '' },
+    { label: 'Блиц / пуля',   value: blitzCount, suffix: '' },
   ];
 
   return (
-    <main className="px-5 pt-8 pb-8 md:px-12 md:pt-12 max-w-2xl">
+    <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16">
 
-      <div className="mb-8">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-[#444] mb-3">Статистика</p>
-        <h1 className="font-cormorant text-[56px] font-light italic leading-[0.9] text-[#EAE8E3]">
+      {/* Header */}
+      <div className="flex flex-col gap-[18px] mb-14">
+        <div className="flex items-center gap-[14px] text-[13px] font-semibold tracking-[0.16em] uppercase text-[#D6B97E]">
+          <span>Статистика</span>
+          <span className="w-10 h-px bg-[#5A4C33]" />
+          <span className="text-[#B3AC9F]">День {day} из 30</span>
+        </div>
+        <h1 className="m-0 font-cormorant font-[500] text-[56px] md:text-[96px] leading-[0.98] tracking-[-0.015em]">
           Прогресс
         </h1>
       </div>
 
-      {/* Rating chart */}
-      <div className="border border-[#181818] p-5 mb-5">
-        <div className="flex justify-between items-center mb-4">
-          <p className="text-[10px] uppercase tracking-[0.15em] text-[#333]">Рейтинг / 30 дней</p>
-          <div className="flex gap-3 text-[10px] text-[#333]">
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-px bg-[#C9A96E] inline-block" />Факт
+      {/* Chart + Rating card */}
+      <div className="flex flex-wrap gap-6 items-stretch">
+
+        {/* Chart card */}
+        <section aria-label="Рейтинг за 30 дней" className="flex-[999_1_560px] min-w-0 bg-[#15130F] border border-[#2A2722] rounded-[28px] p-8 flex flex-col gap-6">
+          <div className="flex flex-wrap justify-between items-baseline gap-4">
+            <h2 className="m-0 font-cormorant font-[500] text-[34px] leading-[1.1]">Рейтинг за 30 дней</h2>
+            <div className="flex gap-5 text-[14px] text-[#C9C2B5]">
+              <span className="flex items-center gap-2">
+                <span className="w-[18px] h-[3px] rounded-full bg-[#D6B97E] inline-block" />
+                Факт
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="w-[18px] h-0 border-t-2 border-dashed border-[#8F887C] inline-block" />
+                Нужный темп
+              </span>
+            </div>
+          </div>
+          <RatingChart data={ratings} currentDay={day} />
+          <div className="flex justify-between text-[13px] text-[#B3AC9F] pt-1">
+            <span>День 1</span><span>День 10</span><span>День 20</span><span>День 30</span>
+          </div>
+        </section>
+
+        {/* Current rating card */}
+        <aside className="flex-[1_1_340px] bg-[#1B1710] border border-[#4A3E28] rounded-[28px] p-8 flex flex-col justify-between gap-7">
+          <div className="flex flex-col gap-[6px]">
+            <span className="text-[13px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">Текущий рейтинг</span>
+            <span className="font-cormorant text-[96px] md:text-[112px] font-[500] leading-[0.95]">{latestRating}</span>
+            <span className="text-[16px] text-[#C9C2B5]">Рапид, chess.com</span>
+          </div>
+          <div className="flex flex-col gap-[10px]">
+            <div className="flex justify-between text-[15px]">
+              <span className="text-[#C9C2B5]">До цели</span>
+              <span className="font-semibold">{TARGET_RATING - latestRating}</span>
+            </div>
+            <div className="h-2 rounded-full bg-[#2A2722] overflow-hidden">
+              <div
+                className="h-full bg-[#D6B97E] transition-all duration-700"
+                style={{ width: `${ratingPct}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[15px]">
+              <span className="text-[#C9C2B5]">Прирост</span>
+              <span className={`font-semibold ${ratingDiff >= 0 ? 'text-[#9BD3A6]' : 'text-[#D36B6B]'}`}>
+                {ratingDiff >= 0 ? '+' : ''}{ratingDiff}
+              </span>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {/* Stat tiles */}
+      <section aria-label="Статистика" className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+        {tiles.map(({ label, value, suffix }) => (
+          <div key={label} className="bg-[#15130F] border border-[#2A2722] rounded-[20px] px-6 py-[22px] flex flex-col gap-1">
+            <span className="text-[14px] text-[#B3AC9F]">{label}</span>
+            <span className="font-cormorant text-[40px] font-semibold leading-[1.15]">
+              {value}
+              {suffix && <span className="font-sans text-[22px] text-[#8F887C]"> {suffix}</span>}
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-px bg-[#2A3A2A] inline-block" />{TARGET_RATING}
+          </div>
+        ))}
+      </section>
+
+      {/* Calendar */}
+      <section aria-label="Календарь" className="mt-[72px] flex flex-col gap-6">
+        <div className="flex flex-wrap justify-between items-baseline gap-4">
+          <h2 className="m-0 font-cormorant font-[500] text-[44px] leading-[1.1]">Календарь</h2>
+          <div className="flex flex-wrap gap-5 text-[14px] text-[#C9C2B5]">
+            <span className="flex items-center gap-2">
+              <span className="w-[14px] h-[14px] rounded-[4px] bg-[#D6B97E] inline-block" />
+              Готово
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-[14px] h-[14px] rounded-[4px] bg-[#3A3122] border border-[#5A4C33] inline-block box-border" />
+              Частично
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-[14px] h-[14px] rounded-[4px] border border-[#D6B97E] inline-block box-border" />
+              Сегодня
             </span>
           </div>
         </div>
-        <RatingChart data={ratings} currentDay={day} />
-      </div>
-
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 border border-[#181818] mb-5">
-        {stats.map(({ label, value, color }, i) => (
-          <div key={label}
-            className={`p-4 ${i % 2 === 0 ? 'border-r border-[#181818]' : ''} ${i < stats.length - 2 ? 'border-b border-[#181818]' : ''}`}>
-            <p className="text-[9px] uppercase tracking-[0.15em] text-[#333] mb-1.5">{label}</p>
-            <p className={`font-cormorant text-2xl font-light ${color}`}>{value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Calendar heatmap */}
-      <div className="border border-[#181818] p-5">
-        <p className="text-[10px] uppercase tracking-[0.15em] text-[#333] mb-4">Календарь</p>
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid gap-[10px]" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))' }}>
           {Array.from({ length: 30 }, (_, i) => {
             const d = i + 1;
             const prog = allProgress.find(p => p.day_number === d);
-            const isCurrent = d === day;
-            const isFuture = d > day;
+            const isToday = d === day;
             const isDone = prog?.day_complete;
             const isPartial = prog && !prog.day_complete &&
               (prog.block_warmup || prog.block_theme || prog.block_game || prog.block_review);
             return (
-              <div key={d}
-                className={`aspect-square flex items-center justify-center text-[10px] transition-colors font-cormorant text-sm
-                  ${isFuture ? 'text-[#1E1E1E]'
-                  : isDone ? 'bg-[#C9A96E]/15 text-[#C9A96E] border border-[#C9A96E]/25'
-                  : isPartial ? 'bg-[#181818] text-[#444]'
-                  : isCurrent ? 'border border-[#2A2A2A] text-[#666]'
-                  : 'text-[#252525]'}`}>
+              <div
+                key={d}
+                className={[
+                  'aspect-square rounded-[14px] border flex items-end pb-[10px] px-3 box-border text-[15px] font-semibold',
+                  isDone   ? 'bg-[#D6B97E] border-[#D6B97E] text-[#0D0C0A]'
+                  : isPartial ? 'bg-[#3A3122] border-[#5A4C33] text-[#F3EEE5]'
+                  : isToday  ? 'bg-[#1B1710] border-[#D6B97E] text-[#D6B97E]'
+                  : 'bg-[#121110] border-[#2A2722] text-[#B3AC9F]',
+                ].join(' ')}
+              >
                 {d}
               </div>
             );
           })}
         </div>
-        <div className="flex gap-4 mt-3 text-[10px] text-[#333]">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 bg-[#C9A96E]/15 border border-[#C9A96E]/25 inline-block" />Готово
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 bg-[#181818] inline-block" />Частично
-          </span>
-        </div>
-      </div>
+      </section>
     </main>
   );
 }
