@@ -71,7 +71,7 @@ export default function TodayPage() {
   const today = new Date().toISOString().split('T')[0];
 
   const loadProgress = useCallback(async () => {
-    const { data } = await supabase.from('daily_progress').select('*').eq('day_number', day).single();
+    const { data } = await supabase.from('daily_progress').select('*').eq('day_number', day).maybeSingle();
     if (data) {
       setProgress(data as DailyProgress);
     } else {
@@ -79,14 +79,14 @@ export default function TodayPage() {
         day_number: day, date: today,
         block_warmup: false, block_theme: false, block_game: false, block_review: false,
         xp_earned: 0, day_complete: false,
-      }).select().single();
+      }).select().maybeSingle();
       if (created) setProgress(created as DailyProgress);
     }
 
-    const { data: xpData } = await supabase.from('user_xp').select('*').eq('id', 1).single();
+    const { data: xpData } = await supabase.from('user_xp').select('*').eq('id', 1).maybeSingle();
     if (xpData) setTotalXP((xpData as { total_xp?: number }).total_xp ?? 0);
 
-    const { data: ratingData } = await supabase.from('rating_history').select('rating').order('date', { ascending: false }).limit(1).single();
+    const { data: ratingData } = await supabase.from('rating_history').select('rating').order('date', { ascending: false }).limit(1).maybeSingle();
     if (ratingData) setCurrentRating((ratingData as { rating: number }).rating);
   }, [day, today]);
 

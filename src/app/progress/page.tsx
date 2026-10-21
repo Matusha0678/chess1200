@@ -19,7 +19,7 @@ export default function ProgressPage() {
         supabase.from('rating_history').select('*').order('date', { ascending: true }),
         supabase.from('daily_progress').select('*').order('day_number'),
         supabase.from('game_logs').select('*'),
-        supabase.from('streak').select('*').eq('id', 1).single(),
+        supabase.from('streak').select('*').eq('id', 1).maybeSingle(),
       ]);
       if (rData) setRatings(rData as RatingPoint[]);
       if (pData) setAllProgress(pData as DailyProgress[]);
