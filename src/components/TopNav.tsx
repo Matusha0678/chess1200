@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 const tabs = [
   { href: '/today', label: 'Сегодня' },
   { href: '/pre-game', label: 'Партия' },
+  { href: '/openings', label: 'Дебюты' },
   { href: '/notebook', label: 'Тетрадь' },
   { href: '/progress', label: 'Прогресс' },
   { href: '/badges', label: 'Награды' },
@@ -25,7 +26,9 @@ export default function TopNav() {
         </Link>
         <nav aria-label="Разделы" className="flex flex-wrap gap-1 order-3 md:order-2 w-full md:w-auto">
           {tabs.map(({ href, label }) => {
-            const active = pathname === href || (href === '/today' && pathname === '/');
+            const active = pathname === href ||
+              (href === '/today' && pathname === '/') ||
+              (href !== '/today' && href !== '/' && pathname.startsWith(href + '/'));
             return (
               <Link
                 key={href}
