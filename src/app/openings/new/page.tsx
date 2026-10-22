@@ -189,143 +189,145 @@ export default function NewOpeningPage() {
   }
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16">
-      {/* Back + header */}
-      <div className="mb-10">
-        <Link
-          href="/openings"
-          className="inline-flex items-center gap-2 text-[14px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline mb-7"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
-          Назад
-        </Link>
+    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+      {/* Back link */}
+      <Link
+        href="/openings"
+        className="inline-flex items-center gap-2 text-[13px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline mb-6"
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M19 12H5M12 5l-7 7 7 7" />
+        </svg>
+        Дебюты
+      </Link>
 
-        <div className="flex items-center gap-[14px] text-[13px] font-semibold tracking-[0.16em] uppercase text-[#D6B97E] mb-4">
+      {/* Page heading */}
+      <div className="flex flex-col gap-3 mb-10">
+        <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
           <span>Репертуар</span>
           <span className="w-10 h-px bg-[#5A4C33]" />
           <span className="text-[#B3AC9F]">Новый дебют</span>
         </div>
-        <h1 className="m-0 font-cormorant font-[500] text-[56px] md:text-[72px] leading-[0.98] tracking-[-0.015em]">
+        <h1 className="m-0 font-cormorant font-[500] text-[64px] leading-[1] tracking-[-0.01em]">
           Новый дебют
         </h1>
       </div>
 
-      {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-[760px] flex flex-col gap-8"
-      >
-        {/* Name */}
-        <div className="flex flex-col gap-[10px]">
-          <label className="text-[14px] font-semibold tracking-[0.12em] uppercase text-[#B3AC9F]">
-            Название дебюта
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Например: Сицилианская защита, вариант Найдорфа"
-            required
-            className="bg-[#15130F] border border-[#2A2722] rounded-[14px] px-5 py-3 text-[15px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors h-12"
-          />
-        </div>
+      {/* Form card */}
+      <div className="max-w-[760px]">
+        <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-7 md:p-8">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            {/* Name */}
+            <div className="flex flex-col gap-[10px]">
+              <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                Название дебюта
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Например: Сицилианская защита, вариант Найдорфа"
+                required
+                className="h-11 bg-[#0D0C0A] border border-[#2A2722] rounded-[12px] px-4 text-[15px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors"
+              />
+            </div>
 
-        {/* Color */}
-        <div className="flex flex-col gap-[10px]">
-          <label className="text-[14px] font-semibold tracking-[0.12em] uppercase text-[#B3AC9F]">
-            Цвет фигур
-          </label>
-          <div className="flex gap-3 flex-wrap">
-            {colorOptions.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setColor(opt.value)}
-                className={`h-11 flex items-center gap-2 rounded-full px-5 text-[14px] font-semibold transition-all border cursor-pointer ${
-                  color === opt.value
-                    ? 'bg-[#D6B97E] text-[#0D0C0A] border-[#D6B97E]'
-                    : 'bg-transparent border-[#2A2722] text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5]'
-                }`}
-              >
-                <span className="text-[16px] leading-none">{opt.icon}</span>
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
+            {/* Color */}
+            <div className="flex flex-col gap-[10px]">
+              <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                Цвет фигур
+              </label>
+              <div className="flex gap-3 flex-wrap">
+                {colorOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setColor(opt.value)}
+                    className={`h-9 flex items-center gap-2 rounded-full px-5 text-[14px] font-semibold transition-all border cursor-pointer ${
+                      color === opt.value
+                        ? 'bg-[#D6B97E] text-[#0D0C0A] border-[#D6B97E]'
+                        : 'bg-transparent border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E]'
+                    }`}
+                  >
+                    <span className="text-[15px] leading-none">{opt.icon}</span>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        {/* PGN */}
-        <div className="flex flex-col gap-[10px]">
-          <label className="text-[14px] font-semibold tracking-[0.12em] uppercase text-[#B3AC9F]">
-            PGN
-          </label>
-          <textarea
-            value={pgn}
-            onChange={(e) => handlePgnChange(e.target.value)}
-            rows={12}
-            placeholder={`Вставь PGN дебюта. Поддерживается несколько партий сразу.\n\nПример:\n[ECO "B90"]\n[Opening "Sicilian"]\n\n1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 (5... e6 6. Be2) 6. Bg5 *`}
-            required
-            className="bg-[#15130F] border border-[#2A2722] rounded-[14px] px-5 py-4 text-[15px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
-          />
-          {previewInfo !== null && (
-            <div
-              className={`flex items-center gap-2 text-[14px] font-medium px-4 py-[10px] rounded-[10px] border ${
-                previewInfo.count > 0
-                  ? 'text-[#9BD3A6] bg-[#1C2D1F] border-[#3A6B44]'
-                  : 'text-[#D36B6B] bg-[#2D1C1C] border-[#6B3A3A]'
-              }`}
-            >
-              {previewInfo.count > 0 ? (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  {previewInfo.gameCount > 1
-                    ? `Найдено ${previewInfo.count} ${pluralVariations(previewInfo.count)} из ${previewInfo.gameCount} ${pluralGames(previewInfo.gameCount)}`
-                    : `Найдено ${previewInfo.count} ${pluralVariations(previewInfo.count)}`
-                  }
-                </>
-              ) : (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-                  </svg>
-                  Вариации не найдены — проверь PGN
-                </>
+            {/* PGN */}
+            <div className="flex flex-col gap-[10px]">
+              <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                PGN
+              </label>
+              <textarea
+                value={pgn}
+                onChange={(e) => handlePgnChange(e.target.value)}
+                rows={12}
+                placeholder={`Вставь PGN дебюта. Поддерживается несколько партий сразу.\n\nПример:\n[ECO "B90"]\n[Opening "Sicilian"]\n\n1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 (5... e6 6. Be2) 6. Bg5 *`}
+                required
+                className="min-h-[200px] bg-[#0D0C0A] border border-[#2A2722] rounded-[12px] px-4 py-3 text-[14px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
+              />
+              {previewInfo !== null && (
+                <div
+                  className={`flex items-center gap-2 text-[14px] font-medium px-4 py-[10px] rounded-[10px] border ${
+                    previewInfo.count > 0
+                      ? 'text-[#9BD3A6] bg-[#1C2D1F] border-[#3A6B44]'
+                      : 'text-[#D36B6B] bg-[#2D1C1C] border-[#6B3A3A]'
+                  }`}
+                >
+                  {previewInfo.count > 0 ? (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                      {previewInfo.gameCount > 1
+                        ? `Найдено ${previewInfo.count} ${pluralVariations(previewInfo.count)} из ${previewInfo.gameCount} ${pluralGames(previewInfo.gameCount)}`
+                        : `Найдено ${previewInfo.count} ${pluralVariations(previewInfo.count)}`
+                      }
+                    </>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+                      </svg>
+                      Вариации не найдены — проверь PGN
+                    </>
+                  )}
+                </div>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Error */}
-        {error && (
-          <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-            </svg>
-            {error}
-          </div>
-        )}
+            {/* Error */}
+            {error && (
+              <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+                </svg>
+                {error}
+              </div>
+            )}
 
-        {/* Submit */}
-        <div className="flex items-center gap-4 pt-2">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="h-11 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-8 text-[15px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          >
-            {submitting ? 'Сохранение...' : 'Добавить дебют'}
-          </button>
-          <Link
-            href="/openings"
-            className="h-11 flex items-center border border-[#2A2722] text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5] rounded-full px-6 text-[14px] font-medium transition-colors bg-transparent no-underline"
-          >
-            Отмена
-          </Link>
+            {/* Submit */}
+            <div className="flex items-center gap-4 pt-1">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="h-9 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {submitting ? 'Сохранение...' : 'Добавить дебют'}
+              </button>
+              <Link
+                href="/openings"
+                className="h-9 flex items-center border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
+              >
+                Отмена
+              </Link>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </main>
   );
 }

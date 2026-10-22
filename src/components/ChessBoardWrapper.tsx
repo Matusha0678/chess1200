@@ -192,23 +192,22 @@ export default function ChessBoardWrapper({
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      {/* Move counter + color label */}
-      <div className="flex flex-col items-center gap-1 w-full max-w-[520px]">
-        <div className="flex items-center gap-2">
-          <span className="font-cormorant text-[32px] leading-none text-[#D6B97E] font-[500]">
-            Ход {currentMoveNumber}
-          </span>
-          <span className="font-cormorant text-[32px] leading-none text-[#5A5249] font-[400]">
-            / {totalPlayerMoves}
-          </span>
-        </div>
-        <div className="text-[14px] text-[#B3AC9F]">
+      {/* Move counter */}
+      <div className="flex items-center gap-2 w-full max-w-[480px]">
+        <span className="text-[14px] text-[#B3AC9F]">
+          Ход{' '}
+          <span className="text-[#D6B97E] font-semibold">{currentMoveNumber}</span>
+          {' / '}
+          {totalPlayerMoves}
+        </span>
+        <span className="text-[14px] text-[#5A5249]">·</span>
+        <span className="text-[14px] text-[#B3AC9F]">
           {playerColor === 'w' ? 'Вы играете белыми' : 'Вы играете чёрными'}
-        </div>
+        </span>
       </div>
 
-      {/* Board — always square, max 520px */}
-      <div className="w-full max-w-[520px] aspect-square rounded-[16px] overflow-hidden border border-[#2A2722]">
+      {/* Board — always square, max 480px */}
+      <div className="w-full max-w-[480px] aspect-square rounded-[16px] overflow-hidden border border-[#2A2722]">
         <Chessboard
           options={{
             position: fen,
@@ -225,13 +224,13 @@ export default function ChessBoardWrapper({
 
       {/* Feedback bar */}
       <div
-        className={`w-full max-w-[520px] rounded-[14px] border px-5 py-4 text-[15px] font-medium transition-all duration-300 flex items-center gap-3 ${feedbackBg} ${feedbackColor}`}
+        className={`w-full max-w-[480px] h-11 rounded-[12px] border px-5 text-[15px] font-medium transition-all duration-300 flex items-center gap-3 ${feedbackBg} ${feedbackColor}`}
       >
         {feedbackIcon && (
-          <span className="text-[18px] font-bold leading-none shrink-0">{feedbackIcon}</span>
+          <span className="text-[17px] font-bold leading-none shrink-0">{feedbackIcon}</span>
         )}
         {!feedbackIcon && (
-          <span className="text-[18px] leading-none shrink-0 opacity-60">
+          <span className="text-[17px] leading-none shrink-0 opacity-60">
             {isPlayerTurn ? '○' : currentMoveIndex >= line.length ? '✓' : '…'}
           </span>
         )}
@@ -240,11 +239,10 @@ export default function ChessBoardWrapper({
 
       {/* Move list */}
       {playedMoves.length > 0 && (
-        <div className="w-full max-w-[520px] bg-[#15130F] border border-[#2A2722] rounded-[14px] px-5 py-4">
-          <div className="text-[12px] font-semibold tracking-[0.12em] uppercase text-[#B3AC9F] mb-3">
+        <div className="w-full max-w-[480px] bg-[#15130F] border border-[#2A2722] rounded-[14px] px-5 py-4">
+          <div className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F] mb-3">
             Сыгранные ходы
           </div>
-          {/* Two-column grid: move number | white move | black move */}
           <div className="flex flex-col gap-[3px]">
             {Array.from(
               { length: Math.ceil(line.slice(0, currentMoveIndex).length / 2) },

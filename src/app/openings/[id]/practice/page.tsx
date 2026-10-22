@@ -352,20 +352,20 @@ export default function PracticePage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16 flex flex-col items-center gap-8">
-        <div className="w-full max-w-[520px] aspect-square bg-[#15130F] border border-[#2A2722] rounded-[20px] animate-pulse" />
+      <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16 flex flex-col items-center gap-6">
+        <div className="w-full max-w-[480px] aspect-square bg-[#15130F] border border-[#2A2722] rounded-[20px] animate-pulse" />
       </main>
     );
   }
 
   if (!opening || allLines.length === 0) {
     return (
-      <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16">
+      <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
         <Link
           href={`/openings/${id}`}
-          className="inline-flex items-center gap-2 text-[14px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline mb-8"
+          className="inline-flex items-center gap-2 text-[13px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline mb-6"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
           Назад
@@ -398,124 +398,116 @@ export default function PracticePage({ params }: Props) {
         </div>
       )}
 
-      <main className="max-w-[1320px] mx-auto px-5 py-8 md:px-10 md:py-12">
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
+      <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+        {/* Header row: back + opening name + session stats */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <Link
             href={`/openings/${id}`}
-            className="inline-flex items-center gap-2 text-[14px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline"
+            className="inline-flex items-center gap-2 text-[13px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M19 12H5M12 5l-7 7 7 7" />
             </svg>
-            Назад
+            Дебюты
           </Link>
 
-          <div className="flex items-center gap-1">
-            <span className="font-cormorant text-[28px] leading-none text-[#F3EEE5]">
+          <div className="flex items-center gap-3">
+            <span className="font-cormorant text-[26px] leading-none text-[#F3EEE5] font-[500]">
               {opening.name}
             </span>
-            <span className="mx-3 w-px h-5 bg-[#2A2722]" />
-            <span className="text-[14px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
+            <span className="w-px h-4 bg-[#2A2722]" />
+            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
               Практика
             </span>
           </div>
 
           {/* Session stats inline */}
-          <div className="flex items-center gap-4 text-[15px]">
-            <span className="text-[#B3AC9F]">
-              Сессия:
-            </span>
+          <div className="flex items-center gap-4 text-[14px]">
+            <span className="text-[#B3AC9F]">Сессия:</span>
             <span className="font-semibold text-[#9BD3A6]">{sessionCorrect} ✓</span>
             <span className="font-semibold text-[#D36B6B]">{sessionIncorrect} ✗</span>
           </div>
         </div>
 
-        {/* Two-column layout on md+, single column on mobile */}
-        <div className="flex flex-col md:flex-row gap-8 items-start">
-          {/* Left: board */}
-          <div className="flex-1 flex justify-center min-w-0">
+        {/* Two-col layout: .main (board) + .side (sidebar) */}
+        <div className="flex flex-wrap gap-6 items-start">
+          {/* .main — board */}
+          <div className="flex-[999_1_600px] min-w-0 flex justify-center">
             {currentLine && (
-              <div className="w-full max-w-[520px]">
-                <ChessBoardWrapper
-                  key={boardKey}
-                  line={currentLine.moves as ChessMove[]}
-                  playerColor={playerColor}
-                  onComplete={handleComplete}
-                  onMoveWrong={handleMoveWrong}
-                />
-              </div>
+              <ChessBoardWrapper
+                key={boardKey}
+                line={currentLine.moves as ChessMove[]}
+                playerColor={playerColor}
+                onComplete={handleComplete}
+                onMoveWrong={handleMoveWrong}
+              />
             )}
           </div>
 
-          {/* Right: sidebar */}
-          <aside className="w-full md:w-[340px] shrink-0 flex flex-col gap-4">
-            {/* Current line card */}
-            <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-6">
-              <div className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F] mb-3">
-                Текущая линия
-              </div>
-              {currentLine && (
-                <>
-                  <p className="text-[14px] font-mono text-[#B3AC9F] leading-relaxed mb-4 break-words">
-                    {lineLabel}
-                  </p>
-                  {/* Mastery dots */}
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[12px] text-[#5A5249]">Освоение</span>
-                    <div className="flex items-center gap-[5px]">
-                      {Array.from({ length: 5 }, (_, dot) => (
-                        <span
-                          key={dot}
-                          className={`inline-block w-[8px] h-[8px] rounded-full transition-colors ${
-                            dot < currentLineMastery ? 'bg-[#D6B97E]' : 'bg-[#2A2722]'
-                          }`}
-                        />
-                      ))}
+          {/* .side — sidebar card */}
+          <div className="flex-[1_1_360px] min-w-0">
+            <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-5 flex flex-col gap-5">
+              {/* Current line */}
+              <div className="flex flex-col gap-3">
+                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                  Текущая линия
+                </span>
+                {currentLine && (
+                  <>
+                    <p className="m-0 text-[14px] font-mono text-[#B3AC9F] leading-relaxed break-words">
+                      {lineLabel}
+                    </p>
+                    {/* Mastery dots */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-[5px]">
+                        {Array.from({ length: 5 }, (_, dot) => (
+                          <span
+                            key={dot}
+                            className={`inline-block w-[8px] h-[8px] rounded-full transition-colors ${
+                              dot < currentLineMastery ? 'bg-[#D6B97E]' : 'bg-[#2A2722]'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[12px] text-[#5A5249]">{currentLineMastery}/5</span>
                     </div>
-                    <span className="text-[12px] text-[#5A5249]">{currentLineMastery}/5</span>
-                  </div>
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
 
-            {/* Session stats card */}
-            <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-6">
-              <div className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F] mb-4">
-                Сессия
-              </div>
+              <div className="border-t border-[#24221D]" />
+
+              {/* Session stats */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-[13px] text-[#B3AC9F] mb-1">Верно</div>
-                  <div className="font-cormorant text-[44px] font-[600] leading-[1] text-[#9BD3A6]">
+                <div className="flex flex-col gap-[2px]">
+                  <span className="text-[13px] text-[#B3AC9F]">Верно</span>
+                  <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#9BD3A6]">
                     {sessionCorrect}
-                  </div>
+                  </span>
                 </div>
-                <div>
-                  <div className="text-[13px] text-[#B3AC9F] mb-1">Ошибок</div>
-                  <div className="font-cormorant text-[44px] font-[600] leading-[1] text-[#D36B6B]">
+                <div className="flex flex-col gap-[2px]">
+                  <span className="text-[13px] text-[#B3AC9F]">Ошибок</span>
+                  <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D36B6B]">
                     {sessionIncorrect}
-                  </div>
+                  </span>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-[#2A2722] text-[13px] text-[#5A5249]">
+
+              <div className="text-[13px] text-[#5A5249]">
                 Линия {sessionCount + 1} из {allLines.length} {pluralLines(allLines.length)}
               </div>
-            </div>
 
-            {/* All lines list */}
-            <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-5">
-              <div className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F] mb-3">
-                Все линии
-              </div>
-              <div className="flex flex-col gap-[6px] max-h-[240px] overflow-y-auto">
+              <div className="border-t border-[#24221D]" />
+
+              {/* All lines mini-list */}
+              <div className="flex flex-col gap-[6px] max-h-[200px] overflow-y-auto">
                 {allLines.map((line, i) => {
                   const prog = line.line_progress?.[0] ?? null;
                   const isActive = currentLine?.id === line.id;
                   return (
                     <div
                       key={line.id}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-[10px] transition-colors ${
+                      className={`flex items-center gap-3 px-3 py-[6px] rounded-[10px] transition-colors ${
                         isActive ? 'bg-[#2A2218] border border-[#4A3E28]' : 'border border-transparent'
                       }`}
                     >
@@ -539,26 +531,29 @@ export default function PracticePage({ params }: Props) {
                   );
                 })}
               </div>
+
+              <div className="border-t border-[#24221D]" />
+
+              {/* Next button */}
+              <button
+                onClick={handleSkip}
+                className="h-11 w-full border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-6 text-[15px] font-medium transition-colors bg-transparent cursor-pointer"
+              >
+                Следующая
+              </button>
+
+              {/* Back link */}
+              <Link
+                href={`/openings/${id}`}
+                className="inline-flex items-center justify-center gap-1 text-[13px] text-[#5A5249] hover:text-[#B3AC9F] transition-colors no-underline text-center"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M19 12H5M12 5l-7 7 7 7" />
+                </svg>
+                К дебюту
+              </Link>
             </div>
-
-            {/* Actions */}
-            <button
-              onClick={handleSkip}
-              className="w-full h-11 border border-[#2A2722] text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5] rounded-full px-6 text-[15px] font-medium transition-colors bg-transparent cursor-pointer"
-            >
-              Следующая линия
-            </button>
-
-            <Link
-              href={`/openings/${id}`}
-              className="inline-flex items-center justify-center gap-2 w-full h-10 text-[14px] text-[#5A5249] hover:text-[#B3AC9F] transition-colors no-underline"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M19 12H5M12 5l-7 7 7 7" />
-              </svg>
-              К дебюту
-            </Link>
-          </aside>
+          </div>
         </div>
       </main>
     </>

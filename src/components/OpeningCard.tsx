@@ -38,63 +38,47 @@ export default function OpeningCard({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-[#15130F] border border-[#2A2722] rounded-[20px] p-6 flex flex-col gap-4 hover:border-[#4A3E28] hover:bg-[#1B1810] transition-all duration-200 cursor-pointer group"
+      className="w-full text-left bg-[#15130F] border border-[#2A2722] rounded-[20px] p-7 flex flex-col gap-4 hover:border-[#4A3E28] hover:bg-[#1B1810] transition-all duration-200 cursor-pointer group"
     >
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-[6px] min-w-0 flex-1">
-          {/* ECO badge + color pill */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {opening.eco_code && (
-              <span className="text-[12px] font-semibold tracking-widest uppercase text-[#D6B97E] bg-[#2A2218] border border-[#4A3E28] rounded-[8px] px-[10px] py-[4px]">
-                {opening.eco_code}
-              </span>
-            )}
-            <span className="text-[13px] text-[#B3AC9F] bg-[#15130F] border border-[#2A2722] rounded-full px-3 py-1 flex items-center gap-1.5">
-              <span className="text-[15px] leading-none">{COLOR_ICON[opening.color]}</span>
-              <span>{COLOR_LABEL[opening.color]}</span>
-            </span>
-          </div>
-
-          {/* Opening name — wraps, not truncated */}
-          <h3 className="m-0 font-cormorant font-[500] text-[28px] leading-[1.2] tracking-[-0.01em] text-[#F3EEE5] group-hover:text-[#D6B97E] transition-colors">
-            {opening.name}
-          </h3>
-        </div>
-
-        {/* Due badge */}
-        {linesDue > 0 && (
-          <div className="shrink-0 flex items-center gap-[5px] bg-[#2A2218] border border-[#4A3E28] rounded-full px-[10px] py-[4px] mt-1">
-            <span className="w-[6px] h-[6px] rounded-full bg-[#D6B97E]" />
-            <span className="text-[13px] font-semibold text-[#D6B97E] whitespace-nowrap">
-              {linesDue} к повторению
-            </span>
-          </div>
+      {/* Header row: ECO badge + color pill */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {opening.eco_code && (
+          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E] bg-[#2A2218] border border-[#4A3E28] rounded-[8px] px-[10px] py-[4px]">
+            {opening.eco_code}
+          </span>
         )}
+        <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F] bg-[#15130F] border border-[#2A2722] rounded-full px-[10px] py-[4px] flex items-center gap-1.5">
+          <span className="text-[14px] leading-none">{COLOR_ICON[opening.color]}</span>
+          <span>{COLOR_LABEL[opening.color]}</span>
+        </span>
       </div>
 
-      {/* Progress */}
-      <div className="flex flex-col gap-[10px]">
-        {/* Progress bar */}
-        <div className="h-[6px] w-full bg-[#24221D] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[#D6B97E] rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+      {/* Opening name */}
+      <h3 className="m-0 font-cormorant font-[500] text-[26px] leading-[1.15] tracking-[-0.01em] text-[#F3EEE5] group-hover:text-[#D6B97E] transition-colors">
+        {opening.name}
+      </h3>
 
-        {/* Stats row */}
-        <div className="flex items-center justify-between">
-          <span className="text-[14px] text-[#B3AC9F]">
-            <span className="text-[#F3EEE5] font-semibold">{linesMastered}</span>
-            {' линий из '}
-            <span className="text-[#F3EEE5] font-semibold">{linesTotal}</span>
-            {' освоено'}
+      {/* Progress bar */}
+      <div className="h-[5px] w-full bg-[#24221D] rounded-full overflow-hidden">
+        <div
+          className="h-full bg-[#D6B97E] rounded-full transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      {/* Footer row */}
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[13px] text-[#B3AC9F]">
+          {linesTotal} {linesTotal === 1 ? 'линия' : linesTotal >= 2 && linesTotal <= 4 ? 'линии' : 'линий'}
+        </span>
+        {linesDue > 0 && (
+          <span className="flex items-center gap-[5px] bg-[#2A2218] border border-[#4A3E28] rounded-full px-[10px] py-[4px]">
+            <span className="w-[5px] h-[5px] rounded-full bg-[#D6B97E]" />
+            <span className="text-[12px] font-semibold text-[#D6B97E] whitespace-nowrap">
+              {linesDue} к повторению
+            </span>
           </span>
-          <span className="text-[13px] text-[#5A5249]">
-            {Math.round(progress)}%
-          </span>
-        </div>
+        )}
       </div>
     </button>
   );

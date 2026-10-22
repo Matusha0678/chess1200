@@ -296,12 +296,12 @@ export default function EditOpeningPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16">
-        <div className="animate-pulse flex flex-col gap-8 max-w-[760px]">
-          <div className="h-[14px] w-[180px] bg-[#24221D] rounded-full" />
-          <div className="h-[60px] w-[360px] bg-[#24221D] rounded-[16px]" />
-          <div className="h-[200px] bg-[#15130F] border border-[#2A2722] rounded-[20px]" />
-          <div className="h-[200px] bg-[#15130F] border border-[#2A2722] rounded-[20px]" />
+      <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+        <div className="animate-pulse flex flex-col gap-6 max-w-[760px]">
+          <div className="h-[13px] w-[180px] bg-[#24221D] rounded-full" />
+          <div className="h-[72px] w-[360px] bg-[#24221D] rounded-[16px]" />
+          <div className="h-[220px] bg-[#15130F] border border-[#2A2722] rounded-[20px]" />
+          <div className="h-[220px] bg-[#15130F] border border-[#2A2722] rounded-[20px]" />
         </div>
       </main>
     );
@@ -310,26 +310,26 @@ export default function EditOpeningPage({ params }: Props) {
   if (!opening) return null;
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16">
+    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
       {/* Back */}
       <Link
         href={`/openings/${id}`}
-        className="inline-flex items-center gap-2 text-[14px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline mb-10"
+        className="inline-flex items-center gap-2 text-[13px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline mb-6"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M19 12H5M12 5l-7 7 7 7" />
         </svg>
         Назад
       </Link>
 
       {/* Header */}
-      <div className="mb-10">
-        <div className="flex items-center gap-[14px] text-[13px] font-semibold tracking-[0.16em] uppercase text-[#D6B97E] mb-4">
+      <div className="flex flex-col gap-3 mb-10">
+        <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
           <span>Репертуар</span>
           <span className="w-10 h-px bg-[#5A4C33]" />
           <span className="text-[#B3AC9F]">Редактировать</span>
         </div>
-        <h1 className="m-0 font-cormorant font-[500] text-[52px] md:text-[64px] leading-[0.98] tracking-[-0.015em]">
+        <h1 className="m-0 font-cormorant font-[500] text-[64px] leading-[1] tracking-[-0.01em]">
           Редактировать дебют
         </h1>
       </div>
@@ -337,257 +337,263 @@ export default function EditOpeningPage({ params }: Props) {
       <div className="max-w-[760px] flex flex-col gap-6">
 
         {/* ── Section 1: Основное ── */}
-        <section className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-7">
-          <h2 className="m-0 font-cormorant font-[500] text-[30px] leading-[1.1] mb-6">
-            Основное
-          </h2>
-          <form onSubmit={handleSaveBasics} className="flex flex-col gap-6">
-            {/* Name */}
-            <div className="flex flex-col gap-[10px]">
-              <label className="text-[13px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
-                Название дебюта
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setBasicsError(null);
-                  setBasicsSuccess(false);
-                }}
-                placeholder="Например: Сицилианская защита, вариант Найдорфа"
-                required
-                className="bg-[#0D0C0A] border border-[#2A2722] rounded-[14px] px-5 py-3 text-[15px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors"
-              />
-            </div>
-
-            {/* Color */}
-            <div className="flex flex-col gap-[10px]">
-              <label className="text-[13px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
-                Цвет фигур
-              </label>
-              <div className="flex gap-3 flex-wrap">
-                {colorOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => {
-                      setColor(opt.value);
-                      setBasicsSuccess(false);
-                    }}
-                    className={`flex items-center gap-2 rounded-full px-5 py-[10px] text-[14px] font-semibold transition-all border cursor-pointer ${
-                      color === opt.value
-                        ? 'bg-[#D6B97E] text-[#0D0C0A] border-[#D6B97E]'
-                        : 'bg-transparent border-[#2A2722] text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5]'
-                    }`}
-                  >
-                    <span className="text-[16px] leading-none">{opt.icon}</span>
-                    {opt.label}
-                  </button>
-                ))}
+        <section className="bg-[#15130F] border border-[#2A2722] rounded-[20px]">
+          <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
+            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Основное</span>
+          </div>
+          <div className="p-7">
+            <form onSubmit={handleSaveBasics} className="flex flex-col gap-6">
+              {/* Name */}
+              <div className="flex flex-col gap-[10px]">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                  Название дебюта
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setBasicsError(null);
+                    setBasicsSuccess(false);
+                  }}
+                  placeholder="Например: Сицилианская защита, вариант Найдорфа"
+                  required
+                  className="h-11 bg-[#0D0C0A] border border-[#2A2722] rounded-[12px] px-4 text-[15px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors"
+                />
               </div>
-            </div>
 
-            {/* Error / success */}
-            {basicsError && (
-              <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-                </svg>
-                {basicsError}
+              {/* Color */}
+              <div className="flex flex-col gap-[10px]">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                  Цвет фигур
+                </label>
+                <div className="flex gap-3 flex-wrap">
+                  {colorOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setColor(opt.value);
+                        setBasicsSuccess(false);
+                      }}
+                      className={`h-9 flex items-center gap-2 rounded-full px-5 text-[14px] font-semibold transition-all border cursor-pointer ${
+                        color === opt.value
+                          ? 'bg-[#D6B97E] text-[#0D0C0A] border-[#D6B97E]'
+                          : 'bg-transparent border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E]'
+                      }`}
+                    >
+                      <span className="text-[15px] leading-none">{opt.icon}</span>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-            {basicsSuccess && (
-              <div className="flex items-center gap-2 text-[14px] text-[#9BD3A6] bg-[#1C2D1F] border border-[#3A6B44] rounded-[12px] px-5 py-3">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                Сохранено!
-              </div>
-            )}
 
-            <div className="flex items-center gap-4 pt-1">
-              <button
-                type="submit"
-                disabled={savingBasics}
-                className="bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-7 py-3 text-[15px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {savingBasics ? 'Сохранение...' : 'Сохранить'}
-              </button>
-            </div>
-          </form>
+              {/* Error / success */}
+              {basicsError && (
+                <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+                  </svg>
+                  {basicsError}
+                </div>
+              )}
+              {basicsSuccess && (
+                <div className="flex items-center gap-2 text-[14px] text-[#9BD3A6] bg-[#1C2D1F] border border-[#3A6B44] rounded-[12px] px-5 py-3">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  Сохранено!
+                </div>
+              )}
+
+              <div className="flex items-center gap-4">
+                <button
+                  type="submit"
+                  disabled={savingBasics}
+                  className="h-9 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {savingBasics ? 'Сохранение...' : 'Сохранить'}
+                </button>
+              </div>
+            </form>
+          </div>
         </section>
 
         {/* ── Section 2: Replace variations ── */}
-        <section className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-7">
-          <h2 className="m-0 font-cormorant font-[500] text-[30px] leading-[1.1] mb-2">
-            Заменить вариации
-          </h2>
-          <p className="text-[14px] text-[#B3AC9F] mb-6 leading-[1.6]">
-            Загрузи новый PGN — все текущие варианты и прогресс будут удалены и заменены новыми.
-          </p>
+        <section className="bg-[#15130F] border border-[#2A2722] rounded-[20px]">
+          <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
+            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Заменить вариации</span>
+          </div>
+          <div className="p-7">
+            <p className="text-[14px] text-[#B3AC9F] mb-6 leading-[1.6]">
+              Загрузи новый PGN — все текущие варианты и прогресс будут удалены и заменены новыми.
+            </p>
 
-          <form onSubmit={handleReplaceLines} className="flex flex-col gap-5">
-            {/* Warning */}
-            <div className="flex items-start gap-3 bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D36B6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-[2px] shrink-0" aria-hidden="true">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <path d="M12 9v4M12 17h.01" />
-              </svg>
-              <span className="text-[13px] text-[#D36B6B] leading-[1.6]">
-                Все текущие варианты и прогресс будут удалены безвозвратно.
-              </span>
-            </div>
+            <form onSubmit={handleReplaceLines} className="flex flex-col gap-5">
+              {/* Warning */}
+              <div className="flex items-start gap-3 bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D36B6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-[2px] shrink-0" aria-hidden="true">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <path d="M12 9v4M12 17h.01" />
+                </svg>
+                <span className="text-[13px] text-[#D36B6B] leading-[1.6]">
+                  Все текущие варианты и прогресс будут удалены безвозвратно.
+                </span>
+              </div>
 
-            <div className="flex flex-col gap-[10px]">
-              <label className="text-[13px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
-                Новый PGN
-              </label>
-              <textarea
-                value={replacePgn}
-                onChange={(e) => handleReplacePgnChange(e.target.value)}
-                rows={10}
-                placeholder="Вставь полный PGN для замены..."
-                className="bg-[#0D0C0A] border border-[#2A2722] rounded-[14px] px-5 py-4 text-[14px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
-              />
-              {replaceCount !== null && (
-                <div
-                  className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
-                    replaceCount > 0
-                      ? 'text-[#9BD3A6] bg-[#1C2D1F] border-[#3A6B44]'
-                      : 'text-[#D36B6B] bg-[#2D1C1C] border-[#6B3A3A]'
-                  }`}
-                >
-                  {replaceCount > 0 ? (
-                    <>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M20 6L9 17l-5-5" />
-                      </svg>
-                      Найдено {replaceCount} {pluralVariations(replaceCount)}
-                    </>
-                  ) : (
-                    <>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-                      </svg>
-                      Вариации не найдены — проверь PGN
-                    </>
-                  )}
+              <div className="flex flex-col gap-[10px]">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                  Новый PGN
+                </label>
+                <textarea
+                  value={replacePgn}
+                  onChange={(e) => handleReplacePgnChange(e.target.value)}
+                  rows={10}
+                  placeholder="Вставь полный PGN для замены..."
+                  className="min-h-[200px] bg-[#0D0C0A] border border-[#2A2722] rounded-[12px] px-4 py-3 text-[14px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
+                />
+                {replaceCount !== null && (
+                  <div
+                    className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
+                      replaceCount > 0
+                        ? 'text-[#9BD3A6] bg-[#1C2D1F] border-[#3A6B44]'
+                        : 'text-[#D36B6B] bg-[#2D1C1C] border-[#6B3A3A]'
+                    }`}
+                  >
+                    {replaceCount > 0 ? (
+                      <>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                        Найдено {replaceCount} {pluralVariations(replaceCount)}
+                      </>
+                    ) : (
+                      <>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+                        </svg>
+                        Вариации не найдены — проверь PGN
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {replaceError && (
+                <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+                  </svg>
+                  {replaceError}
                 </div>
               )}
-            </div>
+              {replaceSuccess && (
+                <div className="flex items-center gap-2 text-[14px] text-[#9BD3A6] bg-[#1C2D1F] border border-[#3A6B44] rounded-[12px] px-5 py-3">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  Вариации заменены успешно!
+                </div>
+              )}
 
-            {replaceError && (
-              <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-                </svg>
-                {replaceError}
+              <div className="flex items-center gap-4">
+                <button
+                  type="submit"
+                  disabled={replacingLines || !replacePgn.trim()}
+                  className="h-9 border border-[#6B3A3A] text-[#D36B6B] hover:bg-[#2D1C1C] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-transparent"
+                >
+                  {replacingLines ? 'Замена...' : 'Заменить'}
+                </button>
               </div>
-            )}
-            {replaceSuccess && (
-              <div className="flex items-center gap-2 text-[14px] text-[#9BD3A6] bg-[#1C2D1F] border border-[#3A6B44] rounded-[12px] px-5 py-3">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                Вариации заменены успешно!
-              </div>
-            )}
-
-            <div className="flex items-center gap-4 pt-1">
-              <button
-                type="submit"
-                disabled={replacingLines || !replacePgn.trim()}
-                className="border border-[#6B3A3A] text-[#D36B6B] hover:bg-[#2D1C1C] rounded-full px-7 py-3 text-[15px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-transparent"
-              >
-                {replacingLines ? 'Замена...' : 'Заменить'}
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </section>
 
         {/* ── Section 3: Add variations ── */}
-        <section className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-7">
-          <h2 className="m-0 font-cormorant font-[500] text-[30px] leading-[1.1] mb-2">
-            Добавить вариации
-          </h2>
-          <p className="text-[14px] text-[#B3AC9F] mb-6 leading-[1.6]">
-            Добавь новые вариации к существующим. Прогресс по текущим линиям сохранится.
-            Сейчас линий: <span className="text-[#F3EEE5] font-semibold">{opening.total_lines}</span>.
-          </p>
+        <section className="bg-[#15130F] border border-[#2A2722] rounded-[20px]">
+          <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
+            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Добавить вариации</span>
+          </div>
+          <div className="p-7">
+            <p className="text-[14px] text-[#B3AC9F] mb-6 leading-[1.6]">
+              Добавь новые вариации к существующим. Прогресс по текущим линиям сохранится.
+              Сейчас линий: <span className="text-[#F3EEE5] font-semibold">{opening.total_lines}</span>.
+            </p>
 
-          <form onSubmit={handleAddLines} className="flex flex-col gap-5">
-            <div className="flex flex-col gap-[10px]">
-              <label className="text-[13px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
-                PGN для добавления
-              </label>
-              <textarea
-                value={addPgn}
-                onChange={(e) => handleAddPgnChange(e.target.value)}
-                rows={10}
-                placeholder="Вставь PGN вариаций для добавления..."
-                className="bg-[#0D0C0A] border border-[#2A2722] rounded-[14px] px-5 py-4 text-[14px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
-              />
-              {addCount !== null && (
-                <div
-                  className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
-                    addCount > 0
-                      ? 'text-[#9BD3A6] bg-[#1C2D1F] border-[#3A6B44]'
-                      : 'text-[#D36B6B] bg-[#2D1C1C] border-[#6B3A3A]'
-                  }`}
-                >
-                  {addCount > 0 ? (
-                    <>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M20 6L9 17l-5-5" />
-                      </svg>
-                      Найдено {addCount} {pluralVariations(addCount)}
-                    </>
-                  ) : (
-                    <>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-                      </svg>
-                      Вариации не найдены — проверь PGN
-                    </>
-                  )}
+            <form onSubmit={handleAddLines} className="flex flex-col gap-5">
+              <div className="flex flex-col gap-[10px]">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                  PGN для добавления
+                </label>
+                <textarea
+                  value={addPgn}
+                  onChange={(e) => handleAddPgnChange(e.target.value)}
+                  rows={10}
+                  placeholder="Вставь PGN вариаций для добавления..."
+                  className="min-h-[200px] bg-[#0D0C0A] border border-[#2A2722] rounded-[12px] px-4 py-3 text-[14px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
+                />
+                {addCount !== null && (
+                  <div
+                    className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
+                      addCount > 0
+                        ? 'text-[#9BD3A6] bg-[#1C2D1F] border-[#3A6B44]'
+                        : 'text-[#D36B6B] bg-[#2D1C1C] border-[#6B3A3A]'
+                    }`}
+                  >
+                    {addCount > 0 ? (
+                      <>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                        Найдено {addCount} {pluralVariations(addCount)}
+                      </>
+                    ) : (
+                      <>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+                        </svg>
+                        Вариации не найдены — проверь PGN
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {addError && (
+                <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+                  </svg>
+                  {addError}
                 </div>
               )}
-            </div>
+              {addSuccess && (
+                <div className="flex items-center gap-2 text-[14px] text-[#9BD3A6] bg-[#1C2D1F] border border-[#3A6B44] rounded-[12px] px-5 py-3">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  Вариации добавлены!
+                </div>
+              )}
 
-            {addError && (
-              <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-                </svg>
-                {addError}
+              <div className="flex items-center gap-4">
+                <button
+                  type="submit"
+                  disabled={addingLines || !addPgn.trim()}
+                  className="h-9 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {addingLines ? 'Добавление...' : 'Добавить'}
+                </button>
+                <Link
+                  href={`/openings/${id}`}
+                  className="h-9 flex items-center border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
+                >
+                  К дебюту
+                </Link>
               </div>
-            )}
-            {addSuccess && (
-              <div className="flex items-center gap-2 text-[14px] text-[#9BD3A6] bg-[#1C2D1F] border border-[#3A6B44] rounded-[12px] px-5 py-3">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                Вариации добавлены!
-              </div>
-            )}
-
-            <div className="flex items-center gap-4 pt-1">
-              <button
-                type="submit"
-                disabled={addingLines || !addPgn.trim()}
-                className="bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-7 py-3 text-[15px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {addingLines ? 'Добавление...' : 'Добавить'}
-              </button>
-              <Link
-                href={`/openings/${id}`}
-                className="border border-[#2A2722] text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5] rounded-full px-6 py-3 text-[14px] font-medium transition-colors bg-transparent no-underline"
-              >
-                К дебюту
-              </Link>
-            </div>
-          </form>
+            </form>
+          </div>
         </section>
 
       </div>

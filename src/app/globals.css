@@ -14,8 +14,10 @@ html, body {
   font-family: var(--font-serif, 'Cormorant Garamond', Georgia, serif);
 }
 
-a { color: #D6B97E; }
-a:hover { color: #EBD3A2; }
+@layer base {
+  a { color: #D6B97E; }
+  a:hover { color: #EBD3A2; }
+}
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: #0D0C0A; }

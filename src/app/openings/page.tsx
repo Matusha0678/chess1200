@@ -19,20 +19,14 @@ interface OpeningWithStats extends Opening {
 
 function SkeletonCard() {
   return (
-    <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-6 flex flex-col gap-4 animate-pulse">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-[6px] min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <div className="h-[22px] w-[48px] bg-[#24221D] rounded-[8px]" />
-            <div className="h-[22px] w-[80px] bg-[#24221D] rounded-full" />
-          </div>
-          <div className="h-[32px] w-3/4 bg-[#24221D] rounded-[8px] mt-1" />
-        </div>
+    <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-7 flex flex-col gap-4 animate-pulse">
+      <div className="flex items-center gap-2">
+        <div className="h-[22px] w-[48px] bg-[#24221D] rounded-[8px]" />
+        <div className="h-[22px] w-[80px] bg-[#24221D] rounded-full" />
       </div>
-      <div className="flex flex-col gap-[10px]">
-        <div className="h-[6px] w-full bg-[#24221D] rounded-full" />
-        <div className="h-[20px] w-1/2 bg-[#24221D] rounded-[6px]" />
-      </div>
+      <div className="h-[34px] w-3/4 bg-[#24221D] rounded-[8px]" />
+      <div className="h-[5px] w-full bg-[#24221D] rounded-full" />
+      <div className="h-[18px] w-1/3 bg-[#24221D] rounded-[6px]" />
     </div>
   );
 }
@@ -98,31 +92,30 @@ export default function OpeningsPage() {
   }, []);
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16">
+    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
       {/* Header */}
-      <section className="flex flex-wrap items-end justify-between gap-5 mb-12">
-        <div className="flex flex-col gap-[10px]">
-          <div className="flex items-center gap-[14px] text-[13px] font-semibold tracking-[0.16em] uppercase text-[#D6B97E]">
+      <div className="flex flex-wrap items-end justify-between gap-6 mb-10">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
             <span>Репертуар</span>
             <span className="w-10 h-px bg-[#5A4C33]" />
             <span className="text-[#B3AC9F]">Дебюты</span>
           </div>
-          <h1 className="m-0 font-cormorant font-[500] text-[56px] md:text-[80px] leading-[0.98] tracking-[-0.015em]">
+          <h1 className="m-0 font-cormorant font-[500] text-[64px] leading-[1] tracking-[-0.01em]">
             Дебюты
           </h1>
-          <p className="m-0 text-[16px] text-[#B3AC9F]">Твой репертуар</p>
         </div>
 
         <Link
           href="/openings/new"
-          className="h-11 flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-6 text-[14px] font-semibold transition-colors no-underline"
+          className="h-9 flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors no-underline"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 5v14M5 12h14" />
           </svg>
           Добавить дебют
         </Link>
-      </section>
+      </div>
 
       {/* Content */}
       {loading ? (
@@ -132,21 +125,21 @@ export default function OpeningsPage() {
           ))}
         </div>
       ) : openings.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-8 py-24 text-center">
-          <div className="text-[80px] leading-none select-none">♟</div>
-          <div className="flex flex-col gap-3">
-            <h2 className="m-0 font-cormorant font-[500] text-[48px] leading-[1.1]">
+        <div className="flex flex-col items-center justify-center gap-6 py-20 text-center">
+          <div className="text-[64px] leading-none select-none">♟</div>
+          <div className="flex flex-col gap-2">
+            <h2 className="m-0 font-cormorant font-[500] text-[40px] leading-[1.1]">
               Нет дебютов
             </h2>
-            <p className="m-0 text-[17px] text-[#B3AC9F]">
+            <p className="m-0 text-[15px] text-[#B3AC9F]">
               Добавь свой первый дебют, чтобы начать тренировки
             </p>
           </div>
           <Link
             href="/openings/new"
-            className="h-11 flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-7 text-[15px] font-semibold transition-colors no-underline"
+            className="h-9 flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors no-underline"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 5v14M5 12h14" />
             </svg>
             Добавить первый дебют
