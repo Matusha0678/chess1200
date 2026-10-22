@@ -50,34 +50,36 @@ export default function NotebookPage() {
   }
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16">
+    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
 
-      {/* Header */}
-      <div className="flex flex-col gap-[18px] max-w-[760px] mb-14">
-        <div className="flex items-center gap-[14px] text-[13px] font-semibold tracking-[0.16em] uppercase text-[#D6B97E]">
+      {/* Page title */}
+      <div className="flex flex-col gap-3 mb-8">
+        <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
           <span>Записи</span>
           <span className="w-10 h-px bg-[#5A4C33]" />
           <span className="text-[#B3AC9F]">После каждой партии</span>
         </div>
-        <h1 className="m-0 font-cormorant font-[500] text-[56px] md:text-[96px] leading-[0.98] tracking-[-0.015em]">
+        <h1 className="m-0 font-cormorant text-[64px] font-[500] leading-[1] tracking-[-0.01em]">
           Тетрадь
         </h1>
-        <p className="m-0 text-[18px] md:text-[19px] text-[#C9C2B5]">
+        <p className="m-0 text-[15px] text-[#C9C2B5]">
           Одна партия — одна главная ошибка. Запиши, пока свежо.
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-10 items-start">
+      <div className="flex flex-wrap gap-6 items-start">
 
-        {/* Form */}
+        {/* Form – side */}
         <form
           onSubmit={save}
-          className="flex-[1_1_400px] bg-[#15130F] border border-[#2A2722] rounded-[28px] p-8 flex flex-col gap-5"
+          className="flex-[1_1_360px] min-w-0 bg-[#15130F] border border-[#2A2722] rounded-[20px] p-7 md:p-8 flex flex-col gap-5"
         >
-          <h2 className="m-0 font-cormorant font-[500] text-[34px] leading-[1.1]">Новая запись</h2>
+          <div className="flex justify-between items-center">
+            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Новая запись</span>
+          </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-semibold text-[#C9C2B5]" htmlFor="nb-link">
+            <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]" htmlFor="nb-link">
               Ссылка на партию
             </label>
             <input
@@ -86,12 +88,12 @@ export default function NotebookPage() {
               placeholder="https://www.chess.com/game/…"
               value={link}
               onChange={e => setLink(e.target.value)}
-              className="w-full box-border bg-[#0F0E0B] border border-[#34302A] rounded-[14px] px-4 py-[14px] text-[#F3EEE5] text-[16px] leading-[1.5] outline-none placeholder-[#8F887C] focus:border-[#D6B97E] transition-colors"
+              className="w-full box-border h-11 bg-[#0F0E0B] border border-[#34302A] rounded-[10px] px-4 text-[#F3EEE5] text-[15px] outline-none placeholder-[#8F887C] focus:border-[#D6B97E] transition-colors"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-semibold text-[#C9C2B5]" htmlFor="nb-mistake">
+            <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]" htmlFor="nb-mistake">
               Главная ошибка
             </label>
             <textarea
@@ -100,12 +102,12 @@ export default function NotebookPage() {
               placeholder="Что пошло не так?"
               value={mistake}
               onChange={e => setMistake(e.target.value)}
-              className="w-full box-border bg-[#0F0E0B] border border-[#34302A] rounded-[14px] px-4 py-[14px] text-[#F3EEE5] text-[16px] leading-[1.5] outline-none placeholder-[#8F887C] focus:border-[#D6B97E] resize-none transition-colors font-[inherit]"
+              className="w-full box-border bg-[#0F0E0B] border border-[#34302A] rounded-[10px] px-4 py-3 text-[#F3EEE5] text-[15px] leading-[1.5] outline-none placeholder-[#8F887C] focus:border-[#D6B97E] resize-none transition-colors font-[inherit]"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-semibold text-[#C9C2B5]" htmlFor="nb-lesson">
+            <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]" htmlFor="nb-lesson">
               Вывод на будущее
             </label>
             <textarea
@@ -114,67 +116,69 @@ export default function NotebookPage() {
               placeholder="Что буду делать иначе"
               value={lesson}
               onChange={e => setLesson(e.target.value)}
-              className="w-full box-border bg-[#0F0E0B] border border-[#34302A] rounded-[14px] px-4 py-[14px] text-[#F3EEE5] text-[16px] leading-[1.5] outline-none placeholder-[#8F887C] focus:border-[#D6B97E] resize-none transition-colors font-[inherit]"
+              className="w-full box-border bg-[#0F0E0B] border border-[#34302A] rounded-[10px] px-4 py-3 text-[#F3EEE5] text-[15px] leading-[1.5] outline-none placeholder-[#8F887C] focus:border-[#D6B97E] resize-none transition-colors font-[inherit]"
             />
           </div>
 
           <button
             type="submit"
             disabled={saving || !mistake.trim()}
-            className="h-14 rounded-full border-0 bg-[#D6B97E] text-[#0D0C0A] text-[16px] font-bold cursor-pointer hover:bg-[#EBD3A2] disabled:opacity-40 transition-colors"
+            className="h-11 px-6 rounded-full border-0 bg-[#D6B97E] text-[#0D0C0A] text-[14px] font-semibold cursor-pointer hover:bg-[#E8D29C] disabled:opacity-40 transition-colors"
           >
             {saving ? 'Сохранение...' : 'Сохранить запись'}
           </button>
         </form>
 
-        {/* Entries */}
-        <section aria-label="Записи" className="flex-[999_1_560px] min-w-0 flex flex-col gap-[14px]">
-          <div className="flex justify-between items-baseline pb-[6px]">
-            <h2 className="m-0 font-cormorant font-[500] text-[34px] leading-[1.1]">Мои ошибки</h2>
-            <span className="text-[15px] text-[#B3AC9F]">{countLabel}</span>
+        {/* Entries list – main */}
+        <section aria-label="Записи" className="flex-[999_1_600px] min-w-0 bg-[#15130F] border border-[#2A2722] rounded-[20px]">
+          <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
+            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Мои ошибки</span>
+            <span className="text-[13px] text-[#B3AC9F]">{countLabel}</span>
           </div>
 
           {n === 0 && (
-            <div className="border border-dashed border-[#3A362F] rounded-[28px] py-[72px] px-8 flex flex-col items-center text-center gap-[14px]">
-              <div className="w-16 h-16 rounded-full border border-[#4A3E28] flex items-center justify-center text-[#D6B97E]">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <div className="py-16 px-8 flex flex-col items-center text-center gap-4">
+              <div className="w-12 h-12 rounded-full border border-[#4A3E28] flex items-center justify-center text-[#D6B97E]">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M4 19.5V5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2.5z" />
                   <path d="M9 7h6M9 11h4" />
                 </svg>
               </div>
-              <p className="m-0 font-cormorant text-[32px] font-[500] leading-[1.15]">Записей нет</p>
-              <p className="m-0 text-[17px] text-[#B3AC9F]">Добавь ошибку после партии.</p>
+              <p className="m-0 font-cormorant text-[26px] font-[500] leading-[1.15]">Записей нет</p>
+              <p className="m-0 text-[14px] text-[#B3AC9F]">Добавь ошибку после партии.</p>
             </div>
           )}
 
           {entries.map((entry, i) => (
             <article
               key={entry.id}
-              className="bg-[#15130F] border border-[#2A2722] rounded-[24px] p-7 flex flex-col gap-3"
+              className={`flex flex-col gap-2 px-5 py-[18px] ${i > 0 ? 'border-t border-[#24221D]' : ''}`}
             >
-              <div className="flex justify-between gap-3 text-[13px] font-semibold tracking-[0.12em] uppercase text-[#D6B97E]">
-                <span>{formatDate(entry.date)} · День {day - (n - 1 - i)}</span>
-                <span className="text-[#B3AC9F]">Запись {n - i}</span>
+              <div className="flex justify-between gap-3">
+                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
+                  {formatDate(entry.date)} · День {day - (n - 1 - i)}
+                </span>
+                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Запись {n - i}</span>
               </div>
-              <p className="m-0 font-cormorant text-[26px] md:text-[28px] font-[500] leading-[1.2]">
+              <p className="m-0 text-[15px] font-semibold text-[#F3EEE5] leading-[1.4]">
                 {entry.mistake_text}
               </p>
               {entry.better_move && (
-                <p className="m-0 text-[16px] text-[#C9C2B5]">
+                <p className="m-0 text-[14px] text-[#C9C2B5]">
                   <span className="text-[#D6B97E] font-semibold">Вывод: </span>
                   {entry.better_move}
                 </p>
               )}
               {link && i === 0 && (
-                <div>
+                <div className="pt-1">
                   <a
                     href={link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 h-10 px-4 rounded-full border border-[#34302A] text-[#E7E1D6] no-underline text-[14px] font-medium hover:border-[#D6B97E] hover:text-[#F3EEE5] transition-colors"
+                    className="inline-flex items-center gap-2 h-9 px-5 rounded-full border border-[#34302A] text-[#E7E1D6] no-underline text-[14px] font-medium hover:border-[#D6B97E] hover:text-[#F3EEE5] transition-colors"
                   >
                     Открыть партию
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M7 17L17 7M8 7h9v9" />
                     </svg>
                   </a>

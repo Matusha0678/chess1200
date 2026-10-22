@@ -38,7 +38,7 @@ const BADGE_GROUPS = [
 
 function BadgeIcon({ name }: { name: IconName }) {
   return (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {ICON_PATHS[name]}
     </svg>
   );
@@ -59,24 +59,26 @@ export default function BadgesPage() {
   const pct = total ? Math.round((earnedCount / total) * 100) : 0;
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16">
+    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
 
-      {/* Header */}
-      <div className="flex flex-wrap justify-between items-end gap-8 mb-14">
-        <div className="flex flex-col gap-[18px]">
-          <div className="flex items-center gap-[14px] text-[13px] font-semibold tracking-[0.16em] uppercase text-[#D6B97E]">
+      {/* Page title */}
+      <div className="flex flex-wrap justify-between items-end gap-6 mb-8">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
             <span>Достижения</span>
             <span className="w-10 h-px bg-[#5A4C33]" />
             <span className="text-[#B3AC9F]">Коллекция</span>
           </div>
-          <h1 className="m-0 font-cormorant font-[500] text-[56px] md:text-[96px] leading-[0.98] tracking-[-0.015em]">
+          <h1 className="m-0 font-cormorant text-[64px] font-[500] leading-[1] tracking-[-0.01em]">
             Награды
           </h1>
         </div>
-        <div className="flex-[0_1_320px] flex flex-col gap-3">
+
+        {/* Progress pill */}
+        <div className="flex-[0_1_280px] bg-[#15130F] border border-[#2A2722] rounded-[20px] p-5 flex flex-col gap-3">
           <div className="flex justify-between items-baseline">
-            <span className="text-[15px] text-[#C9C2B5]">Открыто</span>
-            <span className="font-cormorant text-[44px] font-semibold leading-none">
+            <span className="text-[13px] text-[#B3AC9F]">Открыто</span>
+            <span className="font-cormorant text-[30px] font-semibold leading-[1.1]">
               {earnedCount}<span className="text-[#8F887C]"> из {total}</span>
             </span>
           </div>
@@ -87,64 +89,76 @@ export default function BadgesPage() {
       </div>
 
       {/* Groups */}
-      {BADGE_GROUPS.map(group => {
-        const groupBadges = group.keys.map(key => BADGE_DEFINITIONS.find(b => b.key === key)).filter(Boolean);
-        return (
-          <section key={group.title} className="mb-16 flex flex-col gap-5">
-            <h2 className="m-0 font-cormorant font-[500] text-[40px] leading-[1.1]">{group.title}</h2>
-            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-              {groupBadges.map(badge => {
-                if (!badge) return null;
-                const isGoal = badge.key === 'rating_1200';
-                const isEarned = earnedKeys.has(badge.key);
-                const iconName = (BADGE_ICON_MAP[badge.key] ?? 'star') as IconName;
-                const showActive = isEarned || isGoal;
+      <div className="flex flex-col gap-6">
+        {BADGE_GROUPS.map(group => {
+          const groupBadges = group.keys.map(key => BADGE_DEFINITIONS.find(b => b.key === key)).filter(Boolean);
+          return (
+            <section key={group.title} className="bg-[#15130F] border border-[#2A2722] rounded-[20px]">
+              <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
+                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">{group.title}</span>
+                <span className="text-[13px] text-[#B3AC9F]">
+                  {groupBadges.filter(b => b && earnedKeys.has(b.key)).length} / {groupBadges.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-5">
+                {groupBadges.map(badge => {
+                  if (!badge) return null;
+                  const isGoal = badge.key === 'rating_1200';
+                  const isEarned = earnedKeys.has(badge.key);
+                  const iconName = (BADGE_ICON_MAP[badge.key] ?? 'star') as IconName;
+                  const showActive = isEarned || isGoal;
 
-                return (
-                  <article
-                    key={badge.key}
-                    className={`rounded-[24px] p-7 flex flex-col gap-[18px] border
-                      ${isGoal
-                        ? 'bg-[#1B1710] border-[#D6B97E]'
-                        : 'bg-[#15130F] border-[#2A2722]'}`}
-                  >
-                    <div className="flex justify-between items-start gap-3">
-                      {/* Medal circle */}
-                      <div className={`w-[84px] h-[84px] rounded-full flex items-center justify-center border
+                  return (
+                    <article
+                      key={badge.key}
+                      className={`bg-[#15130F] border rounded-[20px] p-5 flex flex-col items-center gap-2 text-center
+                        ${isGoal
+                          ? 'border-[#D6B97E] bg-[#1B1710]'
+                          : isEarned
+                            ? 'border-[#D6B97E]'
+                            : 'border-[#2A2722]'}`}
+                    >
+                      {/* Icon circle */}
+                      <div className={`w-14 h-14 rounded-full flex items-center justify-center border mb-1
                         ${showActive
                           ? 'border-[#D6B97E] text-[#D6B97E]'
-                          : 'border-[#4A463F] text-[#A8A196]'}`}
+                          : 'border-[#4A463F] text-[#6F695F]'}`}
                         style={showActive
-                          ? { boxShadow: 'inset 0 0 0 6px #100F0D, inset 0 0 0 7px #5A4C33' }
-                          : { boxShadow: 'inset 0 0 0 6px #100F0D, inset 0 0 0 7px #2A2722' }}
+                          ? { boxShadow: 'inset 0 0 0 5px #100F0D, inset 0 0 0 6px #5A4C33' }
+                          : { boxShadow: 'inset 0 0 0 5px #100F0D, inset 0 0 0 6px #2A2722' }}
                       >
                         <BadgeIcon name={iconName} />
                       </div>
 
-                      {/* Status pill */}
-                      <span className={`inline-flex items-center gap-[6px] text-[13px] font-semibold border rounded-full px-3 py-[6px]
+                      {/* Name */}
+                      <span className={`text-[15px] font-semibold leading-[1.3] ${showActive ? 'text-[#F3EEE5]' : 'text-[#6F695F]'}`}>
+                        {badge.label}
+                      </span>
+
+                      {/* Description */}
+                      <span className={`text-[13px] leading-[1.4] ${showActive ? 'text-[#C9C2B5]' : 'text-[#4A463F]'}`}>
+                        {badge.description}
+                      </span>
+
+                      {/* Status */}
+                      <span className={`inline-flex items-center gap-[5px] text-[12px] font-semibold border rounded-full px-3 py-[4px] mt-1
                         ${isEarned || isGoal ? 'text-[#D6B97E] border-[#5A4C33]' : 'text-[#B3AC9F] border-[#34302A]'}`}>
                         {!isEarned && (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <rect x="5" y="11" width="14" height="10" rx="2"/>
                             <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
                           </svg>
                         )}
                         {isEarned ? 'Открыто' : isGoal ? 'Цель' : 'Закрыто'}
                       </span>
-                    </div>
-
-                    <div className="flex flex-col gap-[6px]">
-                      <h3 className="m-0 font-cormorant text-[30px] font-semibold leading-[1.15]">{badge.label}</h3>
-                      <p className="m-0 text-[16px] text-[#C9C2B5]">{badge.description}</p>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        );
-      })}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
     </main>
   );
 }
