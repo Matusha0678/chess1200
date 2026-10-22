@@ -106,15 +106,28 @@ export default function OpeningsPage() {
           </h1>
         </div>
 
-        <Link
-          href="/openings/new"
-          className="h-9 flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors no-underline"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Добавить дебют
-        </Link>
+        <div className="flex items-center gap-3 flex-wrap">
+          <a
+            href="https://www.chess.com/explorer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-9 px-5 border border-[#34302A] text-[#E7E1D6] text-[14px] rounded-full hover:border-[#D6B97E] no-underline inline-flex items-center gap-2"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M7 17L17 7M8 7h9v9"/>
+            </svg>
+            Opening Explorer
+          </a>
+          <Link
+            href="/openings/new"
+            className="h-9 flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors no-underline"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Добавить дебют
+          </Link>
+        </div>
       </div>
 
       {/* Content */}

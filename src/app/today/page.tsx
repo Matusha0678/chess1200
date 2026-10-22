@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getCurrentDay, isLightDay, getDayTheme } from '@/lib/day-utils';
-import { CHESS_LINKS, START_RATING, TARGET_RATING, DAY_SPECIAL_TASKS, TAL_GAMES } from '@/lib/constants';
+import { CHESS_LINKS, START_RATING, TARGET_RATING, DAY_SPECIAL_TASKS, TAL_GAMES, GRANDMASTER_QUOTES } from '@/lib/constants';
 import { getLevelInfo } from '@/lib/xp';
 import type { DailyProgress, SyncResult } from '@/types';
 
@@ -453,13 +453,18 @@ export default function TodayPage() {
             </div>
           )}
 
-          {/* Tal quote */}
-          <figure className="m-0 pt-5 px-5 border-t border-[#24221D]">
-            <blockquote className="m-0 font-cormorant italic text-[21px] leading-[1.35] text-[#E7E1D6]">
-              &ldquo;You must take your opponent into a deep dark forest where 2+2=5.&rdquo;
-            </blockquote>
-            <figcaption className="mt-3 text-[13px] text-[#B3AC9F]">— Михаил Таль</figcaption>
-          </figure>
+          {/* Grandmaster quote — rotates by day */}
+          {(() => {
+            const quote = GRANDMASTER_QUOTES[(day - 1) % GRANDMASTER_QUOTES.length];
+            return (
+              <figure className="m-0 pt-5 px-5 border-t border-[#24221D]">
+                <blockquote className="m-0 font-cormorant italic text-[21px] leading-[1.35] text-[#E7E1D6]">
+                  &ldquo;{quote.text}&rdquo;
+                </blockquote>
+                <figcaption className="mt-3 text-[13px] text-[#B3AC9F]">— {quote.author}</figcaption>
+              </figure>
+            );
+          })()}
 
         </div>
       </div>

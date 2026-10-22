@@ -186,6 +186,29 @@ export default function ProgressPage() {
           </div>
         </div>
       </section>
+
+      {/* Resources */}
+      <section className="mt-6 bg-[#15130F] border border-[#2A2722] rounded-[20px]">
+        <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
+          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Ресурсы</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-5">
+          {[
+            { label: 'Мои партии',      href: 'https://www.chess.com/games/archive/rozt1shka', desc: 'Архив на chess.com' },
+            { label: 'Insights',        href: 'https://www.chess.com/insights',                desc: 'Аналитика игры' },
+            { label: 'Opening Explorer',href: 'https://www.chess.com/explorer',                desc: 'База дебютов' },
+            { label: 'Мой профиль',     href: 'https://www.chess.com/member/rozt1shka',        desc: 'chess.com' },
+            { label: 'Game Review',     href: 'https://www.chess.com/analysis',                desc: 'Разбор партий' },
+            { label: 'Задачи',          href: 'https://www.chess.com/puzzles',                 desc: 'Тактика' },
+          ].map(link => (
+            <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer"
+              className="bg-[#0D0C0A] border border-[#2A2722] rounded-[14px] p-4 flex flex-col gap-1 no-underline hover:border-[#D6B97E] transition-colors group">
+              <span className="text-[15px] font-semibold text-[#F3EEE5] group-hover:text-[#D6B97E] transition-colors">{link.label}</span>
+              <span className="text-[13px] text-[#B3AC9F]">{link.desc}</span>
+            </a>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }

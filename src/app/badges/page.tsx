@@ -4,7 +4,8 @@ import { supabase } from '@/lib/supabase';
 import { BADGE_DEFINITIONS } from '@/lib/constants';
 import type { BadgeRecord } from '@/types';
 
-type IconName = 'flag' | 'flame' | 'shield' | 'rook' | 'crown' | 'trend' | 'star' | 'medal' | 'trophy';
+type IconName = 'flag' | 'flame' | 'shield' | 'rook' | 'crown' | 'trend' | 'star' | 'medal' | 'trophy'
+  | 'target' | 'book' | 'stack' | 'zap' | 'knight' | 'bishop';
 
 const ICON_PATHS: Record<IconName, React.ReactNode> = {
   flag:   <><path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/></>,
@@ -16,24 +17,58 @@ const ICON_PATHS: Record<IconName, React.ReactNode> = {
   star:   <path d="M12 3l2.8 5.8 6.2.9-4.5 4.4 1.1 6.2L12 17.4l-5.6 2.9 1.1-6.2L3 9.7l6.2-.9z"/>,
   medal:  <><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/><path d="M12 6.5v5M10 8h4"/></>,
   trophy: <><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/><path d="M12 14v4M8 21h8M9 18h6"/></>,
+  target: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>,
+  book:   <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>,
+  stack:  <><rect x="2" y="14" width="20" height="6" rx="2"/><rect x="5" y="8" width="14" height="6" rx="2"/><rect x="8" y="2" width="8" height="6" rx="2"/></>,
+  zap:    <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
+  knight: <><path d="M8 16h8"/><path d="M8 20h8"/><path d="M9 20V8c0-3 2-4 4-2l1 3 3-1v8c0 2-1 3-3 3H11c-2 0-3-1-2-3"/></>,
+  bishop: <><path d="M12 2a2 2 0 0 1 2 2c0 1.5-1 2.5-1 4h-2c0-1.5-1-2.5-1-4a2 2 0 0 1 2-2z"/><path d="M8 20h8l-1-8H9z"/><path d="M7 20h10"/><path d="M12 8v4"/></>,
 };
 
 const BADGE_ICON_MAP: Record<string, IconName> = {
-  first_day:   'flag',
-  streak_7:    'flame',
-  clean_week:  'shield',
-  castle_10:   'rook',
-  mate_master: 'crown',
-  plus_100:    'trend',
-  rating_1000: 'star',
-  rating_1100: 'medal',
-  rating_1200: 'trophy',
+  // Дисциплина
+  first_day:       'flag',
+  streak_7:        'flame',
+  streak_14:       'flame',
+  streak_30:       'crown',
+  clean_week:      'shield',
+  full_month:      'trophy',
+  // Тактика
+  castle_10:       'rook',
+  mate_master:     'crown',
+  tactics_week:    'target',
+  endgame_student: 'book',
+  // Дебюты
+  debut_first:     'book',
+  debut_practiced: 'book',
+  debut_mastered:  'star',
+  repertoire_3:    'stack',
+  // Таль
+  tal_magic_5:     'zap',
+  tal_magic_15:    'zap',
+  tal_disciple:    'zap',
+  // Рейтинг
+  plus_50:         'trend',
+  plus_100:        'trend',
+  plus_200:        'trend',
+  rating_900:      'star',
+  rating_1000:     'star',
+  rating_1100:     'medal',
+  rating_1200:     'trophy',
+  // Уровни
+  level_knight:    'knight',
+  level_bishop:    'bishop',
+  level_rook:      'rook',
+  level_queen:     'crown',
 };
 
 const BADGE_GROUPS = [
-  { title: 'Дисциплина', keys: ['first_day', 'streak_7', 'clean_week'] },
-  { title: 'Навыки',     keys: ['castle_10', 'mate_master'] },
-  { title: 'Рейтинг',   keys: ['plus_100', 'rating_1000', 'rating_1100', 'rating_1200'] },
+  { title: 'Дисциплина',    keys: ['first_day', 'streak_7', 'streak_14', 'streak_30', 'clean_week', 'full_month'] },
+  { title: 'Тактика',       keys: ['castle_10', 'mate_master', 'tactics_week', 'endgame_student'] },
+  { title: 'Дебюты',        keys: ['debut_first', 'debut_practiced', 'debut_mastered', 'repertoire_3'] },
+  { title: 'Наследие Таля', keys: ['tal_magic_5', 'tal_magic_15', 'tal_disciple'] },
+  { title: 'Рейтинг',       keys: ['plus_50', 'plus_100', 'plus_200', 'rating_900', 'rating_1000', 'rating_1100', 'rating_1200'] },
+  { title: 'Уровни',        keys: ['level_knight', 'level_bishop', 'level_rook', 'level_queen'] },
 ];
 
 function BadgeIcon({ name }: { name: IconName }) {

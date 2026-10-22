@@ -95,6 +95,39 @@ export const TAL_GAMES = [
   { white: 'Таль', black: 'Котов',     year: 1964, note: '' },
 ];
 
+export const GRANDMASTER_QUOTES = [
+  { text: 'You must take your opponent into a deep dark forest where 2+2=5, and the path leading out is only wide enough for one.', author: 'Михаил Таль' },
+  { text: 'Chess is life in miniature. Chess is struggle, chess is battles.', author: 'Гарри Каспаров' },
+  { text: 'Chess is war over the board. The object is to crush the opponent\'s mind.', author: 'Роберт Фишер' },
+  { text: 'In order to improve your game, you must study the endgame before everything else.', author: 'Хосе Рауль Капабланка' },
+  { text: 'The tactician knows what to do when there is something to do; it takes a strategist to know what to do when there is nothing to do.', author: 'Савелли Тартаковер' },
+  { text: 'Chess is the art of analysis.', author: 'Михаил Ботвинник' },
+  { text: 'Not all artists are chess players, but all chess players are artists.', author: 'Марсель Дюшан' },
+  { text: 'Chess is everything — art, science, and sport.', author: 'Анатолий Карпов' },
+  { text: 'When you see a good move, look for a better one.', author: 'Эмануэль Ласкер' },
+  { text: 'Every chess master was once a beginner.', author: 'Ирвинг Чернев' },
+  { text: 'One bad move nullifies forty good ones.', author: 'Савелий Тартаковер' },
+  { text: 'The blunders are all there on the board, waiting to be made.', author: 'Савелий Тартаковер' },
+  { text: 'Chess is the gymnasium of the mind.', author: 'Блез Паскаль' },
+  { text: 'Pawns are the soul of chess.', author: 'Франсуа-Андре Данникан Филидор' },
+  { text: 'It is not a move, even the best move, that you must seek, but a realisable plan.', author: 'Эжен Зноско-Боровский' },
+  { text: 'A chess player who sees only one move ahead is already lost.', author: 'Рудольф Шпильман' },
+  { text: 'Give me a difficult positional game, I will play it. But totally won positions, I cannot stand them.', author: 'Михаил Таль' },
+  { text: 'The most important thing in chess is the next move.', author: 'Саймон Уэббер' },
+  { text: 'Half the variations which are calculated in a tournament game turn out to be superfluous.', author: 'Михаил Таль' },
+  { text: 'First restrain, then blockade, then destroy.', author: 'Арон Нимцович' },
+  { text: 'Chess is not about winning; it is about understanding.', author: 'Шахматная мудрость' },
+  { text: 'The pin is mightier than the sword.', author: 'Фред Рейнфельд' },
+  { text: 'A good player is always lucky.', author: 'Хосе Рауль Капабланка' },
+  { text: 'Avoid the crowd. Do your own thinking independently. Be the chess player, not the chess piece.', author: 'Ральф Чарелл' },
+  { text: 'No price is too great for the scalp of an enemy King.', author: 'Аарон Нимцович' },
+  { text: 'Chess holds its master in its own bonds, shaking the mind and brain so that the inner freedom of the very strongest must suffer.', author: 'Альберт Эйнштейн' },
+  { text: 'Tactics flow from a superior position.', author: 'Бобби Фишер' },
+  { text: 'The winner of the game is the player who makes the next-to-last mistake.', author: 'Савелий Тартаковер' },
+  { text: 'All that matters on the chessboard is good moves.', author: 'Бобби Фишер' },
+  { text: 'Chess is beautiful enough to waste your life for.', author: 'Ганс Ree' },
+];
+
 export const MONTH_RULES = [
   'Только рапид 10 мин. Блиц и пулю не играй — они учат делать ходы без проверки.',
   'Проиграл 2 партии подряд — стоп. Дальше только задачи и разбор.',
@@ -117,15 +150,40 @@ export const LEVELS = [
 ];
 
 export const BADGE_DEFINITIONS = [
-  { key: 'first_day',   label: 'Первый день',          description: 'Завершил первый день' },
-  { key: 'streak_7',    label: '7 дней подряд',         description: '7 дней подряд без пропусков' },
-  { key: 'clean_week',  label: 'Чистая неделя',         description: 'Неделя без блица и пули' },
-  { key: 'castle_10',   label: 'Рокировка вовремя x10', description: 'Рокировал до 10-го хода в 10 партиях' },
-  { key: 'mate_master', label: 'Мастер мата в 2',       description: 'Завершил тему "маты в 2"' },
-  { key: 'plus_100',    label: '+100 рейтинга',          description: 'Набрал 100 очков рейтинга' },
-  { key: 'rating_1000', label: '1000',                   description: 'Достиг рейтинга 1000' },
-  { key: 'rating_1100', label: '1100',                   description: 'Достиг рейтинга 1100' },
-  { key: 'rating_1200', label: '1200',                   description: 'Достиг рейтинга 1200 — цель!' },
+  // Дисциплина
+  { key: 'first_day',      label: 'Первый шаг',           description: 'Завершил первый день тренировок' },
+  { key: 'streak_7',       label: 'Неделя воли',           description: '7 дней подряд без пропусков' },
+  { key: 'streak_14',      label: 'Две недели',            description: '14 дней подряд — уже привычка' },
+  { key: 'streak_30',      label: 'Месяц без пропусков',   description: 'Все 30 дней программы выполнены' },
+  { key: 'clean_week',     label: 'Чистая неделя',         description: 'Неделя без блица и пули' },
+  { key: 'full_month',     label: 'Марафонец',             description: 'Закончил программу Chess 1200' },
+  // Тактика
+  { key: 'castle_10',      label: 'Рокировка x10',         description: 'Рокировал до 10-го хода в 10 партиях подряд' },
+  { key: 'mate_master',    label: 'Мастер мата в 2',       description: 'Завершил тему «Маты в 2»' },
+  { key: 'tactics_week',   label: 'Тактик недели',         description: 'Завершил первую неделю (дни 1–7)' },
+  { key: 'endgame_student',label: 'Студент эндшпиля',      description: 'Завершил блок эндшпилей (дни 22–26)' },
+  // Дебюты
+  { key: 'debut_first',    label: 'Теоретик',              description: 'Добавил первый дебют в репертуар' },
+  { key: 'debut_practiced',label: 'Знаток дебютов',        description: 'Сыграл 25 линий в тренажёре дебютов' },
+  { key: 'debut_mastered', label: 'Мастер вариаций',       description: 'Довёл хотя бы одну линию до mastery 5' },
+  { key: 'repertoire_3',   label: 'Репертуар',             description: '3 дебюта в репертуаре' },
+  // Таль
+  { key: 'tal_magic_5',    label: 'Ученик Таля',           description: 'Выполнил «Магию дня» 5 раз' },
+  { key: 'tal_magic_15',   label: 'Последователь Таля',    description: 'Выполнил «Магию дня» 15 раз' },
+  { key: 'tal_disciple',   label: 'Адепт Риги',            description: 'Выполнил «Магию дня» все 30 раз' },
+  // Рейтинг
+  { key: 'plus_50',        label: '+50 рейтинга',          description: 'Первые 50 очков прироста' },
+  { key: 'plus_100',       label: '+100 рейтинга',         description: '100 очков прироста за месяц' },
+  { key: 'plus_200',       label: '+200 рейтинга',         description: 'Невероятный прогресс за месяц' },
+  { key: 'rating_900',     label: '900',                   description: 'Рейтинг перешагнул 900' },
+  { key: 'rating_1000',    label: '1000',                  description: 'Рейтинг 1000 — середина пути' },
+  { key: 'rating_1100',    label: '1100',                  description: 'Рейтинг 1100 — почти у цели' },
+  { key: 'rating_1200',    label: '1200',                  description: 'Цель достигнута. Chess 1200.' },
+  // Уровни XP
+  { key: 'level_knight',   label: 'Уровень: Конь',         description: 'Набрал 100 XP' },
+  { key: 'level_bishop',   label: 'Уровень: Слон',         description: 'Набрал 250 XP' },
+  { key: 'level_rook',     label: 'Уровень: Ладья',        description: 'Набрал 500 XP' },
+  { key: 'level_queen',    label: 'Уровень: Ферзь',        description: 'Набрал 900 XP' },
 ];
 
 export const MISTAKE_TAGS = [
@@ -146,4 +204,12 @@ export const CHESS_LINKS = {
   insights:   'https://www.chess.com/insights',
   openings:   'https://www.chess.com/openings',
   games:      'https://www.chess.com/analysis/game/pgn',
+  archive:    'https://www.chess.com/games/archive/' + CHESS_USERNAME,
+  profile:    'https://www.chess.com/member/' + CHESS_USERNAME,
+  explorer:   'https://www.chess.com/explorer',
+  practice:   'https://www.chess.com/practice',
+  drills:     'https://www.chess.com/drills',
+  coaches:    'https://www.chess.com/coaches',
+  study:      'https://www.chess.com/learn',
+  clubhouse:  'https://www.chess.com/club',
 };
