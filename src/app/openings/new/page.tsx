@@ -5,12 +5,61 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { extractLinesFromPgn } from '@/lib/pgn-tree';
+import type { ChessMove } from '@/types/openings';
 
 type ColorChoice = 'white' | 'black' | 'both';
 
 function extractEcoCode(pgn: string): string | null {
   const match = pgn.match(/\[ECO\s+"([^"]+)"\]/);
   return match ? match[1] : null;
+}
+
+function extractAllLines(text: string): { lines: ChessMove[][], gameCount: number } {
+  // Split text into individual PGN games.
+  // A new game starts when we see a '[' header line after some move content has been seen.
+  const trimmed = text.trim();
+
+  const parts: string[] = [];
+  const rawLines = trimmed.split('\n');
+  let current: string[] = [];
+  let hasMovesInCurrent = false;
+
+  for (const line of rawLines) {
+    const trimLine = line.trim();
+
+    if (trimLine.startsWith('[') && hasMovesInCurrent) {
+      // We already saw move content — this '[' starts a new game
+      parts.push(current.join('\n'));
+      current = [];
+      hasMovesInCurrent = false;
+    }
+
+    // Track whether we've seen non-header, non-blank content (i.e. moves)
+    if (trimLine !== '' && !trimLine.startsWith('[')) {
+      hasMovesInCurrent = true;
+    }
+
+    current.push(line);
+  }
+
+  if (current.length > 0) {
+    parts.push(current.join('\n'));
+  }
+
+  if (parts.length === 0) {
+    parts.push(trimmed);
+  }
+
+  const allLines: ChessMove[][] = [];
+  for (const part of parts) {
+    if (!part.trim()) continue;
+    try {
+      const extracted = extractLinesFromPgn(part);
+      allLines.push(...extracted);
+    } catch { /* skip invalid games */ }
+  }
+
+  return { lines: allLines, gameCount: parts.length };
 }
 
 export default function NewOpeningPage() {
@@ -20,7 +69,7 @@ export default function NewOpeningPage() {
   const [pgn, setPgn] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [previewCount, setPreviewCount] = useState<number | null>(null);
+  const [previewInfo, setPreviewInfo] = useState<{ count: number; gameCount: number } | null>(null);
   const parseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handlePgnChange(value: string) {
@@ -32,16 +81,16 @@ export default function NewOpeningPage() {
     }
 
     if (!value.trim()) {
-      setPreviewCount(null);
+      setPreviewInfo(null);
       return;
     }
 
     parseTimeoutRef.current = setTimeout(() => {
       try {
-        const lines = extractLinesFromPgn(value);
-        setPreviewCount(lines.length);
+        const { lines, gameCount } = extractAllLines(value);
+        setPreviewInfo({ count: lines.length, gameCount });
       } catch {
-        setPreviewCount(0);
+        setPreviewInfo({ count: 0, gameCount: 0 });
       }
     }, 400);
   }
@@ -59,9 +108,10 @@ export default function NewOpeningPage() {
       return;
     }
 
-    let lines;
+    let lines: ChessMove[][];
     try {
-      lines = extractLinesFromPgn(pgn);
+      const result = extractAllLines(pgn);
+      lines = result.lines;
     } catch {
       setError('Не удалось разобрать PGN. Проверь формат.');
       return;
@@ -126,6 +176,18 @@ export default function NewOpeningPage() {
     { value: 'both', label: 'Оба', icon: '♗' },
   ];
 
+  function pluralVariations(n: number) {
+    if (n === 1) return 'вариация';
+    if (n >= 2 && n <= 4) return 'вариации';
+    return 'вариаций';
+  }
+
+  function pluralGames(n: number) {
+    if (n === 1) return 'партии';
+    if (n >= 2 && n <= 4) return 'партий';
+    return 'партий';
+  }
+
   return (
     <main className="max-w-[1320px] mx-auto px-5 py-12 md:px-10 md:py-16">
       {/* Back + header */}
@@ -153,11 +215,11 @@ export default function NewOpeningPage() {
       {/* Form */}
       <form
         onSubmit={handleSubmit}
-        className="max-w-[720px] flex flex-col gap-8"
+        className="max-w-[760px] flex flex-col gap-8"
       >
         {/* Name */}
         <div className="flex flex-col gap-[10px]">
-          <label className="text-[13px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+          <label className="text-[14px] font-semibold tracking-[0.12em] uppercase text-[#B3AC9F]">
             Название дебюта
           </label>
           <input
@@ -166,22 +228,22 @@ export default function NewOpeningPage() {
             onChange={(e) => setName(e.target.value)}
             placeholder="Например: Сицилианская защита, вариант Найдорфа"
             required
-            className="bg-[#15130F] border border-[#2A2722] rounded-[14px] px-5 py-3 text-[15px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors"
+            className="bg-[#15130F] border border-[#2A2722] rounded-[14px] px-5 py-3 text-[15px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors h-12"
           />
         </div>
 
         {/* Color */}
         <div className="flex flex-col gap-[10px]">
-          <label className="text-[13px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+          <label className="text-[14px] font-semibold tracking-[0.12em] uppercase text-[#B3AC9F]">
             Цвет фигур
           </label>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             {colorOptions.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setColor(opt.value)}
-                className={`flex items-center gap-2 rounded-full px-5 py-[10px] text-[14px] font-semibold transition-all border cursor-pointer ${
+                className={`h-11 flex items-center gap-2 rounded-full px-5 text-[14px] font-semibold transition-all border cursor-pointer ${
                   color === opt.value
                     ? 'bg-[#D6B97E] text-[#0D0C0A] border-[#D6B97E]'
                     : 'bg-transparent border-[#2A2722] text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5]'
@@ -196,35 +258,38 @@ export default function NewOpeningPage() {
 
         {/* PGN */}
         <div className="flex flex-col gap-[10px]">
-          <label className="text-[13px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+          <label className="text-[14px] font-semibold tracking-[0.12em] uppercase text-[#B3AC9F]">
             PGN
           </label>
           <textarea
             value={pgn}
             onChange={(e) => handlePgnChange(e.target.value)}
             rows={12}
-            placeholder={`Вставь PGN дебюта, например:\n\n[ECO "B90"]\n[Opening "Sicilian"]\n\n1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 (5... e6 6. Be2) 6. Bg5 *`}
+            placeholder={`Вставь PGN дебюта. Поддерживается несколько партий сразу.\n\nПример:\n[ECO "B90"]\n[Opening "Sicilian"]\n\n1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 (5... e6 6. Be2) 6. Bg5 *`}
             required
-            className="bg-[#15130F] border border-[#2A2722] rounded-[14px] px-5 py-4 text-[14px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
+            className="bg-[#15130F] border border-[#2A2722] rounded-[14px] px-5 py-4 text-[15px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
           />
-          {previewCount !== null && (
+          {previewInfo !== null && (
             <div
-              className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
-                previewCount > 0
+              className={`flex items-center gap-2 text-[14px] font-medium px-4 py-[10px] rounded-[10px] border ${
+                previewInfo.count > 0
                   ? 'text-[#9BD3A6] bg-[#1C2D1F] border-[#3A6B44]'
                   : 'text-[#D36B6B] bg-[#2D1C1C] border-[#6B3A3A]'
               }`}
             >
-              {previewCount > 0 ? (
+              {previewInfo.count > 0 ? (
                 <>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M20 6L9 17l-5-5" />
                   </svg>
-                  Найдено {previewCount} {previewCount === 1 ? 'вариация' : previewCount < 5 ? 'вариации' : 'вариаций'}
+                  {previewInfo.gameCount > 1
+                    ? `Найдено ${previewInfo.count} ${pluralVariations(previewInfo.count)} из ${previewInfo.gameCount} ${pluralGames(previewInfo.gameCount)}`
+                    : `Найдено ${previewInfo.count} ${pluralVariations(previewInfo.count)}`
+                  }
                 </>
               ) : (
                 <>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
                   </svg>
                   Вариации не найдены — проверь PGN
@@ -237,7 +302,7 @@ export default function NewOpeningPage() {
         {/* Error */}
         {error && (
           <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
             </svg>
             {error}
@@ -249,13 +314,13 @@ export default function NewOpeningPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-7 py-3 text-[15px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="h-11 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-8 text-[15px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {submitting ? 'Сохранение...' : 'Добавить дебют'}
           </button>
           <Link
             href="/openings"
-            className="border border-[#2A2722] text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5] rounded-full px-6 py-3 text-[14px] font-medium transition-colors bg-transparent no-underline"
+            className="h-11 flex items-center border border-[#2A2722] text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5] rounded-full px-6 text-[14px] font-medium transition-colors bg-transparent no-underline"
           >
             Отмена
           </Link>

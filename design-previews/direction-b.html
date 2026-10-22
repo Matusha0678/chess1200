@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<title>Direction B — The Watchmaker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #F8F6F2;
+  color: #0C0C0C;
+  font-family: 'Manrope', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* TOP NAV */
+.topnav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  background: #F8F6F2;
+  border-bottom: 1px solid #DDDBD6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  z-index: 10;
+}
+.nav-brand {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #0C0C0C;
+}
+.nav-links {
+  display: flex;
+  gap: 36px;
+  align-items: center;
+}
+.nav-link {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #AAA;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.nav-link.active { color: #0C0C0C; }
+.nav-link:hover { color: #555; }
+.nav-piece-links {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.nav-piece {
+  font-size: 18px;
+  color: #CCC;
+  cursor: pointer;
+  transition: color 0.15s;
+  line-height: 1;
+}
+.nav-piece.active { color: #0C0C0C; }
+
+/* MAIN */
+.page {
+  margin-top: 52px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  min-height: calc(100vh - 52px);
+}
+
+/* LEFT */
+.left {
+  padding: 56px 64px 56px 48px;
+  border-right: 1px solid #DDDBD6;
+}
+
+/* Giant date numerals */
+.hero-date {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  margin-bottom: 8px;
+}
+.hero-day {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 220px;
+  font-weight: 300;
+  line-height: 0.82;
+  letter-spacing: -0.04em;
+  color: #0C0C0C;
+}
+.hero-slash {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 80px;
+  font-weight: 300;
+  color: #DDDBD6;
+  margin: 0 4px;
+  line-height: 1;
+  align-self: flex-end;
+  padding-bottom: 28px;
+}
+.hero-total {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 80px;
+  font-weight: 300;
+  color: #DDDBD6;
+  line-height: 1;
+  align-self: flex-end;
+  padding-bottom: 28px;
+}
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+.hero-date-label {
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #AAA;
+}
+.hero-divider {
+  width: 32px;
+  height: 1px;
+  background: #DDDBD6;
+}
+.hero-theme {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-style: italic;
+  font-weight: 300;
+  color: #666;
+}
+
+/* TABLE TASKS */
+.tasks-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 100px;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #0C0C0C;
+  margin-bottom: 0;
+}
+.tasks-col {
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #AAA;
+}
+.task-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 100px;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 0;
+  border-bottom: 1px solid #DDDBD6;
+}
+.task-row.done .task-name { text-decoration: line-through; color: #AAA; }
+.task-row.done .task-idx { color: #CCC; }
+.task-row.done::after {
+  content: none;
+}
+.task-idx {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 300;
+  color: #DDDBD6;
+  letter-spacing: -0.01em;
+}
+.task-row.active .task-idx { color: #0C0C0C; }
+.task-info {}
+.task-name {
+  font-size: 15px;
+  font-weight: 400;
+  color: #0C0C0C;
+  margin-bottom: 2px;
+}
+.task-desc {
+  font-size: 12px;
+  color: #888;
+  font-weight: 300;
+}
+.task-time {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: #888;
+  text-align: right;
+}
+.task-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.task-link {
+  font-size: 11px;
+  color: #888;
+  text-decoration: underline;
+  text-decoration-color: #DDDBD6;
+  text-underline-offset: 2px;
+}
+.task-link:hover { color: #0C0C0C; }
+.done-check {
+  font-size: 13px;
+  color: #0C0C0C;
+  display: none;
+}
+.task-row.done .done-check { display: block; }
+.task-row.active .task-name { font-weight: 500; }
+
+/* RIGHT PANEL */
+.right {
+  padding: 56px 40px;
+  background: #F2F0EB;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Thermometer progress */
+.thermo-section {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 48px;
+}
+.thermo-track {
+  width: 2px;
+  background: #DDDBD6;
+  flex-shrink: 0;
+  position: relative;
+  height: 200px;
+}
+.thermo-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #0C0C0C;
+  height: 7%;
+}
+.thermo-dot {
+  position: absolute;
+  bottom: -4px;
+  left: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0C0C0C;
+}
+.thermo-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 200px;
+}
+.thermo-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 300;
+  color: #AAA;
+  line-height: 1;
+}
+.thermo-label.current {
+  color: #0C0C0C;
+  font-size: 28px;
+}
+.thermo-info {
+  padding-top: 8px;
+}
+.thermo-info-label {
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #AAA;
+  margin-bottom: 4px;
+}
+.thermo-info-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 64px;
+  font-weight: 300;
+  color: #0C0C0C;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+.thermo-info-sub {
+  font-size: 11px;
+  color: #AAA;
+  letter-spacing: 0.1em;
+  margin-top: 6px;
+}
+
+/* Stats table */
+.stats-table {
+  border-top: 1px solid #DDDBD6;
+  border-bottom: 1px solid #DDDBD6;
+  margin-bottom: 40px;
+}
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid #DDDBD6;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-key {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #AAA;
+}
+.stat-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 300;
+  color: #0C0C0C;
+  letter-spacing: -0.01em;
+}
+
+/* Quote band */
+.quote-band {
+  margin-top: auto;
+  padding: 20px;
+  border: 1px solid #DDDBD6;
+  background: #F8F6F2;
+}
+.quote-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 300;
+  color: #555;
+  line-height: 1.65;
+  margin-bottom: 10px;
+}
+.quote-attr {
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #AAA;
+}
+
+.direction-badge {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #AAA;
+  border: 1px solid #DDDBD6;
+  padding: 6px 12px;
+  z-index: 100;
+  background: #F8F6F2;
+}
+</style>
+</head>
+<body>
+<div class="direction-badge">Direction B — The Watchmaker</div>
+
+<!-- TOP NAV -->
+<header class="topnav">
+  <div class="nav-brand">Chess 1200</div>
+  <nav class="nav-links">
+    <span class="nav-link active">Сегодня</span>
+    <span class="nav-link">Прогресс</span>
+    <span class="nav-link">Тетрадь</span>
+    <span class="nav-link">Правила</span>
+  </nav>
+  <div class="nav-piece-links">
+    <span class="nav-piece active">♟</span>
+    <span class="nav-piece">♞</span>
+    <span class="nav-piece">♝</span>
+    <span class="nav-piece">♜</span>
+    <span class="nav-piece">♛</span>
+  </div>
+</header>
+
+<!-- MAIN GRID -->
+<div class="page">
+
+  <!-- LEFT -->
+  <main class="left">
+    <div class="hero-date">
+      <div class="hero-day">1</div>
+      <div class="hero-slash">/</div>
+      <div class="hero-total">30</div>
+    </div>
+    <div class="hero-meta">
+      <span class="hero-date-label">21 октября 2026</span>
+      <div class="hero-divider"></div>
+      <span class="hero-theme">Висячие фигуры — размен «что сколько стоит»</span>
+    </div>
+
+    <!-- Task table -->
+    <div class="tasks-header">
+      <div class="tasks-col">#</div>
+      <div class="tasks-col">Задача</div>
+      <div class="tasks-col" style="text-align:right">Время</div>
+      <div class="tasks-col" style="text-align:right">Ссылки</div>
+    </div>
+
+    <div class="task-row done">
+      <div class="task-idx">01</div>
+      <div class="task-info">
+        <div class="task-name">Разминка</div>
+        <div class="task-desc">5 задач «мат в 2» + 5 рейтинговых</div>
+      </div>
+      <div class="task-time">10 мин ✓</div>
+      <div class="task-links"><a class="task-link" href="#">Задачи</a></div>
+    </div>
+
+    <div class="task-row active">
+      <div class="task-idx">02</div>
+      <div class="task-info">
+        <div class="task-name">Тема дня</div>
+        <div class="task-desc">Урок + 15–20 задач по теме дня</div>
+      </div>
+      <div class="task-time">25 мин</div>
+      <div class="task-links">
+        <a class="task-link" href="#">Уроки</a>
+        <a class="task-link" href="#">Задачи</a>
+      </div>
+    </div>
+
+    <div class="task-row">
+      <div class="task-idx">03</div>
+      <div class="task-info">
+        <div class="task-name">Игра</div>
+        <div class="task-desc">3 партии рапид 10 минут</div>
+      </div>
+      <div class="task-time">50 мин</div>
+      <div class="task-links"><a class="task-link" href="#">Рапид 10</a></div>
+    </div>
+
+    <div class="task-row">
+      <div class="task-idx">04</div>
+      <div class="task-info">
+        <div class="task-name">Разбор</div>
+        <div class="task-desc">Сам → Game Review → тетрадь</div>
+      </div>
+      <div class="task-time">20 мин</div>
+      <div class="task-links">
+        <a class="task-link" href="#">Анализ</a>
+        <a class="task-link" href="#">Тетрадь</a>
+      </div>
+    </div>
+
+    <div class="task-row" style="border-bottom:none">
+      <div class="task-idx" style="color:#DDDBD6">05</div>
+      <div class="task-info">
+        <div class="task-name" style="color:#888">Магия дня</div>
+        <div class="task-desc">Таль — Ботвинник, 1960. Угадай ход.</div>
+      </div>
+      <div class="task-time">10 мин</div>
+      <div class="task-links"><a class="task-link" href="#">Analysis</a></div>
+    </div>
+  </main>
+
+  <!-- RIGHT -->
+  <aside class="right">
+
+    <div class="thermo-section">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+        <div class="thermo-track">
+          <div class="thermo-fill"></div>
+          <div class="thermo-dot"></div>
+        </div>
+      </div>
+      <div>
+        <div class="thermo-info">
+          <div class="thermo-info-label">Рейтинг</div>
+          <div class="thermo-info-val">847</div>
+          <div class="thermo-info-sub">→ 1200</div>
+        </div>
+        <div style="margin-top:24px">
+          <div class="thermo-info-label">Прирост</div>
+          <div class="thermo-info-val" style="font-size:40px;color:#555">+24</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-table">
+      <div class="stat-row">
+        <span class="stat-key">Стрик</span>
+        <span class="stat-val">3 дня</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-key">Уровень</span>
+        <span class="stat-val">Конь</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-key">Блоки сегодня</span>
+        <span class="stat-val">1 / 5</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-key">XP</span>
+        <span class="stat-val">10</span>
+      </div>
+    </div>
+
+    <div class="quote-band">
+      <div class="quote-text">"You must take your opponent into a deep dark forest where 2+2=5."</div>
+      <div class="quote-attr">Михаил Таль</div>
+    </div>
+  </aside>
+
+</div>
+</body>
+</html>

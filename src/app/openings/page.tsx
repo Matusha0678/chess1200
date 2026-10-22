@@ -23,15 +23,15 @@ function SkeletonCard() {
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-[6px] min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <div className="h-[20px] w-[48px] bg-[#24221D] rounded-[6px]" />
-            <div className="h-[18px] w-[72px] bg-[#24221D] rounded-[6px]" />
+            <div className="h-[22px] w-[48px] bg-[#24221D] rounded-[8px]" />
+            <div className="h-[22px] w-[80px] bg-[#24221D] rounded-full" />
           </div>
-          <div className="h-[30px] w-3/4 bg-[#24221D] rounded-[8px] mt-1" />
+          <div className="h-[32px] w-3/4 bg-[#24221D] rounded-[8px] mt-1" />
         </div>
       </div>
       <div className="flex flex-col gap-[10px]">
-        <div className="h-[5px] w-full bg-[#24221D] rounded-full" />
-        <div className="h-[18px] w-1/2 bg-[#24221D] rounded-[6px]" />
+        <div className="h-[6px] w-full bg-[#24221D] rounded-full" />
+        <div className="h-[20px] w-1/2 bg-[#24221D] rounded-[6px]" />
       </div>
     </div>
   );
@@ -115,7 +115,7 @@ export default function OpeningsPage() {
 
         <Link
           href="/openings/new"
-          className="flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-6 py-3 text-[14px] font-semibold transition-colors no-underline"
+          className="h-11 flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-6 text-[14px] font-semibold transition-colors no-underline"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 5v14M5 12h14" />
@@ -126,25 +126,25 @@ export default function OpeningsPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
       ) : openings.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-8 py-24 text-center">
-          <div className="text-[72px] leading-none select-none">♟</div>
+          <div className="text-[80px] leading-none select-none">♟</div>
           <div className="flex flex-col gap-3">
-            <h2 className="m-0 font-cormorant font-[500] text-[40px] leading-[1.1]">
+            <h2 className="m-0 font-cormorant font-[500] text-[48px] leading-[1.1]">
               Нет дебютов
             </h2>
-            <p className="m-0 text-[16px] text-[#B3AC9F]">
+            <p className="m-0 text-[17px] text-[#B3AC9F]">
               Добавь свой первый дебют, чтобы начать тренировки
             </p>
           </div>
           <Link
             href="/openings/new"
-            className="flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-7 py-3 text-[15px] font-semibold transition-colors no-underline"
+            className="h-11 flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-7 text-[15px] font-semibold transition-colors no-underline"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 5v14M5 12h14" />
@@ -153,7 +153,7 @@ export default function OpeningsPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {openings.map((opening) => (
             <OpeningCard
               key={opening.id}

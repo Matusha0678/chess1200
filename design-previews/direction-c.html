@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<title>Direction C — The Grand Hotel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0D0D0D;
+  color: #EAE8E3;
+  font-family: 'Manrope', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 72px;
+  background: #080808;
+  border-right: 1px solid #181818;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0 32px;
+  z-index: 10;
+}
+.sidebar-brand {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #EAE8E3;
+  margin-bottom: auto;
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 40px;
+}
+.sn-item {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.15s;
+  gap: 4px;
+}
+.sn-item.active { background: #1A1A1A; }
+.sn-item:hover { background: #141414; }
+.sn-piece {
+  font-size: 22px;
+  line-height: 1;
+}
+.sn-item .sn-piece { color: #333; }
+.sn-item.active .sn-piece { color: #EAE8E3; }
+.sn-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #C9A96E;
+  opacity: 0;
+}
+.sn-item.active .sn-dot { opacity: 1; }
+
+/* LAYOUT */
+.layout {
+  margin-left: 72px;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  min-height: 100vh;
+  width: calc(100vw - 72px);
+}
+
+/* LEFT */
+.content {
+  padding: 48px 56px;
+  border-right: 1px solid #181818;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Watermark knight */
+.watermark {
+  position: absolute;
+  right: -20px;
+  top: 30px;
+  font-size: 280px;
+  line-height: 1;
+  color: rgba(234,232,227,0.025);
+  pointer-events: none;
+  user-select: none;
+  font-family: serif;
+}
+
+/* Header */
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 48px;
+}
+.header-left {}
+.date-tag {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #444;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.date-tag::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 1px;
+  background: #C9A96E;
+}
+.main-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 72px;
+  font-weight: 300;
+  font-style: italic;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  color: #EAE8E3;
+  max-width: 560px;
+  margin-bottom: 16px;
+}
+.subtitle {
+  font-size: 13px;
+  color: #444;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+}
+.header-right {
+  text-align: right;
+  padding-top: 4px;
+}
+.day-counter {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #444;
+  letter-spacing: 0.05em;
+}
+.day-progress-mini {
+  margin-top: 6px;
+  width: 80px;
+  height: 1px;
+  background: #1E1E1E;
+  margin-left: auto;
+  position: relative;
+}
+.day-progress-mini-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 1px;
+  width: 3.3%;
+  background: #C9A96E;
+}
+
+/* TIMELINE */
+.timeline {
+  position: relative;
+  padding-left: 32px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(to bottom, #1E1E1E 0%, #1E1E1E 85%, transparent 100%);
+}
+.tl-item {
+  position: relative;
+  padding-bottom: 32px;
+}
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  position: absolute;
+  left: -28px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #2A2A2A;
+  background: #0D0D0D;
+  transition: border-color 0.2s;
+}
+.tl-item.done .tl-dot { border-color: #C9A96E; background: #C9A96E; }
+.tl-item.active .tl-dot { border-color: #EAE8E3; background: #EAE8E3; }
+.tl-connector {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+.tl-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 12px;
+  font-weight: 300;
+  color: #2A2A2A;
+  letter-spacing: 0.1em;
+  width: 20px;
+}
+.tl-item.active .tl-num { color: #C9A96E; }
+.tl-item.done .tl-num { color: #2A2A2A; }
+.tl-time {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: #2A2A2A;
+  margin-left: auto;
+  border: 1px solid #1A1A1A;
+  padding: 2px 8px;
+}
+.tl-title {
+  font-size: 18px;
+  font-weight: 400;
+  color: #EAE8E3;
+  margin-bottom: 4px;
+  letter-spacing: 0.01em;
+}
+.tl-item.done .tl-title { text-decoration: line-through; color: #2A2A2A; }
+.tl-desc {
+  font-size: 13px;
+  color: #444;
+  font-weight: 300;
+  margin-bottom: 6px;
+}
+.tl-links {
+  display: flex;
+  gap: 14px;
+}
+.tl-link {
+  font-size: 11px;
+  color: #444;
+  text-decoration: underline;
+  text-decoration-color: #222;
+  text-underline-offset: 3px;
+}
+.tl-link:hover { color: #EAE8E3; }
+
+/* RIGHT PANEL */
+.panel {
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  background: #0A0A0A;
+}
+
+/* Ring chart placeholder */
+.ring-section {
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ring-label {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #333;
+  margin-bottom: 16px;
+  align-self: flex-start;
+}
+.ring-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin-bottom: 16px;
+}
+.ring-svg {
+  width: 160px;
+  height: 160px;
+  transform: rotate(-90deg);
+}
+.ring-track {
+  fill: none;
+  stroke: #1A1A1A;
+  stroke-width: 6;
+}
+.ring-fill {
+  fill: none;
+  stroke: #C9A96E;
+  stroke-width: 6;
+  stroke-linecap: butt;
+  stroke-dasharray: 408.41;
+  stroke-dashoffset: 381.87; /* 408.41 * (1 - 0.065) */
+}
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.ring-rating {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 40px;
+  font-weight: 300;
+  color: #EAE8E3;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.ring-target {
+  font-size: 11px;
+  color: #444;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+}
+
+/* Metrics */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid #181818;
+  margin-bottom: 32px;
+}
+.metric {
+  padding: 18px 20px;
+  border-bottom: 1px solid #181818;
+  border-right: 1px solid #181818;
+}
+.metric:nth-child(2n) { border-right: none; }
+.metric:nth-last-child(-n+2) { border-bottom: none; }
+.metric-label {
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #333;
+  margin-bottom: 6px;
+}
+.metric-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 300;
+  color: #EAE8E3;
+  line-height: 1;
+}
+
+/* Tal quote */
+.tal-section {
+  margin-top: auto;
+  border-top: 1px solid #181818;
+  padding-top: 24px;
+}
+.tal-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-style: italic;
+  font-weight: 300;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.tal-attr {
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #2A2A2A;
+}
+
+.direction-badge {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #333;
+  border: 1px solid #1E1E1E;
+  padding: 6px 12px;
+  z-index: 100;
+}
+</style>
+</head>
+<body>
+<div class="direction-badge">Direction C — The Grand Hotel</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">Chess 1200</div>
+  <nav class="sidebar-nav">
+    <div class="sn-item active">
+      <span class="sn-piece">♟</span>
+      <span class="sn-dot"></span>
+    </div>
+    <div class="sn-item">
+      <span class="sn-piece">♞</span>
+      <span class="sn-dot"></span>
+    </div>
+    <div class="sn-item">
+      <span class="sn-piece">♝</span>
+      <span class="sn-dot"></span>
+    </div>
+    <div class="sn-item">
+      <span class="sn-piece">♜</span>
+      <span class="sn-dot"></span>
+    </div>
+    <div class="sn-item">
+      <span class="sn-piece">♛</span>
+      <span class="sn-dot"></span>
+    </div>
+  </nav>
+</aside>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT -->
+  <main class="content">
+    <div class="watermark">♞</div>
+
+    <div class="header-top">
+      <div class="header-left">
+        <div class="date-tag">21 октября 2026 · День 1</div>
+        <div class="main-title">Висячие фигуры</div>
+        <div class="subtitle">Размен «что сколько стоит»</div>
+      </div>
+      <div class="header-right">
+        <div class="day-counter">1 / 30</div>
+        <div class="day-progress-mini">
+          <div class="day-progress-mini-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline">
+
+      <div class="tl-item done">
+        <div class="tl-dot"></div>
+        <div class="tl-connector">
+          <span class="tl-num">01</span>
+          <span class="tl-time">10 мин</span>
+        </div>
+        <div class="tl-title">Разминка</div>
+        <div class="tl-desc">5 задач «мат в 2» + 5 рейтинговых задач</div>
+        <div class="tl-links"><a class="tl-link" href="#">Задачи</a></div>
+      </div>
+
+      <div class="tl-item active">
+        <div class="tl-dot"></div>
+        <div class="tl-connector">
+          <span class="tl-num">02</span>
+          <span class="tl-time">25 мин</span>
+        </div>
+        <div class="tl-title">Тема дня</div>
+        <div class="tl-desc">Урок + 15–20 задач по теме дня</div>
+        <div class="tl-links">
+          <a class="tl-link" href="#">Уроки</a>
+          <a class="tl-link" href="#">Задачи</a>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-connector">
+          <span class="tl-num">03</span>
+          <span class="tl-time">50 мин</span>
+        </div>
+        <div class="tl-title">Игра</div>
+        <div class="tl-desc">3 партии рапид 10 минут</div>
+        <div class="tl-links"><a class="tl-link" href="#">Рапид 10</a></div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-connector">
+          <span class="tl-num">04</span>
+          <span class="tl-time">20 мин</span>
+        </div>
+        <div class="tl-title">Разбор</div>
+        <div class="tl-desc">Сам → Game Review → тетрадь ошибок</div>
+        <div class="tl-links">
+          <a class="tl-link" href="#">Анализ</a>
+          <a class="tl-link" href="#">Тетрадь</a>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:#1A1A1A"></div>
+        <div class="tl-connector">
+          <span class="tl-num" style="color:#1A1A1A">05</span>
+          <span class="tl-time">10 мин</span>
+        </div>
+        <div class="tl-title" style="color:#555">Магия дня</div>
+        <div class="tl-desc">Таль — Ботвинник, 1960 · Угадай ход в Analysis</div>
+        <div class="tl-links"><a class="tl-link" href="#">Analysis</a></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- RIGHT -->
+  <aside class="panel">
+
+    <div class="ring-section">
+      <div class="ring-label">Рейтинг · Прогресс</div>
+      <div class="ring-wrap">
+        <svg class="ring-svg" viewBox="0 0 160 160">
+          <circle class="ring-track" cx="80" cy="80" r="65" />
+          <circle class="ring-fill" cx="80" cy="80" r="65" />
+        </svg>
+        <div class="ring-center">
+          <div class="ring-rating">847</div>
+          <div class="ring-target">→ 1200</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric">
+        <div class="metric-label">Прирост</div>
+        <div class="metric-value" style="color:#4A7A5A">+24</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Стрик</div>
+        <div class="metric-value">3 д</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Уровень</div>
+        <div class="metric-value" style="font-size:20px;padding-top:4px">Конь</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Блоки</div>
+        <div class="metric-value">1<span style="font-size:16px;color:#333">/5</span></div>
+      </div>
+    </div>
+
+    <div class="tal-section">
+      <div class="tal-text">"You must take your opponent into a deep dark forest where 2+2=5."</div>
+      <div class="tal-attr">Михаил Таль</div>
+    </div>
+
+  </aside>
+
+</div>
+</body>
+</html>
