@@ -19,7 +19,7 @@ export default function TopNav() {
 
   return (
     <header className="border-b border-[#1F1D19]">
-      <div className="max-w-[1320px] mx-auto px-5 md:px-10 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="max-w-[1600px] mx-auto px-5 md:px-10 py-4 flex flex-wrap items-center justify-between gap-4">
 
         {/* Logo */}
         <Link href="/today" className="flex items-baseline gap-2 no-underline">

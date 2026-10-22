@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { getCurrentDay, isLightDay, getDayTheme } from '@/lib/day-utils';
 import { CHESS_LINKS, START_RATING, TARGET_RATING, DAY_SPECIAL_TASKS, TAL_GAMES, GRANDMASTER_QUOTES } from '@/lib/constants';
 import { getLevelInfo } from '@/lib/xp';
+import { checkAndAwardBadges } from '@/lib/badges';
 import type { DailyProgress, SyncResult } from '@/types';
 
 const BLOCKS_NORMAL = [
@@ -70,7 +71,7 @@ function BlockRow({
 }) {
   return (
     <div
-      className={`grid gap-x-5 py-[18px] px-5 items-start
+      className={`grid gap-x-5 py-[14px] px-5 items-start
         ${!isFirst ? 'border-t border-[#24221D]' : ''}
         [grid-template-columns:48px_minmax(0,1fr)_auto_44px]
         max-[720px]:[grid-template-columns:36px_minmax(0,1fr)_44px]`}
@@ -195,6 +196,7 @@ export default function TodayPage() {
     setProgress({ ...updated, xp_earned: xp, day_complete: !!allDone });
     await supabase.from('user_xp').upsert({ id: 1, total_xp: totalXP + (newVal ? 10 : -10) }, { onConflict: 'id' });
     setTotalXP(t => t + (newVal ? 10 : -10));
+    checkAndAwardBadges().catch(() => {});
   }
 
   async function doSync() {
@@ -204,6 +206,7 @@ export default function TodayPage() {
       const data: SyncResult = await res.json();
       setSyncResult(data);
       if (data.rating) setCurrentRating(data.rating);
+      checkAndAwardBadges().catch(() => {});
     } finally {
       setSyncing(false);
     }
@@ -235,34 +238,40 @@ export default function TodayPage() {
 
   /* ── JSX ── */
   return (
-    <main className="max-w-[1320px] mx-auto px-10 pt-10 pb-16">
+    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
 
-      {/* ════ ROW 1 ════ */}
-      <div className="flex flex-wrap gap-6 items-stretch">
+      {/* ════ 3-COLUMN GRID ════ */}
+      <div className="grid gap-6
+        xl:grid-cols-[300px_1fr_300px]
+        md:grid-cols-[1fr_300px]
+        grid-cols-1">
 
-        {/* .main — progress card */}
-        <div className="flex-[999_1_600px] min-w-0 bg-[#15130F] border border-[#2A2722] rounded-[20px] p-7 md:p-8 flex flex-col gap-7">
+        {/* ── LEFT COLUMN: day info card ── */}
+        <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-5 md:p-6 flex flex-col gap-5
+          md:col-span-1 xl:col-span-1 xl:row-span-1">
 
-          {/* eyebrow + title */}
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <Lbl gold>День {String(day).padStart(2, '0')} из 30</Lbl>
-              <span className="w-8 h-px bg-[#5A4C33]" />
-              <Lbl>Тема дня</Lbl>
-            </div>
-            <h1 className="m-0 font-cormorant font-semibold text-[64px] leading-[0.98] tracking-[-0.015em]">
-              {titleText}
-            </h1>
-            {subtitleText && (
-              <p className="m-0 font-cormorant italic text-[28px] leading-[1.2] text-[#D6B97E]">
-                {subtitleText}
-              </p>
-            )}
+          {/* eyebrow */}
+          <div className="flex items-center gap-3">
+            <Lbl gold>День {String(day).padStart(2, '0')} из 30</Lbl>
+            <span className="w-8 h-px bg-[#5A4C33]" />
+            <Lbl>Тема</Lbl>
           </div>
+
+          {/* title */}
+          <h1 className="m-0 font-cormorant font-semibold text-[44px] leading-[0.98] tracking-[-0.015em]">
+            {titleText}
+          </h1>
+
+          {/* subtitle */}
+          {subtitleText && (
+            <p className="m-0 font-cormorant italic text-[22px] leading-[1.2] text-[#D6B97E]">
+              {subtitleText}
+            </p>
+          )}
 
           {/* counter */}
           <div className="flex items-baseline gap-3">
-            <span className="font-cormorant text-[40px] font-semibold leading-[1.1]">
+            <span className="font-cormorant text-[36px] font-semibold leading-[1.1]">
               {completedCount}/{totalBlocks}
             </span>
             <span className="text-[14px] text-[#B3AC9F]">блоков · {approxTime}</span>
@@ -274,7 +283,7 @@ export default function TodayPage() {
               <span>Месяц тренировок</span>
               <span>
                 <span className="text-[#F3EEE5] font-semibold">{daysCompleted}</span>
-                {' / 30 дней'}
+                {' / 30'}
               </span>
             </div>
             <div className="flex gap-1">
@@ -296,58 +305,9 @@ export default function TodayPage() {
           </div>
         </div>
 
-        {/* .side — rating card */}
-        <div className="flex-[1_1_360px] min-w-0 bg-[#15130F] border border-[#2A2722] rounded-[20px] flex flex-col">
-
-          {/* label row */}
-          <div className="flex items-center justify-between px-5 py-[18px] border-b border-[#2A2722]">
-            <Lbl>Рейтинг · Рапид</Lbl>
-            <button
-              onClick={doSync}
-              disabled={syncing}
-              type="button"
-              aria-label="Обновить рейтинг"
-              className="w-9 h-9 rounded-full border border-[#34302A] flex items-center justify-center text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5] transition-colors cursor-pointer bg-transparent disabled:opacity-40"
-            >
-              <svg
-                width="15" height="15" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                className={syncing ? 'animate-spin' : ''}
-                aria-hidden="true"
-              >
-                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-              </svg>
-            </button>
-          </div>
-
-          {/* 3-col grid */}
-          <div className="grid grid-cols-3 flex-1">
-            {/* Сейчас */}
-            <div className="p-5 flex flex-col gap-[2px]">
-              <span className="text-[13px] text-[#B3AC9F]">Сейчас</span>
-              <span className="font-cormorant text-[44px] font-semibold leading-[1.1]">{displayRating}</span>
-            </div>
-            {/* Прирост */}
-            <div className="p-5 flex flex-col gap-[2px] border-l border-[#24221D]">
-              <span className="text-[13px] text-[#B3AC9F]">Прирост</span>
-              <span className={`font-cormorant text-[44px] font-semibold leading-[1.1] ${ratingDiff >= 0 ? 'text-[#9BD3A6]' : 'text-[#D36B6B]'}`}>
-                {ratingDiff >= 0 ? '+' : ''}{ratingDiff}
-              </span>
-            </div>
-            {/* Цель */}
-            <div className="p-5 flex flex-col gap-[2px] border-l border-[#24221D]">
-              <span className="text-[13px] text-[#B3AC9F]">Цель</span>
-              <span className="font-cormorant text-[44px] font-semibold leading-[1.1] text-[#D6B97E]">{TARGET_RATING}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ════ ROW 2 ════ */}
-      <div className="mt-6 flex flex-wrap gap-6 items-start">
-
-        {/* .main — program card */}
-        <div className="flex-[999_1_600px] min-w-0 bg-[#15130F] border border-[#2A2722] rounded-[20px]">
+        {/* ── CENTER COLUMN: program card ── */}
+        <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px]
+          md:col-start-1 xl:col-start-2">
 
           {/* card header */}
           <div className="flex items-center justify-between px-5 py-[18px] border-b border-[#2A2722]">
@@ -381,34 +341,73 @@ export default function TodayPage() {
           />
         </div>
 
-        {/* .side */}
-        <div className="flex-[1_1_360px] min-w-0 flex flex-col gap-6">
+        {/* ── RIGHT COLUMN: stats sidebar ── */}
+        <div className="flex flex-col gap-5
+          md:col-start-2 md:row-start-1 md:row-span-2
+          xl:col-start-3 xl:row-start-1 xl:row-span-1">
+
+          {/* Rating card */}
+          <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-[14px] border-b border-[#2A2722]">
+              <Lbl>Рейтинг · Рапид</Lbl>
+              <button
+                onClick={doSync}
+                disabled={syncing}
+                type="button"
+                aria-label="Обновить рейтинг"
+                className="w-9 h-9 rounded-full border border-[#34302A] flex items-center justify-center text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5] transition-colors cursor-pointer bg-transparent disabled:opacity-40"
+              >
+                <svg
+                  width="15" height="15" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  className={syncing ? 'animate-spin' : ''}
+                  aria-hidden="true"
+                >
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-3">
+              <div className="p-4 flex flex-col gap-[2px]">
+                <span className="text-[12px] text-[#B3AC9F]">Сейчас</span>
+                <span className="font-cormorant text-[32px] font-semibold leading-[1.1]">{displayRating}</span>
+              </div>
+              <div className="p-4 flex flex-col gap-[2px] border-l border-[#24221D]">
+                <span className="text-[12px] text-[#B3AC9F]">Прирост</span>
+                <span className={`font-cormorant text-[32px] font-semibold leading-[1.1] ${ratingDiff >= 0 ? 'text-[#9BD3A6]' : 'text-[#D36B6B]'}`}>
+                  {ratingDiff >= 0 ? '+' : ''}{ratingDiff}
+                </span>
+              </div>
+              <div className="p-4 flex flex-col gap-[2px] border-l border-[#24221D]">
+                <span className="text-[12px] text-[#B3AC9F]">Цель</span>
+                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D6B97E]">{TARGET_RATING}</span>
+              </div>
+            </div>
+          </div>
 
           {/* 2×2 stats card */}
           <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] grid grid-cols-2">
-            {/* row 1 */}
-            <div className="p-5 flex flex-col gap-[2px]">
+            <div className="p-4 flex flex-col gap-[2px]">
               <span className="text-[13px] text-[#B3AC9F]">Стрик</span>
-              <span className="font-cormorant text-[30px] font-semibold leading-[1.1]">
+              <span className="font-cormorant text-[28px] font-semibold leading-[1.1]">
                 {streak > 0 ? streak : 0}
                 <span className="font-sans text-[13px] font-normal text-[#B3AC9F]"> дней</span>
               </span>
             </div>
-            <div className="p-5 flex flex-col gap-[2px] border-l border-[#24221D]">
+            <div className="p-4 flex flex-col gap-[2px] border-l border-[#24221D]">
               <span className="text-[13px] text-[#B3AC9F]">Уровень</span>
-              <span className="font-cormorant text-[30px] font-semibold leading-[1.1]">{levelInfo.name}</span>
+              <span className="font-cormorant text-[28px] font-semibold leading-[1.1]">{levelInfo.name}</span>
             </div>
-            {/* row 2 */}
-            <div className="p-5 flex flex-col gap-[2px] border-t border-[#24221D]">
+            <div className="p-4 flex flex-col gap-[2px] border-t border-[#24221D]">
               <span className="text-[13px] text-[#B3AC9F]">Опыт</span>
-              <span className="font-cormorant text-[30px] font-semibold leading-[1.1]">
+              <span className="font-cormorant text-[28px] font-semibold leading-[1.1]">
                 {totalXP}
                 <span className="font-sans text-[13px] font-normal text-[#B3AC9F]"> XP</span>
               </span>
             </div>
-            <div className="p-5 flex flex-col gap-[2px] border-t border-l border-[#24221D]">
+            <div className="p-4 flex flex-col gap-[2px] border-t border-l border-[#24221D]">
               <span className="text-[13px] text-[#B3AC9F]">Партий</span>
-              <span className="font-cormorant text-[30px] font-semibold leading-[1.1]">
+              <span className="font-cormorant text-[28px] font-semibold leading-[1.1]">
                 {syncResult?.gamesCount ?? 0}
               </span>
             </div>
@@ -418,7 +417,7 @@ export default function TodayPage() {
           {specialTask && (
             <div className="bg-[#1B1710] border border-[#4A3E28] rounded-[20px] p-5 flex flex-col gap-[10px]">
               <Lbl gold>Особое задание</Lbl>
-              <p className="m-0 font-cormorant text-[24px] font-[500] leading-[1.25]">{specialTask}</p>
+              <p className="m-0 font-cormorant text-[22px] font-[500] leading-[1.25]">{specialTask}</p>
             </div>
           )}
 
@@ -457,8 +456,8 @@ export default function TodayPage() {
           {(() => {
             const quote = GRANDMASTER_QUOTES[(day - 1) % GRANDMASTER_QUOTES.length];
             return (
-              <figure className="m-0 pt-5 px-5 border-t border-[#24221D]">
-                <blockquote className="m-0 font-cormorant italic text-[21px] leading-[1.35] text-[#E7E1D6]">
+              <figure className="m-0 pt-4 px-4 border-t border-[#24221D]">
+                <blockquote className="m-0 font-cormorant italic text-[19px] leading-[1.35] text-[#E7E1D6]">
                   &ldquo;{quote.text}&rdquo;
                 </blockquote>
                 <figcaption className="mt-3 text-[13px] text-[#B3AC9F]">— {quote.author}</figcaption>

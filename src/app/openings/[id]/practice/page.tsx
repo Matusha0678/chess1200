@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import ChessBoardWrapper from '@/components/ChessBoardWrapper';
 import { supabase } from '@/lib/supabase';
+import { checkAndAwardBadges } from '@/lib/badges';
 import type { Opening, OpeningLine, LineProgress, ChessMove } from '@/types/openings';
 
 interface LineWithProgress extends OpeningLine {
@@ -320,6 +321,7 @@ export default function PracticePage({ params }: Props) {
         const xp = await updateProgress(currentLine, true);
         setCelebrationXP(xp);
         setCelebrating(true);
+        checkAndAwardBadges().catch(() => {});
 
         setTimeout(() => {
           setCelebrating(false);
@@ -352,7 +354,7 @@ export default function PracticePage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16 flex flex-col items-center gap-6">
+      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6 flex flex-col items-center gap-6">
         <div className="w-full max-w-[480px] aspect-square bg-[#15130F] border border-[#2A2722] rounded-[20px] animate-pulse" />
       </main>
     );
@@ -360,7 +362,7 @@ export default function PracticePage({ params }: Props) {
 
   if (!opening || allLines.length === 0) {
     return (
-      <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         <Link
           href={`/openings/${id}`}
           className="inline-flex items-center gap-2 text-[13px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline mb-6"
@@ -398,7 +400,7 @@ export default function PracticePage({ params }: Props) {
         </div>
       )}
 
-      <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         {/* Header row: back + opening name + session stats */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <Link

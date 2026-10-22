@@ -92,7 +92,7 @@ export default function OpeningsPage() {
   }, []);
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-6 mb-10">
         <div className="flex flex-col gap-3">
@@ -101,7 +101,7 @@ export default function OpeningsPage() {
             <span className="w-10 h-px bg-[#5A4C33]" />
             <span className="text-[#B3AC9F]">Дебюты</span>
           </div>
-          <h1 className="m-0 font-cormorant font-[500] text-[64px] leading-[1] tracking-[-0.01em]">
+          <h1 className="m-0 font-cormorant font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
             Дебюты
           </h1>
         </div>
@@ -132,7 +132,7 @@ export default function OpeningsPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -159,7 +159,7 @@ export default function OpeningsPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {openings.map((opening) => (
             <OpeningCard
               key={opening.id}

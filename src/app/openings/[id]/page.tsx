@@ -210,7 +210,7 @@ export default function OpeningDetailPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         <div className="animate-pulse flex flex-col gap-6">
           <div className="h-[13px] w-[200px] bg-[#24221D] rounded-full" />
           <div className="h-[72px] w-[480px] bg-[#24221D] rounded-[16px]" />
@@ -229,7 +229,7 @@ export default function OpeningDetailPage({ params }: Props) {
   const linesDue = progress.filter((p) => p.next_review <= now && p.mastery < 5).length;
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
       {/* Back */}
       <Link
         href="/openings"
@@ -259,7 +259,7 @@ export default function OpeningDetailPage({ params }: Props) {
           </div>
 
           {/* Title */}
-          <h1 className="m-0 font-cormorant font-[500] text-[64px] leading-[1] tracking-[-0.01em]">
+          <h1 className="m-0 font-cormorant font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
             {opening.name}
           </h1>
         </div>

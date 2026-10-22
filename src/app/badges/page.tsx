@@ -94,17 +94,17 @@ export default function BadgesPage() {
   const pct = total ? Math.round((earnedCount / total) * 100) : 0;
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
 
       {/* Page title */}
-      <div className="flex flex-wrap justify-between items-end gap-6 mb-8">
+      <div className="flex flex-wrap justify-between items-end gap-6 mb-5">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
             <span>Достижения</span>
             <span className="w-10 h-px bg-[#5A4C33]" />
             <span className="text-[#B3AC9F]">Коллекция</span>
           </div>
-          <h1 className="m-0 font-cormorant text-[64px] font-[500] leading-[1] tracking-[-0.01em]">
+          <h1 className="m-0 font-cormorant text-[48px] font-[500] leading-[1] tracking-[-0.01em]">
             Награды
           </h1>
         </div>
@@ -135,7 +135,7 @@ export default function BadgesPage() {
                   {groupBadges.filter(b => b && earnedKeys.has(b.key)).length} / {groupBadges.length}
                 </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                 {groupBadges.map(badge => {
                   if (!badge) return null;
                   const isGoal = badge.key === 'rating_1200';
@@ -146,7 +146,7 @@ export default function BadgesPage() {
                   return (
                     <article
                       key={badge.key}
-                      className={`bg-[#15130F] border rounded-[20px] p-5 flex flex-col items-center gap-2 text-center
+                      className={`bg-[#15130F] border rounded-[20px] p-4 flex flex-col items-center gap-2 text-center
                         ${isGoal
                           ? 'border-[#D6B97E] bg-[#1B1710]'
                           : isEarned

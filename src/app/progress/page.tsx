@@ -49,16 +49,16 @@ export default function ProgressPage() {
   ];
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
 
       {/* Page title */}
-      <div className="flex flex-col gap-3 mb-8">
+      <div className="flex flex-col gap-3 mb-5">
         <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
           <span>Статистика</span>
           <span className="w-10 h-px bg-[#5A4C33]" />
           <span className="text-[#B3AC9F]">День {day} из 30</span>
         </div>
-        <h1 className="m-0 font-cormorant text-[64px] font-[500] leading-[1] tracking-[-0.01em]">
+        <h1 className="m-0 font-cormorant text-[48px] font-[500] leading-[1] tracking-[-0.01em]">
           Прогресс
         </h1>
       </div>

@@ -142,7 +142,7 @@ export default function NewOpeningPage() {
   }
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
       {/* Back link */}
       <Link
         href="/openings"
@@ -161,7 +161,7 @@ export default function NewOpeningPage() {
           <span className="w-10 h-px bg-[#5A4C33]" />
           <span className="text-[#B3AC9F]">Новый дебют</span>
         </div>
-        <h1 className="m-0 font-cormorant font-[500] text-[64px] leading-[1] tracking-[-0.01em]">
+        <h1 className="m-0 font-cormorant font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
           Новый дебют
         </h1>
       </div>

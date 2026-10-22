@@ -296,7 +296,7 @@ export default function EditOpeningPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         <div className="animate-pulse flex flex-col gap-6 max-w-[760px]">
           <div className="h-[13px] w-[180px] bg-[#24221D] rounded-full" />
           <div className="h-[72px] w-[360px] bg-[#24221D] rounded-[16px]" />
@@ -310,7 +310,7 @@ export default function EditOpeningPage({ params }: Props) {
   if (!opening) return null;
 
   return (
-    <main className="max-w-[1320px] mx-auto px-5 md:px-10 pt-10 pb-16">
+    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
       {/* Back */}
       <Link
         href={`/openings/${id}`}
@@ -329,7 +329,7 @@ export default function EditOpeningPage({ params }: Props) {
           <span className="w-10 h-px bg-[#5A4C33]" />
           <span className="text-[#B3AC9F]">Редактировать</span>
         </div>
-        <h1 className="m-0 font-cormorant font-[500] text-[64px] leading-[1] tracking-[-0.01em]">
+        <h1 className="m-0 font-cormorant font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
           Редактировать дебют
         </h1>
       </div>
