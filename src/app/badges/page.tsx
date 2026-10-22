@@ -99,26 +99,26 @@ export default function BadgesPage() {
       {/* Page title */}
       <div className="flex flex-wrap justify-between items-end gap-6 mb-5">
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
+          <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#FFFFFF]">
             <span>Достижения</span>
-            <span className="w-10 h-px bg-[#5A4C33]" />
-            <span className="text-[#B3AC9F]">Коллекция</span>
+            <span className="w-10 h-px bg-[#303030]" />
+            <span className="text-[#A0A0A0]">Коллекция</span>
           </div>
-          <h1 className="m-0 font-cormorant text-[48px] font-[500] leading-[1] tracking-[-0.01em]">
+          <h1 className="m-0 text-[48px] font-[500] leading-[1] tracking-[-0.01em]">
             Награды
           </h1>
         </div>
 
         {/* Progress pill */}
-        <div className="flex-[0_1_280px] bg-[#15130F] border border-[#2A2722] rounded-[20px] p-5 flex flex-col gap-3">
+        <div className="flex-[0_1_280px] bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-3">
           <div className="flex justify-between items-baseline">
-            <span className="text-[13px] text-[#B3AC9F]">Открыто</span>
+            <span className="text-[13px] text-[#A0A0A0]">Открыто</span>
             <span className="font-cormorant text-[30px] font-semibold leading-[1.1]">
-              {earnedCount}<span className="text-[#8F887C]"> из {total}</span>
+              {earnedCount}<span className="text-[#686868]"> из {total}</span>
             </span>
           </div>
-          <div className="h-2 rounded-full bg-[#2A2722] overflow-hidden">
-            <div className="h-full bg-[#D6B97E] transition-all duration-700" style={{ width: `${pct}%` }} />
+          <div className="h-2 rounded-full bg-[#262626] overflow-hidden">
+            <div className="h-full bg-[#FFFFFF] transition-all duration-700" style={{ width: `${pct}%` }} />
           </div>
         </div>
       </div>
@@ -128,10 +128,10 @@ export default function BadgesPage() {
         {BADGE_GROUPS.map(group => {
           const groupBadges = group.keys.map(key => BADGE_DEFINITIONS.find(b => b.key === key)).filter(Boolean);
           return (
-            <section key={group.title} className="bg-[#15130F] border border-[#2A2722] rounded-[20px]">
-              <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
-                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">{group.title}</span>
-                <span className="text-[13px] text-[#B3AC9F]">
+            <section key={group.title} className="bg-[#0D0D0D] border border-[#262626] rounded-[20px]">
+              <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#262626]">
+                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">{group.title}</span>
+                <span className="text-[13px] text-[#A0A0A0]">
                   {groupBadges.filter(b => b && earnedKeys.has(b.key)).length} / {groupBadges.length}
                 </span>
               </div>
@@ -146,38 +146,38 @@ export default function BadgesPage() {
                   return (
                     <article
                       key={badge.key}
-                      className={`bg-[#15130F] border rounded-[20px] p-4 flex flex-col items-center gap-2 text-center
+                      className={`bg-[#0D0D0D] border rounded-[20px] p-4 flex flex-col items-center gap-2 text-center
                         ${isGoal
-                          ? 'border-[#D6B97E] bg-[#1B1710]'
+                          ? 'border-[#FFFFFF] bg-[#111111]'
                           : isEarned
-                            ? 'border-[#D6B97E]'
-                            : 'border-[#2A2722]'}`}
+                            ? 'border-[#FFFFFF]'
+                            : 'border-[#262626]'}`}
                     >
                       {/* Icon circle */}
                       <div className={`w-14 h-14 rounded-full flex items-center justify-center border mb-1
                         ${showActive
-                          ? 'border-[#D6B97E] text-[#D6B97E]'
-                          : 'border-[#4A463F] text-[#6F695F]'}`}
+                          ? 'border-[#FFFFFF] text-[#FFFFFF]'
+                          : 'border-[#3A3A3A] text-[#606060]'}`}
                         style={showActive
-                          ? { boxShadow: 'inset 0 0 0 5px #100F0D, inset 0 0 0 6px #5A4C33' }
-                          : { boxShadow: 'inset 0 0 0 5px #100F0D, inset 0 0 0 6px #2A2722' }}
+                          ? { boxShadow: 'inset 0 0 0 5px #0A0A0A, inset 0 0 0 6px #303030' }
+                          : { boxShadow: 'inset 0 0 0 5px #0A0A0A, inset 0 0 0 6px #262626' }}
                       >
                         <BadgeIcon name={iconName} />
                       </div>
 
                       {/* Name */}
-                      <span className={`text-[15px] font-semibold leading-[1.3] ${showActive ? 'text-[#F3EEE5]' : 'text-[#6F695F]'}`}>
+                      <span className={`text-[15px] font-semibold leading-[1.3] ${showActive ? 'text-[#F5F5F5]' : 'text-[#606060]'}`}>
                         {badge.label}
                       </span>
 
                       {/* Description */}
-                      <span className={`text-[13px] leading-[1.4] ${showActive ? 'text-[#C9C2B5]' : 'text-[#4A463F]'}`}>
+                      <span className={`text-[13px] leading-[1.4] ${showActive ? 'text-[#BCBCBC]' : 'text-[#3A3A3A]'}`}>
                         {badge.description}
                       </span>
 
                       {/* Status */}
                       <span className={`inline-flex items-center gap-[5px] text-[12px] font-semibold border rounded-full px-3 py-[4px] mt-1
-                        ${isEarned || isGoal ? 'text-[#D6B97E] border-[#5A4C33]' : 'text-[#B3AC9F] border-[#34302A]'}`}>
+                        ${isEarned || isGoal ? 'text-[#FFFFFF] border-[#303030]' : 'text-[#A0A0A0] border-[#303030]'}`}>
                         {!isEarned && (
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <rect x="5" y="11" width="14" height="10" rx="2"/>

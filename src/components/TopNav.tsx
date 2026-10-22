@@ -18,17 +18,15 @@ export default function TopNav() {
   const dateCapitalized = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
   return (
-    <header className="border-b border-[#1F1D19]">
-      <div className="max-w-[1600px] mx-auto px-5 md:px-10 py-4 flex flex-wrap items-center justify-between gap-4">
+    <header className="border-b border-[#1E1E1E] bg-[#050505]">
+      <div className="max-w-[1650px] mx-auto px-6 md:px-10 h-[64px] flex items-center justify-between gap-6">
 
-        {/* Logo */}
-        <Link href="/today" className="flex items-baseline gap-2 no-underline">
-          <span className="font-cormorant text-[26px] font-semibold text-[#F3EEE5]">Chess</span>
-          <span className="font-cormorant text-[26px] font-semibold text-[#D6B97E]">1200</span>
+        <Link href="/today" className="flex items-baseline gap-1 no-underline shrink-0">
+          <span className="text-[22px] font-semibold text-[#F5F5F5]">Chess</span>
+          <span className="text-[22px] font-semibold text-[#505050]">1200</span>
         </Link>
 
-        {/* Nav pills */}
-        <nav aria-label="Разделы" className="flex flex-wrap gap-[2px] order-3 md:order-2 w-full md:w-auto">
+        <nav aria-label="Разделы" className="flex items-center flex-wrap">
           {tabs.map(({ href, label }) => {
             const active =
               pathname === href ||
@@ -40,10 +38,10 @@ export default function TopNav() {
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={[
-                  'inline-flex items-center h-10 px-4 text-[14px] font-medium rounded-full border no-underline transition-colors',
+                  'px-3 text-[13px] no-underline transition-colors h-[64px] flex items-center border-b-2',
                   active
-                    ? 'bg-[#1A1813] border-[#2E2B25] text-[#F3EEE5]'
-                    : 'border-transparent text-[#B3AC9F] hover:bg-[#17150F] hover:text-[#F3EEE5]',
+                    ? 'text-[#F5F5F5] border-white'
+                    : 'text-[#707070] border-transparent hover:text-[#A0A0A0]',
                 ].join(' ')}
               >
                 {label}
@@ -52,11 +50,9 @@ export default function TopNav() {
           })}
         </nav>
 
-        {/* Date */}
-        <div className="hidden sm:block text-[14px] text-[#B3AC9F] order-2 md:order-3">
+        <div className="hidden md:block text-[13px] text-[#505050] shrink-0">
           {dateCapitalized}
         </div>
-
       </div>
     </header>
   );

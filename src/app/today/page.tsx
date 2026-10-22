@@ -22,7 +22,7 @@ const BLOCKS_LIGHT = [
 /* ── helpers ── */
 function Lbl({ children, gold }: { children: React.ReactNode; gold?: boolean }) {
   return (
-    <span className={`text-[12px] font-semibold tracking-[0.14em] uppercase ${gold ? 'text-[#D6B97E]' : 'text-[#B3AC9F]'}`}>
+    <span className={`text-[12px] font-semibold tracking-[0.14em] uppercase ${gold ? 'text-[#FFFFFF]' : 'text-[#A0A0A0]'}`}>
       {children}
     </span>
   );
@@ -36,10 +36,10 @@ function CheckBtn({ done, label, onToggle }: { done: boolean; label: string; onT
       aria-label={done ? 'Снять отметку: ' + label : 'Отметить выполненным: ' + label}
       aria-pressed={done}
       className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-[1.5px]
-        ${done ? 'bg-[#D6B97E] border-[#D6B97E]' : 'bg-transparent border-[#4A463F] hover:border-[#D6B97E]'}`}
+        ${done ? 'bg-[#FFFFFF] border-[#FFFFFF]' : 'bg-transparent border-[#3A3A3A] hover:border-[#FFFFFF]'}`}
     >
       {done && (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D0C0A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#050505" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M5 12.5l4.5 4.5L19 7.5" />
         </svg>
       )}
@@ -72,21 +72,21 @@ function BlockRow({
   return (
     <div
       className={`grid gap-x-5 py-[14px] px-5 items-start
-        ${!isFirst ? 'border-t border-[#24221D]' : ''}
+        ${!isFirst ? 'border-t border-[#1E1E1E]' : ''}
         [grid-template-columns:48px_minmax(0,1fr)_auto_44px]
         max-[720px]:[grid-template-columns:36px_minmax(0,1fr)_44px]`}
     >
       {/* number */}
-      <span className={`font-cormorant text-[26px] font-semibold leading-[1.4] select-none ${done ? 'text-[#D6B97E]' : 'text-[#6F695F]'}`}>
+      <span className={`font-cormorant text-[26px] font-semibold leading-[1.4] select-none ${done ? 'text-[#FFFFFF]' : 'text-[#606060]'}`}>
         {String(index).padStart(2, '0')}
       </span>
 
       {/* text */}
       <div className="flex flex-col">
-        <span className={`text-[17px] font-semibold leading-snug ${done ? 'line-through text-[#8F887C]' : 'text-[#F3EEE5]'}`}>
+        <span className={`text-[17px] font-semibold leading-snug ${done ? 'line-through text-[#686868]' : 'text-[#F5F5F5]'}`}>
           {block.title}
         </span>
-        <span className={`text-[14px] mt-[3px] ${done ? 'text-[#4A463F]' : 'text-[#B3AC9F]'}`}>
+        <span className={`text-[14px] mt-[3px] ${done ? 'text-[#3A3A3A]' : 'text-[#A0A0A0]'}`}>
           {block.description}
         </span>
         {/* actions — mobile: span to col 2, appear on row 2 */}
@@ -99,7 +99,7 @@ function BlockRow({
                 href={l.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center h-9 px-[14px] rounded-full border border-[#34302A] text-[#E7E1D6] no-underline text-[13px] hover:border-[#D6B97E] transition-colors"
+                className="inline-flex items-center h-9 px-[14px] rounded-full border border-[#303030] text-[#E5E5E5] no-underline text-[13px] hover:border-[#FFFFFF] transition-colors"
               >
                 {l.label}
               </a>
@@ -117,7 +117,7 @@ function BlockRow({
               href={l.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center h-9 px-[14px] rounded-full border border-[#34302A] text-[#E7E1D6] no-underline text-[13px] hover:border-[#D6B97E] transition-colors"
+              className="inline-flex items-center h-9 px-[14px] rounded-full border border-[#303030] text-[#E5E5E5] no-underline text-[13px] hover:border-[#FFFFFF] transition-colors"
             >
               {l.label}
             </a>
@@ -253,24 +253,24 @@ export default function TodayPage() {
         grid-cols-1">
 
         {/* ── LEFT COLUMN: day info card ── */}
-        <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-5 md:p-6 flex flex-col gap-5
+        <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 md:p-6 flex flex-col gap-5
           md:col-span-1 xl:col-span-1 xl:row-span-1">
 
           {/* eyebrow */}
           <div className="flex items-center gap-3">
             <Lbl gold>День {String(day).padStart(2, '0')} из 30</Lbl>
-            <span className="w-8 h-px bg-[#5A4C33]" />
+            <span className="w-8 h-px bg-[#303030]" />
             <Lbl>Тема</Lbl>
           </div>
 
           {/* title */}
-          <h1 className="m-0 font-cormorant font-semibold text-[44px] leading-[0.98] tracking-[-0.015em]">
+          <h1 className="m-0 font-semibold text-[44px] leading-[0.98] tracking-[-0.015em]">
             {titleText}
           </h1>
 
           {/* subtitle */}
           {subtitleText && (
-            <p className="m-0 font-cormorant italic text-[22px] leading-[1.2] text-[#D6B97E]">
+            <p className="m-0 italic text-[22px] leading-[1.2] text-[#FFFFFF]">
               {subtitleText}
             </p>
           )}
@@ -280,15 +280,15 @@ export default function TodayPage() {
             <span className="font-cormorant text-[36px] font-semibold leading-[1.1]">
               {completedCount}/{totalBlocks}
             </span>
-            <span className="text-[14px] text-[#B3AC9F]">блоков · {approxTime}</span>
+            <span className="text-[14px] text-[#A0A0A0]">блоков · {approxTime}</span>
           </div>
 
           {/* 30-day strip */}
           <div className="flex flex-col gap-3 mt-auto">
-            <div className="flex justify-between text-[14px] text-[#B3AC9F]">
+            <div className="flex justify-between text-[14px] text-[#A0A0A0]">
               <span>Месяц тренировок</span>
               <span>
-                <span className="text-[#F3EEE5] font-semibold">{daysCompleted}</span>
+                <span className="text-[#F5F5F5] font-semibold">{daysCompleted}</span>
                 {' / 30'}
               </span>
             </div>
@@ -302,7 +302,7 @@ export default function TodayPage() {
                 return (
                   <div
                     key={d}
-                    className={`flex-1 h-[6px] rounded-full ${active ? 'bg-[#D6B97E]' : 'bg-[#24221D]'}`}
+                    className={`flex-1 h-[6px] rounded-full ${active ? 'bg-[#FFFFFF]' : 'bg-[#1E1E1E]'}`}
                     style={{ transition: 'background 0.3s' }}
                   />
                 );
@@ -312,15 +312,15 @@ export default function TodayPage() {
         </div>
 
         {/* ── CENTER COLUMN: program card ── */}
-        <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px]
+        <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px]
           md:col-start-1 xl:col-start-2">
 
           {/* card header */}
-          <div className="flex items-center justify-between px-5 py-[18px] border-b border-[#2A2722]">
+          <div className="flex items-center justify-between px-5 py-[18px] border-b border-[#262626]">
             <Lbl>Программа дня</Lbl>
-            <span className="text-[13px] text-[#B3AC9F]">
-              <span className="text-[#F3EEE5]">{completedCount}</span>
-              {' из '}<span className="text-[#F3EEE5]">{totalBlocks}</span>
+            <span className="text-[13px] text-[#A0A0A0]">
+              <span className="text-[#F5F5F5]">{completedCount}</span>
+              {' из '}<span className="text-[#F5F5F5]">{totalBlocks}</span>
               {' выполнено'}
             </span>
           </div>
@@ -357,15 +357,15 @@ export default function TodayPage() {
           xl:col-start-3 xl:row-start-1 xl:row-span-1">
 
           {/* Rating card */}
-          <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] flex flex-col">
-            <div className="flex items-center justify-between px-5 py-[14px] border-b border-[#2A2722]">
+          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-[14px] border-b border-[#262626]">
               <Lbl>Рейтинг · Рапид</Lbl>
               <button
                 onClick={doSync}
                 disabled={syncing}
                 type="button"
                 aria-label="Обновить рейтинг"
-                className="w-9 h-9 rounded-full border border-[#34302A] flex items-center justify-center text-[#B3AC9F] hover:border-[#D6B97E] hover:text-[#F3EEE5] transition-colors cursor-pointer bg-transparent disabled:opacity-40"
+                className="w-9 h-9 rounded-full border border-[#303030] flex items-center justify-center text-[#A0A0A0] hover:border-[#FFFFFF] hover:text-[#F5F5F5] transition-colors cursor-pointer bg-transparent disabled:opacity-40"
               >
                 <svg
                   width="15" height="15" viewBox="0 0 24 24" fill="none"
@@ -379,44 +379,44 @@ export default function TodayPage() {
             </div>
             <div className="grid grid-cols-3">
               <div className="p-4 flex flex-col gap-[2px]">
-                <span className="text-[12px] text-[#B3AC9F]">Сейчас</span>
+                <span className="text-[12px] text-[#A0A0A0]">Сейчас</span>
                 <span className="font-cormorant text-[32px] font-semibold leading-[1.1]">{displayRating}</span>
               </div>
-              <div className="p-4 flex flex-col gap-[2px] border-l border-[#24221D]">
-                <span className="text-[12px] text-[#B3AC9F]">Прирост</span>
-                <span className={`font-cormorant text-[32px] font-semibold leading-[1.1] ${ratingDiff >= 0 ? 'text-[#9BD3A6]' : 'text-[#D36B6B]'}`}>
+              <div className="p-4 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
+                <span className="text-[12px] text-[#A0A0A0]">Прирост</span>
+                <span className={`font-cormorant text-[32px] font-semibold leading-[1.1] ${ratingDiff >= 0 ? 'text-[#D0D0D0]' : 'text-[#A0A0A0]'}`}>
                   {ratingDiff >= 0 ? '+' : ''}{ratingDiff}
                 </span>
               </div>
-              <div className="p-4 flex flex-col gap-[2px] border-l border-[#24221D]">
-                <span className="text-[12px] text-[#B3AC9F]">Цель</span>
-                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D6B97E]">{TARGET_RATING}</span>
+              <div className="p-4 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
+                <span className="text-[12px] text-[#A0A0A0]">Цель</span>
+                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#FFFFFF]">{TARGET_RATING}</span>
               </div>
             </div>
           </div>
 
           {/* 2×2 stats card */}
-          <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] grid grid-cols-2">
+          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] grid grid-cols-2">
             <div className="p-4 flex flex-col gap-[2px]">
-              <span className="text-[13px] text-[#B3AC9F]">Стрик</span>
+              <span className="text-[13px] text-[#A0A0A0]">Стрик</span>
               <span className="font-cormorant text-[28px] font-semibold leading-[1.1]">
                 {streak > 0 ? streak : 0}
-                <span className="font-sans text-[13px] font-normal text-[#B3AC9F]"> дней</span>
+                <span className="font-sans text-[13px] font-normal text-[#A0A0A0]"> дней</span>
               </span>
             </div>
-            <div className="p-4 flex flex-col gap-[2px] border-l border-[#24221D]">
-              <span className="text-[13px] text-[#B3AC9F]">Уровень</span>
+            <div className="p-4 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
+              <span className="text-[13px] text-[#A0A0A0]">Уровень</span>
               <span className="font-cormorant text-[28px] font-semibold leading-[1.1]">{levelInfo.name}</span>
             </div>
-            <div className="p-4 flex flex-col gap-[2px] border-t border-[#24221D]">
-              <span className="text-[13px] text-[#B3AC9F]">Опыт</span>
+            <div className="p-4 flex flex-col gap-[2px] border-t border-[#1E1E1E]">
+              <span className="text-[13px] text-[#A0A0A0]">Опыт</span>
               <span className="font-cormorant text-[28px] font-semibold leading-[1.1]">
                 {totalXP}
-                <span className="font-sans text-[13px] font-normal text-[#B3AC9F]"> XP</span>
+                <span className="font-sans text-[13px] font-normal text-[#A0A0A0]"> XP</span>
               </span>
             </div>
-            <div className="p-4 flex flex-col gap-[2px] border-t border-l border-[#24221D]">
-              <span className="text-[13px] text-[#B3AC9F]">Партий</span>
+            <div className="p-4 flex flex-col gap-[2px] border-t border-l border-[#1E1E1E]">
+              <span className="text-[13px] text-[#A0A0A0]">Партий</span>
               <span className="font-cormorant text-[28px] font-semibold leading-[1.1]">
                 {syncResult?.gamesCount ?? 0}
               </span>
@@ -425,9 +425,9 @@ export default function TodayPage() {
 
           {/* Special task */}
           {specialTask && (
-            <div className="bg-[#1B1710] border border-[#4A3E28] rounded-[20px] p-5 flex flex-col gap-[10px]">
+            <div className="bg-[#111111] border border-[#303030] rounded-[20px] p-5 flex flex-col gap-[10px]">
               <Lbl gold>Особое задание</Lbl>
-              <p className="m-0 font-cormorant text-[22px] font-[500] leading-[1.25]">{specialTask}</p>
+              <p className="m-0 text-[22px] font-[500] leading-[1.25]">{specialTask}</p>
             </div>
           )}
 
@@ -436,7 +436,7 @@ export default function TodayPage() {
             onClick={doSync}
             disabled={syncing}
             type="button"
-            className="h-11 w-full border border-[#34302A] rounded-[14px] text-[#E7E1D6] text-[14px] hover:border-[#D6B97E] transition-colors disabled:opacity-40 cursor-pointer bg-transparent"
+            className="h-11 w-full border border-[#303030] rounded-[14px] text-[#E5E5E5] text-[14px] hover:border-[#FFFFFF] transition-colors disabled:opacity-40 cursor-pointer bg-transparent"
           >
             {syncing ? 'Синхронизация...' : 'Обновить рейтинг'}
           </button>
@@ -445,7 +445,7 @@ export default function TodayPage() {
           {syncResult && (syncResult.lossStreakWarning || syncResult.blitzWarning || syncResult.latecastleGames.length > 0) && (
             <div className="flex flex-col gap-2">
               {syncResult.lossStreakWarning && (
-                <div className="border border-[#5A2A2A] bg-[#1A0E0E] rounded-2xl px-4 py-3 text-[14px] text-[#D36B6B]">
+                <div className="border border-[#5A2A2A] bg-[#1A0E0E] rounded-2xl px-4 py-3 text-[14px] text-[#A0A0A0]">
                   Стоп игре — только задачи и разбор
                 </div>
               )}
@@ -455,7 +455,7 @@ export default function TodayPage() {
                 </div>
               )}
               {syncResult.latecastleGames.length > 0 && (
-                <div className="border border-[#3A3A2A] bg-[#141411] rounded-2xl px-4 py-3 text-[14px] text-[#8F887C]">
+                <div className="border border-[#3A3A2A] bg-[#141411] rounded-2xl px-4 py-3 text-[14px] text-[#686868]">
                   Поздняя рокировка в {syncResult.latecastleGames.length} {syncResult.latecastleGames.length === 1 ? 'партии' : 'партиях'}
                 </div>
               )}
@@ -466,11 +466,11 @@ export default function TodayPage() {
           {(() => {
             const quote = GRANDMASTER_QUOTES[(day - 1) % GRANDMASTER_QUOTES.length];
             return (
-              <figure className="m-0 pt-4 px-4 border-t border-[#24221D]">
-                <blockquote className="m-0 font-cormorant italic text-[19px] leading-[1.35] text-[#E7E1D6]">
+              <figure className="m-0 pt-4 px-4 border-t border-[#1E1E1E]">
+                <blockquote className="m-0 italic text-[19px] leading-[1.35] text-[#E5E5E5]">
                   &ldquo;{quote.text}&rdquo;
                 </blockquote>
-                <figcaption className="mt-3 text-[13px] text-[#B3AC9F]">— {quote.author}</figcaption>
+                <figcaption className="mt-3 text-[13px] text-[#A0A0A0]">— {quote.author}</figcaption>
               </figure>
             );
           })()}

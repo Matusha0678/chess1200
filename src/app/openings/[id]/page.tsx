@@ -32,7 +32,7 @@ function masteryDots(mastery: number) {
     <span
       key={i}
       className={`inline-block w-[8px] h-[8px] rounded-full ${
-        i < mastery ? 'bg-[#D6B97E]' : 'bg-[#2A2722]'
+        i < mastery ? 'bg-[#FFFFFF]' : 'bg-[#262626]'
       }`}
     />
   ));
@@ -212,10 +212,10 @@ export default function OpeningDetailPage({ params }: Props) {
     return (
       <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         <div className="animate-pulse flex flex-col gap-6">
-          <div className="h-[13px] w-[200px] bg-[#24221D] rounded-full" />
-          <div className="h-[72px] w-[480px] bg-[#24221D] rounded-[16px]" />
-          <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] h-[100px]" />
-          <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] h-[300px]" />
+          <div className="h-[13px] w-[200px] bg-[#1E1E1E] rounded-full" />
+          <div className="h-[72px] w-[480px] bg-[#1E1E1E] rounded-[16px]" />
+          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] h-[100px]" />
+          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] h-[300px]" />
         </div>
       </main>
     );
@@ -233,7 +233,7 @@ export default function OpeningDetailPage({ params }: Props) {
       {/* Back */}
       <Link
         href="/openings"
-        className="inline-flex items-center gap-2 text-[13px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline mb-6"
+        className="inline-flex items-center gap-2 text-[13px] text-[#A0A0A0] hover:text-[#F5F5F5] transition-colors no-underline mb-6"
       >
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M19 12H5M12 5l-7 7 7 7" />
@@ -248,38 +248,48 @@ export default function OpeningDetailPage({ params }: Props) {
           {/* Badges */}
           <div className="flex items-center gap-3 flex-wrap">
             {opening.eco_code && (
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E] bg-[#2A2218] border border-[#4A3E28] rounded-[8px] px-[10px] py-[4px]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#FFFFFF] bg-[#1A1A1A] border border-[#303030] rounded-[8px] px-[10px] py-[4px]">
                 {opening.eco_code}
               </span>
             )}
-            <span className="flex items-center gap-[6px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F] bg-[#15130F] border border-[#2A2722] rounded-[8px] px-[10px] py-[4px]">
+            <span className="flex items-center gap-[6px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0] bg-[#0D0D0D] border border-[#262626] rounded-[8px] px-[10px] py-[4px]">
               <span className="text-[15px] leading-none">{COLOR_ICON[opening.color]}</span>
               {COLOR_LABEL[opening.color]}
             </span>
           </div>
 
           {/* Title */}
-          <h1 className="m-0 font-cormorant font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
+          <h1 className="m-0 font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
             {opening.name}
           </h1>
         </div>
 
         {/* .side — action card */}
         <div className="flex-[1_1_360px] min-w-0">
-          <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-5 flex flex-col gap-3">
+          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-3">
+            <Link
+              href={`/openings/${id}/study`}
+              className="h-11 flex items-center justify-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[10px] px-6 text-[15px] font-semibold transition-colors no-underline"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+              Учёба
+            </Link>
+
             <Link
               href={`/openings/${id}/practice`}
-              className="h-11 flex items-center justify-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-6 text-[15px] font-semibold transition-colors no-underline"
+              className="h-10 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-[10px] px-6 text-[14px] font-medium transition-colors no-underline"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
-              Тренироваться
+              Тренировка
             </Link>
 
             <Link
               href={`/openings/${id}/edit`}
-              className="h-9 flex items-center justify-center gap-2 border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-5 text-[14px] transition-colors no-underline"
+              className="h-9 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors no-underline"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -291,18 +301,18 @@ export default function OpeningDetailPage({ params }: Props) {
             {/* Delete */}
             {confirmDelete ? (
               <div className="flex flex-col gap-2 pt-1">
-                <p className="text-[13px] text-[#D36B6B] text-center">Удалить дебют и все линии?</p>
+                <p className="text-[13px] text-[#A0A0A0] text-center">Удалить дебют и все линии?</p>
                 <div className="flex gap-2">
                   <button
                     onClick={handleDelete}
                     disabled={deleting}
-                    className="flex-1 h-9 border border-[#6B3A3A] text-[#D36B6B] hover:bg-[#2D1C1C] rounded-full px-4 text-[13px] font-semibold transition-colors bg-transparent disabled:opacity-50 cursor-pointer"
+                    className="flex-1 h-9 border border-[#404040] text-[#A0A0A0] hover:bg-[#1A1A1A] rounded-full px-4 text-[13px] font-semibold transition-colors bg-transparent disabled:opacity-50 cursor-pointer"
                   >
                     {deleting ? 'Удаление...' : 'Да, удалить'}
                   </button>
                   <button
                     onClick={() => setConfirmDelete(false)}
-                    className="flex-1 h-9 border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-4 text-[13px] transition-colors bg-transparent cursor-pointer"
+                    className="flex-1 h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-4 text-[13px] transition-colors bg-transparent cursor-pointer"
                   >
                     Отмена
                   </button>
@@ -311,7 +321,7 @@ export default function OpeningDetailPage({ params }: Props) {
             ) : (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="h-9 w-full border border-transparent text-[#5A5249] hover:border-[#6B3A3A] hover:text-[#D36B6B] rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer"
+                className="h-9 w-full border border-transparent text-[#505050] hover:border-[#404040] hover:text-[#A0A0A0] rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer"
               >
                 Удалить дебют
               </button>
@@ -321,26 +331,26 @@ export default function OpeningDetailPage({ params }: Props) {
       </div>
 
       {/* Stats — one card with 3 internal cols */}
-      <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] grid grid-cols-3 mb-6">
+      <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] grid grid-cols-3 mb-6">
         <div className="p-5 flex flex-col gap-[2px]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Линий</span>
-          <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#F3EEE5]">{linesTotal}</span>
+          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Линий</span>
+          <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#F5F5F5]">{linesTotal}</span>
         </div>
-        <div className="p-5 flex flex-col gap-[2px] border-l border-[#24221D]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Освоено</span>
-          <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#9BD3A6]">{linesMastered}</span>
+        <div className="p-5 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
+          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Освоено</span>
+          <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">{linesMastered}</span>
         </div>
-        <div className="p-5 flex flex-col gap-[2px] border-l border-[#24221D]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Повторить</span>
-          <span className={`font-cormorant text-[32px] font-semibold leading-[1.1] ${linesDue > 0 ? 'text-[#D6B97E]' : 'text-[#F3EEE5]'}`}>{linesDue}</span>
+        <div className="p-5 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
+          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Повторить</span>
+          <span className={`font-cormorant text-[32px] font-semibold leading-[1.1] ${linesDue > 0 ? 'text-[#FFFFFF]' : 'text-[#F5F5F5]'}`}>{linesDue}</span>
         </div>
       </div>
 
       {/* Lines list — one card */}
-      <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px]">
+      <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px]">
         {/* Section header */}
-        <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Вариации</span>
+        <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#262626]">
+          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Вариации</span>
           <button
             onClick={() => {
               setShowAddLine((v) => !v);
@@ -349,8 +359,8 @@ export default function OpeningDetailPage({ params }: Props) {
             }}
             className={`h-9 flex items-center gap-2 rounded-full px-5 text-[14px] transition-colors border cursor-pointer ${
               showAddLine
-                ? 'bg-[#2A2218] border-[#4A3E28] text-[#D6B97E]'
-                : 'border-[#34302A] text-[#E7E1D6] bg-transparent hover:border-[#D6B97E]'
+                ? 'bg-[#1A1A1A] border-[#303030] text-[#FFFFFF]'
+                : 'border-[#303030] text-[#E5E5E5] bg-transparent hover:border-[#FFFFFF]'
             }`}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -362,7 +372,7 @@ export default function OpeningDetailPage({ params }: Props) {
 
         {/* Success message */}
         {addLineSuccess && (
-          <div className="flex items-center gap-2 text-[14px] text-[#9BD3A6] bg-[#1C2D1F] border-b border-[#3A6B44] px-5 py-3">
+          <div className="flex items-center gap-2 text-[14px] text-[#D0D0D0] bg-[#141414] border-b border-[#303030] px-5 py-3">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M20 6L9 17l-5-5" />
             </svg>
@@ -372,7 +382,7 @@ export default function OpeningDetailPage({ params }: Props) {
 
         {/* Lines */}
         {lines.length === 0 && !showAddLine ? (
-          <div className="px-5 py-12 text-center text-[#B3AC9F] text-[14px]">
+          <div className="px-5 py-12 text-center text-[#A0A0A0] text-[14px]">
             Линии не найдены.
           </div>
         ) : (
@@ -384,16 +394,16 @@ export default function OpeningDetailPage({ params }: Props) {
             return (
               <div
                 key={line.id}
-                className={`grid grid-cols-[32px_minmax(0,1fr)_auto_auto] sm:grid-cols-[32px_minmax(0,1fr)_auto_auto] gap-x-5 px-5 py-[18px] items-center hover:bg-[#1A1814] transition-colors ${i > 0 ? 'border-t border-[#24221D]' : ''}`}
+                className={`grid grid-cols-[32px_minmax(0,1fr)_auto_auto] sm:grid-cols-[32px_minmax(0,1fr)_auto_auto] gap-x-5 px-5 py-[18px] items-center hover:bg-[#1A1814] transition-colors ${i > 0 ? 'border-t border-[#1E1E1E]' : ''}`}
               >
                 {/* Index */}
-                <span className="text-[13px] text-[#5A5249] text-right tabular-nums">
+                <span className="text-[13px] text-[#505050] text-right tabular-nums">
                   {i + 1}
                 </span>
 
                 {/* Moves + mastery dots */}
                 <div className="min-w-0">
-                  <p className="m-0 text-[14px] font-mono text-[#B3AC9F] leading-[1.6] break-words line-clamp-2">
+                  <p className="m-0 text-[14px] font-mono text-[#A0A0A0] leading-[1.6] break-words line-clamp-2">
                     {abbreviateMoves(line)}
                   </p>
                   <div className="flex items-center gap-[4px] mt-1">
@@ -404,9 +414,9 @@ export default function OpeningDetailPage({ params }: Props) {
                 {/* Due badge */}
                 <div className="shrink-0">
                   {isDue ? (
-                    <span className="flex items-center gap-[5px] bg-[#2A2218] border border-[#4A3E28] rounded-full px-[10px] py-[4px]">
-                      <span className="w-[5px] h-[5px] rounded-full bg-[#D6B97E]" />
-                      <span className="text-[12px] font-semibold text-[#D6B97E] whitespace-nowrap">Повторить</span>
+                    <span className="flex items-center gap-[5px] bg-[#1A1A1A] border border-[#303030] rounded-full px-[10px] py-[4px]">
+                      <span className="w-[5px] h-[5px] rounded-full bg-[#FFFFFF]" />
+                      <span className="text-[12px] font-semibold text-[#FFFFFF] whitespace-nowrap">Повторить</span>
                     </span>
                   ) : null}
                 </div>
@@ -414,7 +424,7 @@ export default function OpeningDetailPage({ params }: Props) {
                 {/* Practice link */}
                 <Link
                   href={`/openings/${id}/practice?line=${line.id}`}
-                  className="shrink-0 h-9 flex items-center border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
+                  className="shrink-0 h-9 flex items-center border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
                 >
                   Практика
                 </Link>
@@ -425,13 +435,13 @@ export default function OpeningDetailPage({ params }: Props) {
 
         {/* Add variation inline form */}
         {showAddLine && (
-          <div className={`px-5 pb-5 pt-5 flex flex-col gap-5 ${lines.length > 0 ? 'border-t border-[#24221D]' : ''}`}>
-            <h3 className="m-0 font-cormorant font-[500] text-[26px] leading-[1.1]">
+          <div className={`px-5 pb-5 pt-5 flex flex-col gap-5 ${lines.length > 0 ? 'border-t border-[#1E1E1E]' : ''}`}>
+            <h3 className="m-0 font-[500] text-[26px] leading-[1.1]">
               Добавить вариации
             </h3>
 
             <div className="flex flex-col gap-[10px]">
-              <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+              <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
                 PGN
               </label>
               <textarea
@@ -439,14 +449,14 @@ export default function OpeningDetailPage({ params }: Props) {
                 onChange={(e) => handleAddLinePgnChange(e.target.value)}
                 rows={8}
                 placeholder="Вставь PGN вариаций для добавления..."
-                className="bg-[#0D0C0A] border border-[#2A2722] rounded-[12px] px-4 py-3 text-[14px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
+                className="bg-[#050505] border border-[#262626] rounded-[12px] px-4 py-3 text-[14px] text-[#F5F5F5] placeholder-[#4A4540] outline-none focus:border-[#FFFFFF] transition-colors font-mono resize-y leading-[1.6]"
               />
               {addLineCount !== null && (
                 <div
                   className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
                     addLineCount > 0
-                      ? 'text-[#9BD3A6] bg-[#1C2D1F] border-[#3A6B44]'
-                      : 'text-[#D36B6B] bg-[#2D1C1C] border-[#6B3A3A]'
+                      ? 'text-[#D0D0D0] bg-[#141414] border-[#303030]'
+                      : 'text-[#A0A0A0] bg-[#1A1A1A] border-[#404040]'
                   }`}
                 >
                   {addLineCount > 0 ? (
@@ -469,7 +479,7 @@ export default function OpeningDetailPage({ params }: Props) {
             </div>
 
             {addLineError && (
-              <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
+              <div className="flex items-center gap-2 text-[14px] text-[#A0A0A0] bg-[#1A1A1A] border border-[#404040] rounded-[12px] px-5 py-3">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
                 </svg>
@@ -481,7 +491,7 @@ export default function OpeningDetailPage({ params }: Props) {
               <button
                 onClick={handleAddLines}
                 disabled={addingLine || !addLinePgn.trim()}
-                className="h-9 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="h-9 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {addingLine ? 'Добавление...' : 'Добавить'}
               </button>
@@ -492,7 +502,7 @@ export default function OpeningDetailPage({ params }: Props) {
                   setAddLineCount(null);
                   setAddLineError(null);
                 }}
-                className="h-9 border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-5 text-[14px] transition-colors bg-transparent cursor-pointer"
+                className="h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent cursor-pointer"
               >
                 Отмена
               </button>

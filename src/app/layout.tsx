@@ -1,20 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Manrope, Cormorant_Garamond } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import TopNav from '@/components/TopNav';
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   weight: ['400', '500', '600', '700'],
-  variable: '--font-sans',
-  display: 'swap',
-});
-
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin', 'cyrillic'],
-  weight: ['500', '600'],
-  style: ['normal', 'italic'],
-  variable: '--font-serif',
   display: 'swap',
 });
 
@@ -29,17 +20,17 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#0D0C0A',
+  themeColor: '#050505',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru">
+    <html lang="ru" className={inter.className}>
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}` }} />
       </head>
-      <body className={`${manrope.variable} ${cormorant.variable} bg-[#0D0C0A] text-[#F3EEE5] min-h-screen`}>
+      <body className="bg-[#050505] text-[#F5F5F5] min-h-screen">
         <TopNav />
         {children}
       </body>

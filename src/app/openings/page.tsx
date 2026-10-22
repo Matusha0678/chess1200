@@ -20,15 +20,15 @@ interface OpeningWithStats extends Opening {
 
 function SkeletonCard() {
   return (
-    <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-7 flex flex-col gap-4 animate-pulse">
-      <div className="w-full aspect-square bg-[#24221D] rounded-[12px]" />
+    <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-7 flex flex-col gap-4 animate-pulse">
+      <div className="w-full aspect-square bg-[#1E1E1E] rounded-[12px]" />
       <div className="flex items-center gap-2">
-        <div className="h-[22px] w-[48px] bg-[#24221D] rounded-[8px]" />
-        <div className="h-[22px] w-[80px] bg-[#24221D] rounded-full" />
+        <div className="h-[22px] w-[48px] bg-[#1E1E1E] rounded-[8px]" />
+        <div className="h-[22px] w-[80px] bg-[#1E1E1E] rounded-full" />
       </div>
-      <div className="h-[34px] w-3/4 bg-[#24221D] rounded-[8px]" />
-      <div className="h-[5px] w-full bg-[#24221D] rounded-full" />
-      <div className="h-[18px] w-1/3 bg-[#24221D] rounded-[6px]" />
+      <div className="h-[34px] w-3/4 bg-[#1E1E1E] rounded-[8px]" />
+      <div className="h-[5px] w-full bg-[#1E1E1E] rounded-full" />
+      <div className="h-[18px] w-1/3 bg-[#1E1E1E] rounded-[6px]" />
     </div>
   );
 }
@@ -119,12 +119,12 @@ export default function OpeningsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-6 mb-10">
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
+          <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#FFFFFF]">
             <span>Репертуар</span>
-            <span className="w-10 h-px bg-[#5A4C33]" />
-            <span className="text-[#B3AC9F]">Дебюты</span>
+            <span className="w-10 h-px bg-[#303030]" />
+            <span className="text-[#A0A0A0]">Дебюты</span>
           </div>
-          <h1 className="m-0 font-cormorant font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
+          <h1 className="m-0 font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
             Дебюты
           </h1>
         </div>
@@ -134,7 +134,7 @@ export default function OpeningsPage() {
             href="https://www.chess.com/explorer"
             target="_blank"
             rel="noopener noreferrer"
-            className="h-9 px-5 border border-[#34302A] text-[#E7E1D6] text-[14px] rounded-full hover:border-[#D6B97E] no-underline inline-flex items-center gap-2"
+            className="h-9 px-5 border border-[#303030] text-[#E5E5E5] text-[14px] rounded-full hover:border-[#FFFFFF] no-underline inline-flex items-center gap-2"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M7 17L17 7M8 7h9v9"/>
@@ -143,7 +143,7 @@ export default function OpeningsPage() {
           </a>
           <Link
             href="/openings/new"
-            className="h-9 flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors no-underline"
+            className="h-9 flex items-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[14px] font-semibold transition-colors no-underline"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 5v14M5 12h14" />
@@ -156,7 +156,7 @@ export default function OpeningsPage() {
       {/* Search + filter bar */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5249]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-[#505050]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
           <input
@@ -164,7 +164,7 @@ export default function OpeningsPage() {
             placeholder="Поиск дебюта..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full h-10 bg-[#15130F] border border-[#2A2722] rounded-[12px] pl-10 pr-4 text-[14px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors"
+            className="w-full h-10 bg-[#0D0D0D] border border-[#262626] rounded-[12px] pl-10 pr-4 text-[14px] text-[#F5F5F5] placeholder-[#4A4540] outline-none focus:border-[#FFFFFF] transition-colors"
           />
         </div>
         <div className="flex gap-1">
@@ -172,7 +172,7 @@ export default function OpeningsPage() {
             <button
               key={f}
               onClick={() => setColorFilter(f)}
-              className={`h-10 px-4 rounded-[12px] text-[14px] border transition-colors cursor-pointer ${colorFilter === f ? 'bg-[#D6B97E] text-[#0D0C0A] border-[#D6B97E]' : 'bg-transparent border-[#2A2722] text-[#B3AC9F] hover:border-[#D6B97E]'}`}
+              className={`h-10 px-4 rounded-[12px] text-[14px] border transition-colors cursor-pointer ${colorFilter === f ? 'bg-white text-[#050505] border-[#FFFFFF]' : 'bg-transparent border-[#262626] text-[#A0A0A0] hover:border-[#FFFFFF]'}`}
             >
               {f === 'all' ? 'Все' : f === 'white' ? '♙ Белые' : f === 'black' ? '♟ Чёрные' : '♗ Оба'}
             </button>
@@ -191,16 +191,16 @@ export default function OpeningsPage() {
         <div className="flex flex-col items-center justify-center gap-6 py-20 text-center">
           <div className="text-[64px] leading-none select-none">♟</div>
           <div className="flex flex-col gap-2">
-            <h2 className="m-0 font-cormorant font-[500] text-[40px] leading-[1.1]">
+            <h2 className="m-0 font-[500] text-[40px] leading-[1.1]">
               Нет дебютов
             </h2>
-            <p className="m-0 text-[15px] text-[#B3AC9F]">
+            <p className="m-0 text-[15px] text-[#A0A0A0]">
               Добавь свой первый дебют, чтобы начать тренировки
             </p>
           </div>
           <Link
             href="/openings/new"
-            className="h-9 flex items-center gap-2 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors no-underline"
+            className="h-9 flex items-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[14px] font-semibold transition-colors no-underline"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 5v14M5 12h14" />
@@ -210,8 +210,8 @@ export default function OpeningsPage() {
         </div>
       ) : filteredOpenings.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-          <p className="font-cormorant text-[32px] text-[#B3AC9F]">Ничего не найдено</p>
-          <p className="text-[15px] text-[#5A5249]">Попробуй изменить запрос или фильтр</p>
+          <p className="font-cormorant text-[32px] text-[#A0A0A0]">Ничего не найдено</p>
+          <p className="text-[15px] text-[#505050]">Попробуй изменить запрос или фильтр</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

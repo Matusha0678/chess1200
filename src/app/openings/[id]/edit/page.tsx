@@ -298,10 +298,10 @@ export default function EditOpeningPage({ params }: Props) {
     return (
       <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         <div className="animate-pulse flex flex-col gap-6 max-w-[760px]">
-          <div className="h-[13px] w-[180px] bg-[#24221D] rounded-full" />
-          <div className="h-[72px] w-[360px] bg-[#24221D] rounded-[16px]" />
-          <div className="h-[220px] bg-[#15130F] border border-[#2A2722] rounded-[20px]" />
-          <div className="h-[220px] bg-[#15130F] border border-[#2A2722] rounded-[20px]" />
+          <div className="h-[13px] w-[180px] bg-[#1E1E1E] rounded-full" />
+          <div className="h-[72px] w-[360px] bg-[#1E1E1E] rounded-[16px]" />
+          <div className="h-[220px] bg-[#0D0D0D] border border-[#262626] rounded-[20px]" />
+          <div className="h-[220px] bg-[#0D0D0D] border border-[#262626] rounded-[20px]" />
         </div>
       </main>
     );
@@ -314,7 +314,7 @@ export default function EditOpeningPage({ params }: Props) {
       {/* Back */}
       <Link
         href={`/openings/${id}`}
-        className="inline-flex items-center gap-2 text-[13px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline mb-6"
+        className="inline-flex items-center gap-2 text-[13px] text-[#A0A0A0] hover:text-[#F5F5F5] transition-colors no-underline mb-6"
       >
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M19 12H5M12 5l-7 7 7 7" />
@@ -324,12 +324,12 @@ export default function EditOpeningPage({ params }: Props) {
 
       {/* Header */}
       <div className="flex flex-col gap-3 mb-10">
-        <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
+        <div className="flex items-center gap-[14px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#FFFFFF]">
           <span>Репертуар</span>
-          <span className="w-10 h-px bg-[#5A4C33]" />
-          <span className="text-[#B3AC9F]">Редактировать</span>
+          <span className="w-10 h-px bg-[#303030]" />
+          <span className="text-[#A0A0A0]">Редактировать</span>
         </div>
-        <h1 className="m-0 font-cormorant font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
+        <h1 className="m-0 font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
           Редактировать дебют
         </h1>
       </div>
@@ -337,15 +337,15 @@ export default function EditOpeningPage({ params }: Props) {
       <div className="max-w-[760px] flex flex-col gap-6">
 
         {/* ── Section 1: Основное ── */}
-        <section className="bg-[#15130F] border border-[#2A2722] rounded-[20px]">
-          <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
-            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Основное</span>
+        <section className="bg-[#0D0D0D] border border-[#262626] rounded-[20px]">
+          <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#262626]">
+            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Основное</span>
           </div>
           <div className="p-7">
             <form onSubmit={handleSaveBasics} className="flex flex-col gap-6">
               {/* Name */}
               <div className="flex flex-col gap-[10px]">
-                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
                   Название дебюта
                 </label>
                 <input
@@ -358,13 +358,13 @@ export default function EditOpeningPage({ params }: Props) {
                   }}
                   placeholder="Например: Сицилианская защита, вариант Найдорфа"
                   required
-                  className="h-11 bg-[#0D0C0A] border border-[#2A2722] rounded-[12px] px-4 text-[15px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors"
+                  className="h-11 bg-[#050505] border border-[#262626] rounded-[12px] px-4 text-[15px] text-[#F5F5F5] placeholder-[#4A4540] outline-none focus:border-[#FFFFFF] transition-colors"
                 />
               </div>
 
               {/* Color */}
               <div className="flex flex-col gap-[10px]">
-                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
                   Цвет фигур
                 </label>
                 <div className="flex gap-3 flex-wrap">
@@ -378,8 +378,8 @@ export default function EditOpeningPage({ params }: Props) {
                       }}
                       className={`h-9 flex items-center gap-2 rounded-full px-5 text-[14px] font-semibold transition-all border cursor-pointer ${
                         color === opt.value
-                          ? 'bg-[#D6B97E] text-[#0D0C0A] border-[#D6B97E]'
-                          : 'bg-transparent border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E]'
+                          ? 'bg-white text-[#050505] border-[#FFFFFF]'
+                          : 'bg-transparent border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF]'
                       }`}
                     >
                       <span className="text-[15px] leading-none">{opt.icon}</span>
@@ -391,7 +391,7 @@ export default function EditOpeningPage({ params }: Props) {
 
               {/* Error / success */}
               {basicsError && (
-                <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
+                <div className="flex items-center gap-2 text-[14px] text-[#A0A0A0] bg-[#1A1A1A] border border-[#404040] rounded-[12px] px-5 py-3">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
                   </svg>
@@ -399,7 +399,7 @@ export default function EditOpeningPage({ params }: Props) {
                 </div>
               )}
               {basicsSuccess && (
-                <div className="flex items-center gap-2 text-[14px] text-[#9BD3A6] bg-[#1C2D1F] border border-[#3A6B44] rounded-[12px] px-5 py-3">
+                <div className="flex items-center gap-2 text-[14px] text-[#D0D0D0] bg-[#141414] border border-[#303030] rounded-[12px] px-5 py-3">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M20 6L9 17l-5-5" />
                   </svg>
@@ -411,7 +411,7 @@ export default function EditOpeningPage({ params }: Props) {
                 <button
                   type="submit"
                   disabled={savingBasics}
-                  className="h-9 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="h-9 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {savingBasics ? 'Сохранение...' : 'Сохранить'}
                 </button>
@@ -421,29 +421,29 @@ export default function EditOpeningPage({ params }: Props) {
         </section>
 
         {/* ── Section 2: Replace variations ── */}
-        <section className="bg-[#15130F] border border-[#2A2722] rounded-[20px]">
-          <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
-            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Заменить вариации</span>
+        <section className="bg-[#0D0D0D] border border-[#262626] rounded-[20px]">
+          <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#262626]">
+            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Заменить вариации</span>
           </div>
           <div className="p-7">
-            <p className="text-[14px] text-[#B3AC9F] mb-6 leading-[1.6]">
+            <p className="text-[14px] text-[#A0A0A0] mb-6 leading-[1.6]">
               Загрузи новый PGN — все текущие варианты и прогресс будут удалены и заменены новыми.
             </p>
 
             <form onSubmit={handleReplaceLines} className="flex flex-col gap-5">
               {/* Warning */}
-              <div className="flex items-start gap-3 bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D36B6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-[2px] shrink-0" aria-hidden="true">
+              <div className="flex items-start gap-3 bg-[#1A1A1A] border border-[#404040] rounded-[12px] px-5 py-3">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A0A0A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-[2px] shrink-0" aria-hidden="true">
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                   <path d="M12 9v4M12 17h.01" />
                 </svg>
-                <span className="text-[13px] text-[#D36B6B] leading-[1.6]">
+                <span className="text-[13px] text-[#A0A0A0] leading-[1.6]">
                   Все текущие варианты и прогресс будут удалены безвозвратно.
                 </span>
               </div>
 
               <div className="flex flex-col gap-[10px]">
-                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
                   Новый PGN
                 </label>
                 <textarea
@@ -451,14 +451,14 @@ export default function EditOpeningPage({ params }: Props) {
                   onChange={(e) => handleReplacePgnChange(e.target.value)}
                   rows={10}
                   placeholder="Вставь полный PGN для замены..."
-                  className="min-h-[200px] bg-[#0D0C0A] border border-[#2A2722] rounded-[12px] px-4 py-3 text-[14px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
+                  className="min-h-[200px] bg-[#050505] border border-[#262626] rounded-[12px] px-4 py-3 text-[14px] text-[#F5F5F5] placeholder-[#4A4540] outline-none focus:border-[#FFFFFF] transition-colors font-mono resize-y leading-[1.6]"
                 />
                 {replaceCount !== null && (
                   <div
                     className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
                       replaceCount > 0
-                        ? 'text-[#9BD3A6] bg-[#1C2D1F] border-[#3A6B44]'
-                        : 'text-[#D36B6B] bg-[#2D1C1C] border-[#6B3A3A]'
+                        ? 'text-[#D0D0D0] bg-[#141414] border-[#303030]'
+                        : 'text-[#A0A0A0] bg-[#1A1A1A] border-[#404040]'
                     }`}
                   >
                     {replaceCount > 0 ? (
@@ -481,7 +481,7 @@ export default function EditOpeningPage({ params }: Props) {
               </div>
 
               {replaceError && (
-                <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
+                <div className="flex items-center gap-2 text-[14px] text-[#A0A0A0] bg-[#1A1A1A] border border-[#404040] rounded-[12px] px-5 py-3">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
                   </svg>
@@ -489,7 +489,7 @@ export default function EditOpeningPage({ params }: Props) {
                 </div>
               )}
               {replaceSuccess && (
-                <div className="flex items-center gap-2 text-[14px] text-[#9BD3A6] bg-[#1C2D1F] border border-[#3A6B44] rounded-[12px] px-5 py-3">
+                <div className="flex items-center gap-2 text-[14px] text-[#D0D0D0] bg-[#141414] border border-[#303030] rounded-[12px] px-5 py-3">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M20 6L9 17l-5-5" />
                   </svg>
@@ -501,7 +501,7 @@ export default function EditOpeningPage({ params }: Props) {
                 <button
                   type="submit"
                   disabled={replacingLines || !replacePgn.trim()}
-                  className="h-9 border border-[#6B3A3A] text-[#D36B6B] hover:bg-[#2D1C1C] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-transparent"
+                  className="h-9 border border-[#404040] text-[#A0A0A0] hover:bg-[#1A1A1A] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-transparent"
                 >
                   {replacingLines ? 'Замена...' : 'Заменить'}
                 </button>
@@ -511,19 +511,19 @@ export default function EditOpeningPage({ params }: Props) {
         </section>
 
         {/* ── Section 3: Add variations ── */}
-        <section className="bg-[#15130F] border border-[#2A2722] rounded-[20px]">
-          <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#2A2722]">
-            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Добавить вариации</span>
+        <section className="bg-[#0D0D0D] border border-[#262626] rounded-[20px]">
+          <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#262626]">
+            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Добавить вариации</span>
           </div>
           <div className="p-7">
-            <p className="text-[14px] text-[#B3AC9F] mb-6 leading-[1.6]">
+            <p className="text-[14px] text-[#A0A0A0] mb-6 leading-[1.6]">
               Добавь новые вариации к существующим. Прогресс по текущим линиям сохранится.
-              Сейчас линий: <span className="text-[#F3EEE5] font-semibold">{opening.total_lines}</span>.
+              Сейчас линий: <span className="text-[#F5F5F5] font-semibold">{opening.total_lines}</span>.
             </p>
 
             <form onSubmit={handleAddLines} className="flex flex-col gap-5">
               <div className="flex flex-col gap-[10px]">
-                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
                   PGN для добавления
                 </label>
                 <textarea
@@ -531,14 +531,14 @@ export default function EditOpeningPage({ params }: Props) {
                   onChange={(e) => handleAddPgnChange(e.target.value)}
                   rows={10}
                   placeholder="Вставь PGN вариаций для добавления..."
-                  className="min-h-[200px] bg-[#0D0C0A] border border-[#2A2722] rounded-[12px] px-4 py-3 text-[14px] text-[#F3EEE5] placeholder-[#4A4540] outline-none focus:border-[#D6B97E] transition-colors font-mono resize-y leading-[1.6]"
+                  className="min-h-[200px] bg-[#050505] border border-[#262626] rounded-[12px] px-4 py-3 text-[14px] text-[#F5F5F5] placeholder-[#4A4540] outline-none focus:border-[#FFFFFF] transition-colors font-mono resize-y leading-[1.6]"
                 />
                 {addCount !== null && (
                   <div
                     className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
                       addCount > 0
-                        ? 'text-[#9BD3A6] bg-[#1C2D1F] border-[#3A6B44]'
-                        : 'text-[#D36B6B] bg-[#2D1C1C] border-[#6B3A3A]'
+                        ? 'text-[#D0D0D0] bg-[#141414] border-[#303030]'
+                        : 'text-[#A0A0A0] bg-[#1A1A1A] border-[#404040]'
                     }`}
                   >
                     {addCount > 0 ? (
@@ -561,7 +561,7 @@ export default function EditOpeningPage({ params }: Props) {
               </div>
 
               {addError && (
-                <div className="flex items-center gap-2 text-[14px] text-[#D36B6B] bg-[#2D1C1C] border border-[#6B3A3A] rounded-[12px] px-5 py-3">
+                <div className="flex items-center gap-2 text-[14px] text-[#A0A0A0] bg-[#1A1A1A] border border-[#404040] rounded-[12px] px-5 py-3">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
                   </svg>
@@ -569,7 +569,7 @@ export default function EditOpeningPage({ params }: Props) {
                 </div>
               )}
               {addSuccess && (
-                <div className="flex items-center gap-2 text-[14px] text-[#9BD3A6] bg-[#1C2D1F] border border-[#3A6B44] rounded-[12px] px-5 py-3">
+                <div className="flex items-center gap-2 text-[14px] text-[#D0D0D0] bg-[#141414] border border-[#303030] rounded-[12px] px-5 py-3">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M20 6L9 17l-5-5" />
                   </svg>
@@ -581,13 +581,13 @@ export default function EditOpeningPage({ params }: Props) {
                 <button
                   type="submit"
                   disabled={addingLines || !addPgn.trim()}
-                  className="h-9 bg-[#D6B97E] text-[#0D0C0A] hover:bg-[#E8D29C] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="h-9 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {addingLines ? 'Добавление...' : 'Добавить'}
                 </button>
                 <Link
                   href={`/openings/${id}`}
-                  className="h-9 flex items-center border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
+                  className="h-9 flex items-center border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
                 >
                   К дебюту
                 </Link>

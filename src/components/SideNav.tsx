@@ -30,7 +30,7 @@ export default function SideNav() {
               <span className={`text-[22px] leading-none select-none ${active ? 'text-[#EAE8E3]' : 'text-[#2A2A2A]'}`}>
                 {piece}
               </span>
-              <span className={`w-1 h-1 rounded-full bg-[#C9A96E] transition-opacity ${active ? 'opacity-100' : 'opacity-0'}`} />
+              <span className={`w-1 h-1 rounded-full bg-[#8A8A8A] transition-opacity ${active ? 'opacity-100' : 'opacity-0'}`} />
             </Link>
           );
         })}

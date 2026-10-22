@@ -1,24 +1,20 @@
 @import "tailwindcss";
 
 html, body {
-  background: #0D0C0A;
-  color: #F3EEE5;
-  font-family: var(--font-sans, 'Manrope', sans-serif);
+  background: #050505;
+  color: #F5F5F5;
+  font-family: Inter, Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 * { -webkit-tap-highlight-color: transparent; }
 
-.font-cormorant {
-  font-family: var(--font-serif, 'Cormorant Garamond', Georgia, serif);
-}
-
 @layer base {
-  a { color: #D6B97E; }
-  a:hover { color: #EBD3A2; }
+  a { color: #F5F5F5; }
+  a:hover { color: #FFFFFF; }
 }
 
 ::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: #0D0C0A; }
-::-webkit-scrollbar-thumb { background: #2A2722; border-radius: 2px; }
+::-webkit-scrollbar-track { background: #050505; }
+::-webkit-scrollbar-thumb { background: #303030; border-radius: 2px; }

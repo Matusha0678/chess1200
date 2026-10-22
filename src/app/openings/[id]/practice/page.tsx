@@ -78,7 +78,7 @@ function abbreviateLine(line: LineWithProgress, max = 10): string {
 
 function MoveList({ moves }: { moves: string[] }) {
   if (moves.length === 0) {
-    return <span className="text-[13px] text-[#5A5249]">Ходы пока не сделаны</span>;
+    return <span className="text-[13px] text-[#505050]">Ходы пока не сделаны</span>;
   }
   return (
     <div className="flex flex-col gap-[3px]">
@@ -89,9 +89,9 @@ function MoveList({ moves }: { moves: string[] }) {
         const isLastB = pairIdx * 2 + 1 === moves.length - 1;
         return (
           <div key={pairIdx} className="grid grid-cols-[24px_1fr_1fr] gap-x-2 items-center">
-            <span className="text-[12px] text-[#5A5249] text-right">{pairIdx + 1}.</span>
-            <span className={`text-[13px] font-mono px-1 py-[1px] rounded ${isLastW ? 'bg-[#2A2218] text-[#D6B97E] font-semibold' : 'text-[#B3AC9F]'}`}>{w ?? ''}</span>
-            <span className={`text-[13px] font-mono px-1 py-[1px] rounded ${isLastB ? 'bg-[#2A2218] text-[#D6B97E] font-semibold' : 'text-[#B3AC9F]'}`}>{b ?? ''}</span>
+            <span className="text-[12px] text-[#505050] text-right">{pairIdx + 1}.</span>
+            <span className={`text-[13px] font-mono px-1 py-[1px] rounded ${isLastW ? 'bg-[#1A1A1A] text-[#FFFFFF] font-semibold' : 'text-[#A0A0A0]'}`}>{w ?? ''}</span>
+            <span className={`text-[13px] font-mono px-1 py-[1px] rounded ${isLastB ? 'bg-[#1A1A1A] text-[#FFFFFF] font-semibold' : 'text-[#A0A0A0]'}`}>{b ?? ''}</span>
           </div>
         );
       })}
@@ -388,7 +388,7 @@ export default function PracticePage({ params }: Props) {
   if (loading) {
     return (
       <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6 flex flex-col items-center gap-6">
-        <div className="w-full max-w-[600px] aspect-square bg-[#15130F] border border-[#2A2722] rounded-[20px] animate-pulse" />
+        <div className="w-full max-w-[600px] aspect-square bg-[#0D0D0D] border border-[#262626] rounded-[20px] animate-pulse" />
       </main>
     );
   }
@@ -398,14 +398,14 @@ export default function PracticePage({ params }: Props) {
       <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         <Link
           href={`/openings/${id}`}
-          className="inline-flex items-center gap-2 text-[13px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline mb-6"
+          className="inline-flex items-center gap-2 text-[13px] text-[#A0A0A0] hover:text-[#F5F5F5] transition-colors no-underline mb-6"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
           Назад
         </Link>
-        <div className="text-center py-20 text-[#B3AC9F]">
+        <div className="text-center py-20 text-[#A0A0A0]">
           <p className="font-cormorant text-[32px] mb-3">Нет линий для тренировки</p>
           <p className="text-[15px]">Добавь PGN с вариациями к этому дебюту.</p>
         </div>
@@ -420,13 +420,13 @@ export default function PracticePage({ params }: Props) {
     <>
       {/* Celebration overlay — full-screen, above everything */}
       {celebrating && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0D0C0A]/90">
-          <div className="font-cormorant text-[80px] leading-none text-[#D6B97E]">✓</div>
-          <div className="font-cormorant text-[48px] font-[500] mt-4 text-[#F3EEE5]">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050505]/90">
+          <div className="font-cormorant text-[80px] leading-none text-[#FFFFFF]">✓</div>
+          <div className="font-cormorant text-[48px] font-[500] mt-4 text-[#F5F5F5]">
             Линия освоена!
           </div>
           {celebrationXP > 0 && (
-            <div className="text-[20px] text-[#9BD3A6] mt-2 font-medium">
+            <div className="text-[20px] text-[#D0D0D0] mt-2 font-medium">
               +{celebrationXP} XP
             </div>
           )}
@@ -438,7 +438,7 @@ export default function PracticePage({ params }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <Link
             href={`/openings/${id}`}
-            className="inline-flex items-center gap-2 text-[13px] text-[#B3AC9F] hover:text-[#F3EEE5] transition-colors no-underline"
+            className="inline-flex items-center gap-2 text-[13px] text-[#A0A0A0] hover:text-[#F5F5F5] transition-colors no-underline"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M19 12H5M12 5l-7 7 7 7" />
@@ -447,20 +447,20 @@ export default function PracticePage({ params }: Props) {
           </Link>
 
           <div className="flex items-center gap-3">
-            <span className="font-cormorant text-[26px] leading-none text-[#F3EEE5] font-[500]">
+            <span className="font-cormorant text-[26px] leading-none text-[#F5F5F5] font-[500]">
               {opening.name}
             </span>
-            <span className="w-px h-4 bg-[#2A2722]" />
-            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#D6B97E]">
+            <span className="w-px h-4 bg-[#262626]" />
+            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#FFFFFF]">
               Практика
             </span>
           </div>
 
           {/* Session stats inline */}
           <div className="flex items-center gap-4 text-[14px]">
-            <span className="text-[#B3AC9F]">Сессия:</span>
-            <span className="font-semibold text-[#9BD3A6]">{sessionCorrect} ✓</span>
-            <span className="font-semibold text-[#D36B6B]">{sessionIncorrect} ✗</span>
+            <span className="text-[#A0A0A0]">Сессия:</span>
+            <span className="font-semibold text-[#D0D0D0]">{sessionCorrect} ✓</span>
+            <span className="font-semibold text-[#A0A0A0]">{sessionIncorrect} ✗</span>
           </div>
         </div>
 
@@ -468,9 +468,9 @@ export default function PracticePage({ params }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-[180px_1fr_240px] xl:grid-cols-[220px_1fr_260px] gap-5 items-start">
 
           {/* Left column — move list panel */}
-          <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#2A2722]">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Сыгранные ходы</span>
+          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#262626]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Сыгранные ходы</span>
             </div>
             <div className="px-4 py-3 max-h-[500px] overflow-y-auto">
               <MoveList moves={playedMoves} />
@@ -480,7 +480,7 @@ export default function PracticePage({ params }: Props) {
           {/* Center column — board + hint button */}
           <div className="flex flex-col items-center gap-3">
             {/* Player color indicator */}
-            <div className="text-[13px] text-[#B3AC9F] self-start">
+            <div className="text-[13px] text-[#A0A0A0] self-start">
               {playerColor === 'w' ? '♙ Вы играете белыми' : '♟ Вы играете чёрными'}
             </div>
 
@@ -500,7 +500,7 @@ export default function PracticePage({ params }: Props) {
             {/* Hint button */}
             <button
               onClick={() => { setHintActive(true); setTimeout(() => setHintActive(false), 2000); }}
-              className="h-9 border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-5 text-[14px] transition-colors bg-transparent cursor-pointer flex items-center gap-2"
+              className="h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent cursor-pointer flex items-center gap-2"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
@@ -510,15 +510,15 @@ export default function PracticePage({ params }: Props) {
           </div>
 
           {/* Right column — controls */}
-          <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-5 flex flex-col gap-5">
+          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-5">
             {/* Current line */}
             <div className="flex flex-col gap-3">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
                 Текущая линия
               </span>
               {currentLine && (
                 <>
-                  <p className="m-0 text-[14px] font-mono text-[#B3AC9F] leading-relaxed break-words">
+                  <p className="m-0 text-[14px] font-mono text-[#A0A0A0] leading-relaxed break-words">
                     {lineLabel}
                   </p>
                   {/* Mastery dots */}
@@ -528,12 +528,12 @@ export default function PracticePage({ params }: Props) {
                         <span
                           key={dot}
                           className={`inline-block w-[8px] h-[8px] rounded-full transition-colors ${
-                            dot < currentLineMastery ? 'bg-[#D6B97E]' : 'bg-[#2A2722]'
+                            dot < currentLineMastery ? 'bg-[#FFFFFF]' : 'bg-[#262626]'
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-[12px] text-[#5A5249]">{currentLineMastery}/5</span>
+                    <span className="text-[12px] text-[#505050]">{currentLineMastery}/5</span>
                   </div>
                 </>
               )}
@@ -541,35 +541,35 @@ export default function PracticePage({ params }: Props) {
 
             {/* Played moves in right panel */}
             {playedMoves.length > 0 && (
-              <div className="flex flex-col gap-[3px] border-t border-[#24221D] pt-3">
-                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F] mb-2">Ходы</span>
+              <div className="flex flex-col gap-[3px] border-t border-[#1E1E1E] pt-3">
+                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0] mb-2">Ходы</span>
                 <MoveList moves={playedMoves} />
               </div>
             )}
 
-            <div className="border-t border-[#24221D]" />
+            <div className="border-t border-[#1E1E1E]" />
 
             {/* Session stats */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-[2px]">
-                <span className="text-[13px] text-[#B3AC9F]">Верно</span>
-                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#9BD3A6]">
+                <span className="text-[13px] text-[#A0A0A0]">Верно</span>
+                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">
                   {sessionCorrect}
                 </span>
               </div>
               <div className="flex flex-col gap-[2px]">
-                <span className="text-[13px] text-[#B3AC9F]">Ошибок</span>
-                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D36B6B]">
+                <span className="text-[13px] text-[#A0A0A0]">Ошибок</span>
+                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#A0A0A0]">
                   {sessionIncorrect}
                 </span>
               </div>
             </div>
 
-            <div className="text-[13px] text-[#5A5249]">
+            <div className="text-[13px] text-[#505050]">
               Линия {sessionCount + 1} из {allLines.length} {pluralLines(allLines.length)}
             </div>
 
-            <div className="border-t border-[#24221D]" />
+            <div className="border-t border-[#1E1E1E]" />
 
             {/* All lines mini-list */}
             <div className="flex flex-col gap-[6px] max-h-[200px] overflow-y-auto">
@@ -580,10 +580,10 @@ export default function PracticePage({ params }: Props) {
                   <div
                     key={line.id}
                     className={`flex items-center gap-3 px-3 py-[6px] rounded-[10px] transition-colors ${
-                      isActive ? 'bg-[#2A2218] border border-[#4A3E28]' : 'border border-transparent'
+                      isActive ? 'bg-[#1A1A1A] border border-[#303030]' : 'border border-transparent'
                     }`}
                   >
-                    <span className="text-[12px] text-[#5A5249] w-5 text-right shrink-0">
+                    <span className="text-[12px] text-[#505050] w-5 text-right shrink-0">
                       {i + 1}
                     </span>
                     <div className="flex items-center gap-[3px] shrink-0">
@@ -591,12 +591,12 @@ export default function PracticePage({ params }: Props) {
                         <span
                           key={dot}
                           className={`inline-block w-[6px] h-[6px] rounded-full ${
-                            dot < (prog?.mastery ?? 0) ? 'bg-[#D6B97E]' : 'bg-[#2A2722]'
+                            dot < (prog?.mastery ?? 0) ? 'bg-[#FFFFFF]' : 'bg-[#262626]'
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-[12px] font-mono text-[#5A5249] truncate flex-1">
+                    <span className="text-[12px] font-mono text-[#505050] truncate flex-1">
                       {line.moves.slice(0, 4).map((m, mi) => (mi === 0 ? '1.' : '') + m.san).join(' ')}
                     </span>
                   </div>
@@ -604,12 +604,12 @@ export default function PracticePage({ params }: Props) {
               })}
             </div>
 
-            <div className="border-t border-[#24221D]" />
+            <div className="border-t border-[#1E1E1E]" />
 
             {/* Next button */}
             <button
               onClick={handleSkip}
-              className="h-11 w-full border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-6 text-[15px] font-medium transition-colors bg-transparent cursor-pointer"
+              className="h-11 w-full border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-6 text-[15px] font-medium transition-colors bg-transparent cursor-pointer"
             >
               Следующая
             </button>
@@ -617,7 +617,7 @@ export default function PracticePage({ params }: Props) {
             {/* Back link */}
             <Link
               href={`/openings/${id}`}
-              className="inline-flex items-center justify-center gap-1 text-[13px] text-[#5A5249] hover:text-[#B3AC9F] transition-colors no-underline text-center"
+              className="inline-flex items-center justify-center gap-1 text-[13px] text-[#505050] hover:text-[#A0A0A0] transition-colors no-underline text-center"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M19 12H5M12 5l-7 7 7 7" />

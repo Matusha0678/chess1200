@@ -190,22 +190,22 @@ export default function ChessBoardWrapper({
 
   const feedbackBg =
     feedback === 'correct'
-      ? 'bg-[#1C2D1F] border-[#3A6B44]'
+      ? 'bg-[#141414] border-[#303030]'
       : feedback === 'wrong'
-        ? 'bg-[#2D1C1C] border-[#6B3A3A]'
-        : 'bg-[#15130F] border-[#2A2722]';
+        ? 'bg-[#1A1A1A] border-[#404040]'
+        : 'bg-[#0D0D0D] border-[#262626]';
 
   const feedbackColor =
     feedback === 'correct'
-      ? 'text-[#9BD3A6]'
+      ? 'text-[#D0D0D0]'
       : feedback === 'wrong'
-        ? 'text-[#D36B6B]'
-        : 'text-[#B3AC9F]';
+        ? 'text-[#A0A0A0]'
+        : 'text-[#A0A0A0]';
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
       {/* Board — always square, max 600px */}
-      <div className="w-full max-w-[600px] aspect-square rounded-[16px] overflow-hidden border border-[#2A2722]">
+      <div className="w-full max-w-[600px] aspect-square rounded-[16px] overflow-hidden border border-[#262626]">
         <Chessboard
           options={{
             position: fen,
@@ -214,8 +214,8 @@ export default function ChessBoardWrapper({
             squareStyles: displaySquareStyles,
             allowDragging: isPlayerTurn,
             boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
-            darkSquareStyle: { backgroundColor: '#4A3F30' },
-            lightSquareStyle: { backgroundColor: '#C9A96E' },
+            darkSquareStyle: { backgroundColor: '#3A3A3A' },
+            lightSquareStyle: { backgroundColor: '#8A8A8A' },
           }}
         />
       </div>
