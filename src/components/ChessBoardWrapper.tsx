@@ -12,6 +12,8 @@ interface Props {
   onComplete: (correct: boolean) => void;
   onMoveCorrect?: () => void;
   onMoveWrong?: () => void;
+  showHint?: boolean;
+  onMovesChange?: (moves: string[], currentMoveIndex: number) => void;
 }
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -24,6 +26,8 @@ export default function ChessBoardWrapper({
   onComplete,
   onMoveCorrect,
   onMoveWrong,
+  showHint,
+  onMovesChange,
 }: Props) {
   const [chess] = useState(() => new Chess(INITIAL_FEN));
   const [fen, setFen] = useState(INITIAL_FEN);
@@ -46,10 +50,14 @@ export default function ChessBoardWrapper({
       const move = line[index];
       chess.move({ from: move.from, to: move.to });
       setFen(chess.fen());
-      setPlayedMoves((prev) => [...prev, move.san]);
+      setPlayedMoves((prev) => {
+        const updated = [...prev, move.san];
+        onMovesChange?.(updated, index + 1);
+        return updated;
+      });
       setCurrentMoveIndex(index + 1);
     },
-    [chess, line],
+    [chess, line, onMovesChange],
   );
 
   // On mount: if the player is black, auto-play the first (white) move
@@ -79,6 +87,7 @@ export default function ChessBoardWrapper({
         setFen(chess.fen());
         setPlayedMoves(newPlayedMoves);
         const nextIndex = currentMoveIndex + 1;
+        onMovesChange?.(newPlayedMoves, nextIndex);
 
         // Flash green on the moved squares
         setFeedback('correct');
@@ -107,7 +116,11 @@ export default function ChessBoardWrapper({
             setTimeout(() => {
               chess.move({ from: nextMove.from, to: nextMove.to });
               setFen(chess.fen());
-              setPlayedMoves((prev) => [...prev, nextMove.san]);
+              setPlayedMoves((prev) => {
+                const updated = [...prev, nextMove.san];
+                onMovesChange?.(updated, nextIndex + 1);
+                return updated;
+              });
               setCurrentMoveIndex(nextIndex + 1);
               isProcessing.current = false;
             }, 500);
@@ -148,19 +161,18 @@ export default function ChessBoardWrapper({
       onComplete,
       onMoveCorrect,
       onMoveWrong,
+      onMovesChange,
     ],
   );
 
-  // Count how many player moves have been played / remain
-  const totalPlayerMoves = line.filter((m) => m.color === playerColor).length;
-  const playerMovesPlayed = line
-    .slice(0, currentMoveIndex)
-    .filter((m) => m.color === playerColor).length;
-  // Current move number: moves played + 1, capped at total
-  const currentMoveNumber = Math.min(
-    playerMovesPlayed + (currentMoveIndex < line.length ? 1 : 0),
-    totalPlayerMoves,
-  );
+  // Compute hint overlay styles
+  const displaySquareStyles = (showHint && isPlayerTurn && feedback === null && currentMoveIndex < line.length)
+    ? {
+        ...squareStyles,
+        [line[currentMoveIndex].from]: { background: 'rgba(120, 200, 120, 0.5)' },
+        [line[currentMoveIndex].to]:   { background: 'rgba(60, 180, 60, 0.75)' },
+      }
+    : squareStyles;
 
   const feedbackIcon =
     feedback === 'correct' ? '✓' : feedback === 'wrong' ? '✗' : null;
@@ -192,28 +204,14 @@ export default function ChessBoardWrapper({
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      {/* Move counter */}
-      <div className="flex items-center gap-2 w-full max-w-[480px]">
-        <span className="text-[14px] text-[#B3AC9F]">
-          Ход{' '}
-          <span className="text-[#D6B97E] font-semibold">{currentMoveNumber}</span>
-          {' / '}
-          {totalPlayerMoves}
-        </span>
-        <span className="text-[14px] text-[#5A5249]">·</span>
-        <span className="text-[14px] text-[#B3AC9F]">
-          {playerColor === 'w' ? 'Вы играете белыми' : 'Вы играете чёрными'}
-        </span>
-      </div>
-
-      {/* Board — always square, max 480px */}
-      <div className="w-full max-w-[480px] aspect-square rounded-[16px] overflow-hidden border border-[#2A2722]">
+      {/* Board — always square, max 600px */}
+      <div className="w-full max-w-[600px] aspect-square rounded-[16px] overflow-hidden border border-[#2A2722]">
         <Chessboard
           options={{
             position: fen,
             boardOrientation: playerColor === 'w' ? 'white' : 'black',
             onPieceDrop: handlePieceDrop,
-            squareStyles,
+            squareStyles: displaySquareStyles,
             allowDragging: isPlayerTurn,
             boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
             darkSquareStyle: { backgroundColor: '#4A3F30' },
@@ -224,7 +222,7 @@ export default function ChessBoardWrapper({
 
       {/* Feedback bar */}
       <div
-        className={`w-full max-w-[480px] h-11 rounded-[12px] border px-5 text-[15px] font-medium transition-all duration-300 flex items-center gap-3 ${feedbackBg} ${feedbackColor}`}
+        className={`w-full max-w-[600px] h-11 rounded-[12px] border px-5 text-[15px] font-medium transition-all duration-300 flex items-center gap-3 ${feedbackBg} ${feedbackColor}`}
       >
         {feedbackIcon && (
           <span className="text-[17px] font-bold leading-none shrink-0">{feedbackIcon}</span>
@@ -236,57 +234,6 @@ export default function ChessBoardWrapper({
         )}
         <span>{feedbackText}</span>
       </div>
-
-      {/* Move list */}
-      {playedMoves.length > 0 && (
-        <div className="w-full max-w-[480px] bg-[#15130F] border border-[#2A2722] rounded-[14px] px-5 py-4">
-          <div className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F] mb-3">
-            Сыгранные ходы
-          </div>
-          <div className="flex flex-col gap-[3px]">
-            {Array.from(
-              { length: Math.ceil(line.slice(0, currentMoveIndex).length / 2) },
-              (_, pairIdx) => {
-                const whiteIdx = pairIdx * 2;
-                const blackIdx = pairIdx * 2 + 1;
-                const whiteMove = line[whiteIdx] as ChessMove | undefined;
-                const blackMove = line[blackIdx] as ChessMove | undefined;
-                const isLastWhite = whiteIdx === currentMoveIndex - 1;
-                const isLastBlack = blackIdx === currentMoveIndex - 1;
-                const whiteIsDisplayed = whiteIdx < currentMoveIndex;
-                const blackIsDisplayed = blackIdx < currentMoveIndex;
-                return (
-                  <div key={pairIdx} className="grid grid-cols-[28px_1fr_1fr] gap-x-2 items-center">
-                    <span className="text-[13px] text-[#5A5249] text-right">{pairIdx + 1}.</span>
-                    <span
-                      className={`text-[14px] font-mono px-[6px] py-[2px] rounded ${
-                        whiteIsDisplayed
-                          ? isLastWhite
-                            ? 'bg-[#2A2218] text-[#D6B97E] font-semibold'
-                            : 'text-[#B3AC9F]'
-                          : ''
-                      }`}
-                    >
-                      {whiteIsDisplayed && whiteMove ? whiteMove.san : ''}
-                    </span>
-                    <span
-                      className={`text-[14px] font-mono px-[6px] py-[2px] rounded ${
-                        blackIsDisplayed
-                          ? isLastBlack
-                            ? 'bg-[#2A2218] text-[#D6B97E] font-semibold'
-                            : 'text-[#B3AC9F]'
-                          : ''
-                      }`}
-                    >
-                      {blackIsDisplayed && blackMove ? blackMove.san : ''}
-                    </span>
-                  </div>
-                );
-              },
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

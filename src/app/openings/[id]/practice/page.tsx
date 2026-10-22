@@ -74,6 +74,31 @@ function abbreviateLine(line: LineWithProgress, max = 10): string {
   return parts.join(' ');
 }
 
+// ── Move list renderer ────────────────────────────────────────────────────────
+
+function MoveList({ moves }: { moves: string[] }) {
+  if (moves.length === 0) {
+    return <span className="text-[13px] text-[#5A5249]">Ходы пока не сделаны</span>;
+  }
+  return (
+    <div className="flex flex-col gap-[3px]">
+      {Array.from({ length: Math.ceil(moves.length / 2) }, (_, pairIdx) => {
+        const w = moves[pairIdx * 2];
+        const b = moves[pairIdx * 2 + 1];
+        const isLastW = pairIdx * 2 === moves.length - 1;
+        const isLastB = pairIdx * 2 + 1 === moves.length - 1;
+        return (
+          <div key={pairIdx} className="grid grid-cols-[24px_1fr_1fr] gap-x-2 items-center">
+            <span className="text-[12px] text-[#5A5249] text-right">{pairIdx + 1}.</span>
+            <span className={`text-[13px] font-mono px-1 py-[1px] rounded ${isLastW ? 'bg-[#2A2218] text-[#D6B97E] font-semibold' : 'text-[#B3AC9F]'}`}>{w ?? ''}</span>
+            <span className={`text-[13px] font-mono px-1 py-[1px] rounded ${isLastB ? 'bg-[#2A2218] text-[#D6B97E] font-semibold' : 'text-[#B3AC9F]'}`}>{b ?? ''}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function PracticePage({ params }: Props) {
@@ -104,6 +129,12 @@ export default function PracticePage({ params }: Props) {
 
   // Board reset key — increment to remount ChessBoardWrapper with a fresh state
   const [boardKey, setBoardKey] = useState(0);
+
+  // Played moves for side panel
+  const [playedMoves, setPlayedMoves] = useState<string[]>([]);
+
+  // Hint state
+  const [hintActive, setHintActive] = useState(false);
 
   // ── Load data ──────────────────────────────────────────────────────────────
 
@@ -178,6 +209,8 @@ export default function PracticePage({ params }: Props) {
         setHadWrongMove(false);
         setBoardKey((k) => k + 1);
         setSessionCount((c) => c + 1);
+        setPlayedMoves([]);
+        setHintActive(false);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -355,7 +388,7 @@ export default function PracticePage({ params }: Props) {
   if (loading) {
     return (
       <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6 flex flex-col items-center gap-6">
-        <div className="w-full max-w-[480px] aspect-square bg-[#15130F] border border-[#2A2722] rounded-[20px] animate-pulse" />
+        <div className="w-full max-w-[600px] aspect-square bg-[#15130F] border border-[#2A2722] rounded-[20px] animate-pulse" />
       </main>
     );
   }
@@ -431,10 +464,27 @@ export default function PracticePage({ params }: Props) {
           </div>
         </div>
 
-        {/* Two-col layout: .main (board) + .side (sidebar) */}
-        <div className="flex flex-wrap gap-6 items-start">
-          {/* .main — board */}
-          <div className="flex-[999_1_600px] min-w-0 flex justify-center">
+        {/* 3-column grid */}
+        <div className="grid grid-cols-1 md:grid-cols-[180px_1fr_240px] xl:grid-cols-[220px_1fr_260px] gap-5 items-start">
+
+          {/* Left column — move list panel */}
+          <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#2A2722]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">Сыгранные ходы</span>
+            </div>
+            <div className="px-4 py-3 max-h-[500px] overflow-y-auto">
+              <MoveList moves={playedMoves} />
+            </div>
+          </div>
+
+          {/* Center column — board + hint button */}
+          <div className="flex flex-col items-center gap-3">
+            {/* Player color indicator */}
+            <div className="text-[13px] text-[#B3AC9F] self-start">
+              {playerColor === 'w' ? '♙ Вы играете белыми' : '♟ Вы играете чёрными'}
+            </div>
+
+            {/* Board */}
             {currentLine && (
               <ChessBoardWrapper
                 key={boardKey}
@@ -442,119 +492,138 @@ export default function PracticePage({ params }: Props) {
                 playerColor={playerColor}
                 onComplete={handleComplete}
                 onMoveWrong={handleMoveWrong}
+                showHint={hintActive}
+                onMovesChange={(moves) => setPlayedMoves(moves)}
               />
             )}
+
+            {/* Hint button */}
+            <button
+              onClick={() => { setHintActive(true); setTimeout(() => setHintActive(false), 2000); }}
+              className="h-9 border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-5 text-[14px] transition-colors bg-transparent cursor-pointer flex items-center gap-2"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+              </svg>
+              Подсказка
+            </button>
           </div>
 
-          {/* .side — sidebar card */}
-          <div className="flex-[1_1_360px] min-w-0">
-            <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-5 flex flex-col gap-5">
-              {/* Current line */}
-              <div className="flex flex-col gap-3">
-                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
-                  Текущая линия
-                </span>
-                {currentLine && (
-                  <>
-                    <p className="m-0 text-[14px] font-mono text-[#B3AC9F] leading-relaxed break-words">
-                      {lineLabel}
-                    </p>
-                    {/* Mastery dots */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-[5px]">
-                        {Array.from({ length: 5 }, (_, dot) => (
-                          <span
-                            key={dot}
-                            className={`inline-block w-[8px] h-[8px] rounded-full transition-colors ${
-                              dot < currentLineMastery ? 'bg-[#D6B97E]' : 'bg-[#2A2722]'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-[12px] text-[#5A5249]">{currentLineMastery}/5</span>
+          {/* Right column — controls */}
+          <div className="bg-[#15130F] border border-[#2A2722] rounded-[20px] p-5 flex flex-col gap-5">
+            {/* Current line */}
+            <div className="flex flex-col gap-3">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F]">
+                Текущая линия
+              </span>
+              {currentLine && (
+                <>
+                  <p className="m-0 text-[14px] font-mono text-[#B3AC9F] leading-relaxed break-words">
+                    {lineLabel}
+                  </p>
+                  {/* Mastery dots */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-[5px]">
+                      {Array.from({ length: 5 }, (_, dot) => (
+                        <span
+                          key={dot}
+                          className={`inline-block w-[8px] h-[8px] rounded-full transition-colors ${
+                            dot < currentLineMastery ? 'bg-[#D6B97E]' : 'bg-[#2A2722]'
+                          }`}
+                        />
+                      ))}
                     </div>
-                  </>
-                )}
-              </div>
-
-              <div className="border-t border-[#24221D]" />
-
-              {/* Session stats */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-[2px]">
-                  <span className="text-[13px] text-[#B3AC9F]">Верно</span>
-                  <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#9BD3A6]">
-                    {sessionCorrect}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-[2px]">
-                  <span className="text-[13px] text-[#B3AC9F]">Ошибок</span>
-                  <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D36B6B]">
-                    {sessionIncorrect}
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-[13px] text-[#5A5249]">
-                Линия {sessionCount + 1} из {allLines.length} {pluralLines(allLines.length)}
-              </div>
-
-              <div className="border-t border-[#24221D]" />
-
-              {/* All lines mini-list */}
-              <div className="flex flex-col gap-[6px] max-h-[200px] overflow-y-auto">
-                {allLines.map((line, i) => {
-                  const prog = line.line_progress?.[0] ?? null;
-                  const isActive = currentLine?.id === line.id;
-                  return (
-                    <div
-                      key={line.id}
-                      className={`flex items-center gap-3 px-3 py-[6px] rounded-[10px] transition-colors ${
-                        isActive ? 'bg-[#2A2218] border border-[#4A3E28]' : 'border border-transparent'
-                      }`}
-                    >
-                      <span className="text-[12px] text-[#5A5249] w-5 text-right shrink-0">
-                        {i + 1}
-                      </span>
-                      <div className="flex items-center gap-[3px] shrink-0">
-                        {Array.from({ length: 5 }, (_, dot) => (
-                          <span
-                            key={dot}
-                            className={`inline-block w-[6px] h-[6px] rounded-full ${
-                              dot < (prog?.mastery ?? 0) ? 'bg-[#D6B97E]' : 'bg-[#2A2722]'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-[12px] font-mono text-[#5A5249] truncate flex-1">
-                        {line.moves.slice(0, 4).map((m, mi) => (mi === 0 ? '1.' : '') + m.san).join(' ')}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="border-t border-[#24221D]" />
-
-              {/* Next button */}
-              <button
-                onClick={handleSkip}
-                className="h-11 w-full border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-6 text-[15px] font-medium transition-colors bg-transparent cursor-pointer"
-              >
-                Следующая
-              </button>
-
-              {/* Back link */}
-              <Link
-                href={`/openings/${id}`}
-                className="inline-flex items-center justify-center gap-1 text-[13px] text-[#5A5249] hover:text-[#B3AC9F] transition-colors no-underline text-center"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M19 12H5M12 5l-7 7 7 7" />
-                </svg>
-                К дебюту
-              </Link>
+                    <span className="text-[12px] text-[#5A5249]">{currentLineMastery}/5</span>
+                  </div>
+                </>
+              )}
             </div>
+
+            {/* Played moves in right panel */}
+            {playedMoves.length > 0 && (
+              <div className="flex flex-col gap-[3px] border-t border-[#24221D] pt-3">
+                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#B3AC9F] mb-2">Ходы</span>
+                <MoveList moves={playedMoves} />
+              </div>
+            )}
+
+            <div className="border-t border-[#24221D]" />
+
+            {/* Session stats */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-[2px]">
+                <span className="text-[13px] text-[#B3AC9F]">Верно</span>
+                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#9BD3A6]">
+                  {sessionCorrect}
+                </span>
+              </div>
+              <div className="flex flex-col gap-[2px]">
+                <span className="text-[13px] text-[#B3AC9F]">Ошибок</span>
+                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D36B6B]">
+                  {sessionIncorrect}
+                </span>
+              </div>
+            </div>
+
+            <div className="text-[13px] text-[#5A5249]">
+              Линия {sessionCount + 1} из {allLines.length} {pluralLines(allLines.length)}
+            </div>
+
+            <div className="border-t border-[#24221D]" />
+
+            {/* All lines mini-list */}
+            <div className="flex flex-col gap-[6px] max-h-[200px] overflow-y-auto">
+              {allLines.map((line, i) => {
+                const prog = line.line_progress?.[0] ?? null;
+                const isActive = currentLine?.id === line.id;
+                return (
+                  <div
+                    key={line.id}
+                    className={`flex items-center gap-3 px-3 py-[6px] rounded-[10px] transition-colors ${
+                      isActive ? 'bg-[#2A2218] border border-[#4A3E28]' : 'border border-transparent'
+                    }`}
+                  >
+                    <span className="text-[12px] text-[#5A5249] w-5 text-right shrink-0">
+                      {i + 1}
+                    </span>
+                    <div className="flex items-center gap-[3px] shrink-0">
+                      {Array.from({ length: 5 }, (_, dot) => (
+                        <span
+                          key={dot}
+                          className={`inline-block w-[6px] h-[6px] rounded-full ${
+                            dot < (prog?.mastery ?? 0) ? 'bg-[#D6B97E]' : 'bg-[#2A2722]'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[12px] font-mono text-[#5A5249] truncate flex-1">
+                      {line.moves.slice(0, 4).map((m, mi) => (mi === 0 ? '1.' : '') + m.san).join(' ')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-[#24221D]" />
+
+            {/* Next button */}
+            <button
+              onClick={handleSkip}
+              className="h-11 w-full border border-[#34302A] text-[#E7E1D6] hover:border-[#D6B97E] rounded-full px-6 text-[15px] font-medium transition-colors bg-transparent cursor-pointer"
+            >
+              Следующая
+            </button>
+
+            {/* Back link */}
+            <Link
+              href={`/openings/${id}`}
+              className="inline-flex items-center justify-center gap-1 text-[13px] text-[#5A5249] hover:text-[#B3AC9F] transition-colors no-underline text-center"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M19 12H5M12 5l-7 7 7 7" />
+              </svg>
+              К дебюту
+            </Link>
           </div>
         </div>
       </main>

@@ -153,6 +153,12 @@ export default function TodayPage() {
 
   const today = new Date().toISOString().split('T')[0];
 
+  // Persist magic done state to localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(`magic_day_${day}`);
+    if (saved === 'true') setMagicDone(true);
+  }, [day]);
+
   const loadProgress = useCallback(async () => {
     const { data } = await supabase.from('daily_progress').select('*').eq('day_number', day).maybeSingle();
     if (data) {
@@ -336,7 +342,11 @@ export default function TodayPage() {
             index={blocks.length + 1}
             block={magicBlock}
             done={magicDone}
-            onToggle={() => setMagicDone(d => !d)}
+            onToggle={() => {
+              const newVal = !magicDone;
+              setMagicDone(newVal);
+              localStorage.setItem(`magic_day_${day}`, String(newVal));
+            }}
             isFirst={blocks.length === 0}
           />
         </div>

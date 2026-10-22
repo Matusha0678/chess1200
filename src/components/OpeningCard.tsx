@@ -1,5 +1,9 @@
 'use client';
 
+import { Chessboard } from 'react-chessboard';
+import { Chess } from 'chess.js';
+import type { ChessMove } from '@/types/openings';
+
 interface Props {
   opening: {
     id: string;
@@ -12,6 +16,7 @@ interface Props {
   linesMastered: number;
   linesDue: number;
   onClick: () => void;
+  firstLineMoves?: ChessMove[];
 }
 
 const COLOR_ICON: Record<'white' | 'black' | 'both', string> = {
@@ -26,12 +31,21 @@ const COLOR_LABEL: Record<'white' | 'black' | 'both', string> = {
   both: 'Оба цвета',
 };
 
+function computeFen(moves: ChessMove[], maxMoves = 8): string {
+  const chess = new Chess();
+  for (let i = 0; i < Math.min(moves.length, maxMoves); i++) {
+    try { chess.move({ from: moves[i].from, to: moves[i].to }); } catch { break; }
+  }
+  return chess.fen();
+}
+
 export default function OpeningCard({
   opening,
   linesTotal,
   linesMastered,
   linesDue,
   onClick,
+  firstLineMoves,
 }: Props) {
   const progress = linesTotal > 0 ? (linesMastered / linesTotal) * 100 : 0;
 
@@ -40,6 +54,22 @@ export default function OpeningCard({
       onClick={onClick}
       className="w-full text-left bg-[#15130F] border border-[#2A2722] rounded-[20px] p-7 flex flex-col gap-4 hover:border-[#4A3E28] hover:bg-[#1B1810] transition-all duration-200 cursor-pointer group"
     >
+      {/* Mini chess board */}
+      {firstLineMoves && firstLineMoves.length > 0 && (
+        <div className="w-full aspect-square rounded-[12px] overflow-hidden border border-[#2A2722]">
+          <Chessboard
+            options={{
+              position: computeFen(firstLineMoves),
+              boardOrientation: opening.color === 'black' ? 'black' : 'white',
+              allowDragging: false,
+              boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
+              darkSquareStyle: { backgroundColor: '#4A3F30' },
+              lightSquareStyle: { backgroundColor: '#C9A96E' },
+            }}
+          />
+        </div>
+      )}
+
       {/* Header row: ECO badge + color pill */}
       <div className="flex items-center gap-2 flex-wrap">
         {opening.eco_code && (
