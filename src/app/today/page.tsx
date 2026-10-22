@@ -71,7 +71,7 @@ function BlockRow({
 }) {
   return (
     <div
-      className={`grid gap-x-5 py-[14px] px-5 items-start
+      className={`grid gap-x-5 py-6 px-5 items-center
         ${!isFirst ? 'border-t border-[#1E1E1E]' : ''}
         [grid-template-columns:48px_minmax(0,1fr)_auto_44px]
         max-[720px]:[grid-template-columns:36px_minmax(0,1fr)_44px]`}
@@ -244,17 +244,18 @@ export default function TodayPage() {
 
   /* ── JSX ── */
   return (
-    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
+    <main className="px-6 md:px-8 pt-6 pb-8">
 
       {/* ════ 3-COLUMN GRID ════ */}
-      <div className="grid gap-6
-        xl:grid-cols-[300px_1fr_300px]
-        md:grid-cols-[1fr_300px]
+      <div className="grid gap-5 items-stretch
+        xl:grid-cols-[minmax(260px,0.95fr)_minmax(0,2fr)_minmax(280px,1fr)]
+        xl:min-h-[calc(100vh-64px-56px)]
+        md:grid-cols-[1fr_minmax(280px,0.45fr)]
         grid-cols-1">
 
         {/* ── LEFT COLUMN: day info card ── */}
         <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 md:p-6 flex flex-col gap-5
-          md:col-span-1 xl:col-span-1 xl:row-span-1">
+          md:col-span-1 xl:col-span-1 xl:row-span-1 xl:h-full">
 
           {/* eyebrow */}
           <div className="flex items-center gap-3">
@@ -283,8 +284,13 @@ export default function TodayPage() {
             <span className="text-[14px] text-[#A0A0A0]">блоков · {approxTime}</span>
           </div>
 
+          {/* knight anchor */}
+          <div className="flex-1 flex items-center justify-center overflow-hidden min-h-0">
+            <span className="text-[clamp(120px,14vw,220px)] leading-none select-none text-[#FFFFFF]" style={{ opacity: 0.06 }}>♞</span>
+          </div>
+
           {/* 30-day strip */}
-          <div className="flex flex-col gap-3 mt-auto">
+          <div className="flex flex-col gap-3">
             <div className="flex justify-between text-[14px] text-[#A0A0A0]">
               <span>Месяц тренировок</span>
               <span>
@@ -312,8 +318,8 @@ export default function TodayPage() {
         </div>
 
         {/* ── CENTER COLUMN: program card ── */}
-        <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px]
-          md:col-start-1 xl:col-start-2">
+        <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] flex flex-col
+          md:col-start-1 xl:col-start-2 xl:h-full">
 
           {/* card header */}
           <div className="flex items-center justify-between px-5 py-[18px] border-b border-[#262626]">
@@ -354,7 +360,7 @@ export default function TodayPage() {
         {/* ── RIGHT COLUMN: stats sidebar ── */}
         <div className="flex flex-col gap-5
           md:col-start-2 md:row-start-1 md:row-span-2
-          xl:col-start-3 xl:row-start-1 xl:row-span-1">
+          xl:col-start-3 xl:row-start-1 xl:row-span-1 xl:h-full">
 
           {/* Rating card */}
           <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] flex flex-col">
