@@ -4,7 +4,7 @@ import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { extractLinesFromPgn } from '@/lib/pgn-tree';
+import { extractAllLines } from '@/lib/pgn-tree';
 import type { Opening, OpeningLine, LineProgress } from '@/types/openings';
 
 interface LineWithProgress extends OpeningLine {
@@ -143,8 +143,8 @@ export default function OpeningDetailPage({ params }: Props) {
 
     parseTimeoutRef.current = setTimeout(() => {
       try {
-        const parsed = extractLinesFromPgn(value);
-        setAddLineCount(parsed.length);
+        const { lines } = extractAllLines(value);
+        setAddLineCount(lines.length);
       } catch {
         setAddLineCount(0);
       }
@@ -158,7 +158,8 @@ export default function OpeningDetailPage({ params }: Props) {
 
     let newMoveLines;
     try {
-      newMoveLines = extractLinesFromPgn(addLinePgn);
+      const result = extractAllLines(addLinePgn);
+      newMoveLines = result.lines;
     } catch {
       setAddLineError('Не удалось разобрать PGN. Проверь формат.');
       return;

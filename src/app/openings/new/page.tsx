@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { extractLinesFromPgn } from '@/lib/pgn-tree';
+import { extractAllLines } from '@/lib/pgn-tree';
 import type { ChessMove } from '@/types/openings';
 
 type ColorChoice = 'white' | 'black' | 'both';
@@ -14,53 +14,6 @@ function extractEcoCode(pgn: string): string | null {
   return match ? match[1] : null;
 }
 
-function extractAllLines(text: string): { lines: ChessMove[][], gameCount: number } {
-  // Split text into individual PGN games.
-  // A new game starts when we see a '[' header line after some move content has been seen.
-  const trimmed = text.trim();
-
-  const parts: string[] = [];
-  const rawLines = trimmed.split('\n');
-  let current: string[] = [];
-  let hasMovesInCurrent = false;
-
-  for (const line of rawLines) {
-    const trimLine = line.trim();
-
-    if (trimLine.startsWith('[') && hasMovesInCurrent) {
-      // We already saw move content — this '[' starts a new game
-      parts.push(current.join('\n'));
-      current = [];
-      hasMovesInCurrent = false;
-    }
-
-    // Track whether we've seen non-header, non-blank content (i.e. moves)
-    if (trimLine !== '' && !trimLine.startsWith('[')) {
-      hasMovesInCurrent = true;
-    }
-
-    current.push(line);
-  }
-
-  if (current.length > 0) {
-    parts.push(current.join('\n'));
-  }
-
-  if (parts.length === 0) {
-    parts.push(trimmed);
-  }
-
-  const allLines: ChessMove[][] = [];
-  for (const part of parts) {
-    if (!part.trim()) continue;
-    try {
-      const extracted = extractLinesFromPgn(part);
-      allLines.push(...extracted);
-    } catch { /* skip invalid games */ }
-  }
-
-  return { lines: allLines, gameCount: parts.length };
-}
 
 export default function NewOpeningPage() {
   const router = useRouter();

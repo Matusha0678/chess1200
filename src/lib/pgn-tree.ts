@@ -281,6 +281,38 @@ function getAllLines(
  *  - Annotation glyphs (!, ?, !?, ?!, !!, ??)
  *  - Standard result tokens (1-0, 0-1, 1/2-1/2, *)
  */
+/**
+ * Split a text blob into individual PGN games, then extract all lines from
+ * every game. Supports pasting multiple games at once.
+ */
+export function extractAllLines(text: string): { lines: ChessMove[][]; gameCount: number } {
+  const trimmed = text.trim();
+  const parts: string[] = [];
+  const rawLines = trimmed.split('\n');
+  let current: string[] = [];
+  let hasMovesInCurrent = false;
+
+  for (const line of rawLines) {
+    const trimLine = line.trim();
+    if (trimLine.startsWith('[') && hasMovesInCurrent) {
+      parts.push(current.join('\n'));
+      current = [];
+      hasMovesInCurrent = false;
+    }
+    if (trimLine !== '' && !trimLine.startsWith('[')) hasMovesInCurrent = true;
+    current.push(line);
+  }
+  if (current.length > 0) parts.push(current.join('\n'));
+  if (parts.length === 0) parts.push(trimmed);
+
+  const allLines: ChessMove[][] = [];
+  for (const part of parts) {
+    if (!part.trim()) continue;
+    try { allLines.push(...extractLinesFromPgn(part)); } catch { /* skip */ }
+  }
+  return { lines: allLines, gameCount: parts.length };
+}
+
 export function extractLinesFromPgn(pgn: string): ChessMove[][] {
   // 1. Strip PGN headers (lines that start with '[')
   const moveText = pgn
