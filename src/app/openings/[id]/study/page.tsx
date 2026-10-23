@@ -58,12 +58,31 @@ export default function StudyPage({ params }: Props) {
         .select('*')
         .eq('opening_id', id)
         .order('line_index');
-      setAllLines((linesData as OpeningLine[]) ?? []);
+      const lines = (linesData as OpeningLine[]) ?? [];
+      setAllLines(lines);
+
+      // Load persisted study progress
+      const lineIds = lines.map(l => l.id);
+      if (lineIds.length > 0) {
+        const { data: studyData } = await supabase
+          .from('line_study')
+          .select('line_id')
+          .in('line_id', lineIds);
+        setStudiedLineIds(new Set((studyData ?? []).map((s: { line_id: string }) => s.line_id)));
+      }
+
       setLoading(false);
     }
     load();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  async function markLineStudied(lineId: string) {
+    await supabase.from('line_study').upsert(
+      { line_id: lineId, last_studied: new Date().toISOString() },
+      { onConflict: 'line_id' }
+    );
+  }
 
   const currentLine = allLines[currentLineIndex] ?? null;
 
@@ -83,6 +102,7 @@ export default function StudyPage({ params }: Props) {
     if (idx >= currentLine.moves.length) {
       // All moves shown — mark studied, go next
       setStudiedLineIds(prev => new Set([...prev, currentLine.id]));
+      markLineStudied(currentLine.id);
       const nextIdx = currentLineIndex + 1;
       if (nextIdx < allLines.length) {
         resetBoard(nextIdx);
@@ -136,6 +156,7 @@ export default function StudyPage({ params }: Props) {
       // Line done — auto-advance after pause
       const t = setTimeout(() => {
         setStudiedLineIds(prev => new Set([...prev, currentLine.id]));
+        markLineStudied(currentLine.id);
         const nextIdx = currentLineIndex + 1;
         if (nextIdx < allLines.length) {
           resetBoard(nextIdx);
@@ -391,6 +412,14 @@ export default function StudyPage({ params }: Props) {
               </div>
             </div>
           )}
+
+          {/* Study progress summary */}
+          <div className="px-4 py-3 border-t border-[#1E1E1E] flex items-center justify-between">
+            <span className="text-[12px] text-[#707070]">Изучено линий</span>
+            <span className="text-[13px] font-semibold text-[#F5F5F5]">
+              {studiedLineIds.size} / {allLines.length}
+            </span>
+          </div>
         </div>
       </div>
     </main>

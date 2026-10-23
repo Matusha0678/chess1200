@@ -550,24 +550,76 @@ export default function PracticePage({ params }: Props) {
             <div className="border-t border-[#1E1E1E]" />
 
             {/* Session stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-[2px]">
-                <span className="text-[13px] text-[#A0A0A0]">Верно</span>
-                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">
-                  {sessionCorrect}
-                </span>
+            {/* Session stats */}
+            <div className="flex flex-col gap-2">
+              <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Сессия</span>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-[2px]">
+                  <span className="text-[13px] text-[#A0A0A0]">Верно</span>
+                  <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">
+                    {sessionCorrect}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-[2px]">
+                  <span className="text-[13px] text-[#A0A0A0]">Ошибок</span>
+                  <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#A0A0A0]">
+                    {sessionIncorrect}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col gap-[2px]">
-                <span className="text-[13px] text-[#A0A0A0]">Ошибок</span>
-                <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#A0A0A0]">
-                  {sessionIncorrect}
-                </span>
+              <div className="text-[13px] text-[#505050]">
+                Линия {sessionCount + 1} из {allLines.length} {pluralLines(allLines.length)}
               </div>
             </div>
 
-            <div className="text-[13px] text-[#505050]">
-              Линия {sessionCount + 1} из {allLines.length} {pluralLines(allLines.length)}
-            </div>
+            {/* All-time stats — computed from loaded line_progress */}
+            {(() => {
+              const atCorrect = allLines.reduce((s, l) => s + (l.line_progress?.[0]?.correct_count ?? 0), 0);
+              const atIncorrect = allLines.reduce((s, l) => s + (l.line_progress?.[0]?.incorrect_count ?? 0), 0);
+              const atTotal = atCorrect + atIncorrect;
+              const atAccuracy = atTotal > 0 ? Math.round(atCorrect / atTotal * 100) : null;
+              const lastPracticed = allLines
+                .map(l => l.line_progress?.[0]?.last_practiced ?? null)
+                .filter(Boolean)
+                .sort()
+                .at(-1) ?? null;
+              if (atTotal === 0) return null;
+              return (
+                <div className="flex flex-col gap-2 border-t border-[#1E1E1E] pt-4">
+                  <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">За всё время</span>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <div className="flex flex-col gap-[2px]">
+                      <span className="text-[12px] text-[#A0A0A0]">Попыток</span>
+                      <span className="font-cormorant text-[26px] font-semibold leading-[1.1] text-[#F5F5F5]">{atTotal}</span>
+                    </div>
+                    <div className="flex flex-col gap-[2px]">
+                      <span className="text-[12px] text-[#A0A0A0]">Точность</span>
+                      <span className="font-cormorant text-[26px] font-semibold leading-[1.1] text-[#D0D0D0]">
+                        {atAccuracy !== null ? `${atAccuracy}%` : '—'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-[2px]">
+                      <span className="text-[12px] text-[#A0A0A0]">Верно</span>
+                      <span className="font-cormorant text-[26px] font-semibold leading-[1.1] text-[#D0D0D0]">{atCorrect}</span>
+                    </div>
+                    <div className="flex flex-col gap-[2px]">
+                      <span className="text-[12px] text-[#A0A0A0]">Ошибок</span>
+                      <span className="font-cormorant text-[26px] font-semibold leading-[1.1] text-[#A0A0A0]">{atIncorrect}</span>
+                    </div>
+                  </div>
+                  {lastPracticed && (
+                    <span className="text-[12px] text-[#505050]">
+                      Последнее: {(() => {
+                        const diffDays = Math.floor((Date.now() - new Date(lastPracticed).getTime()) / 86400000);
+                        if (diffDays === 0) return 'Сегодня';
+                        if (diffDays === 1) return 'Вчера';
+                        return `${diffDays} дн. назад`;
+                      })()}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
 
             <div className="border-t border-[#1E1E1E]" />
 

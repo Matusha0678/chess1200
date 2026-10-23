@@ -228,6 +228,26 @@ export default function OpeningDetailPage({ params }: Props) {
   const linesMastered = progress.filter((p) => p.mastery >= 4).length;
   const linesDue = progress.filter((p) => p.next_review <= now && p.mastery < 5).length;
 
+  const totalCorrect = progress.reduce((s, p) => s + (p.correct_count ?? 0), 0);
+  const totalIncorrect = progress.reduce((s, p) => s + (p.incorrect_count ?? 0), 0);
+  const totalAttempts = totalCorrect + totalIncorrect;
+  const accuracy = totalAttempts > 0 ? Math.round(totalCorrect / totalAttempts * 100) : null;
+  const lastPracticed = progress
+    .map(p => p.last_practiced)
+    .filter(Boolean)
+    .sort()
+    .at(-1) ?? null;
+
+  function fmtLastPracticed(iso: string | null): string {
+    if (!iso) return '—';
+    const diffDays = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    if (diffDays === 0) return 'Сегодня';
+    if (diffDays === 1) return 'Вчера';
+    if (diffDays < 7) return `${diffDays} дн.`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} нед.`;
+    return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  }
+
   return (
     <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
       {/* Back */}
@@ -330,7 +350,7 @@ export default function OpeningDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Stats — one card with 3 internal cols */}
+      {/* Stats — 6 cells, 3+3 */}
       <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] grid grid-cols-3 mb-6">
         <div className="p-5 flex flex-col gap-[2px]">
           <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Линий</span>
@@ -343,6 +363,24 @@ export default function OpeningDetailPage({ params }: Props) {
         <div className="p-5 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
           <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Повторить</span>
           <span className={`font-cormorant text-[32px] font-semibold leading-[1.1] ${linesDue > 0 ? 'text-[#FFFFFF]' : 'text-[#F5F5F5]'}`}>{linesDue}</span>
+        </div>
+        <div className="p-5 flex flex-col gap-[2px] border-t border-[#1E1E1E]">
+          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Попыток</span>
+          <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#F5F5F5]">
+            {totalAttempts > 0 ? totalAttempts : '—'}
+          </span>
+        </div>
+        <div className="p-5 flex flex-col gap-[2px] border-t border-l border-[#1E1E1E]">
+          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Точность</span>
+          <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">
+            {accuracy !== null ? `${accuracy}%` : '—'}
+          </span>
+        </div>
+        <div className="p-5 flex flex-col gap-[2px] border-t border-l border-[#1E1E1E]">
+          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Последнее</span>
+          <span className="font-cormorant text-[28px] font-semibold leading-[1.1] text-[#A0A0A0]">
+            {fmtLastPracticed(lastPracticed ?? null)}
+          </span>
         </div>
       </div>
 
