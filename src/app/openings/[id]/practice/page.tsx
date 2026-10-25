@@ -464,23 +464,16 @@ export default function PracticePage({ params }: Props) {
           </div>
         </div>
 
-        {/* 3-column grid */}
-        <div className="grid grid-cols-1 md:grid-cols-[180px_1fr_240px] xl:grid-cols-[220px_1fr_260px] gap-5 items-start">
+        {/* 2-column layout: board | sidebar */}
+        <div className="flex flex-col md:flex-row gap-5 items-start">
 
-          {/* Left column — move list panel */}
-          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#262626]">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Сыгранные ходы</span>
-            </div>
-            <div className="px-4 py-3 max-h-[500px] overflow-y-auto">
-              <MoveList moves={playedMoves} />
-            </div>
-          </div>
-
-          {/* Center column — board + hint button */}
-          <div className="flex flex-col items-center gap-3">
+          {/* Board column — fills viewport height like chess.com */}
+          <div
+            className="w-full flex-shrink-0 flex flex-col gap-3"
+            style={{ maxWidth: 'min(calc(100vh - 180px), 680px)' }}
+          >
             {/* Player color indicator */}
-            <div className="text-[13px] text-[#A0A0A0] self-start">
+            <div className="text-[13px] text-[#A0A0A0]">
               {playerColor === 'w' ? '♙ Вы играете белыми' : '♟ Вы играете чёрными'}
             </div>
 
@@ -509,8 +502,8 @@ export default function PracticePage({ params }: Props) {
             </button>
           </div>
 
-          {/* Right column — controls */}
-          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-5">
+          {/* Right sidebar — controls + all info */}
+          <div className="w-full md:w-[260px] xl:w-[280px] flex-shrink-0 bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-5">
             {/* Current line */}
             <div className="flex flex-col gap-3">
               <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
@@ -539,13 +532,13 @@ export default function PracticePage({ params }: Props) {
               )}
             </div>
 
-            {/* Played moves in right panel */}
-            {playedMoves.length > 0 && (
-              <div className="flex flex-col gap-[3px] border-t border-[#1E1E1E] pt-3">
-                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0] mb-2">Ходы</span>
+            {/* Played moves */}
+            <div className="flex flex-col gap-[3px] border-t border-[#1E1E1E] pt-3">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0] mb-2">Сыгранные ходы</span>
+              <div className="max-h-[180px] overflow-y-auto">
                 <MoveList moves={playedMoves} />
               </div>
-            )}
+            </div>
 
             <div className="border-t border-[#1E1E1E]" />
 

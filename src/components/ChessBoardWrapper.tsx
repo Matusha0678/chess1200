@@ -204,8 +204,8 @@ export default function ChessBoardWrapper({
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      {/* Board — always square, max 600px */}
-      <div className="w-full max-w-[600px] aspect-square rounded-[16px] overflow-hidden border border-[#262626]">
+      {/* Board — fills parent width, square */}
+      <div className="w-full aspect-square rounded-[16px] overflow-hidden border border-[#262626]">
         <Chessboard
           options={{
             position: fen,
@@ -222,7 +222,7 @@ export default function ChessBoardWrapper({
 
       {/* Feedback bar */}
       <div
-        className={`w-full max-w-[600px] h-11 rounded-[12px] border px-5 text-[15px] font-medium transition-all duration-300 flex items-center gap-3 ${feedbackBg} ${feedbackColor}`}
+        className={`w-full h-11 rounded-[12px] border px-5 text-[15px] font-medium transition-all duration-300 flex items-center gap-3 ${feedbackBg} ${feedbackColor}`}
       >
         {feedbackIcon && (
           <span className="text-[17px] font-bold leading-none shrink-0">{feedbackIcon}</span>
