@@ -136,6 +136,12 @@ export default function PracticePage({ params }: Props) {
   // Hint state
   const [hintActive, setHintActive] = useState(false);
 
+  const [boardStatus, setBoardStatus] = useState<{
+    feedback: 'correct' | 'wrong' | null;
+    isPlayerTurn: boolean;
+    isComplete: boolean;
+  }>({ feedback: null, isPlayerTurn: false, isComplete: false });
+
   // ── Load data ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -385,10 +391,39 @@ export default function PracticePage({ params }: Props) {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
+  // CSS value shared between board column width and sidebar max-height calc
+  const boardSize = 'min(calc(100vh - 213px), calc(100vw - 376px))';
+
+  // Feedback bar appearance driven by boardStatus
+  const { feedback: bf, isPlayerTurn: bpt, isComplete: bic } = boardStatus;
+  const feedbackText = bf === 'correct'
+    ? 'Верно!'
+    : bf === 'wrong'
+      ? 'Неверный ход — правильный выделен золотым'
+      : bic
+        ? 'Линия завершена!'
+        : bpt
+          ? 'Ваш ход'
+          : 'Соперник думает…';
+  const feedbackIcon = bf === 'correct' ? '✓' : bf === 'wrong' ? '✗' : null;
+  const feedbackBg = bf === 'correct'
+    ? 'bg-[#141414] border-[#303030]'
+    : bf === 'wrong'
+      ? 'bg-[#1A1A1A] border-[#404040]'
+      : 'bg-[#0D0D0D] border-[#262626]';
+  const feedbackColor = bf === 'correct'
+    ? 'text-[#D0D0D0]'
+    : bf === 'wrong'
+      ? 'text-[#A0A0A0]'
+      : 'text-[#A0A0A0]';
+
   if (loading) {
     return (
-      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6 flex flex-col items-center gap-6">
-        <div className="w-full max-w-[600px] aspect-square bg-[#0D0D0D] border border-[#262626] rounded-[20px] animate-pulse" />
+      <main className="h-[calc(100vh-64px)] overflow-hidden flex flex-col items-center justify-center px-5 pt-5 pb-6">
+        <div
+          className="bg-[#0D0D0D] border border-[#262626] rounded-[4px] animate-pulse"
+          style={{ width: boardSize, height: boardSize }}
+        />
       </main>
     );
   }
@@ -418,7 +453,7 @@ export default function PracticePage({ params }: Props) {
 
   return (
     <>
-      {/* Celebration overlay — full-screen, above everything */}
+      {/* Celebration overlay */}
       {celebrating && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050505]/90">
           <div className="font-cormorant text-[80px] leading-none text-[#FFFFFF]">✓</div>
@@ -433,242 +468,228 @@ export default function PracticePage({ params }: Props) {
         </div>
       )}
 
-      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
-        {/* Header row: back + opening name + session stats */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <Link
-            href={`/openings/${id}`}
-            className="inline-flex items-center gap-2 text-[13px] text-[#A0A0A0] hover:text-[#F5F5F5] transition-colors no-underline"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
-            Дебюты
-          </Link>
+      {/* Full-viewport container — no scroll, nav=64px already above */}
+      <main className="h-[calc(100vh-64px)] overflow-hidden flex flex-col px-5 md:px-10 pt-5 pb-6">
 
-          <div className="flex items-center gap-3">
-            <span className="font-cormorant text-[26px] leading-none text-[#F5F5F5] font-[500]">
-              {opening.name}
-            </span>
-            <span className="w-px h-4 bg-[#262626]" />
-            <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#FFFFFF]">
-              Практика
-            </span>
-          </div>
+        {/* Center group: board + sidebar */}
+        <div className="flex-1 flex items-center justify-center min-h-0">
+          <div className="flex items-start" style={{ gap: '36px' }}>
 
-          {/* Session stats inline */}
-          <div className="flex items-center gap-4 text-[14px]">
-            <span className="text-[#A0A0A0]">Сессия:</span>
-            <span className="font-semibold text-[#D0D0D0]">{sessionCorrect} ✓</span>
-            <span className="font-semibold text-[#A0A0A0]">{sessionIncorrect} ✗</span>
-          </div>
-        </div>
+            {/* ── Board column ── */}
+            <div className="flex flex-col flex-shrink-0" style={{ width: boardSize }}>
 
-        {/* 2-column layout: board | sidebar */}
-        <div className="flex flex-col md:flex-row gap-5 items-start">
+              {/* Player bar — 44px */}
+              <div className="h-11 flex items-center gap-2 text-[13px] text-[#A0A0A0]">
+                {playerColor === 'w'
+                  ? <><span className="text-[15px]">♙</span> Вы играете белыми</>
+                  : <><span className="text-[15px]">♟</span> Вы играете чёрными</>}
+              </div>
 
-          {/* Board column — fills viewport height like chess.com */}
-          <div
-            className="w-full flex-shrink-0 flex flex-col gap-3"
-            style={{ maxWidth: 'min(calc(100vh - 180px), 680px)' }}
-          >
-            {/* Player color indicator */}
-            <div className="text-[13px] text-[#A0A0A0]">
-              {playerColor === 'w' ? '♙ Вы играете белыми' : '♟ Вы играете чёрными'}
+              {/* 10px gap */}
+              <div className="h-[10px] flex-shrink-0" />
+
+              {/* Board — square, fills column width */}
+              <div
+                className="flex-shrink-0"
+                style={{ width: boardSize, height: boardSize }}
+              >
+                {currentLine && (
+                  <ChessBoardWrapper
+                    key={boardKey}
+                    line={currentLine.moves as ChessMove[]}
+                    playerColor={playerColor}
+                    onComplete={handleComplete}
+                    onMoveWrong={handleMoveWrong}
+                    showHint={hintActive}
+                    onMovesChange={(moves) => setPlayedMoves(moves)}
+                    onStatusChange={setBoardStatus}
+                  />
+                )}
+              </div>
+
+              {/* Feedback bar — 44px */}
+              <div
+                className={`h-11 flex-shrink-0 rounded-[12px] border px-5 text-[15px] font-medium transition-all duration-300 flex items-center gap-3 ${feedbackBg} ${feedbackColor}`}
+              >
+                {feedbackIcon
+                  ? <span className="text-[17px] font-bold leading-none shrink-0">{feedbackIcon}</span>
+                  : <span className="text-[17px] leading-none shrink-0 opacity-60">
+                      {bpt ? '○' : bic ? '✓' : '…'}
+                    </span>
+                }
+                <span>{feedbackText}</span>
+              </div>
             </div>
 
-            {/* Board */}
-            {currentLine && (
-              <ChessBoardWrapper
-                key={boardKey}
-                line={currentLine.moves as ChessMove[]}
-                playerColor={playerColor}
-                onComplete={handleComplete}
-                onMoveWrong={handleMoveWrong}
-                showHint={hintActive}
-                onMovesChange={(moves) => setPlayedMoves(moves)}
-              />
-            )}
-
-            {/* Hint button */}
-            <button
-              onClick={() => { setHintActive(true); setTimeout(() => setHintActive(false), 2000); }}
-              className="h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent cursor-pointer flex items-center gap-2"
+            {/* ── Right sidebar ── */}
+            <div
+              className="flex-shrink-0 w-[260px] bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-4 overflow-y-auto"
+              style={{ maxHeight: `calc(${boardSize} + 98px)` }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
-              </svg>
-              Подсказка
-            </button>
-          </div>
+              {/* Opening name + back link */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-1">
+                  <span className="font-cormorant text-[22px] leading-none text-[#F5F5F5] font-[500]">
+                    {opening.name}
+                  </span>
+                  <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-[#505050]">
+                    Практика
+                  </span>
+                </div>
+                <Link
+                  href={`/openings/${id}`}
+                  className="shrink-0 h-8 flex items-center gap-1 text-[12px] text-[#505050] hover:text-[#A0A0A0] transition-colors no-underline"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M19 12H5M12 5l-7 7 7 7" />
+                  </svg>
+                  Назад
+                </Link>
+              </div>
 
-          {/* Right sidebar — controls + all info */}
-          <div className="w-full md:w-[260px] xl:w-[280px] flex-shrink-0 bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-5">
-            {/* Current line */}
-            <div className="flex flex-col gap-3">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
-                Текущая линия
-              </span>
-              {currentLine && (
-                <>
-                  <p className="m-0 text-[14px] font-mono text-[#A0A0A0] leading-relaxed break-words">
-                    {lineLabel}
-                  </p>
-                  {/* Mastery dots */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-[5px]">
-                      {Array.from({ length: 5 }, (_, dot) => (
-                        <span
-                          key={dot}
-                          className={`inline-block w-[8px] h-[8px] rounded-full transition-colors ${
-                            dot < currentLineMastery ? 'bg-[#FFFFFF]' : 'bg-[#262626]'
-                          }`}
-                        />
-                      ))}
+              {/* Session counter */}
+              <div className="flex items-center gap-3 text-[13px]">
+                <span className="text-[#505050]">Сессия</span>
+                <span className="font-semibold text-[#D0D0D0]">{sessionCorrect} ✓</span>
+                <span className="font-semibold text-[#A0A0A0]">{sessionIncorrect} ✗</span>
+                <span className="text-[#505050] ml-auto">{sessionCount + 1} / {allLines.length}</span>
+              </div>
+
+              <div className="border-t border-[#1E1E1E]" />
+
+              {/* Current line + mastery */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-[#505050]">
+                  Текущая линия
+                </span>
+                {currentLine && (
+                  <>
+                    <p className="m-0 text-[13px] font-mono text-[#A0A0A0] leading-relaxed break-words">
+                      {lineLabel}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-[5px]">
+                        {Array.from({ length: 5 }, (_, dot) => (
+                          <span
+                            key={dot}
+                            className={`inline-block w-[8px] h-[8px] rounded-full transition-colors ${
+                              dot < currentLineMastery ? 'bg-[#FFFFFF]' : 'bg-[#262626]'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[12px] text-[#505050]">{currentLineMastery}/5</span>
                     </div>
-                    <span className="text-[12px] text-[#505050]">{currentLineMastery}/5</span>
-                  </div>
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
 
-            {/* Played moves */}
-            <div className="flex flex-col gap-[3px] border-t border-[#1E1E1E] pt-3">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0] mb-2">Сыгранные ходы</span>
-              <div className="max-h-[180px] overflow-y-auto">
+              {/* Hint button */}
+              <button
+                onClick={() => { setHintActive(true); setTimeout(() => setHintActive(false), 2000); }}
+                className="h-9 w-full border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer flex items-center justify-center gap-2"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+                </svg>
+                Подсказка
+              </button>
+
+              <div className="border-t border-[#1E1E1E]" />
+
+              {/* Played moves */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-[#505050]">Ходы</span>
                 <MoveList moves={playedMoves} />
               </div>
-            </div>
 
-            <div className="border-t border-[#1E1E1E]" />
+              <div className="border-t border-[#1E1E1E]" />
 
-            {/* Session stats */}
-            {/* Session stats */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Сессия</span>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-[2px]">
-                  <span className="text-[13px] text-[#A0A0A0]">Верно</span>
-                  <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">
-                    {sessionCorrect}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-[2px]">
-                  <span className="text-[13px] text-[#A0A0A0]">Ошибок</span>
-                  <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#A0A0A0]">
-                    {sessionIncorrect}
-                  </span>
-                </div>
-              </div>
-              <div className="text-[13px] text-[#505050]">
-                Линия {sessionCount + 1} из {allLines.length} {pluralLines(allLines.length)}
-              </div>
-            </div>
-
-            {/* All-time stats — computed from loaded line_progress */}
-            {(() => {
-              const atCorrect = allLines.reduce((s, l) => s + (l.line_progress?.[0]?.correct_count ?? 0), 0);
-              const atIncorrect = allLines.reduce((s, l) => s + (l.line_progress?.[0]?.incorrect_count ?? 0), 0);
-              const atTotal = atCorrect + atIncorrect;
-              const atAccuracy = atTotal > 0 ? Math.round(atCorrect / atTotal * 100) : null;
-              const lastPracticed = allLines
-                .map(l => l.line_progress?.[0]?.last_practiced ?? null)
-                .filter(Boolean)
-                .sort()
-                .at(-1) ?? null;
-              if (atTotal === 0) return null;
-              return (
-                <div className="flex flex-col gap-2 border-t border-[#1E1E1E] pt-4">
-                  <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">За всё время</span>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                    <div className="flex flex-col gap-[2px]">
-                      <span className="text-[12px] text-[#A0A0A0]">Попыток</span>
-                      <span className="font-cormorant text-[26px] font-semibold leading-[1.1] text-[#F5F5F5]">{atTotal}</span>
-                    </div>
-                    <div className="flex flex-col gap-[2px]">
-                      <span className="text-[12px] text-[#A0A0A0]">Точность</span>
-                      <span className="font-cormorant text-[26px] font-semibold leading-[1.1] text-[#D0D0D0]">
-                        {atAccuracy !== null ? `${atAccuracy}%` : '—'}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-[2px]">
-                      <span className="text-[12px] text-[#A0A0A0]">Верно</span>
-                      <span className="font-cormorant text-[26px] font-semibold leading-[1.1] text-[#D0D0D0]">{atCorrect}</span>
-                    </div>
-                    <div className="flex flex-col gap-[2px]">
-                      <span className="text-[12px] text-[#A0A0A0]">Ошибок</span>
-                      <span className="font-cormorant text-[26px] font-semibold leading-[1.1] text-[#A0A0A0]">{atIncorrect}</span>
-                    </div>
-                  </div>
-                  {lastPracticed && (
-                    <span className="text-[12px] text-[#505050]">
-                      Последнее: {(() => {
-                        const diffDays = Math.floor((Date.now() - new Date(lastPracticed).getTime()) / 86400000);
-                        if (diffDays === 0) return 'Сегодня';
-                        if (diffDays === 1) return 'Вчера';
-                        return `${diffDays} дн. назад`;
-                      })()}
-                    </span>
-                  )}
-                </div>
-              );
-            })()}
-
-            <div className="border-t border-[#1E1E1E]" />
-
-            {/* All lines mini-list */}
-            <div className="flex flex-col gap-[6px] max-h-[200px] overflow-y-auto">
-              {allLines.map((line, i) => {
-                const prog = line.line_progress?.[0] ?? null;
-                const isActive = currentLine?.id === line.id;
+              {/* All-time stats */}
+              {(() => {
+                const atCorrect = allLines.reduce((s, l) => s + (l.line_progress?.[0]?.correct_count ?? 0), 0);
+                const atIncorrect = allLines.reduce((s, l) => s + (l.line_progress?.[0]?.incorrect_count ?? 0), 0);
+                const atTotal = atCorrect + atIncorrect;
+                const atAccuracy = atTotal > 0 ? Math.round(atCorrect / atTotal * 100) : null;
+                const lastPracticed = allLines
+                  .map(l => l.line_progress?.[0]?.last_practiced ?? null)
+                  .filter(Boolean)
+                  .sort()
+                  .at(-1) ?? null;
+                if (atTotal === 0) return null;
                 return (
-                  <div
-                    key={line.id}
-                    className={`flex items-center gap-3 px-3 py-[6px] rounded-[10px] transition-colors ${
-                      isActive ? 'bg-[#1A1A1A] border border-[#303030]' : 'border border-transparent'
-                    }`}
-                  >
-                    <span className="text-[12px] text-[#505050] w-5 text-right shrink-0">
-                      {i + 1}
-                    </span>
-                    <div className="flex items-center gap-[3px] shrink-0">
-                      {Array.from({ length: 5 }, (_, dot) => (
-                        <span
-                          key={dot}
-                          className={`inline-block w-[6px] h-[6px] rounded-full ${
-                            dot < (prog?.mastery ?? 0) ? 'bg-[#FFFFFF]' : 'bg-[#262626]'
-                          }`}
-                        />
-                      ))}
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">За всё время</span>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      <div className="flex flex-col gap-[1px]">
+                        <span className="text-[11px] text-[#505050]">Попыток</span>
+                        <span className="font-cormorant text-[22px] font-semibold leading-[1.1] text-[#F5F5F5]">{atTotal}</span>
+                      </div>
+                      <div className="flex flex-col gap-[1px]">
+                        <span className="text-[11px] text-[#505050]">Точность</span>
+                        <span className="font-cormorant text-[22px] font-semibold leading-[1.1] text-[#D0D0D0]">
+                          {atAccuracy !== null ? `${atAccuracy}%` : '—'}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[12px] font-mono text-[#505050] truncate flex-1">
-                      {line.moves.slice(0, 4).map((m, mi) => (mi === 0 ? '1.' : '') + m.san).join(' ')}
-                    </span>
+                    {lastPracticed && (
+                      <span className="text-[11px] text-[#505050]">
+                        Последнее: {(() => {
+                          const diffDays = Math.floor((Date.now() - new Date(lastPracticed).getTime()) / 86400000);
+                          if (diffDays === 0) return 'Сегодня';
+                          if (diffDays === 1) return 'Вчера';
+                          return `${diffDays} дн. назад`;
+                        })()}
+                      </span>
+                    )}
                   </div>
                 );
-              })}
+              })()}
+
+              <div className="border-t border-[#1E1E1E]" />
+
+              {/* All lines mini-list */}
+              <div className="flex flex-col gap-[5px]">
+                {allLines.map((line, i) => {
+                  const prog = line.line_progress?.[0] ?? null;
+                  const isActive = currentLine?.id === line.id;
+                  return (
+                    <div
+                      key={line.id}
+                      className={`flex items-center gap-2 px-2 py-[5px] rounded-[8px] transition-colors ${
+                        isActive ? 'bg-[#1A1A1A] border border-[#303030]' : 'border border-transparent'
+                      }`}
+                    >
+                      <span className="text-[11px] text-[#505050] w-4 text-right shrink-0">{i + 1}</span>
+                      <div className="flex items-center gap-[3px] shrink-0">
+                        {Array.from({ length: 5 }, (_, dot) => (
+                          <span
+                            key={dot}
+                            className={`inline-block w-[5px] h-[5px] rounded-full ${
+                              dot < (prog?.mastery ?? 0) ? 'bg-[#FFFFFF]' : 'bg-[#262626]'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[11px] font-mono text-[#505050] truncate flex-1">
+                        {line.moves.slice(0, 4).map((m, mi) => (mi === 0 ? '1.' : '') + m.san).join(' ')}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="border-t border-[#1E1E1E]" />
+
+              {/* Next button */}
+              <button
+                onClick={handleSkip}
+                className="h-10 w-full border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-6 text-[14px] font-medium transition-colors bg-transparent cursor-pointer"
+              >
+                Следующая
+              </button>
             </div>
 
-            <div className="border-t border-[#1E1E1E]" />
-
-            {/* Next button */}
-            <button
-              onClick={handleSkip}
-              className="h-11 w-full border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-6 text-[15px] font-medium transition-colors bg-transparent cursor-pointer"
-            >
-              Следующая
-            </button>
-
-            {/* Back link */}
-            <Link
-              href={`/openings/${id}`}
-              className="inline-flex items-center justify-center gap-1 text-[13px] text-[#505050] hover:text-[#A0A0A0] transition-colors no-underline text-center"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M19 12H5M12 5l-7 7 7 7" />
-              </svg>
-              К дебюту
-            </Link>
           </div>
         </div>
       </main>

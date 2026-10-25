@@ -14,6 +14,11 @@ interface Props {
   onMoveWrong?: () => void;
   showHint?: boolean;
   onMovesChange?: (moves: string[], currentMoveIndex: number) => void;
+  onStatusChange?: (status: {
+    feedback: 'correct' | 'wrong' | null;
+    isPlayerTurn: boolean;
+    isComplete: boolean;
+  }) => void;
 }
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -28,6 +33,7 @@ export default function ChessBoardWrapper({
   onMoveWrong,
   showHint,
   onMovesChange,
+  onStatusChange,
 }: Props) {
   const [chess] = useState(() => new Chess(INITIAL_FEN));
   const [fen, setFen] = useState(INITIAL_FEN);
@@ -37,13 +43,17 @@ export default function ChessBoardWrapper({
   const [playedMoves, setPlayedMoves] = useState<string[]>([]);
   const isProcessing = useRef(false);
 
-  // Whether it is currently the player's turn to move
   const isPlayerTurn =
     feedback === null &&
     currentMoveIndex < line.length &&
     line[currentMoveIndex].color === playerColor;
 
-  // Auto-play a move from the line at the given index
+  const isComplete = currentMoveIndex >= line.length;
+
+  useEffect(() => {
+    onStatusChange?.({ feedback, isPlayerTurn, isComplete });
+  }, [feedback, isPlayerTurn, isComplete, onStatusChange]);
+
   const autoPlayMove = useCallback(
     (index: number) => {
       if (index >= line.length) return;
@@ -60,7 +70,6 @@ export default function ChessBoardWrapper({
     [chess, line, onMovesChange],
   );
 
-  // On mount: if the player is black, auto-play the first (white) move
   useEffect(() => {
     if (playerColor === 'b' && line.length > 0 && line[0].color === 'w') {
       const timer = setTimeout(() => autoPlayMove(0), 400);
@@ -89,7 +98,6 @@ export default function ChessBoardWrapper({
         const nextIndex = currentMoveIndex + 1;
         onMovesChange?.(newPlayedMoves, nextIndex);
 
-        // Flash green on the moved squares
         setFeedback('correct');
         setSquareStyles({
           [sourceSquare]: { background: 'rgba(155, 211, 166, 0.45)' },
@@ -110,7 +118,6 @@ export default function ChessBoardWrapper({
 
           setCurrentMoveIndex(nextIndex);
 
-          // Auto-play opponent's response if the next move belongs to opponent
           const nextMove = line[nextIndex];
           if (nextMove && nextMove.color !== playerColor) {
             setTimeout(() => {
@@ -131,7 +138,6 @@ export default function ChessBoardWrapper({
 
         return true;
       } else {
-        // Wrong move — flash red, highlight the correct squares in gold, then reset
         isProcessing.current = true;
         setFeedback('wrong');
         setSquareStyles({
@@ -165,75 +171,34 @@ export default function ChessBoardWrapper({
     ],
   );
 
-  // Compute hint overlay styles
-  const displaySquareStyles = (showHint && isPlayerTurn && feedback === null && currentMoveIndex < line.length)
-    ? {
-        ...squareStyles,
-        [line[currentMoveIndex].from]: { background: 'rgba(120, 200, 120, 0.5)' },
-        [line[currentMoveIndex].to]:   { background: 'rgba(60, 180, 60, 0.75)' },
-      }
-    : squareStyles;
-
-  const feedbackIcon =
-    feedback === 'correct' ? '✓' : feedback === 'wrong' ? '✗' : null;
-
-  const feedbackText =
-    feedback === 'correct'
-      ? 'Верно!'
-      : feedback === 'wrong'
-        ? 'Неверный ход — правильный выделен золотым'
-        : isPlayerTurn
-          ? 'Ваш ход'
-          : currentMoveIndex >= line.length
-            ? 'Линия завершена!'
-            : 'Соперник думает…';
-
-  const feedbackBg =
-    feedback === 'correct'
-      ? 'bg-[#141414] border-[#303030]'
-      : feedback === 'wrong'
-        ? 'bg-[#1A1A1A] border-[#404040]'
-        : 'bg-[#0D0D0D] border-[#262626]';
-
-  const feedbackColor =
-    feedback === 'correct'
-      ? 'text-[#D0D0D0]'
-      : feedback === 'wrong'
-        ? 'text-[#A0A0A0]'
-        : 'text-[#A0A0A0]';
+  const displaySquareStyles =
+    showHint && isPlayerTurn && feedback === null && currentMoveIndex < line.length
+      ? {
+          ...squareStyles,
+          [line[currentMoveIndex].from]: { background: 'rgba(120, 200, 120, 0.5)' },
+          [line[currentMoveIndex].to]: { background: 'rgba(60, 180, 60, 0.75)' },
+        }
+      : squareStyles;
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
-      {/* Board — fills parent width, square */}
-      <div className="w-full aspect-square rounded-[16px] overflow-hidden border border-[#262626]">
-        <Chessboard
-          options={{
-            position: fen,
-            boardOrientation: playerColor === 'w' ? 'white' : 'black',
-            onPieceDrop: handlePieceDrop,
-            squareStyles: displaySquareStyles,
-            allowDragging: isPlayerTurn,
-            boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
-            darkSquareStyle: { backgroundColor: '#3A3A3A' },
-            lightSquareStyle: { backgroundColor: '#8A8A8A' },
-          }}
-        />
-      </div>
-
-      {/* Feedback bar */}
-      <div
-        className={`w-full h-11 rounded-[12px] border px-5 text-[15px] font-medium transition-all duration-300 flex items-center gap-3 ${feedbackBg} ${feedbackColor}`}
-      >
-        {feedbackIcon && (
-          <span className="text-[17px] font-bold leading-none shrink-0">{feedbackIcon}</span>
-        )}
-        {!feedbackIcon && (
-          <span className="text-[17px] leading-none shrink-0 opacity-60">
-            {isPlayerTurn ? '○' : currentMoveIndex >= line.length ? '✓' : '…'}
-          </span>
-        )}
-        <span>{feedbackText}</span>
-      </div>
+    <div className="w-full h-full overflow-hidden border border-[#262626]" style={{ borderRadius: '4px' }}>
+      <Chessboard
+        options={{
+          position: fen,
+          boardOrientation: playerColor === 'w' ? 'white' : 'black',
+          onPieceDrop: handlePieceDrop,
+          squareStyles: displaySquareStyles,
+          allowDragging: isPlayerTurn,
+          boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
+          darkSquareStyle: { backgroundColor: '#3A3A3A' },
+          lightSquareStyle: { backgroundColor: '#8A8A8A' },
+          showNotation: true,
+          darkSquareNotationStyle: { color: '#C8C8C8' },
+          lightSquareNotationStyle: { color: '#505050' },
+          alphaNotationStyle: { fontSize: '11px', fontWeight: '700' },
+          numericNotationStyle: { fontSize: '11px', fontWeight: '700' },
+        }}
+      />
     </div>
   );
 }
