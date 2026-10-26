@@ -307,6 +307,15 @@ export default function PracticePage({ params }: Props) {
         }),
       );
 
+      // Log this attempt (fire-and-forget)
+      supabase.from('opening_practice_log').insert({
+        opening_id: line.opening_id,
+        line_id: line.id,
+        practiced_at: now,
+        correct: true,
+        mastery_after: newMastery,
+      }).then(() => {});
+
       return xpEarned;
     } else {
       // Wrong — demote mastery
@@ -357,6 +366,15 @@ export default function PracticePage({ params }: Props) {
           return { ...l, line_progress: [updatedProg] };
         }),
       );
+
+      // Log this attempt (fire-and-forget)
+      supabase.from('opening_practice_log').insert({
+        opening_id: line.opening_id,
+        line_id: line.id,
+        practiced_at: now,
+        correct: false,
+        mastery_after: newMastery,
+      }).then(() => {});
 
       return 0;
     }
