@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Chess } from 'chess.js';
@@ -126,7 +126,7 @@ export default function StudyPage({ params }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLine, currentMoveIndex, currentLineIndex, allLines.length, chess]);
 
-  function handlePrev() {
+  const handlePrev = useCallback(() => {
     if (currentMoveIndex === 0) return;
     const targetIdx = currentMoveIndex - 1;
     chess.reset();
@@ -146,7 +146,26 @@ export default function StudyPage({ params }: Props) {
     } else {
       setHighlightSquares({});
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMoveIndex, currentLine, chess]);
+
+  // ── Keyboard navigation ────────────────────────────────────────────────────
+
+  // Keep stable refs so the keydown listener doesn't need re-registration
+  const handleNextRef = useRef(handleNext);
+  const handlePrevRef = useRef(handlePrev);
+  useEffect(() => { handleNextRef.current = handleNext; }, [handleNext]);
+  useEffect(() => { handlePrevRef.current = handlePrev; }, [handlePrev]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); handleNextRef.current(); }
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); handlePrevRef.current(); }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   // Auto-play
   useEffect(() => {

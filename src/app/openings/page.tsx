@@ -108,11 +108,17 @@ export default function OpeningsPage() {
     loadOpenings();
   }, []);
 
-  const filteredOpenings = openings.filter(o => {
-    const matchesSearch = o.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesColor = colorFilter === 'all' || o.color === colorFilter;
-    return matchesSearch && matchesColor;
-  });
+  const filteredOpenings = openings
+    .filter(o => {
+      const matchesSearch = o.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesColor = colorFilter === 'all' || o.color === colorFilter;
+      return matchesSearch && matchesColor;
+    })
+    .sort((a, b) => {
+      // Openings with due lines come first; ties broken by total lines
+      if (b.stats.linesDue !== a.stats.linesDue) return b.stats.linesDue - a.stats.linesDue;
+      return b.stats.linesTotal - a.stats.linesTotal;
+    });
 
   return (
     <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">

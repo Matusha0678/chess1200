@@ -148,11 +148,36 @@ export default function ChessBoardWrapper({
         });
         onMoveWrong?.();
 
+        // Capture closure values for the replay — onComplete(false) branch
+        // does not read hadWrongMove so stale closure is safe here
+        const capturedLine = line;
+        const capturedChess = chess;
+        const capturedOnComplete = onComplete;
+        const replayStartIndex = currentMoveIndex;
+
+        function replayLine(index: number) {
+          if (index >= capturedLine.length) {
+            isProcessing.current = false;
+            capturedOnComplete(false);
+            return;
+          }
+          const move = capturedLine[index];
+          capturedChess.move({ from: move.from, to: move.to });
+          setFen(capturedChess.fen());
+          setPlayedMoves((prev) => {
+            const updated = [...prev, move.san];
+            onMovesChange?.(updated, index + 1);
+            return updated;
+          });
+          setCurrentMoveIndex(index + 1);
+          setTimeout(() => replayLine(index + 1), 420);
+        }
+
         setTimeout(() => {
           setFeedback(null);
           setSquareStyles({});
-          isProcessing.current = false;
-        }, 1500);
+          replayLine(replayStartIndex);
+        }, 1200);
 
         return false;
       }

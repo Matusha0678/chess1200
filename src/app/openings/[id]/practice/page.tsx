@@ -125,9 +125,10 @@ export default function PracticePage({ params }: Props) {
   // Per-line tracking
   const [hadWrongMove, setHadWrongMove] = useState(false);
 
-  // Celebration overlay
+  // Celebration / feedback overlay
   const [celebrating, setCelebrating] = useState(false);
   const [celebrationXP, setCelebrationXP] = useState(0);
+  const [celebrationCorrect, setCelebrationCorrect] = useState(true);
 
   // Player color for current line
   const [playerColor, setPlayerColor] = useState<'w' | 'b'>('w');
@@ -371,6 +372,7 @@ export default function PracticePage({ params }: Props) {
         setSessionCorrect((c) => c + 1);
         const xp = await updateProgress(currentLine, true);
         setCelebrationXP(xp);
+        setCelebrationCorrect(true);
         setCelebrating(true);
         checkAndAwardBadges().catch(() => {});
 
@@ -384,6 +386,16 @@ export default function PracticePage({ params }: Props) {
       } else {
         setSessionIncorrect((c) => c + 1);
         await updateProgress(currentLine, false);
+        setCelebrationCorrect(false);
+        setCelebrating(true);
+
+        setTimeout(() => {
+          setCelebrating(false);
+          setAllLines((latest) => {
+            pickNextLine(latest);
+            return latest;
+          });
+        }, 1600);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -400,6 +412,27 @@ export default function PracticePage({ params }: Props) {
       return latest;
     });
   }
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'h' || e.key === 'H') {
+        setHintActive(true);
+        setTimeout(() => setHintActive(false), 2000);
+      }
+      if ((e.key === 'n' || e.key === 'N' || e.key === ' ') && !celebrating) {
+        e.preventDefault();
+        setAllLines((latest) => {
+          pickNextLine(latest);
+          return latest;
+        });
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [pickNextLine, celebrating]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -465,17 +498,28 @@ export default function PracticePage({ params }: Props) {
 
   return (
     <>
-      {/* Celebration overlay */}
+      {/* Overlay: correct or wrong completion */}
       {celebrating && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050505]/90">
-          <div className="font-cormorant text-[80px] leading-none text-[#FFFFFF]">✓</div>
-          <div className="font-cormorant text-[48px] font-[500] mt-4 text-[#F5F5F5]">
-            Линия освоена!
-          </div>
-          {celebrationXP > 0 && (
-            <div className="text-[20px] text-[#D0D0D0] mt-2 font-medium">
-              +{celebrationXP} XP
-            </div>
+          {celebrationCorrect ? (
+            <>
+              <div className="font-cormorant text-[80px] leading-none text-[#FFFFFF]">✓</div>
+              <div className="font-cormorant text-[48px] font-[500] mt-4 text-[#F5F5F5]">
+                Линия освоена!
+              </div>
+              {celebrationXP > 0 && (
+                <div className="text-[20px] text-[#D0D0D0] mt-2 font-medium">
+                  +{celebrationXP} XP
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="font-cormorant text-[80px] leading-none text-[#686868]">○</div>
+              <div className="font-cormorant text-[48px] font-[500] mt-4 text-[#A0A0A0]">
+                Запомни линию
+              </div>
+            </>
           )}
         </div>
       )}
@@ -606,6 +650,10 @@ export default function PracticePage({ params }: Props) {
                 </svg>
                 Подсказка
               </button>
+              <div className="flex justify-between text-[11px] text-[#404040]">
+                <span>H — подсказка</span>
+                <span>N / Space — следующая</span>
+              </div>
 
               <div className="border-t border-[#1E1E1E]" />
 
