@@ -72,7 +72,7 @@ export default function ChessBoardWrapper({
 
   useEffect(() => {
     if (playerColor === 'b' && line.length > 0 && line[0].color === 'w') {
-      const timer = setTimeout(() => autoPlayMove(0), 400);
+      const timer = setTimeout(() => autoPlayMove(0), 200);
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,11 +130,11 @@ export default function ChessBoardWrapper({
               });
               setCurrentMoveIndex(nextIndex + 1);
               isProcessing.current = false;
-            }, 500);
+            }, 200);
           } else {
             isProcessing.current = false;
           }
-        }, 600);
+        }, 300);
 
         return true;
       } else {

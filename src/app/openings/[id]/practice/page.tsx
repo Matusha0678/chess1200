@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, useRef, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import ChessBoardWrapper from '@/components/ChessBoardWrapper';
@@ -28,16 +28,21 @@ function getWeight(prog: LineProgress | null): number {
   return 5;
 }
 
-function weightedRandom(lines: LineWithProgress[]): LineWithProgress | null {
+function weightedRandom(lines: LineWithProgress[], excludeIds: string[] = []): LineWithProgress | null {
   if (lines.length === 0) return null;
-  const weights = lines.map((l) => getWeight(l.line_progress?.[0] ?? null));
+  // Exclude recently played lines only when there are alternatives
+  const pool = lines.length > excludeIds.length
+    ? lines.filter((l) => !excludeIds.includes(l.id))
+    : lines;
+  const source = pool.length > 0 ? pool : lines;
+  const weights = source.map((l) => getWeight(l.line_progress?.[0] ?? null));
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
-  for (let i = 0; i < lines.length; i++) {
+  for (let i = 0; i < source.length; i++) {
     r -= weights[i];
-    if (r <= 0) return lines[i];
+    if (r <= 0) return source[i];
   }
-  return lines[lines.length - 1];
+  return source[source.length - 1];
 }
 
 function nextReviewDate(mastery: number): string {
@@ -136,6 +141,9 @@ export default function PracticePage({ params }: Props) {
   // Hint state
   const [hintActive, setHintActive] = useState(false);
 
+  // Anti-repeat: remember last N picked line IDs
+  const recentLineIds = useRef<string[]>([]);
+
   const [boardStatus, setBoardStatus] = useState<{
     feedback: 'correct' | 'wrong' | null;
     isPlayerTurn: boolean;
@@ -208,8 +216,12 @@ export default function PracticePage({ params }: Props) {
 
   const pickNextLine = useCallback(
     (latestLines: LineWithProgress[]) => {
-      const next = weightedRandom(latestLines);
+      const next = weightedRandom(latestLines, recentLineIds.current);
       if (next && opening) {
+        // Keep a history of up to 1/3 of the total lines (min 1, max 5)
+        const maxRecent = Math.min(5, Math.max(1, Math.floor(latestLines.length / 3)));
+        recentLineIds.current = [next.id, ...recentLineIds.current].slice(0, maxRecent);
+
         setCurrentLine(next);
         setPlayerColor(resolveColor(opening, next));
         setHadWrongMove(false);
