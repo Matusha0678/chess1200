@@ -28,7 +28,7 @@ export default function SideNav() {
               className={`w-11 h-11 flex flex-col items-center justify-center rounded-sm transition-colors gap-1
                 ${active ? 'bg-[#1A1A1A]' : 'hover:bg-[#141414]'}`}
               title={label}>
-              <span className={`text-[22px] leading-none select-none ${active ? 'text-[#EAE8E3]' : 'text-[#2A2A2A]'}`}>
+              <span className={`text-[22px] leading-none select-none ${active ? 'text-[#EAE8E3]' : 'text-[#505050]'}`}>
                 {piece}
               </span>
               <span className={`w-1 h-1 rounded-full bg-[#8A8A8A] transition-opacity ${active ? 'opacity-100' : 'opacity-0'}`} />

@@ -159,6 +159,23 @@ export default function OpeningsPage() {
         </div>
       </div>
 
+      {/* Random trainer banner */}
+      <Link
+        href="/openings/random"
+        className="flex items-center justify-between gap-4 bg-[#0D0D0D] border border-[#262626] hover:border-[#505050] rounded-[16px] px-6 py-4 mb-6 no-underline group transition-colors"
+      >
+        <div className="flex items-center gap-4">
+          <span className="text-[28px] leading-none select-none">♔</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[15px] font-semibold text-[#F5F5F5]">Дебют Рандом</span>
+            <span className="text-[13px] text-[#606060]">Играй против Stockfish — он тренирует твои сохранённые дебюты</span>
+          </div>
+        </div>
+        <svg className="text-[#505050] group-hover:text-[#A0A0A0] transition-colors flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </Link>
+
       {/* Search + filter bar */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">

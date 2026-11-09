@@ -22,7 +22,7 @@ export default function BottomNav() {
         return (
           <Link key={href} href={href}
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] tracking-wide uppercase transition-colors duration-150
-              ${active ? 'text-[#EAE8E3]' : 'text-[#2A2A2A] hover:text-[#555]'}`}>
+              ${active ? 'text-[#EAE8E3]' : 'text-[#555555] hover:text-[#909090]'}`}>
             <Icon size={18} strokeWidth={active ? 1.75 : 1.5} />
             <span>{label}</span>
           </Link>
