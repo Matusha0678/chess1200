@@ -1,14 +1,15 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Swords, BookOpen, BarChart2, Award } from 'lucide-react';
+import { Home, Swords, BookOpen, BarChart2, Award, Bot } from 'lucide-react';
 
 const tabs = [
-  { href: '/today',    icon: Home,       label: 'Сегодня'  },
-  { href: '/pre-game', icon: Swords,     label: 'Партия'   },
-  { href: '/notebook', icon: BookOpen,   label: 'Тетрадь'  },
-  { href: '/progress', icon: BarChart2,  label: 'Прогресс' },
-  { href: '/badges',   icon: Award,      label: 'Награды'  },
+  { href: '/today',           icon: Home,      label: 'Сегодня'  },
+  { href: '/pre-game',        icon: Swords,    label: 'Партия'   },
+  { href: '/notebook',        icon: BookOpen,  label: 'Тетрадь'  },
+  { href: '/progress',        icon: BarChart2, label: 'Прогресс' },
+  { href: '/badges',          icon: Award,     label: 'Награды'  },
+  { href: '/openings/random', icon: Bot,       label: 'Рандом'   },
 ];
 
 export default function BottomNav() {

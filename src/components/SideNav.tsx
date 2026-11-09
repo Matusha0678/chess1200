@@ -3,11 +3,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const nav = [
-  { href: '/today',    piece: '♟', label: 'Сегодня'  },
-  { href: '/pre-game', piece: '♞', label: 'Партия'   },
-  { href: '/notebook', piece: '♝', label: 'Тетрадь'  },
-  { href: '/progress', piece: '♜', label: 'Прогресс' },
-  { href: '/badges',   piece: '♛', label: 'Награды'  },
+  { href: '/today',            piece: '♟', label: 'Сегодня'  },
+  { href: '/pre-game',         piece: '♞', label: 'Партия'   },
+  { href: '/notebook',         piece: '♝', label: 'Тетрадь'  },
+  { href: '/progress',         piece: '♜', label: 'Прогресс' },
+  { href: '/badges',           piece: '♛', label: 'Награды'  },
+  { href: '/openings/random',  piece: '♔', label: 'Рандом'   },
 ];
 
 export default function SideNav() {
