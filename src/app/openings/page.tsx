@@ -69,16 +69,20 @@ export default function OpeningsPage() {
         ? await supabase.from('line_progress').select('*').in('line_id', allLineIds)
         : { data: [] as LineProgress[] };
 
-      // Load first line moves for mini board preview
+      // Load first available line moves for mini board preview
+      // Don't filter by line_index=0 — that row may have been deleted; take the smallest available
       const { data: firstLines } = await supabase
         .from('opening_lines')
         .select('opening_id, moves')
-        .eq('line_index', 0)
-        .in('opening_id', openingIds);
+        .in('opening_id', openingIds)
+        .order('line_index', { ascending: true });
 
       const firstLineMap: Record<string, ChessMove[]> = {};
       (firstLines ?? []).forEach((fl) => {
-        firstLineMap[fl.opening_id] = fl.moves as ChessMove[];
+        // Only take the first occurrence (smallest line_index) per opening
+        if (!firstLineMap[fl.opening_id]) {
+          firstLineMap[fl.opening_id] = fl.moves as ChessMove[];
+        }
       });
 
       const now = new Date().toISOString();

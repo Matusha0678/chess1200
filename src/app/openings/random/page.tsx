@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
-import type { PieceDropHandlerArgs } from 'react-chessboard';
+import type { PieceDropHandlerArgs, Arrow } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
 import { useStockfish } from '@/hooks/useStockfish';
+import type { AnalysisInfo } from '@/hooks/useStockfish';
 import type { Opening, OpeningLine, ChessMove } from '@/types/openings';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -29,6 +30,36 @@ interface OpeningWithLines extends Opening {
 }
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+function evalToWhiteScore(cp: number | undefined, mate: number | undefined, turn: 'w' | 'b'): number {
+  if (mate !== undefined) {
+    if (turn === 'w') return mate > 0 ? 97 : 3;
+    return mate > 0 ? 3 : 97;
+  }
+  if (cp !== undefined) {
+    const cpW = turn === 'w' ? cp : -cp;
+    return Math.max(5, Math.min(95, 50 + cpW / 20));
+  }
+  return 50;
+}
+
+function evalToText(cp: number | undefined, mate: number | undefined, turn: 'w' | 'b'): string {
+  if (mate !== undefined) {
+    const mateW = turn === 'w' ? mate : -mate;
+    return mateW > 0 ? `+M${Math.abs(mateW)}` : `-M${Math.abs(mateW)}`;
+  }
+  if (cp !== undefined) {
+    const cpW = turn === 'w' ? cp : -cp;
+    const pawns = cpW / 100;
+    return pawns >= 0 ? `+${pawns.toFixed(1)}` : pawns.toFixed(1);
+  }
+  return '0.0';
+}
+
+function uciToArrow(uciMove: string | null): Arrow[] {
+  if (!uciMove || uciMove.length < 4) return [];
+  return [{ startSquare: uciMove.slice(0, 2), endSquare: uciMove.slice(2, 4), color: 'rgba(100, 180, 255, 0.85)' }];
+}
 
 const DIFFICULTY_PRESETS = [
   { label: 'Новичок', level: 4 },
@@ -154,7 +185,12 @@ export default function RandomOpeningPage() {
   // Store for "same line again" replay
   const savedLineRef = useRef<{ line: ChessMove[]; opening: Opening; lineIdx: number } | null>(null);
 
-  const { getBestMove, setSkillLevel, isReady: sfReady } = useStockfish();
+  const { getBestMove, startAnalysis, stopAnalysis, setSkillLevel, isReady: sfReady } = useStockfish();
+
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [evalInfo, setEvalInfo] = useState<{ cp?: number; mate?: number; turn: 'w' | 'b' } | null>(null);
+  const [bestMoveArrow, setBestMoveArrow] = useState<string | null>(null);
+  const showAnalysisRef = useRef(false);
 
   // ── Load all openings + lines ─────────────────────────────────────────────
 
@@ -215,6 +251,13 @@ export default function RandomOpeningPage() {
     [],
   );
 
+  // ── Analysis info handler ─────────────────────────────────────────────────
+
+  const handleAnalysisInfo = useCallback((info: AnalysisInfo) => {
+    setEvalInfo({ cp: info.cp, mate: info.mate, turn: chessRef.current.turn() });
+    if (info.bestMove) setBestMoveArrow(info.bestMove);
+  }, []);
+
   // ── Handle game over state ────────────────────────────────────────────────
 
   const handleGameOverState = useCallback(
@@ -251,10 +294,14 @@ export default function RandomOpeningPage() {
           try {
             const move = chessRef.current.move({ from, to, promotion });
             if (move) {
-              setFen(chessRef.current.fen());
+              const newFen = chessRef.current.fen();
+              setFen(newFen);
 
               if (chessRef.current.isGameOver()) {
                 handleGameOverState(pc);
+              } else if (showAnalysisRef.current) {
+                // It's now the player's turn — start analysis
+                startAnalysis(newFen, handleAnalysisInfo);
               }
             }
           } catch {
@@ -264,7 +311,7 @@ export default function RandomOpeningPage() {
         }, 350);
       });
     },
-    [getBestMove, handleGameOverState],
+    [getBestMove, handleGameOverState, startAnalysis, handleAnalysisInfo],
   );
 
   // ── Handle line complete ──────────────────────────────────────────────────
@@ -319,8 +366,11 @@ export default function RandomOpeningPage() {
 
       chessRef.current = new Chess();
       isProcessingRef.current = false;
+      stopAnalysis();
 
       savedLineRef.current = { line: moves, opening, lineIdx };
+      setEvalInfo(null);
+      setBestMoveArrow(null);
 
       setCurrentOpening(opening);
       setCurrentLine(moves);
@@ -465,6 +515,12 @@ export default function RandomOpeningPage() {
         });
         if (!move) return false;
 
+        // Stop analysis while stockfish calculates its reply
+        if (showAnalysisRef.current) {
+          stopAnalysis();
+          setBestMoveArrow(null);
+        }
+
         isProcessingRef.current = true;
         const newFen = chessRef.current.fen();
         setFen(newFen);
@@ -481,7 +537,7 @@ export default function RandomOpeningPage() {
         return false;
       }
     },
-    [sfReady, requestStockfishMove, handleGameOverState, playerColor],
+    [sfReady, requestStockfishMove, handleGameOverState, playerColor, stopAnalysis],
   );
 
   // ── Main piece drop router ────────────────────────────────────────────────
@@ -501,11 +557,14 @@ export default function RandomOpeningPage() {
     setPhase('free_play');
     addMsg('info', sfReady ? 'Стокфиш подключён. Играй дальше!' : 'Стокфиш загружается…');
 
+    const currentFen = chessRef.current.fen();
     if (chessRef.current.turn() !== playerColor) {
       isProcessingRef.current = true;
-      requestStockfishMove(chessRef.current.fen(), playerColor);
+      requestStockfishMove(currentFen, playerColor);
+    } else if (showAnalysisRef.current && sfReady) {
+      startAnalysis(currentFen, handleAnalysisInfo);
     }
-  }, [sfReady, playerColor, requestStockfishMove, addMsg]);
+  }, [sfReady, playerColor, requestStockfishMove, addMsg, startAnalysis, handleAnalysisInfo]);
 
   // ── Undo ──────────────────────────────────────────────────────────────────
 
@@ -572,6 +631,25 @@ export default function RandomOpeningPage() {
     return squareStyles;
   })();
 
+  // ── Analysis toggle ───────────────────────────────────────────────────────
+
+  const handleToggleAnalysis = useCallback(() => {
+    const newVal = !showAnalysis;
+    setShowAnalysis(newVal);
+    showAnalysisRef.current = newVal;
+
+    if (!newVal) {
+      stopAnalysis();
+      setEvalInfo(null);
+      setBestMoveArrow(null);
+    } else if (phase === 'free_play' && sfReady) {
+      const turn = chessRef.current.turn();
+      if (turn === playerColor) {
+        startAnalysis(chessRef.current.fen(), handleAnalysisInfo);
+      }
+    }
+  }, [showAnalysis, stopAnalysis, phase, sfReady, playerColor, startAnalysis, handleAnalysisInfo]);
+
   const isPlayerTurn =
     phase === 'playing' &&
     !isProcessingRef.current &&
@@ -579,6 +657,13 @@ export default function RandomOpeningPage() {
     currentLine[moveIndex]?.color === playerColor;
 
   const boardSize = 'min(calc(100vh - 148px), calc(100vw - 340px))';
+
+  const whiteScore = evalInfo
+    ? evalToWhiteScore(evalInfo.cp, evalInfo.mate, evalInfo.turn)
+    : 50;
+  const evalText = evalInfo
+    ? evalToText(evalInfo.cp, evalInfo.mate, evalInfo.turn)
+    : null;
 
   const progressPct =
     currentLine.length > 0 ? Math.round((moveIndex / currentLine.length) * 100) : 0;
@@ -636,6 +721,22 @@ export default function RandomOpeningPage() {
 
             {/* Board — always rendered, overlay on ready */}
             <div className="flex-shrink-0 relative" style={{ width: boardSize, height: boardSize }}>
+              {/* Eval bar — absolutely positioned to the left of the board */}
+              {showAnalysis && (
+                <div
+                  className="absolute top-0 bottom-0 flex flex-col rounded-[6px] overflow-hidden"
+                  style={{ right: 'calc(100% + 6px)', width: '10px' }}
+                >
+                  <div
+                    className="bg-[#2A2A2A] transition-all duration-500"
+                    style={{ height: `${100 - whiteScore}%` }}
+                  />
+                  <div
+                    className="bg-[#D8D8D8] transition-all duration-500"
+                    style={{ height: `${whiteScore}%` }}
+                  />
+                </div>
+              )}
               <Chessboard
                 key={boardKey}
                 options={{
@@ -643,6 +744,7 @@ export default function RandomOpeningPage() {
                   boardOrientation: playerColor === 'w' ? 'white' : 'black',
                   onPieceDrop: handlePieceDrop,
                   squareStyles: displaySquareStyles,
+                  arrows: showAnalysis && phase === 'free_play' ? uciToArrow(bestMoveArrow) : [],
                   allowDragging: isPlayerTurn || phase === 'free_play',
                   boardStyle: { borderRadius: '4px', width: '100%', height: '100%' },
                   darkSquareStyle: { backgroundColor: '#3A3A3A' },
@@ -680,7 +782,13 @@ export default function RandomOpeningPage() {
               )}
               {phase === 'free_play' && (
                 sfReady
-                  ? <><span className="w-2 h-2 rounded-full bg-[#64B5F6] inline-block" /> Стокфиш Ур.{DIFFICULTY_PRESETS[difficultyIdx].level}</>
+                  ? <>
+                      <span className="w-2 h-2 rounded-full bg-[#64B5F6] inline-block" />
+                      Стокфиш Ур.{DIFFICULTY_PRESETS[difficultyIdx].level}
+                      {showAnalysis && evalText && (
+                        <span className="ml-auto font-mono text-[12px] text-[#A0A0A0]">{evalText}</span>
+                      )}
+                    </>
                   : <><span className="w-2 h-2 rounded-full bg-[#808080] animate-pulse inline-block" /> Загрузка Стокфиша…</>
               )}
               {phase === 'game_over' && (
@@ -911,6 +1019,21 @@ export default function RandomOpeningPage() {
                   </button>
                 ))}
               </div>
+
+              {/* Analysis toggle */}
+              <button
+                onClick={handleToggleAnalysis}
+                className={`h-7 w-full rounded-full text-[10px] font-medium transition-colors cursor-pointer border flex items-center justify-center gap-1.5 ${
+                  showAnalysis
+                    ? 'bg-[#1A2A3A] border-[#64B5F6] text-[#64B5F6]'
+                    : 'bg-transparent border-[#1E1E1E] text-[#404040] hover:border-[#303030] hover:text-[#808080]'
+                }`}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                Анализ {showAnalysis ? '· вкл' : '· выкл'}
+              </button>
             </div>
           </div>
 
