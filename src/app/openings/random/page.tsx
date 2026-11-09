@@ -141,6 +141,7 @@ export default function RandomOpeningPage() {
   const chessRef = useRef(new Chess());
   const [fen, setFen] = useState(INITIAL_FEN);
   const [moveIndex, setMoveIndex] = useState(0);
+  const [boardKey, setBoardKey] = useState(0);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [squareStyles, setSquareStyles] = useState<Record<string, React.CSSProperties>>({});
@@ -329,6 +330,7 @@ export default function RandomOpeningPage() {
       setMoveIndex(0);
       setSquareStyles({});
       setShowHint(false);
+      setBoardKey((k) => k + 1);
       setMessages([
         makeMsg('system', opening.name),
         makeMsg(
@@ -622,46 +624,46 @@ export default function RandomOpeningPage() {
 
             {/* Player color bar */}
             <div className="h-9 flex items-center gap-2 text-[13px] text-[#606060]">
-              {phase === 'ready' ? (
-                <span>Нажми «Начать игру» чтобы выбрать случайную линию</span>
-              ) : playerColor === 'w' ? (
-                <><span className="text-[15px]">♙</span> Ты играешь белыми</>
-              ) : (
-                <><span className="text-[15px]">♟</span> Ты играешь чёрными</>
-              )}
+              {phase === 'ready'
+                ? <span>Выбери дебют и нажми «Начать игру»</span>
+                : playerColor === 'w'
+                  ? <><span className="text-[15px]">♙</span> Ты играешь белыми</>
+                  : <><span className="text-[15px]">♟</span> Ты играешь чёрными</>
+              }
             </div>
 
             <div className="h-[8px] flex-shrink-0" />
 
-            {/* Board */}
+            {/* Board — always rendered, overlay on ready */}
             <div className="flex-shrink-0 relative" style={{ width: boardSize, height: boardSize }}>
-              {phase === 'ready' ? (
-                <div className="w-full h-full bg-[#0D0D0D] border border-[#262626] rounded-[4px] flex items-center justify-center">
+              <Chessboard
+                key={boardKey}
+                options={{
+                  position: fen,
+                  boardOrientation: playerColor === 'w' ? 'white' : 'black',
+                  onPieceDrop: handlePieceDrop,
+                  squareStyles: displaySquareStyles,
+                  allowDragging: isPlayerTurn || phase === 'free_play',
+                  boardStyle: { borderRadius: '4px', width: '100%', height: '100%' },
+                  darkSquareStyle: { backgroundColor: '#3A3A3A' },
+                  lightSquareStyle: { backgroundColor: '#8A8A8A' },
+                  showNotation: true,
+                  darkSquareNotationStyle: { color: '#C8C8C8' },
+                  lightSquareNotationStyle: { color: '#505050' },
+                  alphaNotationStyle: { fontSize: '11px', fontWeight: '700' },
+                  numericNotationStyle: { fontSize: '11px', fontWeight: '700' },
+                }}
+              />
+              {phase === 'ready' && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-[4px]"
+                  style={{ background: 'rgba(5,5,5,0.72)' }}>
                   <button
                     onClick={startGame}
-                    className="px-10 py-4 bg-[#F5F5F5] text-[#050505] rounded-full text-[16px] font-semibold hover:bg-white transition-colors cursor-pointer"
+                    className="px-10 py-4 bg-[#F5F5F5] text-[#050505] rounded-full text-[16px] font-semibold hover:bg-white transition-colors cursor-pointer shadow-lg"
                   >
                     Начать игру
                   </button>
                 </div>
-              ) : (
-                <Chessboard
-                  options={{
-                    position: fen,
-                    boardOrientation: playerColor === 'w' ? 'white' : 'black',
-                    onPieceDrop: handlePieceDrop,
-                    squareStyles: displaySquareStyles,
-                    allowDragging: isPlayerTurn || phase === 'free_play',
-                    boardStyle: { borderRadius: '4px', width: '100%', height: '100%' },
-                    darkSquareStyle: { backgroundColor: '#3A3A3A' },
-                    lightSquareStyle: { backgroundColor: '#8A8A8A' },
-                    showNotation: true,
-                    darkSquareNotationStyle: { color: '#C8C8C8' },
-                    lightSquareNotationStyle: { color: '#505050' },
-                    alphaNotationStyle: { fontSize: '11px', fontWeight: '700' },
-                    numericNotationStyle: { fontSize: '11px', fontWeight: '700' },
-                  }}
-                />
               )}
             </div>
 
