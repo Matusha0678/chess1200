@@ -66,6 +66,10 @@ export default function OpeningDetailPage({ params }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // Per-line deletion
+  const [confirmDeleteLineId, setConfirmDeleteLineId] = useState<string | null>(null);
+  const [deletingLineId, setDeletingLineId] = useState<string | null>(null);
+
   // Add variation state
   const [showAddLine, setShowAddLine] = useState(false);
   const [addLinePgn, setAddLinePgn] = useState('');
@@ -127,6 +131,20 @@ export default function OpeningDetailPage({ params }: Props) {
     await supabase.from('openings').delete().eq('id', opening.id);
 
     router.push('/openings');
+  }
+
+  async function handleDeleteLine(lineId: string) {
+    if (!opening) return;
+    setDeletingLineId(lineId);
+    await supabase.from('line_progress').delete().eq('line_id', lineId);
+    await supabase.from('opening_lines').delete().eq('id', lineId);
+    await supabase
+      .from('openings')
+      .update({ total_lines: Math.max(0, opening.total_lines - 1) })
+      .eq('id', opening.id);
+    setDeletingLineId(null);
+    setConfirmDeleteLineId(null);
+    await load();
   }
 
   function handleAddLinePgnChange(value: string) {
@@ -470,13 +488,45 @@ export default function OpeningDetailPage({ params }: Props) {
                   ) : null}
                 </div>
 
-                {/* Practice link */}
-                <Link
-                  href={`/openings/${id}/practice?line=${line.id}`}
-                  className="shrink-0 h-9 flex items-center border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
-                >
-                  Практика
-                </Link>
+                {/* Practice + delete */}
+                <div className="shrink-0 flex items-center gap-2">
+                  {confirmDeleteLineId === line.id ? (
+                    <>
+                      <span className="text-[13px] text-[#A0A0A0] whitespace-nowrap">Удалить?</span>
+                      <button
+                        onClick={() => handleDeleteLine(line.id)}
+                        disabled={deletingLineId === line.id}
+                        className="h-9 border border-[#505050] text-[#EF9A9A] hover:border-[#EF9A9A] rounded-full px-4 text-[13px] font-medium transition-colors bg-transparent disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                      >
+                        {deletingLineId === line.id ? '…' : 'Да'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteLineId(null)}
+                        className="h-9 border border-[#303030] text-[#808080] hover:border-[#505050] rounded-full px-4 text-[13px] transition-colors bg-transparent cursor-pointer"
+                      >
+                        Нет
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href={`/openings/${id}/practice?line=${line.id}`}
+                        className="shrink-0 h-9 flex items-center border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
+                      >
+                        Практика
+                      </Link>
+                      <button
+                        onClick={() => setConfirmDeleteLineId(line.id)}
+                        title="Удалить линию"
+                        className="shrink-0 w-9 h-9 flex items-center justify-center border border-transparent text-[#404040] hover:border-[#404040] hover:text-[#808080] rounded-full transition-colors bg-transparent cursor-pointer"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })
