@@ -4,39 +4,40 @@ import { usePathname } from 'next/navigation';
 
 export default function TopNav() {
   const pathname = usePathname();
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
-  const dateCapitalized = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
+  const homeActive = pathname === '/';
   const openingsActive = pathname === '/openings' || pathname.startsWith('/openings/');
 
   return (
     <header className="border-b border-[#1E1E1E] bg-[#050505]">
-      <div className="max-w-[1650px] mx-auto px-6 md:px-10 h-[64px] flex items-center justify-between gap-6">
+      <div className="max-w-[1650px] mx-auto px-6 md:px-10 h-[64px] flex items-center gap-6">
 
-        <Link href="/openings" className="flex items-baseline gap-1 no-underline shrink-0">
+        <Link href="/" className="flex items-baseline gap-1 no-underline shrink-0 mr-2">
           <span className="text-[22px] font-semibold text-[#F5F5F5]">Chess</span>
           <span className="text-[22px] font-semibold text-[#505050]">1200</span>
         </Link>
 
         <nav aria-label="Разделы" className="flex items-center">
-          <Link
-            href="/openings"
-            aria-current={openingsActive ? 'page' : undefined}
-            className={[
-              'px-3 text-[13px] no-underline transition-colors h-[64px] flex items-center border-b-2',
-              openingsActive
-                ? 'text-[#F5F5F5] border-white'
-                : 'text-[#707070] border-transparent hover:text-[#A0A0A0]',
-            ].join(' ')}
-          >
-            Дебюты
-          </Link>
+          {[
+            { href: '/',         label: 'Сегодня',  active: homeActive },
+            { href: '/openings', label: 'Дебюты',   active: openingsActive },
+          ].map(({ href, label, active }) => (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? 'page' : undefined}
+              className={[
+                'px-3 text-[13px] no-underline transition-colors h-[64px] flex items-center border-b-2',
+                active
+                  ? 'text-[#F5F5F5] border-white'
+                  : 'text-[#606060] border-transparent hover:text-[#A0A0A0]',
+              ].join(' ')}
+            >
+              {label}
+            </Link>
+          ))}
         </nav>
 
-        <div className="hidden md:block text-[13px] text-[#505050] shrink-0">
-          {dateCapitalized}
-        </div>
       </div>
     </header>
   );
