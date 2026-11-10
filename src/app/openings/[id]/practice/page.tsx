@@ -164,6 +164,9 @@ export default function PracticePage({ params }: Props) {
   // Hint state
   const [hintActive, setHintActive] = useState(false);
 
+  // Session-done: all due/new lines exhausted
+  const [sessionDone, setSessionDone] = useState(false);
+
   // Anti-repeat: remember last N picked line IDs
   const recentLineIds = useRef<string[]>([]);
 
@@ -213,12 +216,20 @@ export default function PracticePage({ params }: Props) {
         firstLine = lines.find((l) => l.id === forceLineId) ?? null;
       }
       if (!firstLine) {
-        firstLine = weightedRandom(lines);
+        const now = new Date().toISOString();
+        const dueOrNew = lines.filter((l) => {
+          const prog = l.line_progress?.[0] ?? null;
+          if (!prog) return true;
+          return prog.next_review <= now && prog.mastery < 5;
+        });
+        firstLine = dueOrNew.length > 0 ? weightedRandom(dueOrNew) : null;
       }
 
       if (firstLine) {
         setCurrentLine(firstLine);
         setPlayerColor(resolveColor(openingData as Opening, firstLine));
+      } else {
+        setSessionDone(true);
       }
 
       setLoading(false);
@@ -240,10 +251,21 @@ export default function PracticePage({ params }: Props) {
 
   const pickNextLine = useCallback(
     (latestLines: LineWithProgress[]) => {
-      const next = weightedRandom(latestLines, recentLineIds.current);
+      const now = new Date().toISOString();
+      const dueOrNew = latestLines.filter((l) => {
+        const prog = l.line_progress?.[0] ?? null;
+        if (!prog) return true;
+        return prog.next_review <= now && prog.mastery < 5;
+      });
+
+      if (dueOrNew.length === 0) {
+        setSessionDone(true);
+        return;
+      }
+
+      const next = weightedRandom(dueOrNew, recentLineIds.current);
       if (next && opening) {
-        // Keep a history of up to 1/3 of the total lines (min 1, max 5)
-        const maxRecent = Math.min(5, Math.max(1, Math.floor(latestLines.length / 3)));
+        const maxRecent = Math.min(5, Math.max(1, Math.floor(dueOrNew.length / 3)));
         recentLineIds.current = [next.id, ...recentLineIds.current].slice(0, maxRecent);
 
         setCurrentLine(next);
@@ -524,6 +546,48 @@ export default function PracticePage({ params }: Props) {
 
   return (
     <>
+      {/* Overlay: session done */}
+      {sessionDone && !celebrating && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050505]">
+          <div className="text-[64px] leading-none select-none mb-6">✓</div>
+          <div className="text-[32px] font-[500] text-[#F5F5F5] mb-2">На сегодня всё!</div>
+          <div className="text-[15px] text-[#808080] mb-8">
+            {sessionCorrect + sessionIncorrect > 0
+              ? `${sessionCorrect + sessionIncorrect} ${pluralLines(sessionCorrect + sessionIncorrect)} пройдено`
+              : 'Нечего повторять сегодня'}
+          </div>
+          <div className="flex gap-3">
+            <Link
+              href="/"
+              className="h-11 flex items-center bg-white text-[#050505] hover:bg-[#ECECEC] rounded-full px-7 text-[14px] font-semibold transition-colors no-underline"
+            >
+              На главную
+            </Link>
+            <button
+              onClick={() => {
+                setSessionDone(false);
+                setAllLines((latest) => {
+                  const next = weightedRandom(latest, recentLineIds.current);
+                  if (next && opening) {
+                    recentLineIds.current = [next.id, ...recentLineIds.current].slice(0, 5);
+                    setCurrentLine(next);
+                    setPlayerColor(resolveColor(opening, next));
+                    setBoardKey((k) => k + 1);
+                    setSessionCount((c) => c + 1);
+                    setPlayedMoves([]);
+                    setHintActive(false);
+                  }
+                  return latest;
+                });
+              }}
+              className="h-11 flex items-center border border-[#383838] text-[#A0A0A0] hover:border-[#A0A0A0] hover:text-[#F5F5F5] rounded-full px-7 text-[14px] transition-colors bg-transparent cursor-pointer"
+            >
+              Продолжить
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Overlay: correct or wrong completion */}
       {celebrating && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050505]/90">

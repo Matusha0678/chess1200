@@ -157,6 +157,7 @@ export default function ChessBoardWrapper({
             const remaining = reviewQueue.slice(1);
             if (remaining.length === 0) {
               setReviewQueue([]);
+              setCurrentMoveIndex(line.length);
               isProcessing.current = false;
               onComplete(true, true);
             } else {
@@ -196,6 +197,7 @@ export default function ChessBoardWrapper({
             const remaining = reviewQueue.slice(1);
             if (remaining.length === 0) {
               setReviewQueue([]);
+              setCurrentMoveIndex(line.length);
               isProcessing.current = false;
               onComplete(true, true);
             } else {
