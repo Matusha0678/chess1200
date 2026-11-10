@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import ChessBoardWrapper from '@/components/ChessBoardWrapper';
 import { supabase } from '@/lib/supabase';
-import { checkAndAwardBadges } from '@/lib/badges';
 import type { Opening, OpeningLine, LineProgress, ChessMove } from '@/types/openings';
 
 interface LineWithProgress extends OpeningLine {
@@ -415,7 +414,6 @@ export default function PracticePage({ params }: Props) {
       setCelebrationXP(xp);
       setCelebrationCorrect(!hadWrongMove);
       setCelebrating(true);
-      checkAndAwardBadges().catch(() => {});
 
       setTimeout(() => {
         setCelebrating(false);

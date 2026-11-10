@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Chess 1200',
-  description: 'Твой путь к рейтингу 1200',
+  description: 'Тренажёр дебютов с интервальным повторением',
   manifest: '/manifest.json',
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Chess 1200' },
 };
