@@ -559,12 +559,12 @@ export default function PracticePage({ params }: Props) {
               : 'Нечего повторять сегодня'}
           </div>
           <div className="flex gap-3">
-            <Link
+            <a
               href="/"
               className="h-11 flex items-center bg-white text-[#050505] hover:bg-[#ECECEC] rounded-full px-7 text-[14px] font-semibold transition-colors no-underline"
             >
               На главную
-            </Link>
+            </a>
             <button
               onClick={() => {
                 setSessionDone(false);

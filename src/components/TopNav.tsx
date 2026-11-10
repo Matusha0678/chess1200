@@ -12,30 +12,39 @@ export default function TopNav() {
     <header className="border-b border-[#1E1E1E] bg-[#050505]">
       <div className="max-w-[1650px] mx-auto px-6 md:px-10 h-[64px] flex items-center gap-6">
 
-        <Link href="/" className="flex items-baseline gap-1 no-underline shrink-0 mr-2">
+        {/* Logo — hard navigation so home always loads fresh */}
+        <a href="/" className="flex items-baseline gap-1 no-underline shrink-0 mr-2">
           <span className="text-[22px] font-semibold text-[#F5F5F5]">Chess</span>
           <span className="text-[22px] font-semibold text-[#505050]">1200</span>
-        </Link>
+        </a>
 
         <nav aria-label="Разделы" className="flex items-center">
-          {[
-            { href: '/',         label: 'Сегодня',  active: homeActive },
-            { href: '/openings', label: 'Дебюты',   active: openingsActive },
-          ].map(({ href, label, active }) => (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? 'page' : undefined}
-              className={[
-                'px-3 text-[13px] no-underline transition-colors h-[64px] flex items-center border-b-2',
-                active
-                  ? 'text-[#F5F5F5] border-white'
-                  : 'text-[#606060] border-transparent hover:text-[#A0A0A0]',
-              ].join(' ')}
-            >
-              {label}
-            </Link>
-          ))}
+          {/* "Сегодня" uses a hard <a> so the dashboard always re-fetches on arrival */}
+          <a
+            href="/"
+            aria-current={homeActive ? 'page' : undefined}
+            className={[
+              'px-3 text-[13px] no-underline transition-colors h-[64px] flex items-center border-b-2',
+              homeActive
+                ? 'text-[#F5F5F5] border-white'
+                : 'text-[#606060] border-transparent hover:text-[#A0A0A0]',
+            ].join(' ')}
+          >
+            Сегодня
+          </a>
+
+          <Link
+            href="/openings"
+            aria-current={openingsActive ? 'page' : undefined}
+            className={[
+              'px-3 text-[13px] no-underline transition-colors h-[64px] flex items-center border-b-2',
+              openingsActive
+                ? 'text-[#F5F5F5] border-white'
+                : 'text-[#606060] border-transparent hover:text-[#A0A0A0]',
+            ].join(' ')}
+          >
+            Дебюты
+          </Link>
         </nav>
 
       </div>
