@@ -16,6 +16,31 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+// ── Move-level mistake recording ─────────────────────────────────────────────
+
+async function recordMoveMistake(lineId: string, moveIndex: number) {
+  const now = new Date().toISOString();
+  const { data } = await supabase
+    .from('line_move_progress')
+    .select('id, incorrect_count')
+    .eq('line_id', lineId)
+    .eq('move_index', moveIndex)
+    .maybeSingle();
+  if (data) {
+    const row = data as { id: string; incorrect_count: number };
+    supabase
+      .from('line_move_progress')
+      .update({ incorrect_count: row.incorrect_count + 1, last_missed_at: now })
+      .eq('id', row.id)
+      .then(() => {});
+  } else {
+    supabase
+      .from('line_move_progress')
+      .insert({ line_id: lineId, move_index: moveIndex, incorrect_count: 1, last_missed_at: now })
+      .then(() => {});
+  }
+}
+
 // ── Spaced-repetition helpers ────────────────────────────────────────────────
 
 function getWeight(prog: LineProgress | null): number {
@@ -238,14 +263,15 @@ export default function PracticePage({ params }: Props) {
 
   // ── Update progress after completing a line ────────────────────────────────
 
-  async function updateProgress(line: LineWithProgress, correct: boolean) {
+  async function updateProgress(line: LineWithProgress, hadMistakes: boolean) {
     const existingProg = line.line_progress?.[0] ?? null;
     const now = new Date().toISOString();
+    const oldMastery = existingProg?.mastery ?? 0;
 
-    if (correct) {
-      const oldMastery = existingProg?.mastery ?? 0;
+    if (!hadMistakes) {
+      // Perfect run → promote mastery, award XP
       const newMastery = Math.min(oldMastery + 1, 5);
-      const xpEarned = hadWrongMove ? 0 : 5;
+      const xpEarned = 5;
 
       if (existingProg) {
         await supabase
@@ -268,21 +294,16 @@ export default function PracticePage({ params }: Props) {
         });
       }
 
-      // Award XP if no wrong moves
-      if (xpEarned > 0) {
-        const { data: xpRow } = await supabase
-          .from('user_xp')
-          .select('total_xp')
-          .eq('id', 1)
-          .maybeSingle();
+      const { data: xpRow } = await supabase
+        .from('user_xp')
+        .select('total_xp')
+        .eq('id', 1)
+        .maybeSingle();
+      const currentXp = (xpRow as { total_xp?: number } | null)?.total_xp ?? 0;
+      await supabase
+        .from('user_xp')
+        .upsert({ id: 1, total_xp: currentXp + xpEarned }, { onConflict: 'id' });
 
-        const currentXp = (xpRow as { total_xp?: number } | null)?.total_xp ?? 0;
-        await supabase
-          .from('user_xp')
-          .upsert({ id: 1, total_xp: currentXp + xpEarned }, { onConflict: 'id' });
-      }
-
-      // Refresh line in allLines state with updated progress
       setAllLines((prev) =>
         prev.map((l) => {
           if (l.id !== line.id) return l;
@@ -307,7 +328,6 @@ export default function PracticePage({ params }: Props) {
         }),
       );
 
-      // Log this attempt (fire-and-forget)
       supabase.from('opening_practice_log').insert({
         opening_id: line.opening_id,
         line_id: line.id,
@@ -318,9 +338,9 @@ export default function PracticePage({ params }: Props) {
 
       return xpEarned;
     } else {
-      // Wrong — demote mastery
-      const oldMastery = existingProg?.mastery ?? 0;
-      const newMastery = Math.max(oldMastery - 1, 0);
+      // Had mistakes → mastery stays, shorter review interval (don't demote, don't promote)
+      const newMastery = oldMastery;
+      const reviewInterval = Math.max(0, oldMastery - 1);
 
       if (existingProg) {
         await supabase
@@ -328,7 +348,7 @@ export default function PracticePage({ params }: Props) {
           .update({
             incorrect_count: (existingProg.incorrect_count ?? 0) + 1,
             mastery: newMastery,
-            next_review: now,
+            next_review: nextReviewDate(reviewInterval),
             last_practiced: now,
           })
           .eq('id', existingProg.id);
@@ -338,7 +358,7 @@ export default function PracticePage({ params }: Props) {
           correct_count: 0,
           incorrect_count: 1,
           mastery: 0,
-          next_review: now,
+          next_review: nextReviewDate(0),
           last_practiced: now,
         });
       }
@@ -351,7 +371,7 @@ export default function PracticePage({ params }: Props) {
                 ...existingProg,
                 incorrect_count: (existingProg.incorrect_count ?? 0) + 1,
                 mastery: newMastery,
-                next_review: now,
+                next_review: nextReviewDate(reviewInterval),
                 last_practiced: now,
               }
             : {
@@ -360,14 +380,13 @@ export default function PracticePage({ params }: Props) {
                 correct_count: 0,
                 incorrect_count: 1,
                 mastery: 0,
-                next_review: now,
+                next_review: nextReviewDate(0),
                 last_practiced: now,
               };
           return { ...l, line_progress: [updatedProg] };
         }),
       );
 
-      // Log this attempt (fire-and-forget)
       supabase.from('opening_practice_log').insert({
         opening_id: line.opening_id,
         line_id: line.id,
@@ -384,45 +403,38 @@ export default function PracticePage({ params }: Props) {
 
   const handleComplete = useCallback(
     async (correct: boolean) => {
-      if (!currentLine) return;
+      if (!currentLine || !correct) return;
 
-      if (correct) {
+      if (!hadWrongMove) {
         setSessionCorrect((c) => c + 1);
-        const xp = await updateProgress(currentLine, true);
-        setCelebrationXP(xp);
-        setCelebrationCorrect(true);
-        setCelebrating(true);
-        checkAndAwardBadges().catch(() => {});
-
-        setTimeout(() => {
-          setCelebrating(false);
-          setAllLines((latest) => {
-            pickNextLine(latest);
-            return latest;
-          });
-        }, 1800);
       } else {
         setSessionIncorrect((c) => c + 1);
-        await updateProgress(currentLine, false);
-        setCelebrationCorrect(false);
-        setCelebrating(true);
-
-        setTimeout(() => {
-          setCelebrating(false);
-          setAllLines((latest) => {
-            pickNextLine(latest);
-            return latest;
-          });
-        }, 1600);
       }
+
+      const xp = await updateProgress(currentLine, hadWrongMove);
+      setCelebrationXP(xp);
+      setCelebrationCorrect(!hadWrongMove);
+      setCelebrating(true);
+      checkAndAwardBadges().catch(() => {});
+
+      setTimeout(() => {
+        setCelebrating(false);
+        setAllLines((latest) => {
+          pickNextLine(latest);
+          return latest;
+        });
+      }, 1800);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentLine, hadWrongMove],
   );
 
-  const handleMoveWrong = useCallback(() => {
+  const handleMoveMistake = useCallback((moveIndex: number) => {
     setHadWrongMove(true);
-  }, []);
+    if (!currentLine) return;
+    recordMoveMistake(currentLine.id, moveIndex);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLine]);
 
   function handleSkip() {
     setAllLines((latest) => {
@@ -573,7 +585,7 @@ export default function PracticePage({ params }: Props) {
                     line={currentLine.moves as ChessMove[]}
                     playerColor={playerColor}
                     onComplete={handleComplete}
-                    onMoveWrong={handleMoveWrong}
+                    onMoveMistake={handleMoveMistake}
                     showHint={hintActive}
                     onMovesChange={(moves) => setPlayedMoves(moves)}
                     onStatusChange={setBoardStatus}

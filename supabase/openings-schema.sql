@@ -29,3 +29,13 @@ create table if not exists line_progress (
   mastery integer default 0,  -- 0: new, 1-4: learning, 5: mastered
   unique(line_id)
 );
+
+-- Move-level mistake tracking: which specific moves the user stumbles on
+create table if not exists line_move_progress (
+  id uuid default gen_random_uuid() primary key,
+  line_id uuid references opening_lines on delete cascade,
+  move_index integer not null,
+  incorrect_count integer default 0,
+  last_missed_at timestamptz,
+  unique(line_id, move_index)
+);

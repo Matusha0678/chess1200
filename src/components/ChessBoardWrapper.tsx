@@ -11,7 +11,7 @@ interface Props {
   playerColor: 'w' | 'b';
   onComplete: (correct: boolean) => void;
   onMoveCorrect?: () => void;
-  onMoveWrong?: () => void;
+  onMoveMistake?: (moveIndex: number) => void;
   showHint?: boolean;
   onMovesChange?: (moves: string[], currentMoveIndex: number) => void;
   onStatusChange?: (status: {
@@ -30,7 +30,7 @@ export default function ChessBoardWrapper({
   playerColor,
   onComplete,
   onMoveCorrect,
-  onMoveWrong,
+  onMoveMistake,
   showHint,
   onMovesChange,
   onStatusChange,
@@ -146,38 +146,15 @@ export default function ChessBoardWrapper({
           [expected.from]: { background: 'rgba(214, 185, 126, 0.55)' },
           [expected.to]: { background: 'rgba(214, 185, 126, 0.55)' },
         });
-        onMoveWrong?.();
+        onMoveMistake?.(currentMoveIndex);
 
-        // Capture closure values for the replay — onComplete(false) branch
-        // does not read hadWrongMove so stale closure is safe here
-        const capturedLine = line;
-        const capturedChess = chess;
-        const capturedOnComplete = onComplete;
-        const replayStartIndex = currentMoveIndex;
-
-        function replayLine(index: number) {
-          if (index >= capturedLine.length) {
-            isProcessing.current = false;
-            capturedOnComplete(false);
-            return;
-          }
-          const move = capturedLine[index];
-          capturedChess.move({ from: move.from, to: move.to });
-          setFen(capturedChess.fen());
-          setPlayedMoves((prev) => {
-            const updated = [...prev, move.san];
-            onMovesChange?.(updated, index + 1);
-            return updated;
-          });
-          setCurrentMoveIndex(index + 1);
-          setTimeout(() => replayLine(index + 1), 420);
-        }
-
+        // Show the correct move highlighted for 1.5s, then let user retry
+        // Board position is already correct (wrong move was never applied)
         setTimeout(() => {
           setFeedback(null);
           setSquareStyles({});
-          replayLine(replayStartIndex);
-        }, 1200);
+          isProcessing.current = false;
+        }, 1500);
 
         return false;
       }
@@ -191,7 +168,7 @@ export default function ChessBoardWrapper({
       playerColor,
       onComplete,
       onMoveCorrect,
-      onMoveWrong,
+      onMoveMistake,
       onMovesChange,
     ],
   );
