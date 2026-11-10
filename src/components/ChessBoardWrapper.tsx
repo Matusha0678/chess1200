@@ -9,7 +9,7 @@ import type { PieceDropHandlerArgs } from 'react-chessboard';
 interface Props {
   line: ChessMove[];
   playerColor: 'w' | 'b';
-  onComplete: (correct: boolean) => void;
+  onComplete: (correct: boolean, hadMistakes: boolean) => void;
   onMoveCorrect?: () => void;
   onMoveMistake?: (moveIndex: number) => void;
   showHint?: boolean;
@@ -18,6 +18,7 @@ interface Props {
     feedback: 'correct' | 'wrong' | null;
     isPlayerTurn: boolean;
     isComplete: boolean;
+    reviewsRemaining: number;
   }) => void;
 }
 
@@ -41,18 +42,23 @@ export default function ChessBoardWrapper({
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [squareStyles, setSquareStyles] = useState<Record<string, React.CSSProperties>>({});
   const [playedMoves, setPlayedMoves] = useState<string[]>([]);
+  // Queue of move-indices to review after the line ends (positions where user made mistakes)
+  const [reviewQueue, setReviewQueue] = useState<number[]>([]);
+  const mistakesRef = useRef<number[]>([]);
   const isProcessing = useRef(false);
+
+  const inReview = reviewQueue.length > 0;
 
   const isPlayerTurn =
     feedback === null &&
     currentMoveIndex < line.length &&
     line[currentMoveIndex].color === playerColor;
 
-  const isComplete = currentMoveIndex >= line.length;
+  const isComplete = !inReview && currentMoveIndex >= line.length;
 
   useEffect(() => {
-    onStatusChange?.({ feedback, isPlayerTurn, isComplete });
-  }, [feedback, isPlayerTurn, isComplete, onStatusChange]);
+    onStatusChange?.({ feedback, isPlayerTurn, isComplete, reviewsRemaining: reviewQueue.length });
+  }, [feedback, isPlayerTurn, isComplete, reviewQueue.length, onStatusChange]);
 
   const autoPlayMove = useCallback(
     (index: number) => {
@@ -80,65 +86,172 @@ export default function ChessBoardWrapper({
 
   const handlePieceDrop = useCallback(
     ({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean => {
-      if (!isPlayerTurn || isProcessing.current) return false;
-      if (currentMoveIndex >= line.length) return false;
+      if (isProcessing.current) return false;
       if (!targetSquare) return false;
 
+      // ── Helpers ─────────────────────────────────────────────────────────────
+
+      // After any move (correct or auto), handle opponent response + line end
+      function continueFromIndex(nextIdx: number, currentMoves: string[]) {
+        if (nextIdx >= line.length) {
+          if (mistakesRef.current.length > 0) {
+            // Enter review: reset board to first mistake position
+            const firstIdx = mistakesRef.current[0];
+            const fenBefore = firstIdx === 0 ? INITIAL_FEN : line[firstIdx - 1].fen;
+            chess.load(fenBefore);
+            setFen(fenBefore);
+            const movesBefore = line.slice(0, firstIdx).map((m) => m.san);
+            setPlayedMoves(movesBefore);
+            onMovesChange?.(movesBefore, firstIdx);
+            setCurrentMoveIndex(firstIdx);
+            setReviewQueue([...mistakesRef.current]);
+          } else {
+            setCurrentMoveIndex(nextIdx);
+            onComplete(true, false);
+          }
+          isProcessing.current = false;
+          return;
+        }
+        const nextMove = line[nextIdx];
+        if (nextMove.color !== playerColor) {
+          // Auto-play opponent's move
+          setTimeout(() => {
+            chess.move({ from: nextMove.from, to: nextMove.to });
+            setFen(chess.fen());
+            const updated = [...currentMoves, nextMove.san];
+            setPlayedMoves(updated);
+            onMovesChange?.(updated, nextIdx + 1);
+            setCurrentMoveIndex(nextIdx + 1);
+            continueFromIndex(nextIdx + 1, updated);
+          }, 300);
+        } else {
+          // Player's turn — wait for input
+          isProcessing.current = false;
+        }
+      }
+
+      // ── Review phase ────────────────────────────────────────────────────────
+      if (inReview) {
+        if (!isPlayerTurn) return false;
+        const reviewIdx = reviewQueue[0];
+        const expected = line[reviewIdx];
+        const isCorrect = sourceSquare === expected.from && targetSquare === expected.to;
+
+        isProcessing.current = true;
+
+        if (isCorrect) {
+          chess.move({ from: sourceSquare, to: targetSquare });
+          setFen(chess.fen());
+          const newMoves = [...playedMoves, expected.san];
+          setPlayedMoves(newMoves);
+          onMovesChange?.(newMoves, reviewIdx + 1);
+          setFeedback('correct');
+          setSquareStyles({
+            [sourceSquare]: { background: 'rgba(155, 211, 166, 0.45)' },
+            [targetSquare]: { background: 'rgba(155, 211, 166, 0.45)' },
+          });
+
+          setTimeout(() => {
+            setFeedback(null);
+            setSquareStyles({});
+            const remaining = reviewQueue.slice(1);
+            if (remaining.length === 0) {
+              setReviewQueue([]);
+              isProcessing.current = false;
+              onComplete(true, true);
+            } else {
+              const nextIdx = remaining[0];
+              const fenBefore = nextIdx === 0 ? INITIAL_FEN : line[nextIdx - 1].fen;
+              chess.load(fenBefore);
+              setFen(fenBefore);
+              const movesBefore = line.slice(0, nextIdx).map((m) => m.san);
+              setPlayedMoves(movesBefore);
+              onMovesChange?.(movesBefore, nextIdx);
+              setCurrentMoveIndex(nextIdx);
+              setReviewQueue(remaining);
+              isProcessing.current = false;
+            }
+          }, 400);
+
+          return true;
+        } else {
+          // Wrong in review: show correct, auto-make, advance to next
+          setFeedback('wrong');
+          setSquareStyles({
+            [sourceSquare]: { background: 'rgba(211, 107, 107, 0.45)' },
+            [targetSquare]: { background: 'rgba(211, 107, 107, 0.45)' },
+            [expected.from]: { background: 'rgba(214, 185, 126, 0.55)' },
+            [expected.to]: { background: 'rgba(214, 185, 126, 0.55)' },
+          });
+
+          setTimeout(() => {
+            setFeedback(null);
+            setSquareStyles({});
+            chess.move({ from: expected.from, to: expected.to });
+            setFen(chess.fen());
+            const newMoves = [...playedMoves, expected.san];
+            setPlayedMoves(newMoves);
+            onMovesChange?.(newMoves, reviewIdx + 1);
+
+            const remaining = reviewQueue.slice(1);
+            if (remaining.length === 0) {
+              setReviewQueue([]);
+              isProcessing.current = false;
+              onComplete(true, true);
+            } else {
+              const nextIdx = remaining[0];
+              const fenBefore = nextIdx === 0 ? INITIAL_FEN : line[nextIdx - 1].fen;
+              chess.load(fenBefore);
+              setFen(fenBefore);
+              const movesBefore = line.slice(0, nextIdx).map((m) => m.san);
+              setPlayedMoves(movesBefore);
+              onMovesChange?.(movesBefore, nextIdx);
+              setCurrentMoveIndex(nextIdx);
+              setReviewQueue(remaining);
+              isProcessing.current = false;
+            }
+          }, 1200);
+
+          return false;
+        }
+      }
+
+      // ── Normal play phase ───────────────────────────────────────────────────
+      if (!isPlayerTurn) return false;
+      if (currentMoveIndex >= line.length) return false;
+
       const expected = line[currentMoveIndex];
-      const isCorrect =
-        sourceSquare === expected.from && targetSquare === expected.to;
+      const isCorrect = sourceSquare === expected.from && targetSquare === expected.to;
 
       if (isCorrect) {
         isProcessing.current = true;
-
         chess.move({ from: sourceSquare, to: targetSquare });
-        const newPlayedMoves = [...playedMoves, expected.san];
+        const newMoves = [...playedMoves, expected.san];
         setFen(chess.fen());
-        setPlayedMoves(newPlayedMoves);
-        const nextIndex = currentMoveIndex + 1;
-        onMovesChange?.(newPlayedMoves, nextIndex);
-
+        setPlayedMoves(newMoves);
+        const nextIdx = currentMoveIndex + 1;
+        onMovesChange?.(newMoves, nextIdx);
         setFeedback('correct');
         setSquareStyles({
           [sourceSquare]: { background: 'rgba(155, 211, 166, 0.45)' },
           [targetSquare]: { background: 'rgba(155, 211, 166, 0.45)' },
         });
         onMoveCorrect?.();
+        setCurrentMoveIndex(nextIdx);
 
         setTimeout(() => {
           setFeedback(null);
           setSquareStyles({});
-
-          if (nextIndex >= line.length) {
-            setCurrentMoveIndex(nextIndex);
-            isProcessing.current = false;
-            onComplete(true);
-            return;
-          }
-
-          setCurrentMoveIndex(nextIndex);
-
-          const nextMove = line[nextIndex];
-          if (nextMove && nextMove.color !== playerColor) {
-            setTimeout(() => {
-              chess.move({ from: nextMove.from, to: nextMove.to });
-              setFen(chess.fen());
-              setPlayedMoves((prev) => {
-                const updated = [...prev, nextMove.san];
-                onMovesChange?.(updated, nextIndex + 1);
-                return updated;
-              });
-              setCurrentMoveIndex(nextIndex + 1);
-              isProcessing.current = false;
-            }, 200);
-          } else {
-            isProcessing.current = false;
-          }
+          continueFromIndex(nextIdx, newMoves);
         }, 300);
 
         return true;
       } else {
+        // Wrong: record mistake, show correct, auto-make, then continue
         isProcessing.current = true;
+        mistakesRef.current = [...mistakesRef.current, currentMoveIndex];
+        onMoveMistake?.(currentMoveIndex);
+
         setFeedback('wrong');
         setSquareStyles({
           [sourceSquare]: { background: 'rgba(211, 107, 107, 0.45)' },
@@ -146,20 +259,28 @@ export default function ChessBoardWrapper({
           [expected.from]: { background: 'rgba(214, 185, 126, 0.55)' },
           [expected.to]: { background: 'rgba(214, 185, 126, 0.55)' },
         });
-        onMoveMistake?.(currentMoveIndex);
 
-        // Show the correct move highlighted for 1.5s, then let user retry
-        // Board position is already correct (wrong move was never applied)
+        const mistakeIdx = currentMoveIndex;
         setTimeout(() => {
           setFeedback(null);
           setSquareStyles({});
-          isProcessing.current = false;
-        }, 1500);
+          // Auto-make the correct move on behalf of the user
+          chess.move({ from: expected.from, to: expected.to });
+          setFen(chess.fen());
+          const newMoves = [...playedMoves, expected.san];
+          setPlayedMoves(newMoves);
+          const nextIdx = mistakeIdx + 1;
+          onMovesChange?.(newMoves, nextIdx);
+          setCurrentMoveIndex(nextIdx);
+          continueFromIndex(nextIdx, newMoves);
+        }, 1200);
 
         return false;
       }
     },
     [
+      inReview,
+      reviewQueue,
       isPlayerTurn,
       currentMoveIndex,
       line,

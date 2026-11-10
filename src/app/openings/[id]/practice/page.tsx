@@ -146,8 +146,6 @@ export default function PracticePage({ params }: Props) {
   const [sessionIncorrect, setSessionIncorrect] = useState(0);
   const [sessionCount, setSessionCount] = useState(0);
 
-  // Per-line tracking
-  const [hadWrongMove, setHadWrongMove] = useState(false);
 
   // Celebration / feedback overlay
   const [celebrating, setCelebrating] = useState(false);
@@ -173,7 +171,8 @@ export default function PracticePage({ params }: Props) {
     feedback: 'correct' | 'wrong' | null;
     isPlayerTurn: boolean;
     isComplete: boolean;
-  }>({ feedback: null, isPlayerTurn: false, isComplete: false });
+    reviewsRemaining: number;
+  }>({ feedback: null, isPlayerTurn: false, isComplete: false, reviewsRemaining: 0 });
 
   // ── Load data ──────────────────────────────────────────────────────────────
 
@@ -249,7 +248,6 @@ export default function PracticePage({ params }: Props) {
 
         setCurrentLine(next);
         setPlayerColor(resolveColor(opening, next));
-        setHadWrongMove(false);
         setBoardKey((k) => k + 1);
         setSessionCount((c) => c + 1);
         setPlayedMoves([]);
@@ -401,18 +399,18 @@ export default function PracticePage({ params }: Props) {
   // ── onComplete callback from ChessBoardWrapper ─────────────────────────────
 
   const handleComplete = useCallback(
-    async (correct: boolean) => {
+    async (correct: boolean, hadMistakes: boolean) => {
       if (!currentLine || !correct) return;
 
-      if (!hadWrongMove) {
+      if (!hadMistakes) {
         setSessionCorrect((c) => c + 1);
       } else {
         setSessionIncorrect((c) => c + 1);
       }
 
-      const xp = await updateProgress(currentLine, hadWrongMove);
+      const xp = await updateProgress(currentLine, hadMistakes);
       setCelebrationXP(xp);
-      setCelebrationCorrect(!hadWrongMove);
+      setCelebrationCorrect(!hadMistakes);
       setCelebrating(true);
 
       setTimeout(() => {
@@ -424,14 +422,12 @@ export default function PracticePage({ params }: Props) {
       }, 1800);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentLine, hadWrongMove],
+    [currentLine],
   );
 
   const handleMoveMistake = useCallback((moveIndex: number) => {
-    setHadWrongMove(true);
     if (!currentLine) return;
     recordMoveMistake(currentLine.id, moveIndex);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLine]);
 
   function handleSkip() {
@@ -468,16 +464,18 @@ export default function PracticePage({ params }: Props) {
   const boardSize = 'min(calc(100vh - 213px), calc(100vw - 376px))';
 
   // Feedback bar appearance driven by boardStatus
-  const { feedback: bf, isPlayerTurn: bpt, isComplete: bic } = boardStatus;
+  const { feedback: bf, isPlayerTurn: bpt, isComplete: bic, reviewsRemaining: brev } = boardStatus;
   const feedbackText = bf === 'correct'
     ? 'Верно!'
     : bf === 'wrong'
       ? 'Неверный ход — правильный выделен золотым'
-      : bic
-        ? 'Линия завершена!'
-        : bpt
-          ? 'Ваш ход'
-          : 'Соперник думает…';
+      : brev > 0
+        ? `Повтори ход${brev > 1 ? ` (${brev} осталось)` : ''}`
+        : bic
+          ? 'Линия завершена!'
+          : bpt
+            ? 'Ваш ход'
+            : 'Соперник думает…';
   const feedbackIcon = bf === 'correct' ? '✓' : bf === 'wrong' ? '✗' : null;
   const feedbackBg = bf === 'correct'
     ? 'bg-[#141414] border-[#303030]'
