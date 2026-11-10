@@ -154,6 +154,7 @@ export default function HomePage() {
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       const now = new Date().toISOString();
       const thirtyAgo = new Date();
       thirtyAgo.setDate(thirtyAgo.getDate() - 29);
@@ -227,6 +228,12 @@ export default function HomePage() {
       setLoading(false);
     }
     load();
+
+    // Reload when browser restores this page from the back/forward cache
+    // (bfcache bypasses React's lifecycle — component doesn't remount)
+    const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) load(); };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
   }, []);
 
   const totalDue     = openings.reduce((s, o) => s + o.linesDue, 0);
