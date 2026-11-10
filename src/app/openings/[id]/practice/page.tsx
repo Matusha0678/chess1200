@@ -145,6 +145,7 @@ export default function PracticePage({ params }: Props) {
   const [sessionCorrect, setSessionCorrect] = useState(0);
   const [sessionIncorrect, setSessionIncorrect] = useState(0);
   const [sessionCount, setSessionCount] = useState(0);
+  const [sessionTotal, setSessionTotal] = useState(0);
 
 
   // Celebration / feedback overlay
@@ -222,6 +223,7 @@ export default function PracticePage({ params }: Props) {
           if (!prog) return true;
           return prog.next_review <= now && prog.mastery < 5;
         });
+        setSessionTotal(dueOrNew.length);
         firstLine = dueOrNew.length > 0 ? weightedRandom(dueOrNew) : null;
       }
 
@@ -693,13 +695,37 @@ export default function PracticePage({ params }: Props) {
                 </Link>
               </div>
 
-              {/* Session counter */}
-              <div className="flex items-center gap-3 text-[13px]">
-                <span className="text-[#505050]">Сессия</span>
-                <span className="font-semibold text-[#D0D0D0]">{sessionCorrect} ✓</span>
-                <span className="font-semibold text-[#A0A0A0]">{sessionIncorrect} ✗</span>
-                <span className="text-[#505050] ml-auto">{sessionCount + 1} / {allLines.length}</span>
-              </div>
+              {/* Session progress */}
+              {(() => {
+                const done = sessionCorrect + sessionIncorrect;
+                const remaining = Math.max(0, sessionTotal - done);
+                const pct = sessionTotal > 0 ? Math.min(100, (done / sessionTotal) * 100) : 0;
+                return (
+                  <div className="flex flex-col gap-[8px]">
+                    <div className="flex items-center justify-between text-[12px]">
+                      <span className="text-[#505050]">Прогресс сессии</span>
+                      <span className="text-[#D0D0D0] font-semibold tabular-nums">{done} / {sessionTotal}</span>
+                    </div>
+                    <div className="h-[3px] bg-[#1A1A1A] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-white rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-[#505050]">
+                        {remaining > 0
+                          ? `${remaining} ${remaining === 1 ? 'осталась' : remaining < 5 ? 'осталось' : 'осталось'}`
+                          : 'всё сделано'}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        {sessionCorrect > 0 && <span className="text-[#606060]">{sessionCorrect} ✓</span>}
+                        {sessionIncorrect > 0 && <span className="text-[#404040]">{sessionIncorrect} ✗</span>}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="border-t border-[#1E1E1E]" />
 
