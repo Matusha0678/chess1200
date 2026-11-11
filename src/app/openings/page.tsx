@@ -112,9 +112,10 @@ export default function OpeningsPage() {
       {/* Random banner */}
       <Link
         href="/openings/random"
-        style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '20px 24px', background: 'var(--ivory)', color: 'var(--ink)' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '20px 24px', background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ivory)' }}
+        className="random-banner-link"
       >
-        <span style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', border: '1px solid var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', border: '1px solid var(--control)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <rect x="4" y="4" width="16" height="16" rx="3"/>
             <circle cx="9" cy="9" r="0.8" fill="currentColor"/>
@@ -125,7 +126,7 @@ export default function OpeningsPage() {
         </span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
           <span style={{ ...HEADING, fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.1 }}>Дебют Рандом</span>
-          <span style={{ fontSize: 14, color: 'var(--ink-2)' }}>Играй против Stockfish — он тренирует твои сохранённые дебюты</span>
+          <span style={{ fontSize: 14, color: 'var(--muted)' }}>Играй против Stockfish — он тренирует твои сохранённые дебюты</span>
         </span>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
       </Link>

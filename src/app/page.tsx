@@ -313,18 +313,18 @@ export default function HomePage() {
             </Link>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, padding: 28, background: 'var(--ivory)', color: 'var(--ink)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, padding: 28, background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ivory)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14 }}>
                 <span style={{ ...HEADING, fontWeight: 700, fontSize: 112, lineHeight: 0.82, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
-                <span style={{ ...HEADING, fontWeight: 600, fontSize: 28, lineHeight: 1, letterSpacing: '-0.02em' }}>{linesTodayWord}</span>
+                <span style={{ ...HEADING, fontWeight: 600, fontSize: 28, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--muted)' }}>{linesTodayWord}</span>
               </div>
-              <span style={{ fontSize: 14, color: 'var(--ink-2)' }}>{ctaSubtext}</span>
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>{ctaSubtext}</span>
             </div>
             {firstOpening && (
               <Link
                 href={`/openings/${firstOpening.id}/practice`}
-                style={{ flex: '0 1 300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: 56, background: 'var(--ink)', color: 'var(--ivory)', fontSize: 15, fontWeight: 600 }}
+                style={{ flex: '0 1 300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: 56, background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 600 }}
               >
                 Начать тренировку
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>

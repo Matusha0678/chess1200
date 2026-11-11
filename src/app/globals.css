@@ -67,6 +67,7 @@ html, body {
 /* ── Card and row hover effects ──────────────────────────────────────────── */
 .opening-card-link:hover { border-color: var(--card-hover) !important; }
 .row-hover-link:hover { background: var(--row-hover); }
+.random-banner-link:hover { border-color: var(--card-hover) !important; }
 
 /* ── Legacy site-theme overrides (ThemePanel) ─────────────────────────────── */
 [data-site-theme="midnight"] {
