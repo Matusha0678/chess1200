@@ -103,21 +103,32 @@ export default function ChessBoardWrapper({
     ({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean => {
       if (!targetSquare) return false;
 
-      // ── Premove: queue a move while opponent is responding ──────────────────
-      if (!inReview && !isPlayerTurn) {
-        const piece = chess.get(sourceSquare as any);
-        if (!piece || piece.color !== playerColor) return false;
+      // ── Premove: queue a move while the opponent is responding ───────────────
+      // Allow premoves whenever it's NOT the player's turn (and not in review)
+      if (!inReview && !isPlayerTurn && !isComplete) {
         premoveRef.current = { from: sourceSquare, to: targetSquare };
         setPremoveSquares({
           [sourceSquare]: { background: 'rgba(100, 150, 255, 0.3)' },
-          [targetSquare]: { background: 'rgba(100, 150, 255, 0.5)' },
+          [targetSquare]: { background: 'rgba(100, 150, 255, 0.52)' },
         });
-        return false; // snap piece back visually; highlight shows the queued premove
+        return false; // snap piece back; blue highlights show the queued premove
       }
 
       if (isProcessing.current) return false;
 
       // ── Helpers ─────────────────────────────────────────────────────────────
+
+      // Validate a premove using a temporary chess instance so we don't mutate
+      // the main board. Returns the SAN string if legal, null otherwise.
+      function validatePremoveSan(from: string, to: string): string | null {
+        try {
+          const temp = new Chess(chess.fen());
+          const result = temp.move({ from, to });
+          return result ? result.san : null;
+        } catch {
+          return null;
+        }
+      }
 
       function continueFromIndex(nextIdx: number, currentMoves: string[]) {
         if (nextIdx >= line.length) {
@@ -152,14 +163,16 @@ export default function ChessBoardWrapper({
             continueFromIndex(nextIdx + 1, updated);
           }, 300);
         } else {
-          // Player's turn — execute premove or wait for input
+          // Player's turn — execute queued premove or wait for input
           const pm = premoveRef.current;
           if (pm) {
             premoveRef.current = null;
             setPremoveSquares({});
             setTimeout(() => {
               const expected = line[nextIdx];
-              const isCorrect = pm.from === expected.from && pm.to === expected.to;
+              const san = validatePremoveSan(pm.from, pm.to);
+              const isCorrect = san !== null && san === expected.san;
+
               if (isCorrect) {
                 const r = chess.move({ from: pm.from, to: pm.to });
                 if (soundRef.current) r?.captured ? playCapture() : playMove();
@@ -181,6 +194,7 @@ export default function ChessBoardWrapper({
                   continueFromIndex(nextIdx + 1, newMoves);
                 }, 300);
               } else {
+                // Wrong premove — record mistake, show correction
                 mistakesRef.current = [...mistakesRef.current, nextIdx];
                 onMoveMistake?.(nextIdx);
                 setFeedback('wrong');
@@ -372,6 +386,7 @@ export default function ChessBoardWrapper({
       inReview,
       reviewQueue,
       isPlayerTurn,
+      isComplete,
       currentMoveIndex,
       line,
       chess,
@@ -413,7 +428,7 @@ export default function ChessBoardWrapper({
           onPieceDrop: handlePieceDrop,
           onSquareRightClick: cancelPremove,
           squareStyles: displaySquareStyles,
-          allowDragging: inReview ? isPlayerTurn : !isComplete,
+          allowDragging: true,
           boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
           darkSquareStyle: { backgroundColor: boardTheme.dark },
           lightSquareStyle: { backgroundColor: boardTheme.light },

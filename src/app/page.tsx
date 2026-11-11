@@ -110,7 +110,6 @@ function MasteryBar({ dist, total }: { dist: number[]; total: number }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Stacked bar */}
       <div className="flex h-[10px] rounded-full overflow-hidden gap-[1px]">
         {dist.map((count, level) => {
           if (count === 0) return null;
@@ -125,7 +124,6 @@ function MasteryBar({ dist, total }: { dist: number[]; total: number }) {
           );
         })}
       </div>
-      {/* Legend */}
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {dist.map((count, level) => {
           if (count === 0) return null;
@@ -165,7 +163,6 @@ export default function HomePage() {
         supabase.from('opening_practice_log').select('practiced_at').gte('practiced_at', thirtyAgo.toISOString()),
       ]);
 
-      // ── Streak + activity chart ──────────────────────────────────────────────
       const practicedAts = (logData ?? []).map((r: { practiced_at: string }) => r.practiced_at);
       setStreak(calcStreak(practicedAts));
 
@@ -182,7 +179,6 @@ export default function HomePage() {
 
       if (!ops || ops.length === 0) { setLoading(false); return; }
 
-      // ── Lines + progress ─────────────────────────────────────────────────────
       const ids = ops.map((o: Opening) => o.id);
       const { data: lines } = await supabase
         .from('opening_lines').select('id, opening_id').in('opening_id', ids);
@@ -192,7 +188,6 @@ export default function HomePage() {
         ? await supabase.from('line_progress').select('*').in('line_id', lineIds)
         : { data: [] as LineProgress[] };
 
-      // ── Mastery distribution ─────────────────────────────────────────────────
       const dist = Array(6).fill(0);
       const practicedLineIds = new Set((prog ?? []).map((p: LineProgress) => p.line_id));
       (prog ?? []).forEach((p: LineProgress) => { dist[Math.min(p.mastery ?? 0, 5)]++; });
@@ -200,7 +195,6 @@ export default function HomePage() {
       setMasteryDist(dist);
       setTotalLines(lineIds.length);
 
-      // ── Per-opening rows ─────────────────────────────────────────────────────
       const rows: OpeningRow[] = ops.map((op: Opening) => {
         const opLines = (lines ?? []).filter((l: { id: string; opening_id: string }) => l.opening_id === op.id);
         const opLineIds = opLines.map((l: { id: string }) => l.id);
@@ -229,8 +223,6 @@ export default function HomePage() {
     }
     load();
 
-    // Reload when browser restores this page from the back/forward cache
-    // (bfcache bypasses React's lifecycle — component doesn't remount)
     const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) load(); };
     window.addEventListener('pageshow', onPageShow);
     return () => window.removeEventListener('pageshow', onPageShow);
@@ -252,16 +244,20 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <main className="max-w-[600px] mx-auto px-5 pt-10 pb-16">
-        <div className="flex flex-col gap-4 animate-pulse">
-          <div className="h-[52px] w-48 bg-[#1E1E1E] rounded-[12px]" />
-          <div className="grid grid-cols-3 gap-3">
-            {[0,1,2].map(i => <div key={i} className="h-[88px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[16px]" />)}
+      <main className="max-w-[1200px] mx-auto px-5 lg:px-10 pt-8 pb-10">
+        <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8">
+          <div className="flex flex-col gap-4 animate-pulse">
+            <div className="h-[52px] w-48 bg-[#1E1E1E] rounded-[12px]" />
+            <div className="grid grid-cols-3 gap-3">
+              {[0,1,2].map(i => <div key={i} className="h-[88px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[16px]" />)}
+            </div>
+            <div className="h-32 bg-[#0D0D0D] border border-[#262626] rounded-[20px]" />
+            <div className="h-[96px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px]" />
+            <div className="h-[80px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px]" />
           </div>
-          <div className="h-32 bg-[#0D0D0D] border border-[#262626] rounded-[20px]" />
-          <div className="h-[96px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px]" />
-          <div className="h-[80px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px]" />
-          {[0,1,2].map(i => <div key={i} className="h-[72px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[16px]" />)}
+          <div className="hidden lg:flex flex-col gap-[6px] mt-10 animate-pulse">
+            {[0,1,2,3].map(i => <div key={i} className="h-[72px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[14px]" />)}
+          </div>
         </div>
       </main>
     );
@@ -269,7 +265,7 @@ export default function HomePage() {
 
   if (openings.length === 0) {
     return (
-      <main className="max-w-[600px] mx-auto px-5 pt-16 pb-16 flex flex-col items-center gap-5 text-center">
+      <main className="max-w-[1200px] mx-auto px-5 pt-16 pb-16 flex flex-col items-center gap-5 text-center">
         <div className="text-[72px] leading-none select-none mt-4">♟</div>
         <h1 className="m-0 text-[36px] font-[500] leading-[1.1]">Нет дебютов</h1>
         <p className="m-0 text-[15px] text-[#808080] max-w-[320px]">
@@ -285,200 +281,208 @@ export default function HomePage() {
     );
   }
 
+  const sortedOpenings = [...openings]
+    .filter(o => o.linesTotal > 0)
+    .sort((a, b) => (b.linesDue + b.linesNew) - (a.linesDue + a.linesNew));
+
   return (
-    <main className="max-w-[600px] mx-auto px-5 pt-10 pb-16">
+    <main className="max-w-[1200px] mx-auto px-5 lg:px-10 pt-8 pb-10">
+      <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 lg:items-start">
 
-      {/* ── Date header ───────────────────────────────────────────────────────── */}
-      <div className="mb-6">
-        <div className="text-[13px] text-[#404040] mb-[2px]">{dayLabel}</div>
-        <h1 className="m-0 text-[30px] font-[600] leading-none text-[#F5F5F5]">{dateLabel}</h1>
-      </div>
+        {/* ── Left column: today's dashboard ──────────────────────────────── */}
+        <div className="flex flex-col gap-4">
 
-      {/* ── 3 stat chips ─────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-
-        {/* Streak */}
-        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[16px] px-4 pt-4 pb-3 flex flex-col gap-[2px]">
-          <div className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#505050] mb-1">Серия</div>
-          <div className="flex items-baseline gap-[5px]">
-            <span className="text-[30px] font-[700] tabular-nums leading-none text-[#F5F5F5]">{streak}</span>
-            {streak > 0 && <span className="text-[18px] leading-none">🔥</span>}
+          {/* Date header */}
+          <div className="mb-1">
+            <div className="text-[13px] text-[#404040] mb-[2px]">{dayLabel}</div>
+            <h1 className="m-0 text-[30px] font-[600] leading-none text-[#F5F5F5]">{dateLabel}</h1>
           </div>
-          <div className="text-[11px] text-[#404040] mt-[3px]">
-            {streak === 0 ? 'начни сегодня' : streak === 1 ? 'день подряд' : streak < 5 ? 'дня подряд' : 'дней подряд'}
-          </div>
-        </div>
 
-        {/* Today */}
-        <div className={`bg-[#0D0D0D] border rounded-[16px] px-4 pt-4 pb-3 flex flex-col gap-[2px] ${todayTotal > 0 ? 'border-[#2A2A2A]' : 'border-[#1E1E1E]'}`}>
-          <div className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#505050] mb-1">Сегодня</div>
-          <div className="text-[30px] font-[700] tabular-nums leading-none text-[#F5F5F5]">{todayTotal}</div>
-          <div className="text-[11px] text-[#404040] mt-[3px]">
-            {todayTotal === 0
-              ? 'всё готово'
-              : totalDue > 0 && totalNew > 0
-                ? `${totalDue} повт. · ${totalNew} нов.`
-                : totalDue > 0 ? 'на повторение' : 'новые'}
-          </div>
-        </div>
+          {/* 3 stat chips */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[16px] px-4 pt-4 pb-3 flex flex-col gap-[2px]">
+              <div className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#505050] mb-1">Серия</div>
+              <div className="flex items-baseline gap-[5px]">
+                <span className="text-[30px] font-[700] tabular-nums leading-none text-[#F5F5F5]">{streak}</span>
+                {streak > 0 && <span className="text-[18px] leading-none">🔥</span>}
+              </div>
+              <div className="text-[11px] text-[#404040] mt-[3px]">
+                {streak === 0 ? 'начни сегодня' : streak === 1 ? 'день подряд' : streak < 5 ? 'дня подряд' : 'дней подряд'}
+              </div>
+            </div>
 
-        {/* Mastered */}
-        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[16px] px-4 pt-4 pb-3 flex flex-col gap-[2px]">
-          <div className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#505050] mb-1">Освоено</div>
-          <div className="flex items-baseline gap-[4px]">
-            <span className="text-[30px] font-[700] tabular-nums leading-none text-[#F5F5F5]">{totalMastered}</span>
-            <span className="text-[14px] text-[#383838] leading-none">/{totalLines}</span>
-          </div>
-          <div className="text-[11px] text-[#404040] mt-[3px]">{masteryPct}% репертуара</div>
-        </div>
-      </div>
+            <div className={`bg-[#0D0D0D] border rounded-[16px] px-4 pt-4 pb-3 flex flex-col gap-[2px] ${todayTotal > 0 ? 'border-[#2A2A2A]' : 'border-[#1E1E1E]'}`}>
+              <div className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#505050] mb-1">Сегодня</div>
+              <div className="text-[30px] font-[700] tabular-nums leading-none text-[#F5F5F5]">{todayTotal}</div>
+              <div className="text-[11px] text-[#404040] mt-[3px]">
+                {todayTotal === 0
+                  ? 'всё готово'
+                  : totalDue > 0 && totalNew > 0
+                    ? `${totalDue} повт. · ${totalNew} нов.`
+                    : totalDue > 0 ? 'на повторение' : 'новые'}
+              </div>
+            </div>
 
-      {/* ── Status card ──────────────────────────────────────────────────────── */}
-      {todayTotal === 0 ? (
-        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px] px-7 py-7 mb-4 flex flex-col items-center gap-2 text-center">
-          <div className="w-11 h-11 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-1">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6L9 17l-5-5"/>
-            </svg>
+            <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[16px] px-4 pt-4 pb-3 flex flex-col gap-[2px]">
+              <div className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#505050] mb-1">Освоено</div>
+              <div className="flex items-baseline gap-[4px]">
+                <span className="text-[30px] font-[700] tabular-nums leading-none text-[#F5F5F5]">{totalMastered}</span>
+                <span className="text-[14px] text-[#383838] leading-none">/{totalLines}</span>
+              </div>
+              <div className="text-[11px] text-[#404040] mt-[3px]">{masteryPct}% репертуара</div>
+            </div>
           </div>
-          <div className="text-[20px] font-[500] text-[#F5F5F5]">Всё готово на сегодня</div>
-          {nextReviewGlobal ? (
-            <div className="text-[14px] text-[#505050]">
-              Следующее повторение — <span className="text-[#808080]">{formatNext(nextReviewGlobal)}</span>
+
+          {/* Status / action card */}
+          {todayTotal === 0 ? (
+            <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px] px-7 py-7 flex flex-col items-center gap-2 text-center">
+              <div className="w-11 h-11 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-1">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+              </div>
+              <div className="text-[20px] font-[500] text-[#F5F5F5]">Всё готово на сегодня</div>
+              {nextReviewGlobal ? (
+                <div className="text-[14px] text-[#505050]">
+                  Следующее повторение — <span className="text-[#808080]">{formatNext(nextReviewGlobal)}</span>
+                </div>
+              ) : (
+                <div className="text-[14px] text-[#505050]">Добавь новые линии в дебюты</div>
+              )}
             </div>
           ) : (
-            <div className="text-[14px] text-[#505050]">Добавь новые линии в дебюты</div>
-          )}
-        </div>
-      ) : (
-        <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] px-7 py-6 mb-4">
-          <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-[52px] font-[700] leading-none tabular-nums text-[#FFFFFF]">
-              {todayTotal}
-            </span>
-            <span className="text-[20px] text-[#808080]">
-              {todayTotal % 10 === 1 && todayTotal % 100 !== 11 ? 'линия' :
-               todayTotal % 10 >= 2 && todayTotal % 10 <= 4 && !(todayTotal % 100 >= 12 && todayTotal % 100 <= 14) ? 'линии' : 'линий'}
-            </span>
-          </div>
-          <div className="text-[13px] text-[#505050] mb-5">
-            {totalDue > 0 && totalNew > 0
-              ? `${plural(totalDue, 'повторение', 'повторения', 'повторений')} · ${plural(totalNew, 'новая', 'новые', 'новых')}`
-              : totalDue > 0 ? 'пора повторить — забываешь' : 'ещё ни разу не тренировал'}
-          </div>
-          {firstOpening && (
-            <Link
-              href={`/openings/${firstOpening.id}/practice`}
-              className="flex items-center justify-center h-11 w-full bg-white text-[#050505] hover:bg-[#ECECEC] rounded-full text-[14px] font-semibold transition-colors no-underline"
-            >
-              Начать тренировку →
-            </Link>
-          )}
-        </div>
-      )}
-
-      {/* ── Activity chart ────────────────────────────────────────────────────── */}
-      <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px] px-5 py-5 mb-4">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Активность</span>
-          <span className="text-[11px] text-[#383838]">7 дней</span>
-        </div>
-        <ActivityChart counts={weekCounts} />
-      </div>
-
-      {/* ── Mastery distribution ─────────────────────────────────────────────── */}
-      {totalLines > 0 && (
-        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px] px-5 py-5 mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Прогресс репертуара</span>
-            <span className="text-[11px] text-[#383838]">{totalLines} линий</span>
-          </div>
-          <MasteryBar dist={masteryDist} total={totalLines} />
-        </div>
-      )}
-
-      {/* ── Per-opening list ─────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Дебюты</span>
-        <Link href="/openings" className="text-[12px] text-[#404040] hover:text-[#808080] transition-colors no-underline">
-          Все дебюты →
-        </Link>
-      </div>
-      <div className="flex flex-col gap-[6px]">
-        {openings
-          .filter(o => o.linesTotal > 0)
-          .sort((a, b) => (b.linesDue + b.linesNew) - (a.linesDue + a.linesNew))
-          .map(o => {
-            const toDoCount = o.linesDue + o.linesNew;
-            const masteredPct = o.linesTotal > 0 ? Math.round(o.linesMastered / o.linesTotal * 100) : 0;
-
-            return (
-              <Link
-                key={o.id}
-                href={`/openings/${o.id}/practice`}
-                className="flex items-center gap-4 bg-[#0D0D0D] border border-[#1A1A1A] hover:border-[#383838] rounded-[14px] px-5 py-[14px] no-underline transition-colors group"
-              >
-                {/* Icon */}
-                <span className="text-[20px] leading-none select-none shrink-0 opacity-60">
-                  {o.color === 'white' ? '♙' : o.color === 'black' ? '♟' : '♗'}
+            <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] px-7 py-6">
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-[52px] font-[700] leading-none tabular-nums text-[#FFFFFF]">
+                  {todayTotal}
                 </span>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-3 mb-[7px]">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-[14px] font-[500] text-[#E0E0E0] truncate">{o.name}</span>
-                      {o.eco_code && <span className="text-[11px] text-[#404040] shrink-0">{o.eco_code}</span>}
-                    </div>
-                    <div className="shrink-0 text-[13px] font-semibold">
-                      {toDoCount > 0 ? (
-                        <span className={o.linesDue > 0 ? 'text-[#FFFFFF]' : 'text-[#808080]'}>
-                          {o.linesDue > 0 && o.linesNew > 0
-                            ? `${o.linesDue} повт. · ${o.linesNew} нов.`
-                            : o.linesDue > 0
-                              ? `${plural(o.linesDue, 'повторение', 'повторения', 'повторений')}`
-                              : `${plural(o.linesNew, 'новая', 'новые', 'новых')}`}
-                        </span>
-                      ) : (
-                        <span className="text-[#2E2E2E] font-normal text-[12px]">✓ готово</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Progress: mastered / total */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-[2px] bg-[#1A1A1A] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#FFFFFF] rounded-full" style={{ width: `${masteredPct}%` }} />
-                    </div>
-                    <span className="text-[10px] text-[#363636] shrink-0 tabular-nums">
-                      {o.linesMastered}/{o.linesTotal}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Arrow */}
-                <svg
-                  className="text-[#282828] group-hover:text-[#606060] transition-colors shrink-0"
-                  width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                <span className="text-[20px] text-[#808080]">
+                  {todayTotal % 10 === 1 && todayTotal % 100 !== 11 ? 'линия' :
+                   todayTotal % 10 >= 2 && todayTotal % 10 <= 4 && !(todayTotal % 100 >= 12 && todayTotal % 100 <= 14) ? 'линии' : 'линий'}
+                </span>
+              </div>
+              <div className="text-[13px] text-[#505050] mb-5">
+                {totalDue > 0 && totalNew > 0
+                  ? `${plural(totalDue, 'повторение', 'повторения', 'повторений')} · ${plural(totalNew, 'новая', 'новые', 'новых')}`
+                  : totalDue > 0 ? 'пора повторить — забываешь' : 'ещё ни разу не тренировал'}
+              </div>
+              {firstOpening && (
+                <Link
+                  href={`/openings/${firstOpening.id}/practice`}
+                  className="flex items-center justify-center h-11 w-full bg-white text-[#050505] hover:bg-[#ECECEC] rounded-full text-[14px] font-semibold transition-colors no-underline"
                 >
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </Link>
-            );
-          })}
-      </div>
+                  Начать тренировку →
+                </Link>
+              )}
+            </div>
+          )}
 
-      {/* ── Footer ───────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mt-8 pt-5 border-t border-[#141414]">
-        <Link href="/openings" className="text-[13px] text-[#404040] hover:text-[#808080] transition-colors no-underline">
-          Все дебюты
-        </Link>
-        <Link href="/openings/new" className="text-[13px] text-[#404040] hover:text-[#808080] transition-colors no-underline">
-          + Добавить дебют
-        </Link>
-      </div>
+          {/* Activity chart */}
+          <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px] px-5 py-5">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Активность</span>
+              <span className="text-[11px] text-[#383838]">7 дней</span>
+            </div>
+            <ActivityChart counts={weekCounts} />
+          </div>
 
+          {/* Mastery distribution */}
+          {totalLines > 0 && (
+            <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px] px-5 py-5">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Прогресс репертуара</span>
+                <span className="text-[11px] text-[#383838]">{totalLines} линий</span>
+              </div>
+              <MasteryBar dist={masteryDist} total={totalLines} />
+            </div>
+          )}
+
+          {/* On mobile: openings list appears below */}
+          <div className="lg:hidden mt-2">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Дебюты</span>
+              <div className="flex items-center gap-4">
+                <Link href="/openings" className="text-[12px] text-[#404040] hover:text-[#808080] transition-colors no-underline">Все →</Link>
+                <Link href="/openings/new" className="text-[12px] text-[#404040] hover:text-[#808080] transition-colors no-underline">+ Добавить</Link>
+              </div>
+            </div>
+            <div className="flex flex-col gap-[6px]">
+              {sortedOpenings.map(o => <OpeningListItem key={o.id} o={o} />)}
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── Right column: openings list (desktop only) ───────────────────── */}
+        <div className="hidden lg:block lg:sticky lg:top-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Дебюты</span>
+            <div className="flex items-center gap-4">
+              <Link href="/openings" className="text-[12px] text-[#404040] hover:text-[#808080] transition-colors no-underline">Все →</Link>
+              <Link href="/openings/new" className="text-[12px] text-[#404040] hover:text-[#808080] transition-colors no-underline">+ Добавить</Link>
+            </div>
+          </div>
+          <div className="flex flex-col gap-[6px] overflow-y-auto max-h-[calc(100vh-120px)] pr-1">
+            {sortedOpenings.map(o => <OpeningListItem key={o.id} o={o} />)}
+          </div>
+        </div>
+
+      </div>
     </main>
+  );
+}
+
+function OpeningListItem({ o }: { o: OpeningRow }) {
+  const toDoCount = o.linesDue + o.linesNew;
+  const masteredPct = o.linesTotal > 0 ? Math.round(o.linesMastered / o.linesTotal * 100) : 0;
+
+  return (
+    <Link
+      href={`/openings/${o.id}/practice`}
+      className="flex items-center gap-4 bg-[#0D0D0D] border border-[#1A1A1A] hover:border-[#383838] rounded-[14px] px-5 py-[14px] no-underline transition-colors group"
+    >
+      <span className="text-[20px] leading-none select-none shrink-0 opacity-60">
+        {o.color === 'white' ? '♙' : o.color === 'black' ? '♟' : '♗'}
+      </span>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-3 mb-[7px]">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[14px] font-[500] text-[#E0E0E0] truncate">{o.name}</span>
+            {o.eco_code && <span className="text-[11px] text-[#404040] shrink-0">{o.eco_code}</span>}
+          </div>
+          <div className="shrink-0 text-[13px] font-semibold">
+            {toDoCount > 0 ? (
+              <span className={o.linesDue > 0 ? 'text-[#FFFFFF]' : 'text-[#808080]'}>
+                {o.linesDue > 0 && o.linesNew > 0
+                  ? `${o.linesDue} повт. · ${o.linesNew} нов.`
+                  : o.linesDue > 0
+                    ? `${o.linesDue} повт.`
+                    : `${o.linesNew} нов.`}
+              </span>
+            ) : (
+              <span className="text-[#2E2E2E] font-normal text-[12px]">✓ готово</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-[2px] bg-[#1A1A1A] rounded-full overflow-hidden">
+            <div className="h-full bg-[#FFFFFF] rounded-full" style={{ width: `${masteredPct}%` }} />
+          </div>
+          <span className="text-[10px] text-[#363636] shrink-0 tabular-nums">
+            {o.linesMastered}/{o.linesTotal}
+          </span>
+        </div>
+      </div>
+
+      <svg
+        className="text-[#282828] group-hover:text-[#606060] transition-colors shrink-0"
+        width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      >
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </Link>
   );
 }

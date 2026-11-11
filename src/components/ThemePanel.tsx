@@ -59,7 +59,7 @@ export default function ThemePanel() {
             <h2 className="text-[11px] font-semibold text-[#505050] uppercase tracking-widest mb-3">
               Тема сайта
             </h2>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-1.5">
               {SITE_THEMES.map(theme => {
                 const active = theme.id === siteThemeId;
                 const isLight = theme.id === 'light';

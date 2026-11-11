@@ -66,11 +66,9 @@ export default function OpeningDetailPage({ params }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Per-line deletion
   const [confirmDeleteLineId, setConfirmDeleteLineId] = useState<string | null>(null);
   const [deletingLineId, setDeletingLineId] = useState<string | null>(null);
 
-  // Add variation state
   const [showAddLine, setShowAddLine] = useState(false);
   const [addLinePgn, setAddLinePgn] = useState('');
   const [addLineCount, setAddLineCount] = useState<number | null>(null);
@@ -191,7 +189,6 @@ export default function OpeningDetailPage({ params }: Props) {
 
     setAddingLine(true);
 
-    // Find the current highest line_index
     const maxIndex = lines.length > 0
       ? Math.max(...lines.map((l) => l.line_index))
       : -1;
@@ -223,7 +220,6 @@ export default function OpeningDetailPage({ params }: Props) {
     setAddLineCount(null);
     setShowAddLine(false);
 
-    // Refresh
     await load();
   }
 
@@ -260,7 +256,7 @@ export default function OpeningDetailPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
+      <main className="max-w-[1200px] mx-auto px-5 lg:px-10 pt-5 pb-10">
         <div className="animate-pulse flex flex-col gap-6">
           <div className="h-[13px] w-[200px] bg-[#1E1E1E] rounded-full" />
           <div className="h-[72px] w-[480px] bg-[#1E1E1E] rounded-[16px]" />
@@ -298,8 +294,103 @@ export default function OpeningDetailPage({ params }: Props) {
     return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   }
 
+  /* Shared action card content — rendered twice (mobile inline, desktop sidebar) */
+  function ActionCard() {
+    return (
+      <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-3">
+        <Link
+          href={`/openings/${id}/study`}
+          className="h-11 flex items-center justify-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[10px] px-6 text-[15px] font-semibold transition-colors no-underline"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+          Учёба
+        </Link>
+
+        <Link
+          href={`/openings/${id}/practice`}
+          className="h-10 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-[10px] px-6 text-[14px] font-medium transition-colors no-underline"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          Тренировка
+        </Link>
+
+        <div className="flex gap-2">
+          <Link
+            href={`/openings/${id}/stats`}
+            className="flex-1 h-9 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors no-underline"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Статистика
+          </Link>
+          <Link
+            href={`/openings/${id}/edit`}
+            className="flex-1 h-9 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors no-underline"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Изменить
+          </Link>
+        </div>
+
+        <button
+          onClick={handleExportPgn}
+          disabled={lines.length === 0}
+          className={[
+            'h-9 w-full flex items-center justify-center gap-2 border rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer disabled:opacity-30',
+            exportFlash
+              ? 'border-[#505050] text-[#A0A0A0]'
+              : 'border-[#303030] text-[#606060] hover:border-[#505050] hover:text-[#A0A0A0]',
+          ].join(' ')}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          {exportFlash ? 'Скачано!' : 'Скачать PGN'}
+        </button>
+
+        {confirmDelete ? (
+          <div className="flex flex-col gap-2 pt-1">
+            <p className="text-[13px] text-[#A0A0A0] text-center">Удалить дебют и все линии?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 h-9 border border-[#404040] text-[#A0A0A0] hover:bg-[#1A1A1A] rounded-full px-4 text-[13px] font-semibold transition-colors bg-transparent disabled:opacity-50 cursor-pointer"
+              >
+                {deleting ? 'Удаление...' : 'Да, удалить'}
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="flex-1 h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-4 text-[13px] transition-colors bg-transparent cursor-pointer"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="h-9 w-full border border-transparent text-[#505050] hover:border-[#404040] hover:text-[#A0A0A0] rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer"
+          >
+            Удалить дебют
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
+    <main className="max-w-[1200px] mx-auto px-5 lg:px-10 pt-5 pb-10">
       {/* Back */}
       <Link
         href="/openings"
@@ -311,354 +402,263 @@ export default function OpeningDetailPage({ params }: Props) {
         Дебюты
       </Link>
 
-      {/* Hero: two-col flex-wrap */}
-      <div className="flex flex-wrap gap-6 items-start mb-6">
-        {/* .main */}
-        <div className="flex-[999_1_600px] min-w-0 flex flex-col gap-4">
-          {/* Badges */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {opening.eco_code && (
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#FFFFFF] bg-[#1A1A1A] border border-[#303030] rounded-[8px] px-[10px] py-[4px]">
-                {opening.eco_code}
+      <div className="flex flex-col lg:flex-row lg:gap-8 lg:items-start">
+
+        {/* ── Left: main content ──────────────────────────────────────────── */}
+        <div className="flex-1 min-w-0 flex flex-col gap-5">
+
+          {/* Badges + title */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {opening.eco_code && (
+                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#FFFFFF] bg-[#1A1A1A] border border-[#303030] rounded-[8px] px-[10px] py-[4px]">
+                  {opening.eco_code}
+                </span>
+              )}
+              <span className="flex items-center gap-[6px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0] bg-[#0D0D0D] border border-[#262626] rounded-[8px] px-[10px] py-[4px]">
+                <span className="text-[15px] leading-none">{COLOR_ICON[opening.color]}</span>
+                {COLOR_LABEL[opening.color]}
               </span>
-            )}
-            <span className="flex items-center gap-[6px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0] bg-[#0D0D0D] border border-[#262626] rounded-[8px] px-[10px] py-[4px]">
-              <span className="text-[15px] leading-none">{COLOR_ICON[opening.color]}</span>
-              {COLOR_LABEL[opening.color]}
-            </span>
+            </div>
+            <h1 className="m-0 font-[500] text-[42px] leading-[1] tracking-[-0.01em]">
+              {opening.name}
+            </h1>
           </div>
 
-          {/* Title */}
-          <h1 className="m-0 font-[500] text-[48px] leading-[1] tracking-[-0.01em]">
-            {opening.name}
-          </h1>
-        </div>
+          {/* Action card — mobile only */}
+          <div className="lg:hidden">
+            <ActionCard />
+          </div>
 
-        {/* .side — action card */}
-        <div className="flex-[1_1_360px] min-w-0">
-          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-3">
-            <Link
-              href={`/openings/${id}/study`}
-              className="h-11 flex items-center justify-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[10px] px-6 text-[15px] font-semibold transition-colors no-underline"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-              </svg>
-              Учёба
-            </Link>
+          {/* Stats — 6 cells, 3+3 */}
+          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] grid grid-cols-3">
+            <div className="p-5 flex flex-col gap-[2px]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Линий</span>
+              <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#F5F5F5]">{linesTotal}</span>
+            </div>
+            <div className="p-5 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Освоено</span>
+              <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">{linesMastered}</span>
+            </div>
+            <div className="p-5 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Повторить</span>
+              <span className={`font-cormorant text-[32px] font-semibold leading-[1.1] ${linesDue > 0 ? 'text-[#FFFFFF]' : 'text-[#F5F5F5]'}`}>{linesDue}</span>
+            </div>
+            <div className="p-5 flex flex-col gap-[2px] border-t border-[#1E1E1E]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Попыток</span>
+              <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#F5F5F5]">
+                {totalAttempts > 0 ? totalAttempts : '—'}
+              </span>
+            </div>
+            <div className="p-5 flex flex-col gap-[2px] border-t border-l border-[#1E1E1E]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Точность</span>
+              <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">
+                {accuracy !== null ? `${accuracy}%` : '—'}
+              </span>
+            </div>
+            <div className="p-5 flex flex-col gap-[2px] border-t border-l border-[#1E1E1E]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Последнее</span>
+              <span className="font-cormorant text-[28px] font-semibold leading-[1.1] text-[#A0A0A0]">
+                {fmtLastPracticed(lastPracticed ?? null)}
+              </span>
+            </div>
+          </div>
 
-            <Link
-              href={`/openings/${id}/practice`}
-              className="h-10 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-[10px] px-6 text-[14px] font-medium transition-colors no-underline"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-              Тренировка
-            </Link>
-
-            <div className="flex gap-2">
-              <Link
-                href={`/openings/${id}/stats`}
-                className="flex-1 h-9 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors no-underline"
+          {/* Lines list */}
+          <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px]">
+            <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#262626]">
+              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Вариации</span>
+              <button
+                onClick={() => {
+                  setShowAddLine((v) => !v);
+                  setAddLineError(null);
+                  setAddLineSuccess(false);
+                }}
+                className={`h-9 flex items-center gap-2 rounded-full px-5 text-[14px] transition-colors border cursor-pointer ${
+                  showAddLine
+                    ? 'bg-[#1A1A1A] border-[#303030] text-[#FFFFFF]'
+                    : 'border-[#303030] text-[#E5E5E5] bg-transparent hover:border-[#FFFFFF]'
+                }`}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" />
                 </svg>
-                Статистика
-              </Link>
-              <Link
-                href={`/openings/${id}/edit`}
-                className="flex-1 h-9 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors no-underline"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                Изменить
-              </Link>
+                Добавить вариацию
+              </button>
             </div>
 
-            {/* Export PGN */}
-            <button
-              onClick={handleExportPgn}
-              disabled={lines.length === 0}
-              className={[
-                'h-9 w-full flex items-center justify-center gap-2 border rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer disabled:opacity-30',
-                exportFlash
-                  ? 'border-[#505050] text-[#A0A0A0]'
-                  : 'border-[#303030] text-[#606060] hover:border-[#505050] hover:text-[#A0A0A0]',
-              ].join(' ')}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              {exportFlash ? 'Скачано!' : 'Скачать PGN'}
-            </button>
+            {addLineSuccess && (
+              <div className="flex items-center gap-2 text-[14px] text-[#D0D0D0] bg-[#141414] border-b border-[#303030] px-5 py-3">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+                Вариации добавлены успешно
+              </div>
+            )}
 
-            {/* Delete */}
-            {confirmDelete ? (
-              <div className="flex flex-col gap-2 pt-1">
-                <p className="text-[13px] text-[#A0A0A0] text-center">Удалить дебют и все линии?</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="flex-1 h-9 border border-[#404040] text-[#A0A0A0] hover:bg-[#1A1A1A] rounded-full px-4 text-[13px] font-semibold transition-colors bg-transparent disabled:opacity-50 cursor-pointer"
+            {lines.length === 0 && !showAddLine ? (
+              <div className="px-5 py-12 text-center text-[#A0A0A0] text-[14px]">
+                Линии не найдены.
+              </div>
+            ) : (
+              lines.map((line, i) => {
+                const prog = line.line_progress?.[0] ?? null;
+                const isDue = prog && prog.next_review <= now && prog.mastery < 5;
+                const mastery = prog?.mastery ?? 0;
+
+                return (
+                  <div
+                    key={line.id}
+                    className={`grid grid-cols-[32px_minmax(0,1fr)_auto_auto] gap-x-5 px-5 py-[18px] items-center hover:bg-[#1A1814] transition-colors ${i > 0 ? 'border-t border-[#1E1E1E]' : ''}`}
                   >
-                    {deleting ? 'Удаление...' : 'Да, удалить'}
+                    <span className="text-[13px] text-[#505050] text-right tabular-nums">
+                      {i + 1}
+                    </span>
+
+                    <div className="min-w-0">
+                      <p className="m-0 text-[14px] font-mono text-[#A0A0A0] leading-[1.6] break-words line-clamp-2">
+                        {abbreviateMoves(line)}
+                      </p>
+                      <div className="flex items-center gap-[4px] mt-1">
+                        {masteryDots(mastery)}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      {isDue ? (
+                        <span className="flex items-center gap-[5px] bg-[#1A1A1A] border border-[#303030] rounded-full px-[10px] py-[4px]">
+                          <span className="w-[5px] h-[5px] rounded-full bg-[#FFFFFF]" />
+                          <span className="text-[12px] font-semibold text-[#FFFFFF] whitespace-nowrap">Повторить</span>
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="shrink-0 flex items-center gap-2">
+                      {confirmDeleteLineId === line.id ? (
+                        <>
+                          <span className="text-[13px] text-[#A0A0A0] whitespace-nowrap">Удалить?</span>
+                          <button
+                            onClick={() => handleDeleteLine(line.id)}
+                            disabled={deletingLineId === line.id}
+                            className="h-9 border border-[#505050] text-[#EF9A9A] hover:border-[#EF9A9A] rounded-full px-4 text-[13px] font-medium transition-colors bg-transparent disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                          >
+                            {deletingLineId === line.id ? '…' : 'Да'}
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteLineId(null)}
+                            className="h-9 border border-[#303030] text-[#808080] hover:border-[#505050] rounded-full px-4 text-[13px] transition-colors bg-transparent cursor-pointer"
+                          >
+                            Нет
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Link
+                            href={`/openings/${id}/practice?line=${line.id}`}
+                            className="shrink-0 h-9 flex items-center border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
+                          >
+                            Практика
+                          </Link>
+                          <button
+                            onClick={() => setConfirmDeleteLineId(line.id)}
+                            title="Удалить линию"
+                            className="shrink-0 w-9 h-9 flex items-center justify-center border border-transparent text-[#404040] hover:border-[#404040] hover:text-[#808080] rounded-full transition-colors bg-transparent cursor-pointer"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                            </svg>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+
+            {showAddLine && (
+              <div className={`px-5 pb-5 pt-5 flex flex-col gap-5 ${lines.length > 0 ? 'border-t border-[#1E1E1E]' : ''}`}>
+                <h3 className="m-0 font-[500] text-[26px] leading-[1.1]">
+                  Добавить вариации
+                </h3>
+
+                <div className="flex flex-col gap-[10px]">
+                  <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                    PGN
+                  </label>
+                  <textarea
+                    value={addLinePgn}
+                    onChange={(e) => handleAddLinePgnChange(e.target.value)}
+                    rows={8}
+                    placeholder="Вставь PGN вариаций для добавления..."
+                    className="bg-[#050505] border border-[#262626] rounded-[12px] px-4 py-3 text-[14px] text-[#F5F5F5] placeholder-[#4A4540] outline-none focus:border-[#FFFFFF] transition-colors font-mono resize-y leading-[1.6]"
+                  />
+                  {addLineCount !== null && (
+                    <div
+                      className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
+                        addLineCount > 0
+                          ? 'text-[#D0D0D0] bg-[#141414] border-[#303030]'
+                          : 'text-[#A0A0A0] bg-[#1A1A1A] border-[#404040]'
+                      }`}
+                    >
+                      {addLineCount > 0 ? (
+                        <>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M20 6L9 17l-5-5" />
+                          </svg>
+                          Найдено {addLineCount} {pluralVariations(addLineCount)}
+                        </>
+                      ) : (
+                        <>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+                          </svg>
+                          Вариации не найдены — проверь PGN
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {addLineError && (
+                  <div className="flex items-center gap-2 text-[14px] text-[#A0A0A0] bg-[#1A1A1A] border border-[#404040] rounded-[12px] px-5 py-3">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+                    </svg>
+                    {addLineError}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleAddLines}
+                    disabled={addingLine || !addLinePgn.trim()}
+                    className="h-9 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {addingLine ? 'Добавление...' : 'Добавить'}
                   </button>
                   <button
-                    onClick={() => setConfirmDelete(false)}
-                    className="flex-1 h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-4 text-[13px] transition-colors bg-transparent cursor-pointer"
+                    onClick={() => {
+                      setShowAddLine(false);
+                      setAddLinePgn('');
+                      setAddLineCount(null);
+                      setAddLineError(null);
+                    }}
+                    className="h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent cursor-pointer"
                   >
                     Отмена
                   </button>
                 </div>
               </div>
-            ) : (
-              <button
-                onClick={() => setConfirmDelete(true)}
-                className="h-9 w-full border border-transparent text-[#505050] hover:border-[#404040] hover:text-[#A0A0A0] rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer"
-              >
-                Удалить дебют
-              </button>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Stats — 6 cells, 3+3 */}
-      <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] grid grid-cols-3 mb-6">
-        <div className="p-5 flex flex-col gap-[2px]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Линий</span>
-          <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#F5F5F5]">{linesTotal}</span>
-        </div>
-        <div className="p-5 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Освоено</span>
-          <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">{linesMastered}</span>
-        </div>
-        <div className="p-5 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Повторить</span>
-          <span className={`font-cormorant text-[32px] font-semibold leading-[1.1] ${linesDue > 0 ? 'text-[#FFFFFF]' : 'text-[#F5F5F5]'}`}>{linesDue}</span>
-        </div>
-        <div className="p-5 flex flex-col gap-[2px] border-t border-[#1E1E1E]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Попыток</span>
-          <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#F5F5F5]">
-            {totalAttempts > 0 ? totalAttempts : '—'}
-          </span>
-        </div>
-        <div className="p-5 flex flex-col gap-[2px] border-t border-l border-[#1E1E1E]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Точность</span>
-          <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">
-            {accuracy !== null ? `${accuracy}%` : '—'}
-          </span>
-        </div>
-        <div className="p-5 flex flex-col gap-[2px] border-t border-l border-[#1E1E1E]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Последнее</span>
-          <span className="font-cormorant text-[28px] font-semibold leading-[1.1] text-[#A0A0A0]">
-            {fmtLastPracticed(lastPracticed ?? null)}
-          </span>
-        </div>
-      </div>
-
-      {/* Lines list — one card */}
-      <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px]">
-        {/* Section header */}
-        <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#262626]">
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Вариации</span>
-          <button
-            onClick={() => {
-              setShowAddLine((v) => !v);
-              setAddLineError(null);
-              setAddLineSuccess(false);
-            }}
-            className={`h-9 flex items-center gap-2 rounded-full px-5 text-[14px] transition-colors border cursor-pointer ${
-              showAddLine
-                ? 'bg-[#1A1A1A] border-[#303030] text-[#FFFFFF]'
-                : 'border-[#303030] text-[#E5E5E5] bg-transparent hover:border-[#FFFFFF]'
-            }`}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Добавить вариацию
-          </button>
+        {/* ── Right: sticky action sidebar (desktop only) ─────────────────── */}
+        <div className="hidden lg:block w-[280px] shrink-0 sticky top-5">
+          <ActionCard />
         </div>
 
-        {/* Success message */}
-        {addLineSuccess && (
-          <div className="flex items-center gap-2 text-[14px] text-[#D0D0D0] bg-[#141414] border-b border-[#303030] px-5 py-3">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
-            Вариации добавлены успешно
-          </div>
-        )}
-
-        {/* Lines */}
-        {lines.length === 0 && !showAddLine ? (
-          <div className="px-5 py-12 text-center text-[#A0A0A0] text-[14px]">
-            Линии не найдены.
-          </div>
-        ) : (
-          lines.map((line, i) => {
-            const prog = line.line_progress?.[0] ?? null;
-            const isDue = prog && prog.next_review <= now && prog.mastery < 5;
-            const mastery = prog?.mastery ?? 0;
-
-            return (
-              <div
-                key={line.id}
-                className={`grid grid-cols-[32px_minmax(0,1fr)_auto_auto] sm:grid-cols-[32px_minmax(0,1fr)_auto_auto] gap-x-5 px-5 py-[18px] items-center hover:bg-[#1A1814] transition-colors ${i > 0 ? 'border-t border-[#1E1E1E]' : ''}`}
-              >
-                {/* Index */}
-                <span className="text-[13px] text-[#505050] text-right tabular-nums">
-                  {i + 1}
-                </span>
-
-                {/* Moves + mastery dots */}
-                <div className="min-w-0">
-                  <p className="m-0 text-[14px] font-mono text-[#A0A0A0] leading-[1.6] break-words line-clamp-2">
-                    {abbreviateMoves(line)}
-                  </p>
-                  <div className="flex items-center gap-[4px] mt-1">
-                    {masteryDots(mastery)}
-                  </div>
-                </div>
-
-                {/* Due badge */}
-                <div className="shrink-0">
-                  {isDue ? (
-                    <span className="flex items-center gap-[5px] bg-[#1A1A1A] border border-[#303030] rounded-full px-[10px] py-[4px]">
-                      <span className="w-[5px] h-[5px] rounded-full bg-[#FFFFFF]" />
-                      <span className="text-[12px] font-semibold text-[#FFFFFF] whitespace-nowrap">Повторить</span>
-                    </span>
-                  ) : null}
-                </div>
-
-                {/* Practice + delete */}
-                <div className="shrink-0 flex items-center gap-2">
-                  {confirmDeleteLineId === line.id ? (
-                    <>
-                      <span className="text-[13px] text-[#A0A0A0] whitespace-nowrap">Удалить?</span>
-                      <button
-                        onClick={() => handleDeleteLine(line.id)}
-                        disabled={deletingLineId === line.id}
-                        className="h-9 border border-[#505050] text-[#EF9A9A] hover:border-[#EF9A9A] rounded-full px-4 text-[13px] font-medium transition-colors bg-transparent disabled:opacity-50 cursor-pointer whitespace-nowrap"
-                      >
-                        {deletingLineId === line.id ? '…' : 'Да'}
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeleteLineId(null)}
-                        className="h-9 border border-[#303030] text-[#808080] hover:border-[#505050] rounded-full px-4 text-[13px] transition-colors bg-transparent cursor-pointer"
-                      >
-                        Нет
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link
-                        href={`/openings/${id}/practice?line=${line.id}`}
-                        className="shrink-0 h-9 flex items-center border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
-                      >
-                        Практика
-                      </Link>
-                      <button
-                        onClick={() => setConfirmDeleteLineId(line.id)}
-                        title="Удалить линию"
-                        className="shrink-0 w-9 h-9 flex items-center justify-center border border-transparent text-[#404040] hover:border-[#404040] hover:text-[#808080] rounded-full transition-colors bg-transparent cursor-pointer"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
-                        </svg>
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        )}
-
-        {/* Add variation inline form */}
-        {showAddLine && (
-          <div className={`px-5 pb-5 pt-5 flex flex-col gap-5 ${lines.length > 0 ? 'border-t border-[#1E1E1E]' : ''}`}>
-            <h3 className="m-0 font-[500] text-[26px] leading-[1.1]">
-              Добавить вариации
-            </h3>
-
-            <div className="flex flex-col gap-[10px]">
-              <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
-                PGN
-              </label>
-              <textarea
-                value={addLinePgn}
-                onChange={(e) => handleAddLinePgnChange(e.target.value)}
-                rows={8}
-                placeholder="Вставь PGN вариаций для добавления..."
-                className="bg-[#050505] border border-[#262626] rounded-[12px] px-4 py-3 text-[14px] text-[#F5F5F5] placeholder-[#4A4540] outline-none focus:border-[#FFFFFF] transition-colors font-mono resize-y leading-[1.6]"
-              />
-              {addLineCount !== null && (
-                <div
-                  className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
-                    addLineCount > 0
-                      ? 'text-[#D0D0D0] bg-[#141414] border-[#303030]'
-                      : 'text-[#A0A0A0] bg-[#1A1A1A] border-[#404040]'
-                  }`}
-                >
-                  {addLineCount > 0 ? (
-                    <>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M20 6L9 17l-5-5" />
-                      </svg>
-                      Найдено {addLineCount} {pluralVariations(addLineCount)}
-                    </>
-                  ) : (
-                    <>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-                      </svg>
-                      Вариации не найдены — проверь PGN
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {addLineError && (
-              <div className="flex items-center gap-2 text-[14px] text-[#A0A0A0] bg-[#1A1A1A] border border-[#404040] rounded-[12px] px-5 py-3">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-                </svg>
-                {addLineError}
-              </div>
-            )}
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleAddLines}
-                disabled={addingLine || !addLinePgn.trim()}
-                className="h-9 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {addingLine ? 'Добавление...' : 'Добавить'}
-              </button>
-              <button
-                onClick={() => {
-                  setShowAddLine(false);
-                  setAddLinePgn('');
-                  setAddLineCount(null);
-                  setAddLineError(null);
-                }}
-                className="h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent cursor-pointer"
-              >
-                Отмена
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </main>
   );

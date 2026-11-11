@@ -55,11 +55,16 @@ export const PIECE_STYLES: PieceStyle[] = [
 export const PIECE_KEYS = ['wP','wN','wB','wR','wQ','wK','bP','bN','bB','bR','bQ','bK'] as const;
 
 export const SITE_THEMES: SiteTheme[] = [
-  { id: 'dark',     name: 'Уголь',   bg: '#050505', card: '#0D0D0D' },
-  { id: 'midnight', name: 'Полночь', bg: '#05070F', card: '#0C0E1A' },
-  { id: 'forest',   name: 'Лесной',  bg: '#050A06', card: '#0C1409' },
-  { id: 'amethyst', name: 'Аметист', bg: '#070509', card: '#0F0C15' },
-  { id: 'amber',    name: 'Янтарь',  bg: '#0A0804', card: '#15110A' },
-  { id: 'slate',    name: 'Сланец',  bg: '#06080C', card: '#0D1018' },
-  { id: 'light',    name: 'Светлый', bg: '#F8F8F8', card: '#FFFFFF' },
+  { id: 'dark',     name: 'Уголь',      bg: '#050505', card: '#0D0D0D' },
+  { id: 'midnight', name: 'Полночь',    bg: '#05070F', card: '#0C0E1A' },
+  { id: 'indigo',   name: 'Индиго',     bg: '#030306', card: '#090A11' },
+  { id: 'forest',   name: 'Лесной',     bg: '#050A06', card: '#0C1409' },
+  { id: 'ocean',    name: 'Морской',    bg: '#030A0B', card: '#071618' },
+  { id: 'amethyst', name: 'Аметист',    bg: '#070509', card: '#0F0C15' },
+  { id: 'rose',     name: 'Розовый',    bg: '#09040A', card: '#130A14' },
+  { id: 'crimson',  name: 'Малиновый',  bg: '#0A0304', card: '#150708' },
+  { id: 'amber',    name: 'Янтарь',     bg: '#0A0804', card: '#15110A' },
+  { id: 'copper',   name: 'Медь',       bg: '#090601', card: '#130E04' },
+  { id: 'slate',    name: 'Сланец',     bg: '#06080C', card: '#0D1018' },
+  { id: 'light',    name: 'Светлый',    bg: '#F8F8F8', card: '#FFFFFF' },
 ];

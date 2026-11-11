@@ -3,6 +3,7 @@
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import type { ChessMove } from '@/types/openings';
+import { useBoardTheme } from '@/contexts/BoardThemeContext';
 
 interface Props {
   opening: {
@@ -47,6 +48,7 @@ export default function OpeningCard({
   onClick,
   firstLineMoves,
 }: Props) {
+  const { boardTheme, boardThemeId } = useBoardTheme();
   const progress = linesTotal > 0 ? (linesMastered / linesTotal) * 100 : 0;
 
   return (
@@ -58,13 +60,14 @@ export default function OpeningCard({
       {firstLineMoves && firstLineMoves.length > 0 && (
         <div className="w-full aspect-square rounded-[12px] overflow-hidden border border-[#262626]">
           <Chessboard
+            key={boardThemeId}
             options={{
               position: computeFen(firstLineMoves),
               boardOrientation: opening.color === 'black' ? 'black' : 'white',
               allowDragging: false,
               boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
-              darkSquareStyle: { backgroundColor: '#3A3A3A' },
-              lightSquareStyle: { backgroundColor: '#8A8A8A' },
+              darkSquareStyle: { backgroundColor: boardTheme.dark },
+              lightSquareStyle: { backgroundColor: boardTheme.light },
             }}
           />
         </div>
