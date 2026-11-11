@@ -13,12 +13,13 @@ interface OpeningRow extends Opening {
   earliestNextReview: string | null;
 }
 
-const MONTH_NAMES = [
-  'января','февраля','марта','апреля','мая','июня',
-  'июля','августа','сентября','октября','ноября','декабря',
-];
-const DAY_NAMES = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const MONTH_NAMES = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const DAY_NAMES_RU = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const DAY_NAMES_RU_UPPER = ['ВОСКРЕСЕНЬЕ','ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА'];
 const DAY_SHORT = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+// suppress unused variable warnings
+void DAY_NAMES_RU;
 
 function plural(n: number, one: string, few: string, many: string) {
   const m100 = n % 100, m10 = n % 10;
@@ -42,58 +43,81 @@ function formatNext(iso: string): string {
 function calcStreak(practicedAts: string[]): number {
   if (practicedAts.length === 0) return 0;
   const unique = [...new Set(practicedAts.map(d => d.slice(0, 10)))].sort().reverse();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
   const todayStr = today.toISOString().slice(0, 10);
   const yday = new Date(today); yday.setDate(yday.getDate() - 1);
   const ydayStr = yday.toISOString().slice(0, 10);
   if (unique[0] !== todayStr && unique[0] !== ydayStr) return 0;
-  let streak = 0;
-  let checkStr = unique[0];
+  let streak = 0, checkStr = unique[0];
   for (const d of unique) {
     if (d === checkStr) {
       streak++;
-      const next = new Date(checkStr + 'T00:00:00');
-      next.setDate(next.getDate() - 1);
+      const next = new Date(checkStr + 'T00:00:00'); next.setDate(next.getDate() - 1);
       checkStr = next.toISOString().slice(0, 10);
     } else break;
   }
   return streak;
 }
 
+const EYEBROW: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 12,
+  fontSize: 11, fontWeight: 600, letterSpacing: '0.18em',
+  color: 'var(--muted)', textTransform: 'uppercase',
+};
+
+const EYEBROW_LINE: React.CSSProperties = {
+  width: 48, height: 1, background: 'var(--eyebrow-line)', flexShrink: 0,
+};
+
+const SECTION_HEADER: React.CSSProperties = {
+  borderTop: '2px solid var(--ivory)',
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+  minHeight: 48,
+};
+
+const LABEL: React.CSSProperties = {
+  margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.18em',
+  color: 'var(--ivory)', textTransform: 'uppercase',
+};
+
+const HEADING: React.CSSProperties = {
+  fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
+};
+
 function ActivityChart({ counts }: { counts: number[] }) {
   const today = new Date();
   const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - 6 + i);
+    const d = new Date(today); d.setDate(d.getDate() - 6 + i);
     return { dow: d.getDay(), count: counts[i], isToday: i === 6 };
   });
   const maxVal = Math.max(...counts, 1);
-  const H = 44;
 
   return (
-    <div className="flex items-end gap-[5px]" style={{ height: `${H + 20}px` }}>
+    <div
+      role="img"
+      aria-label={`Активность за 7 дней: ${counts.reduce((a, b) => a + b, 0)} тренировок`}
+      style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 8, paddingTop: 8 }}
+    >
       {days.map((day, i) => {
-        const barH = day.count > 0 ? Math.max(4, Math.round((day.count / maxVal) * H)) : 2;
+        const barH = day.count > 0 ? Math.max(4, Math.round((day.count / maxVal) * 54)) : 0;
         return (
-          <div key={i} className="flex-1 flex flex-col items-center gap-[6px]">
-            <div className="w-full flex items-end justify-center" style={{ height: `${H}px` }}>
-              {day.count > 0 && (
-                <div className="text-[9px] text-[#404040] mb-[2px] tabular-nums">{day.count}</div>
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{
+              position: 'relative', height: 56,
+              borderBottom: `2px solid ${day.isToday ? 'var(--ivory)' : 'var(--track)'}`,
+            }}>
+              {barH > 0 && (
+                <div style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0,
+                  height: barH, background: 'var(--ivory)',
+                }} />
               )}
             </div>
-            <div className="w-full" style={{ height: `${H}px`, position: 'relative', marginTop: `-${H}px` }}>
-              <div
-                className="w-full absolute bottom-0 rounded-t-[3px] transition-all"
-                style={{
-                  height: `${barH}px`,
-                  backgroundColor: day.isToday
-                    ? (day.count > 0 ? '#FFFFFF' : '#2A2A2A')
-                    : (day.count > 0 ? '#404040' : '#1A1A1A'),
-                }}
-              />
-            </div>
-            <span className="text-[9px] font-medium" style={{ color: day.isToday ? '#808080' : '#3A3A3A' }}>
+            <span style={{
+              fontSize: 12, textAlign: 'center',
+              color: day.isToday ? 'var(--ivory)' : 'var(--muted)',
+              fontWeight: day.isToday ? 600 : 400,
+            }}>
               {DAY_SHORT[day.dow]}
             </span>
           </div>
@@ -103,44 +127,8 @@ function ActivityChart({ counts }: { counts: number[] }) {
   );
 }
 
-function MasteryBar({ dist, total }: { dist: number[]; total: number }) {
-  if (total === 0) return null;
-  const colors = ['#1E1E1E', '#2D2D2D', '#424242', '#636363', '#939393', '#E8E8E8'];
-  const labels = ['Новые', 'Ур. 1', 'Ур. 2', 'Ур. 3', 'Ур. 4', 'Освоены'];
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex h-[10px] rounded-full overflow-hidden gap-[1px]">
-        {dist.map((count, level) => {
-          if (count === 0) return null;
-          const pct = (count / total) * 100;
-          return (
-            <div
-              key={level}
-              className="h-full"
-              style={{ width: `${pct}%`, backgroundColor: colors[level], minWidth: count > 0 ? '2px' : 0 }}
-              title={`${labels[level]}: ${count}`}
-            />
-          );
-        })}
-      </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1">
-        {dist.map((count, level) => {
-          if (count === 0) return null;
-          return (
-            <div key={level} className="flex items-center gap-[6px]">
-              <span
-                className="w-[7px] h-[7px] rounded-full inline-block shrink-0"
-                style={{ backgroundColor: colors[level] }}
-              />
-              <span className="text-[11px] text-[#505050]">{labels[level]}: <span className="text-[#808080]">{count}</span></span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+const MASTERY_COLORS = ['#6E6A61','#A8A499','#BFBBB4','#CFCCC6','#DEDAD7','#F2EFE7'];
+const MASTERY_LABELS = ['Новые','Ур. 1','Ур. 2','Ур. 3','Ур. 4','Ур. 5'];
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -154,9 +142,7 @@ export default function HomePage() {
     async function load() {
       setLoading(true);
       const now = new Date().toISOString();
-      const thirtyAgo = new Date();
-      thirtyAgo.setDate(thirtyAgo.getDate() - 29);
-      thirtyAgo.setHours(0, 0, 0, 0);
+      const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate() - 29); thirtyAgo.setHours(0,0,0,0);
 
       const [{ data: ops }, { data: logData }] = await Promise.all([
         supabase.from('openings').select('*').order('created_at', { ascending: false }),
@@ -166,12 +152,10 @@ export default function HomePage() {
       const practicedAts = (logData ?? []).map((r: { practiced_at: string }) => r.practiced_at);
       setStreak(calcStreak(practicedAts));
 
-      const todayMidnight = new Date();
-      todayMidnight.setHours(0, 0, 0, 0);
+      const todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
       const counts = Array(7).fill(0);
       practicedAts.forEach((iso) => {
-        const d = new Date(iso);
-        d.setHours(0, 0, 0, 0);
+        const d = new Date(iso); d.setHours(0,0,0,0);
         const diff = Math.round((todayMidnight.getTime() - d.getTime()) / 86400000);
         if (diff >= 0 && diff < 7) counts[6 - diff]++;
       });
@@ -180,9 +164,7 @@ export default function HomePage() {
       if (!ops || ops.length === 0) { setLoading(false); return; }
 
       const ids = ops.map((o: Opening) => o.id);
-      const { data: lines } = await supabase
-        .from('opening_lines').select('id, opening_id').in('opening_id', ids);
-
+      const { data: lines } = await supabase.from('opening_lines').select('id, opening_id').in('opening_id', ids);
       const lineIds = (lines ?? []).map((l: { id: string }) => l.id);
       const { data: prog } = lineIds.length > 0
         ? await supabase.from('line_progress').select('*').in('line_id', lineIds)
@@ -200,289 +182,302 @@ export default function HomePage() {
         const opLineIds = opLines.map((l: { id: string }) => l.id);
         const opProg = (prog ?? []).filter((p: LineProgress) => opLineIds.includes(p.line_id));
         const practicedIds = opProg.map((p: LineProgress) => p.line_id);
-
         const linesNew = opLineIds.filter((id: string) => !practicedIds.includes(id)).length;
         const linesDue = opProg.filter((p: LineProgress) => p.next_review <= now && p.mastery < 5).length;
         const linesMastered = opProg.filter((p: LineProgress) => p.mastery >= 5).length;
-        const futureReviews = opProg
-          .filter((p: LineProgress) => p.next_review > now && p.mastery < 5)
-          .map((p: LineProgress) => p.next_review).sort();
-
-        return {
-          ...(op as Opening),
-          linesTotal: opLines.length,
-          linesNew,
-          linesDue,
-          linesMastered,
-          earliestNextReview: futureReviews[0] ?? null,
-        };
+        const futureReviews = opProg.filter((p: LineProgress) => p.next_review > now && p.mastery < 5).map((p: LineProgress) => p.next_review).sort();
+        return { ...(op as Opening), linesTotal: opLines.length, linesNew, linesDue, linesMastered, earliestNextReview: futureReviews[0] ?? null };
       });
 
       setOpenings(rows);
       setLoading(false);
     }
     load();
-
     const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) load(); };
     window.addEventListener('pageshow', onPageShow);
     return () => window.removeEventListener('pageshow', onPageShow);
   }, []);
 
-  const totalDue     = openings.reduce((s, o) => s + o.linesDue, 0);
-  const totalNew     = openings.reduce((s, o) => s + o.linesNew, 0);
-  const todayTotal   = totalDue + totalNew;
+  const totalDue = openings.reduce((s, o) => s + o.linesDue, 0);
+  const totalNew = openings.reduce((s, o) => s + o.linesNew, 0);
+  const todayTotal = totalDue + totalNew;
   const totalMastered = openings.reduce((s, o) => s + o.linesMastered, 0);
   const nextReviewGlobal = openings.map(o => o.earliestNextReview).filter(Boolean).sort()[0] ?? null;
-  const firstOpening = [...openings]
-    .filter(o => o.linesDue + o.linesNew > 0)
-    .sort((a, b) => (b.linesDue - a.linesDue) || (b.linesNew - a.linesNew))[0] ?? null;
+  const firstOpening = [...openings].filter(o => o.linesDue + o.linesNew > 0).sort((a, b) => (b.linesDue - a.linesDue) || (b.linesNew - a.linesNew))[0] ?? null;
 
   const today = new Date();
   const dateLabel = `${today.getDate()} ${MONTH_NAMES[today.getMonth()]}`;
-  const dayLabel = DAY_NAMES[today.getDay()];
+  const dayLabelUpper = DAY_NAMES_RU_UPPER[today.getDay()];
   const masteryPct = totalLines > 0 ? Math.round(totalMastered / totalLines * 100) : 0;
+  const sortedOpenings = [...openings].filter(o => o.linesTotal > 0).sort((a, b) => (b.linesDue + b.linesNew) - (a.linesDue + a.linesNew));
+
+  const linesTodayWord = (() => {
+    const n = todayTotal;
+    const m100 = n % 100, m10 = n % 10;
+    if (m100 >= 11 && m100 <= 19) return 'линий';
+    if (m10 === 1) return 'линия';
+    if (m10 >= 2 && m10 <= 4) return 'линии';
+    return 'линий';
+  })();
+
+  const ctaSubtext = totalDue > 0 && totalNew > 0
+    ? `${plural(totalDue, 'повторение', 'повторения', 'повторений')} · ${plural(totalNew, 'новая', 'новые', 'новых')}`
+    : totalDue > 0 ? 'пора повторить — забываешь' : 'ещё ни разу не тренировал';
 
   if (loading) {
     return (
-      <main className="max-w-[1200px] mx-auto px-5 lg:px-10 pt-8 pb-10">
-        <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8">
-          <div className="flex flex-col gap-4 animate-pulse">
-            <div className="h-[52px] w-48 bg-[#1E1E1E] rounded-[12px]" />
-            <div className="grid grid-cols-3 gap-3">
-              {[0,1,2].map(i => <div key={i} className="h-[88px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[16px]" />)}
-            </div>
-            <div className="h-32 bg-[#0D0D0D] border border-[#262626] rounded-[20px]" />
-            <div className="h-[96px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px]" />
-            <div className="h-[80px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px]" />
+      <main style={{ maxWidth: 1240, margin: '0 auto', padding: '44px 32px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
+        <div style={{ flex: '999 1 560px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
+          <div style={{ height: 88, width: 220, background: 'var(--surface)' }} />
+          <div style={{ display: 'flex', borderTop: '2px solid var(--hairline)' }}>
+            {[0,1,2].map(i => <div key={i} style={{ flex: '1 1 150px', height: 100, background: i > 0 ? 'var(--surface)' : undefined }} />)}
           </div>
-          <div className="hidden lg:flex flex-col gap-[6px] mt-10 animate-pulse">
-            {[0,1,2,3].map(i => <div key={i} className="h-[72px] bg-[#0D0D0D] border border-[#1E1E1E] rounded-[14px]" />)}
-          </div>
+          <div style={{ height: 160, background: 'var(--surface)' }} />
+          <div style={{ height: 100, background: 'var(--surface)' }} />
         </div>
+        <aside style={{ flex: '1 1 380px', maxWidth: 420, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
+          <div style={{ height: 300, background: 'var(--surface)' }} />
+        </aside>
       </main>
     );
   }
 
   if (openings.length === 0) {
     return (
-      <main className="max-w-[1200px] mx-auto px-5 pt-16 pb-16 flex flex-col items-center gap-5 text-center">
-        <div className="text-[72px] leading-none select-none mt-4">♟</div>
-        <h1 className="m-0 text-[36px] font-[500] leading-[1.1]">Нет дебютов</h1>
-        <p className="m-0 text-[15px] text-[#808080] max-w-[320px]">
-          Добавь первый дебют — и можно начинать тренировки
-        </p>
-        <Link
-          href="/openings/new"
-          className="mt-2 h-11 flex items-center gap-2 bg-white text-[#050505] hover:bg-[#ECECEC] rounded-full px-7 text-[14px] font-semibold transition-colors no-underline"
-        >
+      <main style={{ maxWidth: 1240, margin: '0 auto', padding: '44px 32px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, textAlign: 'center' }}>
+        <h1 style={{ ...HEADING, fontSize: 88, fontWeight: 700, lineHeight: 0.88, letterSpacing: '-0.045em', margin: 0 }}>{dateLabel}</h1>
+        <p style={{ fontSize: 15, color: 'var(--muted)', maxWidth: 320, margin: 0 }}>Добавь первый дебют — и можно начинать тренировки</p>
+        <Link href="/openings/new" style={{ display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600 }}>
           + Добавить дебют
         </Link>
       </main>
     );
   }
 
-  const sortedOpenings = [...openings]
-    .filter(o => o.linesTotal > 0)
-    .sort((a, b) => (b.linesDue + b.linesNew) - (a.linesDue + a.linesNew));
-
   return (
-    <main className="max-w-[1200px] mx-auto px-5 lg:px-10 pt-8 pb-10">
-      <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 lg:items-start">
+    <main style={{ maxWidth: 1240, margin: '0 auto', padding: '44px 32px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
 
-        {/* ── Left column: today's dashboard ──────────────────────────────── */}
-        <div className="flex flex-col gap-4">
+      {/* ── Left column ── */}
+      <div style={{ flex: '999 1 560px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-          {/* Date header */}
-          <div className="mb-1">
-            <div className="text-[13px] text-[#404040] mb-[2px]">{dayLabel}</div>
-            <h1 className="m-0 text-[30px] font-[600] leading-none text-[#F5F5F5]">{dateLabel}</h1>
+        {/* 1. Date hero */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={EYEBROW}>
+            <span>СЕГОДНЯ</span>
+            <span style={EYEBROW_LINE} />
+            <span>{dayLabelUpper}</span>
           </div>
-
-          {/* 3 stat chips */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[16px] px-4 pt-4 pb-3 flex flex-col gap-[2px]">
-              <div className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#505050] mb-1">Серия</div>
-              <div className="flex items-baseline gap-[5px]">
-                <span className="text-[30px] font-[700] tabular-nums leading-none text-[#F5F5F5]">{streak}</span>
-                {streak > 0 && <span className="text-[18px] leading-none">🔥</span>}
-              </div>
-              <div className="text-[11px] text-[#404040] mt-[3px]">
-                {streak === 0 ? 'начни сегодня' : streak === 1 ? 'день подряд' : streak < 5 ? 'дня подряд' : 'дней подряд'}
-              </div>
-            </div>
-
-            <div className={`bg-[#0D0D0D] border rounded-[16px] px-4 pt-4 pb-3 flex flex-col gap-[2px] ${todayTotal > 0 ? 'border-[#2A2A2A]' : 'border-[#1E1E1E]'}`}>
-              <div className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#505050] mb-1">Сегодня</div>
-              <div className="text-[30px] font-[700] tabular-nums leading-none text-[#F5F5F5]">{todayTotal}</div>
-              <div className="text-[11px] text-[#404040] mt-[3px]">
-                {todayTotal === 0
-                  ? 'всё готово'
-                  : totalDue > 0 && totalNew > 0
-                    ? `${totalDue} повт. · ${totalNew} нов.`
-                    : totalDue > 0 ? 'на повторение' : 'новые'}
-              </div>
-            </div>
-
-            <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[16px] px-4 pt-4 pb-3 flex flex-col gap-[2px]">
-              <div className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#505050] mb-1">Освоено</div>
-              <div className="flex items-baseline gap-[4px]">
-                <span className="text-[30px] font-[700] tabular-nums leading-none text-[#F5F5F5]">{totalMastered}</span>
-                <span className="text-[14px] text-[#383838] leading-none">/{totalLines}</span>
-              </div>
-              <div className="text-[11px] text-[#404040] mt-[3px]">{masteryPct}% репертуара</div>
-            </div>
-          </div>
-
-          {/* Status / action card */}
-          {todayTotal === 0 ? (
-            <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px] px-7 py-7 flex flex-col items-center gap-2 text-center">
-              <div className="w-11 h-11 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-1">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-              </div>
-              <div className="text-[20px] font-[500] text-[#F5F5F5]">Всё готово на сегодня</div>
-              {nextReviewGlobal ? (
-                <div className="text-[14px] text-[#505050]">
-                  Следующее повторение — <span className="text-[#808080]">{formatNext(nextReviewGlobal)}</span>
-                </div>
-              ) : (
-                <div className="text-[14px] text-[#505050]">Добавь новые линии в дебюты</div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] px-7 py-6">
-              <div className="flex items-baseline gap-2 mb-1">
-                <span className="text-[52px] font-[700] leading-none tabular-nums text-[#FFFFFF]">
-                  {todayTotal}
-                </span>
-                <span className="text-[20px] text-[#808080]">
-                  {todayTotal % 10 === 1 && todayTotal % 100 !== 11 ? 'линия' :
-                   todayTotal % 10 >= 2 && todayTotal % 10 <= 4 && !(todayTotal % 100 >= 12 && todayTotal % 100 <= 14) ? 'линии' : 'линий'}
-                </span>
-              </div>
-              <div className="text-[13px] text-[#505050] mb-5">
-                {totalDue > 0 && totalNew > 0
-                  ? `${plural(totalDue, 'повторение', 'повторения', 'повторений')} · ${plural(totalNew, 'новая', 'новые', 'новых')}`
-                  : totalDue > 0 ? 'пора повторить — забываешь' : 'ещё ни разу не тренировал'}
-              </div>
-              {firstOpening && (
-                <Link
-                  href={`/openings/${firstOpening.id}/practice`}
-                  className="flex items-center justify-center h-11 w-full bg-white text-[#050505] hover:bg-[#ECECEC] rounded-full text-[14px] font-semibold transition-colors no-underline"
-                >
-                  Начать тренировку →
-                </Link>
-              )}
-            </div>
-          )}
-
-          {/* Activity chart */}
-          <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px] px-5 py-5">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Активность</span>
-              <span className="text-[11px] text-[#383838]">7 дней</span>
-            </div>
-            <ActivityChart counts={weekCounts} />
-          </div>
-
-          {/* Mastery distribution */}
-          {totalLines > 0 && (
-            <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-[20px] px-5 py-5">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Прогресс репертуара</span>
-                <span className="text-[11px] text-[#383838]">{totalLines} линий</span>
-              </div>
-              <MasteryBar dist={masteryDist} total={totalLines} />
-            </div>
-          )}
-
-          {/* On mobile: openings list appears below */}
-          <div className="lg:hidden mt-2">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Дебюты</span>
-              <div className="flex items-center gap-4">
-                <Link href="/openings" className="text-[12px] text-[#404040] hover:text-[#808080] transition-colors no-underline">Все →</Link>
-                <Link href="/openings/new" className="text-[12px] text-[#404040] hover:text-[#808080] transition-colors no-underline">+ Добавить</Link>
-              </div>
-            </div>
-            <div className="flex flex-col gap-[6px]">
-              {sortedOpenings.map(o => <OpeningListItem key={o.id} o={o} />)}
-            </div>
-          </div>
-
+          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 88, lineHeight: 0.88, letterSpacing: '-0.045em' }}>{dateLabel}</h1>
         </div>
 
-        {/* ── Right column: openings list (desktop only) ───────────────────── */}
-        <div className="hidden lg:block lg:sticky lg:top-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">Дебюты</span>
-            <div className="flex items-center gap-4">
-              <Link href="/openings" className="text-[12px] text-[#404040] hover:text-[#808080] transition-colors no-underline">Все →</Link>
-              <Link href="/openings/new" className="text-[12px] text-[#404040] hover:text-[#808080] transition-colors no-underline">+ Добавить</Link>
-            </div>
+        {/* 2. Stats band */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', borderTop: '2px solid var(--ivory)' }}>
+          {/* СЕРИЯ */}
+          <div style={{ flex: '1 1 150px', minWidth: 0, padding: '18px 20px 20px 0', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>СЕРИЯ</span>
+            <span style={{ ...HEADING, fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>{streak}</span>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+              {streak === 0 ? 'начни сегодня' : streak === 1 ? 'день подряд' : streak < 5 ? 'дня подряд' : 'дней подряд'}
+            </span>
           </div>
-          <div className="flex flex-col gap-[6px] overflow-y-auto max-h-[calc(100vh-120px)] pr-1">
-            {sortedOpenings.map(o => <OpeningListItem key={o.id} o={o} />)}
+          {/* СЕГОДНЯ */}
+          <div style={{ flex: '1 1 150px', minWidth: 0, padding: '18px 20px 20px 24px', borderLeft: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>СЕГОДНЯ</span>
+            <span style={{ ...HEADING, fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+              {todayTotal === 0 ? 'всё готово' : totalDue > 0 && totalNew > 0 ? `${totalDue} повт. · ${totalNew} нов.` : totalDue > 0 ? 'на повторение' : 'новые'}
+            </span>
+          </div>
+          {/* ОСВОЕНО */}
+          <div style={{ flex: '1 1 150px', minWidth: 0, padding: '18px 20px 20px 24px', borderLeft: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>ОСВОЕНО</span>
+            <span style={{ ...HEADING, fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>
+              {totalMastered}
+              <span style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--muted)' }}> /{totalLines}</span>
+            </span>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>{masteryPct}% репертуара</span>
           </div>
         </div>
+
+        {/* 3. Train CTA */}
+        {todayTotal === 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, padding: 28, background: 'var(--surface)', border: '1px solid var(--hairline)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ ...HEADING, fontWeight: 600, fontSize: 24, letterSpacing: '-0.02em', color: 'var(--ivory)' }}>Всё готово на сегодня</span>
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>
+                {nextReviewGlobal ? `Следующее повторение — ${formatNext(nextReviewGlobal)}` : 'Добавь новые линии в дебюты'}
+              </span>
+            </div>
+            <Link href="/openings" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: 56, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 600 }}>
+              Дебюты →
+            </Link>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, padding: 28, background: 'var(--ivory)', color: 'var(--ink)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14 }}>
+                <span style={{ ...HEADING, fontWeight: 700, fontSize: 112, lineHeight: 0.82, letterSpacing: '-0.05em', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
+                <span style={{ ...HEADING, fontWeight: 600, fontSize: 28, lineHeight: 1, letterSpacing: '-0.02em' }}>{linesTodayWord}</span>
+              </div>
+              <span style={{ fontSize: 14, color: 'var(--ink-2)' }}>{ctaSubtext}</span>
+            </div>
+            {firstOpening && (
+              <Link
+                href={`/openings/${firstOpening.id}/practice`}
+                style={{ flex: '0 1 300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: 56, background: 'var(--ink)', color: 'var(--ivory)', fontSize: 15, fontWeight: 600 }}
+              >
+                Начать тренировку
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* 4. Activity */}
+        <section>
+          <div style={SECTION_HEADER}>
+            <h2 style={LABEL}>АКТИВНОСТЬ</h2>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>7 дней</span>
+          </div>
+          <ActivityChart counts={weekCounts} />
+        </section>
+
+        {/* Mobile openings list */}
+        <section style={{ display: 'block' }} className="lg:hidden">
+          <div style={SECTION_HEADER}>
+            <h2 style={LABEL}>ДЕБЮТЫ</h2>
+            <div style={{ display: 'flex', gap: 4, marginRight: -8 }}>
+              <Link href="/openings" style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 8px', fontSize: 13, color: 'var(--muted)' }}>
+                Все
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+              </Link>
+              <Link href="/openings/new" style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 8px', fontSize: 13, color: 'var(--muted)' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Добавить
+              </Link>
+            </div>
+          </div>
+          <OpeningsList openings={sortedOpenings} />
+        </section>
 
       </div>
+
+      {/* ── Right aside ── */}
+      <aside style={{ flex: '1 1 380px', maxWidth: 420, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }}>
+
+        {/* 5. Openings list (desktop) */}
+        <section className="hidden lg:block">
+          <div style={SECTION_HEADER}>
+            <h2 style={LABEL}>ДЕБЮТЫ</h2>
+            <div style={{ display: 'flex', gap: 4, marginRight: -8 }}>
+              <Link href="/openings" style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 8px', fontSize: 13, color: 'var(--muted)' }}>
+                Все
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+              </Link>
+              <Link href="/openings/new" style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 8px', fontSize: 13, color: 'var(--muted)' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Добавить
+              </Link>
+            </div>
+          </div>
+          <OpeningsList openings={sortedOpenings} />
+        </section>
+
+        {/* 6. Repertoire progress */}
+        {totalLines > 0 && (
+          <section>
+            <div style={SECTION_HEADER}>
+              <h2 style={LABEL}>ПРОГРЕСС РЕПЕРТУАРА</h2>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>{totalLines} линий</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4 }}>
+              <div
+                role="img"
+                aria-label={`Прогресс: ${masteryDist[0]} новые, ${masteryDist.slice(1).reduce((a,b)=>a+b,0)} в прогрессе`}
+                style={{ display: 'flex', height: 12, background: 'var(--track)' }}
+              >
+                {masteryDist.map((count, level) => count > 0 ? (
+                  <span key={level} style={{ flex: `${count} 1 0`, background: MASTERY_COLORS[level] }} />
+                ) : null)}
+              </div>
+              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 13, color: 'var(--muted)' }}>
+                {masteryDist.map((count, level) => count > 0 ? (
+                  <span key={level} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 9, height: 9, background: MASTERY_COLORS[level], flexShrink: 0 }} />
+                    {MASTERY_LABELS[level]}: <span style={{ color: 'var(--ivory)', fontWeight: 600 }}>{count}</span>
+                  </span>
+                ) : null)}
+              </div>
+            </div>
+          </section>
+        )}
+
+      </aside>
+
     </main>
   );
 }
 
-function OpeningListItem({ o }: { o: OpeningRow }) {
-  const toDoCount = o.linesDue + o.linesNew;
-  const masteredPct = o.linesTotal > 0 ? Math.round(o.linesMastered / o.linesTotal * 100) : 0;
-
+function OpeningsList({ openings }: { openings: OpeningRow[] }) {
   return (
-    <Link
-      href={`/openings/${o.id}/practice`}
-      className="flex items-center gap-4 bg-[#0D0D0D] border border-[#1A1A1A] hover:border-[#383838] rounded-[14px] px-5 py-[14px] no-underline transition-colors group"
-    >
-      <span className="text-[20px] leading-none select-none shrink-0 opacity-60">
-        {o.color === 'white' ? '♙' : o.color === 'black' ? '♟' : '♗'}
-      </span>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-3 mb-[7px]">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[14px] font-[500] text-[#E0E0E0] truncate">{o.name}</span>
-            {o.eco_code && <span className="text-[11px] text-[#404040] shrink-0">{o.eco_code}</span>}
-          </div>
-          <div className="shrink-0 text-[13px] font-semibold">
-            {toDoCount > 0 ? (
-              <span className={o.linesDue > 0 ? 'text-[#FFFFFF]' : 'text-[#808080]'}>
-                {o.linesDue > 0 && o.linesNew > 0
-                  ? `${o.linesDue} повт. · ${o.linesNew} нов.`
-                  : o.linesDue > 0
-                    ? `${o.linesDue} повт.`
-                    : `${o.linesNew} нов.`}
+    <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+      {openings.map((o, i) => {
+        const dueCount = o.linesDue > 0 ? `${o.linesDue} повт.` : o.linesNew > 0 ? `${o.linesNew} нов.` : null;
+        const isLast = i === openings.length - 1;
+        const isWhite = o.color === 'white';
+        const isBoth = o.color === 'both';
+        return (
+          <li key={o.id}>
+            <Link
+              href={`/openings/${o.id}/practice`}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '18px minmax(0, 1fr) auto',
+                columnGap: 14, rowGap: 10,
+                alignItems: 'center', padding: '16px 0',
+                borderTop: '1px solid var(--hairline)',
+                borderBottom: isLast ? '1px solid var(--hairline)' : undefined,
+                color: 'var(--ivory)',
+              }}
+              className="row-hover-link"
+            >
+              {/* Row 1 col 1: king icon */}
+              <span
+                role="img"
+                aria-label={isWhite ? 'Белые' : isBoth ? 'Оба цвета' : 'Чёрные'}
+                style={{
+                  fontFamily: "'Segoe UI Symbol','Apple Symbols','Noto Sans Symbols 2','DejaVu Sans',sans-serif",
+                  fontSize: 18, lineHeight: 1,
+                  color: isWhite || isBoth ? 'var(--ivory)' : 'var(--ink)',
+                  WebkitTextStroke: isWhite || isBoth ? 'none' : '0.8px var(--ivory)',
+                }}
+              >♚</span>
+              {/* Row 1 col 2: name */}
+              <span style={{
+                fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
+                fontSize: 20, fontWeight: 600, letterSpacing: '-0.02em',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{o.name}</span>
+              {/* Row 1 col 3: count */}
+              <span style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                {dueCount}
               </span>
-            ) : (
-              <span className="text-[#2E2E2E] font-normal text-[12px]">✓ готово</span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-[2px] bg-[#1A1A1A] rounded-full overflow-hidden">
-            <div className="h-full bg-[#FFFFFF] rounded-full" style={{ width: `${masteredPct}%` }} />
-          </div>
-          <span className="text-[10px] text-[#363636] shrink-0 tabular-nums">
-            {o.linesMastered}/{o.linesTotal}
-          </span>
-        </div>
-      </div>
-
-      <svg
-        className="text-[#282828] group-hover:text-[#606060] transition-colors shrink-0"
-        width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      >
-        <path d="M5 12h14M12 5l7 7-7 7"/>
-      </svg>
-    </Link>
+              {/* Row 2 col 1: empty */}
+              <span />
+              {/* Row 2 col 2: progress track */}
+              <span style={{ display: 'block', height: 2, background: 'var(--track)' }}>
+                {o.linesTotal > 0 && o.linesMastered > 0 && (
+                  <span style={{ display: 'block', height: '100%', width: `${(o.linesMastered / o.linesTotal) * 100}%`, background: 'var(--ivory)' }} />
+                )}
+              </span>
+              {/* Row 2 col 3: fraction */}
+              <span style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                {o.linesMastered}/{o.linesTotal}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

@@ -1,9 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import type { ChessMove } from '@/types/openings';
-import { useBoardTheme } from '@/contexts/BoardThemeContext';
 
 interface Props {
   opening: {
@@ -11,26 +11,14 @@ interface Props {
     name: string;
     eco_code?: string | null;
     color: 'white' | 'black' | 'both';
-    total_lines: number;
   };
+  index: number;
   linesTotal: number;
   linesMastered: number;
   linesDue: number;
-  onClick: () => void;
   firstLineMoves?: ChessMove[];
+  href: string;
 }
-
-const COLOR_ICON: Record<'white' | 'black' | 'both', string> = {
-  white: '♙',
-  black: '♟',
-  both: '♗',
-};
-
-const COLOR_LABEL: Record<'white' | 'black' | 'both', string> = {
-  white: 'Белые',
-  black: 'Чёрные',
-  both: 'Оба цвета',
-};
 
 function computeFen(moves: ChessMove[], maxMoves = 8): string {
   const chess = new Chess();
@@ -40,79 +28,107 @@ function computeFen(moves: ChessMove[], maxMoves = 8): string {
   return chess.fen();
 }
 
-export default function OpeningCard({
-  opening,
-  linesTotal,
-  linesMastered,
-  linesDue,
-  onClick,
-  firstLineMoves,
-}: Props) {
-  const { boardTheme, boardThemeId } = useBoardTheme();
-  const progress = linesTotal > 0 ? (linesMastered / linesTotal) * 100 : 0;
+function linesPlural(n: number): string {
+  const m100 = n % 100, m10 = n % 10;
+  if (m100 >= 11 && m100 <= 19) return `${n} линий`;
+  if (m10 === 1) return `${n} линия`;
+  if (m10 >= 2 && m10 <= 4) return `${n} линии`;
+  return `${n} линий`;
+}
+
+const HEADING: React.CSSProperties = { fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" };
+
+export default function OpeningCard({ opening, index, linesTotal, linesMastered, linesDue, firstLineMoves, href }: Props) {
+  const progress = linesTotal > 0 ? linesMastered / linesTotal : 0;
+  const fen = firstLineMoves && firstLineMoves.length > 0 ? computeFen(firstLineMoves) : 'start';
+  const isWhite = opening.color === 'white';
+  const isBoth = opening.color === 'both';
+
+  // suppress unused variable warning
+  void linesDue;
 
   return (
-    <button
-      onClick={onClick}
-      className="w-full text-left bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-7 flex flex-col gap-4 hover:border-[#303030] hover:bg-[#111111] transition-all duration-200 cursor-pointer group"
+    <Link
+      href={href}
+      style={{
+        display: 'flex', flexWrap: 'wrap', gap: 20, padding: 16,
+        border: '1px solid var(--hairline)', background: 'var(--surface)',
+        color: 'var(--ivory)',
+      }}
+      className="opening-card-link"
     >
-      {/* Mini chess board */}
-      {firstLineMoves && firstLineMoves.length > 0 && (
-        <div className="w-full aspect-square rounded-[12px] overflow-hidden border border-[#262626]">
+      {/* Board */}
+      <div style={{ flex: '0 1 220px', minWidth: 160, alignSelf: 'flex-start', border: '1px solid var(--board-border)' }}>
+        <div style={{ width: '100%', aspectRatio: '1 / 1' }}>
           <Chessboard
-            key={boardThemeId}
             options={{
-              position: computeFen(firstLineMoves),
+              position: fen,
               boardOrientation: opening.color === 'black' ? 'black' : 'white',
               allowDragging: false,
-              boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
-              darkSquareStyle: { backgroundColor: boardTheme.dark },
-              lightSquareStyle: { backgroundColor: boardTheme.light },
+              boardStyle: { borderRadius: 0, width: '100%', height: '100%' },
+              darkSquareStyle: { backgroundColor: 'var(--board-dark)' },
+              lightSquareStyle: { backgroundColor: 'var(--board-light)' },
             }}
           />
         </div>
-      )}
+      </div>
 
-      {/* Header row: ECO badge + color pill */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {opening.eco_code && (
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#FFFFFF] bg-[#1A1A1A] border border-[#303030] rounded-[8px] px-[10px] py-[4px]">
-            {opening.eco_code}
+      {/* Text */}
+      <div style={{ flex: '1 1 200px', minWidth: 0, minHeight: 220, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Top row: number + color tag */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <span style={{ ...HEADING, fontSize: 14, fontWeight: 600, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+            {String(index).padStart(2, '0')}
           </span>
-        )}
-        <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0] bg-[#0D0D0D] border border-[#262626] rounded-full px-[10px] py-[4px] flex items-center gap-1.5">
-          <span className="text-[14px] leading-none">{COLOR_ICON[opening.color]}</span>
-          <span>{COLOR_LABEL[opening.color]}</span>
-        </span>
-      </div>
-
-      {/* Opening name */}
-      <h3 className="m-0 font-[500] text-[26px] leading-[1.15] tracking-[-0.01em] text-[#F5F5F5] group-hover:text-[#FFFFFF] transition-colors">
-        {opening.name}
-      </h3>
-
-      {/* Progress bar */}
-      <div className="h-[5px] w-full bg-[#1E1E1E] rounded-full overflow-hidden">
-        <div
-          className="h-full bg-[#FFFFFF] rounded-full transition-all duration-500"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      {/* Footer row */}
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] text-[#A0A0A0]">
-          {linesTotal} {linesTotal === 1 ? 'линия' : linesTotal >= 2 && linesTotal <= 4 ? 'линии' : 'линий'}
-        </span>
-        {linesDue > 0 && (
-          <span className="flex items-center gap-[5px] bg-[#1A1A1A] border border-[#303030] rounded-full px-[10px] py-[4px]">
-            <span className="w-[5px] h-[5px] rounded-full bg-[#FFFFFF]" />
-            <span className="text-[12px] font-semibold text-[#FFFFFF] whitespace-nowrap">
-              {linesDue} к повторению
-            </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+            {isBoth ? (
+              <span style={{ display: 'inline-flex', fontFamily: "'Segoe UI Symbol','Apple Symbols',sans-serif", fontSize: 18, lineHeight: 1 }}>
+                <span style={{ color: 'var(--ivory)' }}>♚</span>
+                <span style={{ marginLeft: -4, color: 'var(--ink)', WebkitTextStroke: '0.8px var(--ivory)' }}>♚</span>
+              </span>
+            ) : (
+              <span style={{
+                fontFamily: "'Segoe UI Symbol','Apple Symbols',sans-serif", fontSize: 18, lineHeight: 1,
+                color: isWhite ? 'var(--ivory)' : 'var(--ink)',
+                WebkitTextStroke: isWhite ? 'none' : '0.8px var(--ivory)',
+              }}>♚</span>
+            )}
+            {isWhite ? 'БЕЛЫЕ' : isBoth ? 'ОБА' : 'ЧЁРНЫЕ'}
           </span>
-        )}
+        </div>
+
+        {/* Title */}
+        <h2 style={{ ...HEADING, margin: 0, fontSize: 32, lineHeight: '34px', fontWeight: 600, letterSpacing: '-0.025em', color: 'var(--ivory)' }}>
+          {opening.name}
+        </h2>
+
+        {/* Bottom: progress + count + arrow */}
+        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Progress track */}
+          <div style={{ height: 2, background: 'var(--track)' }}>
+            {progress > 0 && <div style={{ height: '100%', width: `${progress * 100}%`, background: 'var(--ivory)' }} />}
+          </div>
+          {/* Footer row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <span style={{ fontSize: 14, color: 'var(--muted)' }}>{linesPlural(linesTotal)}</span>
+            {/* Arrow button */}
+            <button
+              aria-hidden="true"
+              tabIndex={-1}
+              style={{
+                width: 40, height: 40, borderRadius: '50%',
+                border: '1px solid var(--ivory)', background: 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--ivory)', cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
-    </button>
+    </Link>
   );
 }
