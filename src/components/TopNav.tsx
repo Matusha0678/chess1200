@@ -1,9 +1,12 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Palette } from 'lucide-react';
+import { useBoardTheme } from '@/contexts/BoardThemeContext';
 
 export default function TopNav() {
   const pathname = usePathname();
+  const { openPanel } = useBoardTheme();
 
   const homeActive = pathname === '/';
   const openingsActive = pathname === '/openings' || pathname.startsWith('/openings/');
@@ -46,6 +49,17 @@ export default function TopNav() {
             Дебюты
           </Link>
         </nav>
+
+        <div className="ml-auto">
+          <button
+            onClick={openPanel}
+            className="text-[#606060] hover:text-[#F5F5F5] transition-colors p-2 rounded"
+            aria-label="Настройки внешнего вида"
+            title="Внешний вид"
+          >
+            <Palette size={18} />
+          </button>
+        </div>
 
       </div>
     </header>

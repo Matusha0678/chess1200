@@ -5,6 +5,7 @@ import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import type { ChessMove } from '@/types/openings';
 import type { PieceDropHandlerArgs } from 'react-chessboard';
+import { useBoardTheme } from '@/contexts/BoardThemeContext';
 
 interface Props {
   line: ChessMove[];
@@ -296,6 +297,8 @@ export default function ChessBoardWrapper({
     ],
   );
 
+  const { boardTheme, customPieces, showNotation: notationEnabled } = useBoardTheme();
+
   const displaySquareStyles =
     showHint && isPlayerTurn && feedback === null && currentMoveIndex < line.length
       ? {
@@ -315,9 +318,10 @@ export default function ChessBoardWrapper({
           squareStyles: displaySquareStyles,
           allowDragging: isPlayerTurn,
           boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
-          darkSquareStyle: { backgroundColor: '#3A3A3A' },
-          lightSquareStyle: { backgroundColor: '#8A8A8A' },
-          showNotation: true,
+          darkSquareStyle: { backgroundColor: boardTheme.dark },
+          lightSquareStyle: { backgroundColor: boardTheme.light },
+          pieces: customPieces,
+          showNotation: notationEnabled,
           darkSquareNotationStyle: { color: '#C8C8C8' },
           lightSquareNotationStyle: { color: '#505050' },
           alphaNotationStyle: { fontSize: '11px', fontWeight: '700' },

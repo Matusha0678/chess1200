@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import TopNav from '@/components/TopNav';
+import { BoardThemeProvider } from '@/contexts/BoardThemeContext';
+import ThemePanel from '@/components/ThemePanel';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -31,8 +33,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}` }} />
       </head>
       <body className="bg-[#050505] text-[#F5F5F5] min-h-screen">
-        <TopNav />
-        {children}
+        <BoardThemeProvider>
+          <TopNav />
+          <ThemePanel />
+          {children}
+        </BoardThemeProvider>
       </body>
     </html>
   );
