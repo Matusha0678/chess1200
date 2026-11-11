@@ -87,7 +87,7 @@ export default function OpeningsPage() {
             <span style={EYEBROW_LINE} />
             <span>ДЕБЮТЫ</span>
           </div>
-          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 88, lineHeight: 0.88, letterSpacing: '-0.045em' }}>Дебюты</h1>
+          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 88, lineHeight: 0.88, letterSpacing: '-0.015em' }}>Дебюты</h1>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <a

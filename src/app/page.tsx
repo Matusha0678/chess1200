@@ -245,7 +245,7 @@ export default function HomePage() {
   if (openings.length === 0) {
     return (
       <main style={{ maxWidth: 1600, margin: '0 auto', padding: '44px 48px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, textAlign: 'center' }}>
-        <h1 style={{ ...HEADING, fontSize: 88, fontWeight: 700, lineHeight: 0.88, letterSpacing: '-0.045em', margin: 0 }}>{dateLabel}</h1>
+        <h1 style={{ ...HEADING, fontSize: 88, fontWeight: 700, lineHeight: 0.88, letterSpacing: '-0.015em', margin: 0 }}>{dateLabel}</h1>
         <p style={{ fontSize: 15, color: 'var(--muted)', maxWidth: 320, margin: 0 }}>Добавь первый дебют — и можно начинать тренировки</p>
         <Link href="/openings/new" style={{ display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600 }}>
           + Добавить дебют
@@ -267,7 +267,7 @@ export default function HomePage() {
             <span style={EYEBROW_LINE} />
             <span>{dayLabelUpper}</span>
           </div>
-          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 88, lineHeight: 0.88, letterSpacing: '-0.045em' }}>{dateLabel}</h1>
+          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 88, lineHeight: 0.88, letterSpacing: '-0.015em' }}>{dateLabel}</h1>
         </div>
 
         {/* 2. Stats band */}
@@ -275,7 +275,7 @@ export default function HomePage() {
           {/* СЕРИЯ */}
           <div style={{ flex: '1 1 150px', minWidth: 0, padding: '18px 20px 20px 0', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>СЕРИЯ</span>
-            <span style={{ ...HEADING, fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>{streak}</span>
+            <span style={{ ...HEADING, fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{streak}</span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>
               {streak === 0 ? 'начни сегодня' : streak === 1 ? 'день подряд' : streak < 5 ? 'дня подряд' : 'дней подряд'}
             </span>
@@ -283,7 +283,7 @@ export default function HomePage() {
           {/* СЕГОДНЯ */}
           <div style={{ flex: '1 1 150px', minWidth: 0, padding: '18px 20px 20px 24px', borderLeft: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>СЕГОДНЯ</span>
-            <span style={{ ...HEADING, fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
+            <span style={{ ...HEADING, fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>
               {todayTotal === 0 ? 'всё готово' : totalDue > 0 && totalNew > 0 ? `${totalDue} повт. · ${totalNew} нов.` : totalDue > 0 ? 'на повторение' : 'новые'}
             </span>
@@ -291,7 +291,7 @@ export default function HomePage() {
           {/* ОСВОЕНО */}
           <div style={{ flex: '1 1 150px', minWidth: 0, padding: '18px 20px 20px 24px', borderLeft: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>ОСВОЕНО</span>
-            <span style={{ ...HEADING, fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ ...HEADING, fontWeight: 700, fontSize: 56, lineHeight: 1, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
               {totalMastered}
               <span style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--muted)' }}> /{totalLines}</span>
             </span>
@@ -316,7 +316,7 @@ export default function HomePage() {
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, padding: 28, background: 'var(--ivory)', color: 'var(--ink)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14 }}>
-                <span style={{ ...HEADING, fontWeight: 700, fontSize: 112, lineHeight: 0.82, letterSpacing: '-0.05em', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
+                <span style={{ ...HEADING, fontWeight: 700, fontSize: 112, lineHeight: 0.82, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
                 <span style={{ ...HEADING, fontWeight: 600, fontSize: 28, lineHeight: 1, letterSpacing: '-0.02em' }}>{linesTodayWord}</span>
               </div>
               <span style={{ fontSize: 14, color: 'var(--ink-2)' }}>{ctaSubtext}</span>
