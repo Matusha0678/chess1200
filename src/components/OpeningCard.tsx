@@ -51,14 +51,14 @@ export default function OpeningCard({ opening, index, linesTotal, linesMastered,
     <Link
       href={href}
       style={{
-        display: 'flex', flexWrap: 'wrap', gap: 20, padding: 16,
+        display: 'flex', flexWrap: 'wrap', gap: 16, padding: 14,
         border: '1px solid var(--hairline)', background: 'var(--surface)',
         color: 'var(--ivory)',
       }}
       className="opening-card-link"
     >
       {/* Board */}
-      <div style={{ flex: '0 1 220px', minWidth: 160, alignSelf: 'flex-start', border: '1px solid var(--board-border)' }}>
+      <div style={{ flex: '0 1 190px', minWidth: 140, alignSelf: 'flex-start', border: '1px solid var(--board-border)' }}>
         <div style={{ width: '100%', aspectRatio: '1 / 1' }}>
           <Chessboard
             options={{
@@ -74,7 +74,7 @@ export default function OpeningCard({ opening, index, linesTotal, linesMastered,
       </div>
 
       {/* Text */}
-      <div style={{ flex: '1 1 200px', minWidth: 0, minHeight: 220, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ flex: '1 1 180px', minWidth: 0, minHeight: 190, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Top row: number + color tag */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <span style={{ ...HEADING, fontSize: 14, fontWeight: 600, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
@@ -98,7 +98,7 @@ export default function OpeningCard({ opening, index, linesTotal, linesMastered,
         </div>
 
         {/* Title */}
-        <h2 style={{ ...HEADING, margin: 0, fontSize: 32, lineHeight: '34px', fontWeight: 600, letterSpacing: '-0.025em', color: 'var(--ivory)' }}>
+        <h2 style={{ ...HEADING, margin: 0, fontSize: 26, lineHeight: '28px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--ivory)' }}>
           {opening.name}
         </h2>
 

@@ -77,7 +77,7 @@ export default function OpeningsPage() {
   ];
 
   return (
-    <main style={{ maxWidth: 1600, margin: '0 auto', padding: '44px 48px 72px', display: 'flex', flexDirection: 'column', gap: 24, boxSizing: 'border-box' }}>
+    <main style={{ maxWidth: 1600, margin: '0 auto', padding: '36px 48px 64px', display: 'flex', flexDirection: 'column', gap: 20, boxSizing: 'border-box' }}>
 
       {/* Hero row */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
@@ -87,7 +87,7 @@ export default function OpeningsPage() {
             <span style={EYEBROW_LINE} />
             <span>ДЕБЮТЫ</span>
           </div>
-          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 88, lineHeight: 0.88, letterSpacing: '-0.015em' }}>Дебюты</h1>
+          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 72, lineHeight: 0.9, letterSpacing: '-0.015em' }}>Дебюты</h1>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <a
