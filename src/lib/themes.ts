@@ -11,6 +11,13 @@ export type PieceStyle = {
   baseUrl: string | null;
 };
 
+export type SiteTheme = {
+  id: string;
+  name: string;
+  bg: string;
+  card: string;
+};
+
 export const BOARD_THEMES: BoardTheme[] = [
   { id: 'dark',     name: 'Тёмный',   dark: '#3A3A3A', light: '#8A8A8A' },
   { id: 'classic',  name: 'Классика', dark: '#B58863', light: '#F0D9B5' },
@@ -46,3 +53,13 @@ export const PIECE_STYLES: PieceStyle[] = [
 ];
 
 export const PIECE_KEYS = ['wP','wN','wB','wR','wQ','wK','bP','bN','bB','bR','bQ','bK'] as const;
+
+export const SITE_THEMES: SiteTheme[] = [
+  { id: 'dark',     name: 'Уголь',   bg: '#050505', card: '#0D0D0D' },
+  { id: 'midnight', name: 'Полночь', bg: '#05070F', card: '#0C0E1A' },
+  { id: 'forest',   name: 'Лесной',  bg: '#050A06', card: '#0C1409' },
+  { id: 'amethyst', name: 'Аметист', bg: '#070509', card: '#0F0C15' },
+  { id: 'amber',    name: 'Янтарь',  bg: '#0A0804', card: '#15110A' },
+  { id: 'slate',    name: 'Сланец',  bg: '#06080C', card: '#0D1018' },
+  { id: 'light',    name: 'Светлый', bg: '#F8F8F8', card: '#FFFFFF' },
+];

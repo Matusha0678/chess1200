@@ -40,7 +40,7 @@ export default function ChessBoardWrapper({
   onMovesChange,
   onStatusChange,
 }: Props) {
-  const { boardTheme, customPieces, showNotation: notationEnabled, animationMs, soundEnabled } = useBoardTheme();
+  const { boardTheme, customPieces, showNotation: notationEnabled, animationMs, soundEnabled, boardThemeId, pieceStyleId } = useBoardTheme();
   const soundRef = useRef(soundEnabled);
   soundRef.current = soundEnabled;
 
@@ -328,9 +328,14 @@ export default function ChessBoardWrapper({
     ? (naturalOrientation === 'white' ? 'black' : 'white')
     : naturalOrientation;
 
+  // Key forces Chessboard remount when theme/orientation changes,
+  // guaranteeing new darkSquareStyle/pieces are applied even if the library caches options.
+  const boardKey = `${boardThemeId}-${pieceStyleId}-${boardOrientation}`;
+
   return (
     <div className="w-full h-full overflow-hidden border border-[#262626]" style={{ borderRadius: '4px' }}>
       <Chessboard
+        key={boardKey}
         options={{
           position: fen,
           boardOrientation,

@@ -3,12 +3,12 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useBoardTheme, type AnimationSpeed } from '@/contexts/BoardThemeContext';
-import { BOARD_THEMES, PIECE_STYLES } from '@/lib/themes';
+import { BOARD_THEMES, PIECE_STYLES, SITE_THEMES } from '@/lib/themes';
 
 export default function ThemePanel() {
   const {
-    boardThemeId, pieceStyleId, showNotation, soundEnabled, animationSpeed,
-    setBoardThemeId, setPieceStyleId, setShowNotation, setSoundEnabled, setAnimationSpeed,
+    boardThemeId, pieceStyleId, showNotation, soundEnabled, animationSpeed, siteThemeId,
+    setBoardThemeId, setPieceStyleId, setShowNotation, setSoundEnabled, setAnimationSpeed, setSiteThemeId,
     isPanelOpen, closePanel,
   } = useBoardTheme();
 
@@ -53,6 +53,47 @@ export default function ThemePanel() {
         </div>
 
         <div className="flex flex-col gap-7 px-5 py-5">
+
+          {/* Site theme */}
+          <section>
+            <h2 className="text-[11px] font-semibold text-[#505050] uppercase tracking-widest mb-3">
+              Тема сайта
+            </h2>
+            <div className="grid grid-cols-4 gap-2">
+              {SITE_THEMES.map(theme => {
+                const active = theme.id === siteThemeId;
+                const isLight = theme.id === 'light';
+                return (
+                  <button
+                    key={theme.id}
+                    onClick={() => setSiteThemeId(theme.id)}
+                    className={[
+                      'flex flex-col items-center gap-1.5 rounded p-1.5 transition-colors',
+                      active ? 'bg-[#1E1E1E] ring-1 ring-white/20' : 'hover:bg-[#161616]',
+                    ].join(' ')}
+                    title={theme.name}
+                  >
+                    {/* Mini app preview: outer = bg, inner = card */}
+                    <div
+                      className="w-10 h-7 rounded overflow-hidden relative"
+                      style={{ background: theme.bg }}
+                    >
+                      {/* Top bar */}
+                      <div className="absolute top-0 left-0 right-0 h-[6px]" style={{ background: theme.bg, borderBottom: `1px solid ${isLight ? '#D0D0D0' : '#1E1E1E'}` }} />
+                      {/* Card block */}
+                      <div className="absolute bottom-[3px] left-[3px] right-[3px] rounded-sm" style={{ height: '10px', background: theme.card, border: `1px solid ${isLight ? '#D0D0D0' : '#1E1E1E'}` }} />
+                    </div>
+                    <span className={[
+                      'text-[9px] leading-tight text-center truncate w-full',
+                      active ? 'text-[#F5F5F5]' : 'text-[#606060]',
+                    ].join(' ')}>
+                      {theme.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
           {/* Board theme */}
           <section>

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { BOARD_THEMES, PIECE_STYLES, PIECE_KEYS, type BoardTheme, type PieceStyle } from '@/lib/themes';
 
 type PieceRenderObject = Record<string, (props?: { fill?: string; square?: string; svgStyle?: React.CSSProperties }) => React.JSX.Element>;
@@ -19,6 +19,7 @@ interface BoardThemeSettings {
   showNotation: boolean;
   soundEnabled: boolean;
   animationSpeed: AnimationSpeed;
+  siteThemeId: string;
 }
 
 interface BoardThemeContextValue extends BoardThemeSettings {
@@ -31,6 +32,7 @@ interface BoardThemeContextValue extends BoardThemeSettings {
   setShowNotation: (v: boolean) => void;
   setSoundEnabled: (v: boolean) => void;
   setAnimationSpeed: (s: AnimationSpeed) => void;
+  setSiteThemeId: (id: string) => void;
   isPanelOpen: boolean;
   openPanel: () => void;
   closePanel: () => void;
@@ -42,6 +44,7 @@ const DEFAULT_SETTINGS: BoardThemeSettings = {
   showNotation: true,
   soundEnabled: true,
   animationSpeed: 'normal',
+  siteThemeId: 'dark',
 };
 
 const STORAGE_KEY = 'chess1200-board-settings';
@@ -83,20 +86,41 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
     setSettings(loadSettings());
   }, []);
 
-  const save = useCallback((next: BoardThemeSettings) => {
-    setSettings(next);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  // Apply site theme to <html> data attribute so CSS overrides kick in
+  useEffect(() => {
+    document.documentElement.dataset.siteTheme = settings.siteThemeId;
+  }, [settings.siteThemeId]);
+
+  // Functional update pattern — no stale closure possible
+  const save = useCallback((updater: (prev: BoardThemeSettings) => BoardThemeSettings) => {
+    setSettings(prev => {
+      const next = updater(prev);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
   }, []);
 
-  const setBoardThemeId   = useCallback((id: string) => save({ ...settings, boardThemeId: id }), [settings, save]);
-  const setPieceStyleId   = useCallback((id: string) => save({ ...settings, pieceStyleId: id }), [settings, save]);
-  const setShowNotation   = useCallback((v: boolean) => save({ ...settings, showNotation: v }), [settings, save]);
-  const setSoundEnabled   = useCallback((v: boolean) => save({ ...settings, soundEnabled: v }), [settings, save]);
-  const setAnimationSpeed = useCallback((s: AnimationSpeed) => save({ ...settings, animationSpeed: s }), [settings, save]);
+  const setBoardThemeId   = useCallback((id: string) => save(p => ({ ...p, boardThemeId: id })), [save]);
+  const setPieceStyleId   = useCallback((id: string) => save(p => ({ ...p, pieceStyleId: id })), [save]);
+  const setShowNotation   = useCallback((v: boolean) => save(p => ({ ...p, showNotation: v })), [save]);
+  const setSoundEnabled   = useCallback((v: boolean) => save(p => ({ ...p, soundEnabled: v })), [save]);
+  const setAnimationSpeed = useCallback((s: AnimationSpeed) => save(p => ({ ...p, animationSpeed: s })), [save]);
+  const setSiteThemeId    = useCallback((id: string) => save(p => ({ ...p, siteThemeId: id })), [save]);
 
   const boardTheme = BOARD_THEMES.find(t => t.id === settings.boardThemeId) ?? BOARD_THEMES[0];
   const pieceStyle = PIECE_STYLES.find(p => p.id === settings.pieceStyleId) ?? PIECE_STYLES[0];
-  const customPieces = pieceStyle.baseUrl ? buildCustomPieces(pieceStyle.baseUrl) : undefined;
+
+  // Memoize customPieces by baseUrl to avoid recreating functions on every render
+  const customPiecesRef = useRef<{ url: string; pieces: PieceRenderObject } | null>(null);
+  if (pieceStyle.baseUrl) {
+    if (!customPiecesRef.current || customPiecesRef.current.url !== pieceStyle.baseUrl) {
+      customPiecesRef.current = { url: pieceStyle.baseUrl, pieces: buildCustomPieces(pieceStyle.baseUrl) };
+    }
+  } else {
+    customPiecesRef.current = null;
+  }
+  const customPieces = customPiecesRef.current?.pieces;
+
   const animationMs = ANIMATION_MS[settings.animationSpeed];
 
   return (
@@ -111,6 +135,7 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
       setShowNotation,
       setSoundEnabled,
       setAnimationSpeed,
+      setSiteThemeId,
       isPanelOpen,
       openPanel: () => setIsPanelOpen(true),
       closePanel: () => setIsPanelOpen(false),
