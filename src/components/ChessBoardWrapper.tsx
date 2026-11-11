@@ -53,6 +53,8 @@ export default function ChessBoardWrapper({
   const [reviewQueue, setReviewQueue] = useState<number[]>([]);
   const mistakesRef = useRef<number[]>([]);
   const isProcessing = useRef(false);
+  const premoveRef = useRef<{ from: string; to: string } | null>(null);
+  const [premoveSquares, setPremoveSquares] = useState<Record<string, React.CSSProperties>>({});
 
   const inReview = reviewQueue.length > 0;
 
@@ -92,18 +94,34 @@ export default function ChessBoardWrapper({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const cancelPremove = useCallback(() => {
+    premoveRef.current = null;
+    setPremoveSquares({});
+  }, []);
+
   const handlePieceDrop = useCallback(
     ({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean => {
-      if (isProcessing.current) return false;
       if (!targetSquare) return false;
+
+      // ── Premove: queue a move while opponent is responding ──────────────────
+      if (!inReview && !isPlayerTurn) {
+        const piece = chess.get(sourceSquare as any);
+        if (!piece || piece.color !== playerColor) return false;
+        premoveRef.current = { from: sourceSquare, to: targetSquare };
+        setPremoveSquares({
+          [sourceSquare]: { background: 'rgba(100, 150, 255, 0.3)' },
+          [targetSquare]: { background: 'rgba(100, 150, 255, 0.5)' },
+        });
+        return false; // snap piece back visually; highlight shows the queued premove
+      }
+
+      if (isProcessing.current) return false;
 
       // ── Helpers ─────────────────────────────────────────────────────────────
 
-      // After any move (correct or auto), handle opponent response + line end
       function continueFromIndex(nextIdx: number, currentMoves: string[]) {
         if (nextIdx >= line.length) {
           if (mistakesRef.current.length > 0) {
-            // Enter review: reset board to first mistake position
             const firstIdx = mistakesRef.current[0];
             const fenBefore = firstIdx === 0 ? INITIAL_FEN : line[firstIdx - 1].fen;
             chess.load(fenBefore);
@@ -123,7 +141,6 @@ export default function ChessBoardWrapper({
         }
         const nextMove = line[nextIdx];
         if (nextMove.color !== playerColor) {
-          // Auto-play opponent's move
           setTimeout(() => {
             const r = chess.move({ from: nextMove.from, to: nextMove.to });
             if (soundRef.current) r?.captured ? playCapture() : playMove();
@@ -135,8 +152,63 @@ export default function ChessBoardWrapper({
             continueFromIndex(nextIdx + 1, updated);
           }, 300);
         } else {
-          // Player's turn — wait for input
-          isProcessing.current = false;
+          // Player's turn — execute premove or wait for input
+          const pm = premoveRef.current;
+          if (pm) {
+            premoveRef.current = null;
+            setPremoveSquares({});
+            setTimeout(() => {
+              const expected = line[nextIdx];
+              const isCorrect = pm.from === expected.from && pm.to === expected.to;
+              if (isCorrect) {
+                const r = chess.move({ from: pm.from, to: pm.to });
+                if (soundRef.current) r?.captured ? playCapture() : playMove();
+                const newMoves = [...currentMoves, expected.san];
+                setFen(chess.fen());
+                setPlayedMoves(newMoves);
+                onMovesChange?.(newMoves, nextIdx + 1);
+                setFeedback('correct');
+                if (soundRef.current) playCorrect();
+                setSquareStyles({
+                  [pm.from]: { background: 'rgba(155, 211, 166, 0.45)' },
+                  [pm.to]: { background: 'rgba(155, 211, 166, 0.45)' },
+                });
+                onMoveCorrect?.();
+                setCurrentMoveIndex(nextIdx + 1);
+                setTimeout(() => {
+                  setFeedback(null);
+                  setSquareStyles({});
+                  continueFromIndex(nextIdx + 1, newMoves);
+                }, 300);
+              } else {
+                mistakesRef.current = [...mistakesRef.current, nextIdx];
+                onMoveMistake?.(nextIdx);
+                setFeedback('wrong');
+                if (soundRef.current) playWrong();
+                setSquareStyles({
+                  [pm.from]: { background: 'rgba(211, 107, 107, 0.45)' },
+                  [pm.to]: { background: 'rgba(211, 107, 107, 0.45)' },
+                  [expected.from]: { background: 'rgba(214, 185, 126, 0.55)' },
+                  [expected.to]: { background: 'rgba(214, 185, 126, 0.55)' },
+                });
+                const afterWrong = nextIdx + 1;
+                setTimeout(() => {
+                  setFeedback(null);
+                  setSquareStyles({});
+                  const r = chess.move({ from: expected.from, to: expected.to });
+                  if (soundRef.current) r?.captured ? playCapture() : playMove();
+                  setFen(chess.fen());
+                  const newMoves2 = [...currentMoves, expected.san];
+                  setPlayedMoves(newMoves2);
+                  onMovesChange?.(newMoves2, afterWrong);
+                  setCurrentMoveIndex(afterWrong);
+                  continueFromIndex(afterWrong, newMoves2);
+                }, 1200);
+              }
+            }, 50);
+          } else {
+            isProcessing.current = false;
+          }
         }
       }
 
@@ -189,7 +261,6 @@ export default function ChessBoardWrapper({
 
           return true;
         } else {
-          // Wrong in review: show correct, auto-make, advance to next
           setFeedback('wrong');
           if (soundRef.current) playWrong();
           setSquareStyles({
@@ -266,7 +337,6 @@ export default function ChessBoardWrapper({
 
         return true;
       } else {
-        // Wrong: record mistake, show correct, auto-make, then continue
         isProcessing.current = true;
         mistakesRef.current = [...mistakesRef.current, currentMoveIndex];
         onMoveMistake?.(currentMoveIndex);
@@ -314,22 +384,23 @@ export default function ChessBoardWrapper({
     ],
   );
 
-  const displaySquareStyles =
-    showHint && isPlayerTurn && feedback === null && currentMoveIndex < line.length
-      ? {
-          ...squareStyles,
-          [line[currentMoveIndex].from]: { background: 'rgba(120, 200, 120, 0.5)' },
-          [line[currentMoveIndex].to]: { background: 'rgba(60, 180, 60, 0.75)' },
-        }
-      : squareStyles;
+  const displaySquareStyles = (() => {
+    let styles = { ...premoveSquares, ...squareStyles };
+    if (showHint && isPlayerTurn && feedback === null && currentMoveIndex < line.length) {
+      styles = {
+        ...styles,
+        [line[currentMoveIndex].from]: { background: 'rgba(120, 200, 120, 0.5)' },
+        [line[currentMoveIndex].to]: { background: 'rgba(60, 180, 60, 0.75)' },
+      };
+    }
+    return styles;
+  })();
 
   const naturalOrientation = playerColor === 'w' ? 'white' : 'black';
   const boardOrientation = flipBoard
     ? (naturalOrientation === 'white' ? 'black' : 'white')
     : naturalOrientation;
 
-  // Key forces Chessboard remount when theme/orientation changes,
-  // guaranteeing new darkSquareStyle/pieces are applied even if the library caches options.
   const boardKey = `${boardThemeId}-${pieceStyleId}-${boardOrientation}`;
 
   return (
@@ -340,8 +411,9 @@ export default function ChessBoardWrapper({
           position: fen,
           boardOrientation,
           onPieceDrop: handlePieceDrop,
+          onSquareRightClick: cancelPremove,
           squareStyles: displaySquareStyles,
-          allowDragging: isPlayerTurn,
+          allowDragging: inReview ? isPlayerTurn : !isComplete,
           boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
           darkSquareStyle: { backgroundColor: boardTheme.dark },
           lightSquareStyle: { backgroundColor: boardTheme.light },
