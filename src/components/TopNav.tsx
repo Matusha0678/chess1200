@@ -13,7 +13,7 @@ export default function TopNav() {
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 10,
-      background: 'rgba(12,12,11,.92)', backdropFilter: 'blur(12px)',
+      background: 'var(--header-bg)', backdropFilter: 'blur(12px)',
       borderTop: '2px solid var(--ivory)', borderBottom: '1px solid var(--hairline)',
     }}>
       <div style={{
