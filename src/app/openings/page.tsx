@@ -77,7 +77,7 @@ export default function OpeningsPage() {
   ];
 
   return (
-    <main style={{ maxWidth: 1240, margin: '0 auto', padding: '44px 32px 72px', display: 'flex', flexDirection: 'column', gap: 24, boxSizing: 'border-box' }}>
+    <main style={{ maxWidth: 1600, margin: '0 auto', padding: '44px 48px 72px', display: 'flex', flexDirection: 'column', gap: 24, boxSizing: 'border-box' }}>
 
       {/* Hero row */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>

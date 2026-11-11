@@ -17,7 +17,7 @@ export default function TopNav() {
       borderTop: '2px solid var(--ivory)', borderBottom: '1px solid var(--hairline)',
     }}>
       <div style={{
-        maxWidth: 1240, margin: '0 auto', padding: '0 32px',
+        maxWidth: 1600, margin: '0 auto', padding: '0 48px',
         minHeight: 66, display: 'flex', alignItems: 'stretch',
         justifyContent: 'space-between', gap: 24, flexWrap: 'wrap',
         boxSizing: 'border-box',

@@ -226,7 +226,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 1240, margin: '0 auto', padding: '44px 32px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
+      <main style={{ maxWidth: 1600, margin: '0 auto', padding: '44px 48px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
         <div style={{ flex: '999 1 560px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
           <div style={{ height: 88, width: 220, background: 'var(--surface)' }} />
           <div style={{ display: 'flex', borderTop: '2px solid var(--hairline)' }}>
@@ -235,7 +235,7 @@ export default function HomePage() {
           <div style={{ height: 160, background: 'var(--surface)' }} />
           <div style={{ height: 100, background: 'var(--surface)' }} />
         </div>
-        <aside style={{ flex: '1 1 380px', maxWidth: 420, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
+        <aside style={{ flex: '1 1 420px', maxWidth: 520, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
           <div style={{ height: 300, background: 'var(--surface)' }} />
         </aside>
       </main>
@@ -244,7 +244,7 @@ export default function HomePage() {
 
   if (openings.length === 0) {
     return (
-      <main style={{ maxWidth: 1240, margin: '0 auto', padding: '44px 32px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, textAlign: 'center' }}>
+      <main style={{ maxWidth: 1600, margin: '0 auto', padding: '44px 48px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, textAlign: 'center' }}>
         <h1 style={{ ...HEADING, fontSize: 88, fontWeight: 700, lineHeight: 0.88, letterSpacing: '-0.045em', margin: 0 }}>{dateLabel}</h1>
         <p style={{ fontSize: 15, color: 'var(--muted)', maxWidth: 320, margin: 0 }}>Добавь первый дебют — и можно начинать тренировки</p>
         <Link href="/openings/new" style={{ display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600 }}>
@@ -255,7 +255,7 @@ export default function HomePage() {
   }
 
   return (
-    <main style={{ maxWidth: 1240, margin: '0 auto', padding: '44px 32px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
+    <main style={{ maxWidth: 1600, margin: '0 auto', padding: '44px 48px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
 
       {/* ── Left column ── */}
       <div style={{ flex: '999 1 560px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -363,7 +363,7 @@ export default function HomePage() {
       </div>
 
       {/* ── Right aside ── */}
-      <aside style={{ flex: '1 1 380px', maxWidth: 420, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <aside style={{ flex: '1 1 420px', maxWidth: 520, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }}>
 
         {/* 5. Openings list (desktop) */}
         <section className="hidden lg:block">
