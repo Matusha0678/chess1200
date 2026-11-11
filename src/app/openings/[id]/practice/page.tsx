@@ -165,6 +165,9 @@ export default function PracticePage({ params }: Props) {
   // Hint state
   const [hintActive, setHintActive] = useState(false);
 
+  // Board flip
+  const [boardFlipped, setBoardFlipped] = useState(false);
+
   // Session-done: all due/new lines exhausted
   const [sessionDone, setSessionDone] = useState(false);
 
@@ -627,10 +630,25 @@ export default function PracticePage({ params }: Props) {
             <div className="flex flex-col flex-shrink-0" style={{ width: boardSize }}>
 
               {/* Player bar — 44px */}
-              <div className="h-11 flex items-center gap-2 text-[13px] text-[#A0A0A0]">
-                {playerColor === 'w'
-                  ? <><span className="text-[15px]">♙</span> Вы играете белыми</>
-                  : <><span className="text-[15px]">♟</span> Вы играете чёрными</>}
+              <div className="h-11 flex items-center justify-between gap-2 text-[13px] text-[#A0A0A0]">
+                <span className="flex items-center gap-2">
+                  {playerColor === 'w'
+                    ? <><span className="text-[15px]">♙</span> Вы играете белыми</>
+                    : <><span className="text-[15px]">♟</span> Вы играете чёрными</>}
+                </span>
+                <button
+                  onClick={() => setBoardFlipped(f => !f)}
+                  title="Перевернуть доску"
+                  className={[
+                    'flex items-center justify-center w-8 h-8 rounded transition-colors shrink-0',
+                    boardFlipped ? 'bg-[#1E1E1E] text-[#F5F5F5]' : 'hover:bg-[#1A1A1A] text-[#505050] hover:text-[#A0A0A0]',
+                  ].join(' ')}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 16V4m0 0L3 8m4-4l4 4"/>
+                    <path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </button>
               </div>
 
               {/* 10px gap */}
@@ -649,6 +667,7 @@ export default function PracticePage({ params }: Props) {
                     onComplete={handleComplete}
                     onMoveMistake={handleMoveMistake}
                     showHint={hintActive}
+                    flipBoard={boardFlipped}
                     onMovesChange={(moves) => setPlayedMoves(moves)}
                     onStatusChange={setBoardStatus}
                   />

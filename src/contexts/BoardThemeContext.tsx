@@ -5,19 +5,32 @@ import { BOARD_THEMES, PIECE_STYLES, PIECE_KEYS, type BoardTheme, type PieceStyl
 
 type PieceRenderObject = Record<string, (props?: { fill?: string; square?: string; svgStyle?: React.CSSProperties }) => React.JSX.Element>;
 
+export type AnimationSpeed = 'slow' | 'normal' | 'fast';
+
+export const ANIMATION_MS: Record<AnimationSpeed, number> = {
+  slow: 500,
+  normal: 200,
+  fast: 50,
+};
+
 interface BoardThemeSettings {
   boardThemeId: string;
   pieceStyleId: string;
   showNotation: boolean;
+  soundEnabled: boolean;
+  animationSpeed: AnimationSpeed;
 }
 
 interface BoardThemeContextValue extends BoardThemeSettings {
   boardTheme: BoardTheme;
   pieceStyle: PieceStyle;
   customPieces: PieceRenderObject | undefined;
+  animationMs: number;
   setBoardThemeId: (id: string) => void;
   setPieceStyleId: (id: string) => void;
   setShowNotation: (v: boolean) => void;
+  setSoundEnabled: (v: boolean) => void;
+  setAnimationSpeed: (s: AnimationSpeed) => void;
   isPanelOpen: boolean;
   openPanel: () => void;
   closePanel: () => void;
@@ -27,6 +40,8 @@ const DEFAULT_SETTINGS: BoardThemeSettings = {
   boardThemeId: 'dark',
   pieceStyleId: 'default',
   showNotation: true,
+  soundEnabled: true,
+  animationSpeed: 'normal',
 };
 
 const STORAGE_KEY = 'chess1200-board-settings';
@@ -73,13 +88,16 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
   }, []);
 
-  const setBoardThemeId  = useCallback((id: string) => save({ ...settings, boardThemeId: id }), [settings, save]);
-  const setPieceStyleId  = useCallback((id: string) => save({ ...settings, pieceStyleId: id }), [settings, save]);
-  const setShowNotation  = useCallback((v: boolean) => save({ ...settings, showNotation: v }), [settings, save]);
+  const setBoardThemeId   = useCallback((id: string) => save({ ...settings, boardThemeId: id }), [settings, save]);
+  const setPieceStyleId   = useCallback((id: string) => save({ ...settings, pieceStyleId: id }), [settings, save]);
+  const setShowNotation   = useCallback((v: boolean) => save({ ...settings, showNotation: v }), [settings, save]);
+  const setSoundEnabled   = useCallback((v: boolean) => save({ ...settings, soundEnabled: v }), [settings, save]);
+  const setAnimationSpeed = useCallback((s: AnimationSpeed) => save({ ...settings, animationSpeed: s }), [settings, save]);
 
   const boardTheme = BOARD_THEMES.find(t => t.id === settings.boardThemeId) ?? BOARD_THEMES[0];
   const pieceStyle = PIECE_STYLES.find(p => p.id === settings.pieceStyleId) ?? PIECE_STYLES[0];
   const customPieces = pieceStyle.baseUrl ? buildCustomPieces(pieceStyle.baseUrl) : undefined;
+  const animationMs = ANIMATION_MS[settings.animationSpeed];
 
   return (
     <BoardThemeContext.Provider value={{
@@ -87,9 +105,12 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
       boardTheme,
       pieceStyle,
       customPieces,
+      animationMs,
       setBoardThemeId,
       setPieceStyleId,
       setShowNotation,
+      setSoundEnabled,
+      setAnimationSpeed,
       isPanelOpen,
       openPanel: () => setIsPanelOpen(true),
       closePanel: () => setIsPanelOpen(false),

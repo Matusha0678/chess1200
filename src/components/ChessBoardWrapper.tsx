@@ -6,6 +6,7 @@ import { Chess } from 'chess.js';
 import type { ChessMove } from '@/types/openings';
 import type { PieceDropHandlerArgs } from 'react-chessboard';
 import { useBoardTheme } from '@/contexts/BoardThemeContext';
+import { playMove, playCapture, playCorrect, playWrong, playComplete } from '@/lib/sounds';
 
 interface Props {
   line: ChessMove[];
@@ -14,6 +15,7 @@ interface Props {
   onMoveCorrect?: () => void;
   onMoveMistake?: (moveIndex: number) => void;
   showHint?: boolean;
+  flipBoard?: boolean;
   onMovesChange?: (moves: string[], currentMoveIndex: number) => void;
   onStatusChange?: (status: {
     feedback: 'correct' | 'wrong' | null;
@@ -34,16 +36,20 @@ export default function ChessBoardWrapper({
   onMoveCorrect,
   onMoveMistake,
   showHint,
+  flipBoard,
   onMovesChange,
   onStatusChange,
 }: Props) {
+  const { boardTheme, customPieces, showNotation: notationEnabled, animationMs, soundEnabled } = useBoardTheme();
+  const soundRef = useRef(soundEnabled);
+  soundRef.current = soundEnabled;
+
   const [chess] = useState(() => new Chess(INITIAL_FEN));
   const [fen, setFen] = useState(INITIAL_FEN);
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [squareStyles, setSquareStyles] = useState<Record<string, React.CSSProperties>>({});
   const [playedMoves, setPlayedMoves] = useState<string[]>([]);
-  // Queue of move-indices to review after the line ends (positions where user made mistakes)
   const [reviewQueue, setReviewQueue] = useState<number[]>([]);
   const mistakesRef = useRef<number[]>([]);
   const isProcessing = useRef(false);
@@ -65,7 +71,8 @@ export default function ChessBoardWrapper({
     (index: number) => {
       if (index >= line.length) return;
       const move = line[index];
-      chess.move({ from: move.from, to: move.to });
+      const result = chess.move({ from: move.from, to: move.to });
+      if (soundRef.current) result?.captured ? playCapture() : playMove();
       setFen(chess.fen());
       setPlayedMoves((prev) => {
         const updated = [...prev, move.san];
@@ -108,6 +115,7 @@ export default function ChessBoardWrapper({
             setReviewQueue([...mistakesRef.current]);
           } else {
             setCurrentMoveIndex(nextIdx);
+            if (soundRef.current) playComplete();
             onComplete(true, false);
           }
           isProcessing.current = false;
@@ -117,7 +125,8 @@ export default function ChessBoardWrapper({
         if (nextMove.color !== playerColor) {
           // Auto-play opponent's move
           setTimeout(() => {
-            chess.move({ from: nextMove.from, to: nextMove.to });
+            const r = chess.move({ from: nextMove.from, to: nextMove.to });
+            if (soundRef.current) r?.captured ? playCapture() : playMove();
             setFen(chess.fen());
             const updated = [...currentMoves, nextMove.san];
             setPlayedMoves(updated);
@@ -141,12 +150,14 @@ export default function ChessBoardWrapper({
         isProcessing.current = true;
 
         if (isCorrect) {
-          chess.move({ from: sourceSquare, to: targetSquare });
+          const r1 = chess.move({ from: sourceSquare, to: targetSquare });
+          if (soundRef.current) r1?.captured ? playCapture() : playMove();
           setFen(chess.fen());
           const newMoves = [...playedMoves, expected.san];
           setPlayedMoves(newMoves);
           onMovesChange?.(newMoves, reviewIdx + 1);
           setFeedback('correct');
+          if (soundRef.current) playCorrect();
           setSquareStyles({
             [sourceSquare]: { background: 'rgba(155, 211, 166, 0.45)' },
             [targetSquare]: { background: 'rgba(155, 211, 166, 0.45)' },
@@ -160,6 +171,7 @@ export default function ChessBoardWrapper({
               setReviewQueue([]);
               setCurrentMoveIndex(line.length);
               isProcessing.current = false;
+              if (soundRef.current) playComplete();
               onComplete(true, true);
             } else {
               const nextIdx = remaining[0];
@@ -179,6 +191,7 @@ export default function ChessBoardWrapper({
         } else {
           // Wrong in review: show correct, auto-make, advance to next
           setFeedback('wrong');
+          if (soundRef.current) playWrong();
           setSquareStyles({
             [sourceSquare]: { background: 'rgba(211, 107, 107, 0.45)' },
             [targetSquare]: { background: 'rgba(211, 107, 107, 0.45)' },
@@ -189,7 +202,8 @@ export default function ChessBoardWrapper({
           setTimeout(() => {
             setFeedback(null);
             setSquareStyles({});
-            chess.move({ from: expected.from, to: expected.to });
+            const r2 = chess.move({ from: expected.from, to: expected.to });
+            if (soundRef.current) r2?.captured ? playCapture() : playMove();
             setFen(chess.fen());
             const newMoves = [...playedMoves, expected.san];
             setPlayedMoves(newMoves);
@@ -228,13 +242,15 @@ export default function ChessBoardWrapper({
 
       if (isCorrect) {
         isProcessing.current = true;
-        chess.move({ from: sourceSquare, to: targetSquare });
+        const r3 = chess.move({ from: sourceSquare, to: targetSquare });
+        if (soundRef.current) r3?.captured ? playCapture() : playMove();
         const newMoves = [...playedMoves, expected.san];
         setFen(chess.fen());
         setPlayedMoves(newMoves);
         const nextIdx = currentMoveIndex + 1;
         onMovesChange?.(newMoves, nextIdx);
         setFeedback('correct');
+        if (soundRef.current) playCorrect();
         setSquareStyles({
           [sourceSquare]: { background: 'rgba(155, 211, 166, 0.45)' },
           [targetSquare]: { background: 'rgba(155, 211, 166, 0.45)' },
@@ -256,6 +272,7 @@ export default function ChessBoardWrapper({
         onMoveMistake?.(currentMoveIndex);
 
         setFeedback('wrong');
+        if (soundRef.current) playWrong();
         setSquareStyles({
           [sourceSquare]: { background: 'rgba(211, 107, 107, 0.45)' },
           [targetSquare]: { background: 'rgba(211, 107, 107, 0.45)' },
@@ -267,8 +284,8 @@ export default function ChessBoardWrapper({
         setTimeout(() => {
           setFeedback(null);
           setSquareStyles({});
-          // Auto-make the correct move on behalf of the user
-          chess.move({ from: expected.from, to: expected.to });
+          const r4 = chess.move({ from: expected.from, to: expected.to });
+          if (soundRef.current) r4?.captured ? playCapture() : playMove();
           setFen(chess.fen());
           const newMoves = [...playedMoves, expected.san];
           setPlayedMoves(newMoves);
@@ -297,8 +314,6 @@ export default function ChessBoardWrapper({
     ],
   );
 
-  const { boardTheme, customPieces, showNotation: notationEnabled } = useBoardTheme();
-
   const displaySquareStyles =
     showHint && isPlayerTurn && feedback === null && currentMoveIndex < line.length
       ? {
@@ -308,12 +323,17 @@ export default function ChessBoardWrapper({
         }
       : squareStyles;
 
+  const naturalOrientation = playerColor === 'w' ? 'white' : 'black';
+  const boardOrientation = flipBoard
+    ? (naturalOrientation === 'white' ? 'black' : 'white')
+    : naturalOrientation;
+
   return (
     <div className="w-full h-full overflow-hidden border border-[#262626]" style={{ borderRadius: '4px' }}>
       <Chessboard
         options={{
           position: fen,
-          boardOrientation: playerColor === 'w' ? 'white' : 'black',
+          boardOrientation,
           onPieceDrop: handlePieceDrop,
           squareStyles: displaySquareStyles,
           allowDragging: isPlayerTurn,
@@ -322,6 +342,7 @@ export default function ChessBoardWrapper({
           lightSquareStyle: { backgroundColor: boardTheme.light },
           pieces: customPieces,
           showNotation: notationEnabled,
+          animationDurationInMs: animationMs,
           darkSquareNotationStyle: { color: '#C8C8C8' },
           lightSquareNotationStyle: { color: '#505050' },
           alphaNotationStyle: { fontSize: '11px', fontWeight: '700' },

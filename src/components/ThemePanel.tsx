@@ -2,13 +2,13 @@
 
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-import { useBoardTheme } from '@/contexts/BoardThemeContext';
+import { useBoardTheme, type AnimationSpeed } from '@/contexts/BoardThemeContext';
 import { BOARD_THEMES, PIECE_STYLES } from '@/lib/themes';
 
 export default function ThemePanel() {
   const {
-    boardThemeId, pieceStyleId, showNotation,
-    setBoardThemeId, setPieceStyleId, setShowNotation,
+    boardThemeId, pieceStyleId, showNotation, soundEnabled, animationSpeed,
+    setBoardThemeId, setPieceStyleId, setShowNotation, setSoundEnabled, setAnimationSpeed,
     isPanelOpen, closePanel,
   } = useBoardTheme();
 
@@ -72,7 +72,6 @@ export default function ThemePanel() {
                     ].join(' ')}
                     title={theme.name}
                   >
-                    {/* 2×2 mini board */}
                     <div className="w-10 h-10 rounded overflow-hidden grid grid-cols-2 grid-rows-2">
                       <div style={{ background: theme.light }} />
                       <div style={{ background: theme.dark }} />
@@ -118,7 +117,6 @@ export default function ThemePanel() {
                           draggable={false}
                         />
                       ) : (
-                        /* Default pieces — show a simple king SVG inline */
                         <svg viewBox="0 0 45 45" className="w-10 h-10" xmlns="http://www.w3.org/2000/svg">
                           <g fill="none" fillRule="evenodd" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M22.5 11.63V6M20 8h5" strokeLinejoin="miter"/>
@@ -141,6 +139,33 @@ export default function ThemePanel() {
             </div>
           </section>
 
+          {/* Animation speed */}
+          <section>
+            <h2 className="text-[11px] font-semibold text-[#505050] uppercase tracking-widest mb-3">
+              Скорость анимации
+            </h2>
+            <div className="grid grid-cols-3 gap-2">
+              {(['slow', 'normal', 'fast'] as AnimationSpeed[]).map(speed => {
+                const labels: Record<AnimationSpeed, string> = { slow: 'Медленно', normal: 'Норма', fast: 'Быстро' };
+                const active = animationSpeed === speed;
+                return (
+                  <button
+                    key={speed}
+                    onClick={() => setAnimationSpeed(speed)}
+                    className={[
+                      'h-9 rounded text-[12px] font-medium transition-colors',
+                      active
+                        ? 'bg-white text-[#050505]'
+                        : 'bg-[#161616] text-[#606060] hover:text-[#A0A0A0] hover:bg-[#1E1E1E]',
+                    ].join(' ')}
+                  >
+                    {labels[speed]}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
           {/* Options */}
           <section>
             <h2 className="text-[11px] font-semibold text-[#505050] uppercase tracking-widest mb-3">
@@ -151,6 +176,11 @@ export default function ThemePanel() {
                 label="Показывать координаты"
                 value={showNotation}
                 onChange={setShowNotation}
+              />
+              <Toggle
+                label="Звук ходов"
+                value={soundEnabled}
+                onChange={setSoundEnabled}
               />
             </div>
           </section>
@@ -169,7 +199,7 @@ function Toggle({ label, value, onChange }: { label: string; value: boolean; onC
     >
       <span className="text-[13px] text-[#A0A0A0] group-hover:text-[#F5F5F5] transition-colors">{label}</span>
       <div className={[
-        'w-9 h-5 rounded-full relative transition-colors duration-200',
+        'w-9 h-5 rounded-full relative transition-colors duration-200 shrink-0',
         value ? 'bg-white/90' : 'bg-[#303030]',
       ].join(' ')}>
         <div className={[

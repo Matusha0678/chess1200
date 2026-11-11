@@ -78,6 +78,7 @@ export default function OpeningDetailPage({ params }: Props) {
   const [addLineError, setAddLineError] = useState<string | null>(null);
   const [addLineSuccess, setAddLineSuccess] = useState(false);
   const parseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [exportFlash, setExportFlash] = useState(false);
 
   const now = new Date().toISOString();
 
@@ -226,6 +227,37 @@ export default function OpeningDetailPage({ params }: Props) {
     await load();
   }
 
+  function handleExportPgn() {
+    if (!opening || lines.length === 0) return;
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+    const games = lines.map(line => {
+      const header = [
+        `[Event "${opening.name}"]`,
+        `[Site "Chess 1200"]`,
+        `[Date "${date}"]`,
+        `[White "?"]`,
+        `[Black "?"]`,
+        `[Result "*"]`,
+      ].join('\n');
+      const moveText = line.moves.reduce((acc, move, idx) => {
+        return acc + (move.color === 'w' ? `${Math.floor(idx / 2) + 1}. ` : '') + `${move.san} `;
+      }, '');
+      return `${header}\n\n${moveText}*`;
+    });
+    const content = games.join('\n\n');
+    const blob = new Blob([content], { type: 'application/x-chess-pgn' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${opening.name.replace(/[^a-zа-яёА-ЯЁ0-9 ]/gi, '').trim()}.pgn`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setExportFlash(true);
+    setTimeout(() => setExportFlash(false), 2000);
+  }
+
   if (loading) {
     return (
       <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
@@ -346,6 +378,25 @@ export default function OpeningDetailPage({ params }: Props) {
                 Изменить
               </Link>
             </div>
+
+            {/* Export PGN */}
+            <button
+              onClick={handleExportPgn}
+              disabled={lines.length === 0}
+              className={[
+                'h-9 w-full flex items-center justify-center gap-2 border rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer disabled:opacity-30',
+                exportFlash
+                  ? 'border-[#505050] text-[#A0A0A0]'
+                  : 'border-[#303030] text-[#606060] hover:border-[#505050] hover:text-[#A0A0A0]',
+              ].join(' ')}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              {exportFlash ? 'Скачано!' : 'Скачать PGN'}
+            </button>
 
             {/* Delete */}
             {confirmDelete ? (
