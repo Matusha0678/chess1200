@@ -98,7 +98,7 @@ export default function OpeningCard({ opening, index, linesTotal, linesMastered,
         </div>
 
         {/* Title */}
-        <h2 style={{ ...HEADING, margin: 0, fontSize: 26, lineHeight: '28px', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--ivory)' }}>
+        <h2 style={{ ...HEADING, margin: 0, fontSize: 26, lineHeight: '28px', fontWeight: 600, letterSpacing: '0', color: 'var(--ivory)' }}>
           {opening.name}
         </h2>
 

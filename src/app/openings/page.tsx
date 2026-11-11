@@ -77,7 +77,7 @@ export default function OpeningsPage() {
   ];
 
   return (
-    <main style={{ maxWidth: 1600, margin: '0 auto', padding: '36px 48px 64px', display: 'flex', flexDirection: 'column', gap: 20, boxSizing: 'border-box' }}>
+    <main style={{ maxWidth: 1600, margin: '0 auto', padding: '40px 48px 72px', display: 'flex', flexDirection: 'column', gap: 24, boxSizing: 'border-box' }}>
 
       {/* Hero row */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
@@ -87,7 +87,7 @@ export default function OpeningsPage() {
             <span style={EYEBROW_LINE} />
             <span>ДЕБЮТЫ</span>
           </div>
-          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 72, lineHeight: 0.9, letterSpacing: '-0.015em' }}>Дебюты</h1>
+          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 72, lineHeight: 0.9, letterSpacing: '0.01em' }}>Дебюты</h1>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <a
@@ -125,7 +125,7 @@ export default function OpeningsPage() {
           </svg>
         </span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
-          <span style={{ ...HEADING, fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.1 }}>Дебют Рандом</span>
+          <span style={{ ...HEADING, fontSize: 22, fontWeight: 600, letterSpacing: '0', lineHeight: 1.1 }}>Дебют Рандом</span>
           <span style={{ fontSize: 14, color: 'var(--muted)' }}>Играй против Stockfish — он тренирует твои сохранённые дебюты</span>
         </span>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
@@ -198,7 +198,7 @@ export default function OpeningsPage() {
 
       {/* Grid of opening cards */}
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(520px, 100%), 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(440px, 100%), 1fr))', gap: 16 }}>
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} style={{ display: 'flex', flexWrap: 'wrap', gap: 20, padding: 16, border: '1px solid var(--hairline)', background: 'var(--surface)', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
               <div style={{ flex: '0 1 220px', minWidth: 160, aspectRatio: '1/1', background: 'var(--track)' }} />
@@ -224,7 +224,7 @@ export default function OpeningsPage() {
           <p style={{ margin: 0, fontSize: 15, color: 'var(--control)' }}>Попробуй изменить запрос или фильтр</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(520px, 100%), 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(440px, 100%), 1fr))', gap: 16 }}>
           {filteredOpenings.map((opening, idx) => (
             <OpeningCard
               key={opening.id}

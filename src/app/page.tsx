@@ -226,16 +226,16 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 1600, margin: '0 auto', padding: '44px 48px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
-        <div style={{ flex: '999 1 560px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
+      <main style={{ maxWidth: 1600, margin: '0 auto', padding: '40px 48px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
+        <div style={{ flex: '999 1 520px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
           <div style={{ height: 88, width: 220, background: 'var(--surface)' }} />
-          <div style={{ display: 'flex', borderTop: '2px solid var(--hairline)' }}>
-            {[0,1,2].map(i => <div key={i} style={{ flex: '1 1 150px', height: 100, background: i > 0 ? 'var(--surface)' : undefined }} />)}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '2px solid var(--hairline)' }}>
+            {[0,1,2].map(i => <div key={i} style={{ height: 100, background: i > 0 ? 'var(--surface)' : undefined }} />)}
           </div>
           <div style={{ height: 160, background: 'var(--surface)' }} />
           <div style={{ height: 100, background: 'var(--surface)' }} />
         </div>
-        <aside style={{ flex: '1 1 420px', maxWidth: 520, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
+        <aside style={{ flex: '1 1 340px', maxWidth: 400, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
           <div style={{ height: 300, background: 'var(--surface)' }} />
         </aside>
       </main>
@@ -255,10 +255,10 @@ export default function HomePage() {
   }
 
   return (
-    <main style={{ maxWidth: 1600, margin: '0 auto', padding: '44px 48px 72px', display: 'flex', flexWrap: 'wrap', gap: 40, alignItems: 'flex-start', boxSizing: 'border-box' }}>
+    <main style={{ maxWidth: 1600, margin: '0 auto', padding: '40px 48px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
 
       {/* ── Left column ── */}
-      <div style={{ flex: '999 1 560px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div style={{ flex: '999 1 520px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }}>
 
         {/* 1. Date hero */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -267,33 +267,33 @@ export default function HomePage() {
             <span style={EYEBROW_LINE} />
             <span>{dayLabelUpper}</span>
           </div>
-          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 88, lineHeight: 0.88, letterSpacing: '-0.015em' }}>{dateLabel}</h1>
+          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 88, lineHeight: 0.88, letterSpacing: '0.01em' }}>{dateLabel}</h1>
         </div>
 
         {/* 2. Stats band */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', borderTop: '2px solid var(--ivory)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '2px solid var(--ivory)' }}>
           {/* СЕРИЯ */}
-          <div style={{ flex: '1 1 130px', minWidth: 0, padding: '14px 16px 16px 0', display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ padding: '16px 20px 18px 0', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>СЕРИЯ</span>
-            <span style={{ ...HEADING, fontWeight: 700, fontSize: 44, lineHeight: 1, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{streak}</span>
+            <span style={{ ...HEADING, fontWeight: 700, fontSize: 44, lineHeight: 1, letterSpacing: '0', fontVariantNumeric: 'tabular-nums' }}>{streak}</span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>
               {streak === 0 ? 'начни сегодня' : streak === 1 ? 'день подряд' : streak < 5 ? 'дня подряд' : 'дней подряд'}
             </span>
           </div>
           {/* СЕГОДНЯ */}
-          <div style={{ flex: '1 1 130px', minWidth: 0, padding: '14px 16px 16px 20px', borderLeft: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ padding: '16px 20px 18px', borderLeft: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>СЕГОДНЯ</span>
-            <span style={{ ...HEADING, fontWeight: 700, fontSize: 44, lineHeight: 1, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
+            <span style={{ ...HEADING, fontWeight: 700, fontSize: 44, lineHeight: 1, letterSpacing: '0', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>
               {todayTotal === 0 ? 'всё готово' : totalDue > 0 && totalNew > 0 ? `${totalDue} повт. · ${totalNew} нов.` : totalDue > 0 ? 'на повторение' : 'новые'}
             </span>
           </div>
           {/* ОСВОЕНО */}
-          <div style={{ flex: '1 1 130px', minWidth: 0, padding: '14px 16px 16px 20px', borderLeft: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ padding: '16px 0 18px 20px', borderLeft: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>ОСВОЕНО</span>
-            <span style={{ ...HEADING, fontWeight: 700, fontSize: 44, lineHeight: 1, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ ...HEADING, fontWeight: 700, fontSize: 44, lineHeight: 1, letterSpacing: '0', fontVariantNumeric: 'tabular-nums' }}>
               {totalMastered}
-              <span style={{ fontSize: 18, fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--muted)' }}> /{totalLines}</span>
+              <span style={{ fontSize: 18, fontWeight: 400, letterSpacing: '0', color: 'var(--muted)' }}> /{totalLines}</span>
             </span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>{masteryPct}% репертуара</span>
           </div>
@@ -301,30 +301,30 @@ export default function HomePage() {
 
         {/* 3. Train CTA */}
         {todayTotal === 0 ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, padding: 28, background: 'var(--surface)', border: '1px solid var(--hairline)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <span style={{ ...HEADING, fontWeight: 600, fontSize: 24, letterSpacing: '-0.02em', color: 'var(--ivory)' }}>Всё готово на сегодня</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '24px 28px', background: 'var(--surface)', border: '1px solid var(--hairline)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{ ...HEADING, fontWeight: 600, fontSize: 22, letterSpacing: '0', color: 'var(--ivory)' }}>Всё готово на сегодня</span>
               <span style={{ fontSize: 14, color: 'var(--muted)' }}>
                 {nextReviewGlobal ? `Следующее повторение — ${formatNext(nextReviewGlobal)}` : 'Добавь новые линии в дебюты'}
               </span>
             </div>
-            <Link href="/openings" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: 56, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 600 }}>
+            <Link href="/openings" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: 48, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap' }}>
               Дебюты →
             </Link>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, padding: 28, background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ivory)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
-                <span style={{ ...HEADING, fontWeight: 700, fontSize: 80, lineHeight: 0.86, letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
-                <span style={{ ...HEADING, fontWeight: 600, fontSize: 22, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--muted)' }}>{linesTodayWord}</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, padding: '24px 28px', background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ivory)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+                <span style={{ ...HEADING, fontWeight: 700, fontSize: 80, lineHeight: 0.9, letterSpacing: '0', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
+                <span style={{ ...HEADING, fontWeight: 500, fontSize: 20, lineHeight: 1, letterSpacing: '0', color: 'var(--muted)' }}>{linesTodayWord}</span>
               </div>
               <span style={{ fontSize: 14, color: 'var(--muted)' }}>{ctaSubtext}</span>
             </div>
             {firstOpening && (
               <Link
                 href={`/openings/${firstOpening.id}/practice`}
-                style={{ flex: '0 1 300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: 56, background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 600 }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: 52, padding: '0 28px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap' }}
               >
                 Начать тренировку
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
@@ -363,7 +363,7 @@ export default function HomePage() {
       </div>
 
       {/* ── Right aside ── */}
-      <aside style={{ flex: '1 1 380px', maxWidth: 480, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <aside style={{ flex: '1 1 340px', maxWidth: 400, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }}>
 
         {/* 5. Openings list (desktop) */}
         <section className="hidden lg:block">
@@ -455,7 +455,7 @@ function OpeningsList({ openings }: { openings: OpeningRow[] }) {
               {/* Row 1 col 2: name */}
               <span style={{
                 fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-                fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em',
+                fontSize: 16, fontWeight: 600, letterSpacing: '0',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>{o.name}</span>
               {/* Row 1 col 3: count */}
