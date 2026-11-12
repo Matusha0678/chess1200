@@ -294,28 +294,41 @@ export default function OpeningDetailPage({ params }: Props) {
     return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   }
 
+  const masteryPct = linesTotal > 0 ? Math.round((linesMastered / linesTotal) * 100) : 0;
+
   /* Shared action card content — rendered twice (mobile inline, desktop sidebar) */
   function ActionCard() {
     return (
       <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-3">
-        <Link
-          href={`/openings/${id}/study`}
-          className="h-11 flex items-center justify-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[10px] px-6 text-[15px] font-semibold transition-colors no-underline"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-          </svg>
-          Учёба
-        </Link>
+        {linesDue > 0 && (
+          <div className="flex items-center justify-between bg-[#141414] border border-[#2A2A2A] rounded-[10px] px-4 py-3 mb-1">
+            <div className="flex items-center gap-2">
+              <span className="w-[6px] h-[6px] rounded-full bg-white shrink-0" />
+              <span className="text-[13px] text-[#E5E5E5] font-medium">
+                {linesDue} {linesDue === 1 ? 'линия' : linesDue <= 4 ? 'линии' : 'линий'} к повторению
+              </span>
+            </div>
+          </div>
+        )}
 
         <Link
           href={`/openings/${id}/practice`}
-          className="h-10 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-[10px] px-6 text-[14px] font-medium transition-colors no-underline"
+          className="h-11 flex items-center justify-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[10px] px-6 text-[15px] font-semibold transition-colors no-underline"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <polygon points="5 3 19 12 5 21 5 3" />
           </svg>
           Тренировка
+        </Link>
+
+        <Link
+          href={`/openings/${id}/study`}
+          className="h-10 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-[10px] px-6 text-[14px] font-medium transition-colors no-underline"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+          Учёба
         </Link>
 
         <div className="flex gap-2">
@@ -408,21 +421,40 @@ export default function OpeningDetailPage({ params }: Props) {
         <div className="flex-1 min-w-0 flex flex-col gap-5">
 
           {/* Badges + title */}
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 flex-wrap">
               {opening.eco_code && (
-                <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#FFFFFF] bg-[#1A1A1A] border border-[#303030] rounded-[8px] px-[10px] py-[4px]">
+                <span className="text-[11px] font-bold tracking-[0.16em] uppercase text-[#FFFFFF] bg-[#222222] border border-[#383838] rounded-[6px] px-[9px] py-[4px]">
                   {opening.eco_code}
                 </span>
               )}
-              <span className="flex items-center gap-[6px] text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0] bg-[#0D0D0D] border border-[#262626] rounded-[8px] px-[10px] py-[4px]">
-                <span className="text-[15px] leading-none">{COLOR_ICON[opening.color]}</span>
+              <span className="flex items-center gap-[5px] text-[11px] font-bold tracking-[0.16em] uppercase text-[#808080] bg-[#111111] border border-[#262626] rounded-[6px] px-[9px] py-[4px]">
+                <span className="text-[14px] leading-none">{COLOR_ICON[opening.color]}</span>
                 {COLOR_LABEL[opening.color]}
               </span>
+              <span className="text-[11px] font-bold tracking-[0.16em] uppercase text-[#606060] bg-[#111111] border border-[#262626] rounded-[6px] px-[9px] py-[4px]">
+                {linesTotal} {linesTotal === 1 ? 'линия' : linesTotal <= 4 ? 'линии' : 'линий'}
+              </span>
             </div>
-            <h1 className="m-0 font-[500] text-[42px] leading-[1] tracking-[-0.01em]">
+            <h1 className="m-0 font-[500] text-[48px] leading-[1] tracking-[-0.02em]">
               {opening.name}
             </h1>
+
+            {/* Mastery progress bar */}
+            {linesTotal > 0 && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] text-[#606060]">Освоено {linesMastered} из {linesTotal}</span>
+                  <span className="text-[12px] font-semibold text-[#808080]">{masteryPct}%</span>
+                </div>
+                <div className="h-[3px] bg-[#1E1E1E] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-white rounded-full transition-all duration-500"
+                    style={{ width: `${masteryPct}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Action card — mobile only */}
@@ -430,123 +462,135 @@ export default function OpeningDetailPage({ params }: Props) {
             <ActionCard />
           </div>
 
-          {/* Stats — 6 cells, 3+3 */}
+          {/* Stats — 2 rows of 3 */}
           <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] grid grid-cols-3">
-            <div className="p-5 flex flex-col gap-[2px]">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Линий</span>
-              <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#F5F5F5]">{linesTotal}</span>
-            </div>
-            <div className="p-5 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Освоено</span>
-              <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">{linesMastered}</span>
-            </div>
-            <div className="p-5 flex flex-col gap-[2px] border-l border-[#1E1E1E]">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Повторить</span>
-              <span className={`font-cormorant text-[32px] font-semibold leading-[1.1] ${linesDue > 0 ? 'text-[#FFFFFF]' : 'text-[#F5F5F5]'}`}>{linesDue}</span>
-            </div>
-            <div className="p-5 flex flex-col gap-[2px] border-t border-[#1E1E1E]">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Попыток</span>
-              <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#F5F5F5]">
-                {totalAttempts > 0 ? totalAttempts : '—'}
+            <div className="px-5 py-4 flex flex-col gap-[6px]">
+              <span className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">Повторить</span>
+              <span className={`font-cormorant text-[36px] font-semibold leading-[1] ${linesDue > 0 ? 'text-[#FFFFFF]' : 'text-[#404040]'}`}>
+                {linesDue}
               </span>
             </div>
-            <div className="p-5 flex flex-col gap-[2px] border-t border-l border-[#1E1E1E]">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Точность</span>
-              <span className="font-cormorant text-[32px] font-semibold leading-[1.1] text-[#D0D0D0]">
+            <div className="px-5 py-4 flex flex-col gap-[6px] border-l border-[#1A1A1A]">
+              <span className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">Освоено</span>
+              <span className="font-cormorant text-[36px] font-semibold leading-[1] text-[#D0D0D0]">{linesMastered}</span>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-[6px] border-l border-[#1A1A1A]">
+              <span className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">Точность</span>
+              <span className="font-cormorant text-[36px] font-semibold leading-[1] text-[#C0C0C0]">
                 {accuracy !== null ? `${accuracy}%` : '—'}
               </span>
             </div>
-            <div className="p-5 flex flex-col gap-[2px] border-t border-l border-[#1E1E1E]">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Последнее</span>
-              <span className="font-cormorant text-[28px] font-semibold leading-[1.1] text-[#A0A0A0]">
+            <div className="px-5 py-4 flex flex-col gap-[6px] border-t border-[#1A1A1A]">
+              <span className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">Попыток</span>
+              <span className="font-cormorant text-[36px] font-semibold leading-[1] text-[#909090]">
+                {totalAttempts > 0 ? totalAttempts : '—'}
+              </span>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-[6px] border-t border-l border-[#1A1A1A]">
+              <span className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">Последнее</span>
+              <span className="font-cormorant text-[32px] font-semibold leading-[1] text-[#707070]">
                 {fmtLastPracticed(lastPracticed ?? null)}
               </span>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-[6px] border-t border-l border-[#1A1A1A]">
+              <span className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">Линий</span>
+              <span className="font-cormorant text-[36px] font-semibold leading-[1] text-[#909090]">{linesTotal}</span>
             </div>
           </div>
 
           {/* Lines list */}
           <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px]">
-            <div className="flex justify-between items-center px-5 py-[18px] border-b border-[#262626]">
-              <span className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">Вариации</span>
+            <div className="flex justify-between items-center px-5 py-[16px] border-b border-[#1E1E1E]">
+              <div className="flex items-center gap-3">
+                <span className="text-[12px] font-bold tracking-[0.14em] uppercase text-[#505050]">Вариации</span>
+                {lines.length > 0 && (
+                  <span className="text-[12px] font-semibold text-[#383838] tabular-nums">{lines.length}</span>
+                )}
+              </div>
               <button
                 onClick={() => {
                   setShowAddLine((v) => !v);
                   setAddLineError(null);
                   setAddLineSuccess(false);
                 }}
-                className={`h-9 flex items-center gap-2 rounded-full px-5 text-[14px] transition-colors border cursor-pointer ${
+                className={`h-8 flex items-center gap-[6px] rounded-full px-4 text-[13px] transition-colors border cursor-pointer ${
                   showAddLine
                     ? 'bg-[#1A1A1A] border-[#303030] text-[#FFFFFF]'
-                    : 'border-[#303030] text-[#E5E5E5] bg-transparent hover:border-[#FFFFFF]'
+                    : 'border-[#262626] text-[#808080] bg-transparent hover:border-[#404040] hover:text-[#E5E5E5]'
                 }`}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M12 5v14M5 12h14" />
                 </svg>
-                Добавить вариацию
+                Добавить
               </button>
             </div>
 
             {addLineSuccess && (
-              <div className="flex items-center gap-2 text-[14px] text-[#D0D0D0] bg-[#141414] border-b border-[#303030] px-5 py-3">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <div className="flex items-center gap-2 text-[13px] text-[#C0C0C0] bg-[#111111] border-b border-[#1E1E1E] px-5 py-3">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
-                Вариации добавлены успешно
+                Вариации добавлены
               </div>
             )}
 
             {lines.length === 0 && !showAddLine ? (
-              <div className="px-5 py-12 text-center text-[#A0A0A0] text-[14px]">
-                Линии не найдены.
+              <div className="px-5 py-14 text-center">
+                <p className="text-[14px] text-[#404040] m-0">Нет вариаций</p>
+                <p className="text-[13px] text-[#303030] m-0 mt-1">Добавь PGN чтобы начать</p>
               </div>
             ) : (
               lines.map((line, i) => {
                 const prog = line.line_progress?.[0] ?? null;
                 const isDue = prog && prog.next_review <= now && prog.mastery < 5;
                 const mastery = prog?.mastery ?? 0;
+                const moveCount = line.moves.length;
 
                 return (
                   <div
                     key={line.id}
-                    className={`grid grid-cols-[32px_minmax(0,1fr)_auto_auto] gap-x-5 px-5 py-[18px] items-center hover:bg-[#1A1814] transition-colors ${i > 0 ? 'border-t border-[#1E1E1E]' : ''}`}
+                    className={`flex items-start gap-4 px-5 py-4 hover:bg-[#111111] transition-colors ${i > 0 ? 'border-t border-[#1A1A1A]' : ''}`}
                   >
-                    <span className="text-[13px] text-[#505050] text-right tabular-nums">
+                    {/* Number */}
+                    <span className="text-[12px] text-[#383838] tabular-nums pt-[3px] shrink-0 w-5 text-right">
                       {i + 1}
                     </span>
 
-                    <div className="min-w-0">
-                      <p className="m-0 text-[14px] font-mono text-[#A0A0A0] leading-[1.6] break-words line-clamp-2">
+                    {/* Move text + mastery */}
+                    <div className="flex-1 min-w-0">
+                      <p className="m-0 text-[13px] font-mono text-[#707070] leading-[1.7] break-words">
                         {abbreviateMoves(line)}
                       </p>
-                      <div className="flex items-center gap-[4px] mt-1">
-                        {masteryDots(mastery)}
+                      <div className="flex items-center gap-3 mt-[6px]">
+                        <div className="flex items-center gap-[3px]">
+                          {masteryDots(mastery)}
+                        </div>
+                        <span className="text-[11px] text-[#383838] tabular-nums">{moveCount} ходов</span>
+                        {isDue && (
+                          <span className="flex items-center gap-[4px]">
+                            <span className="w-[4px] h-[4px] rounded-full bg-white" />
+                            <span className="text-[11px] font-semibold text-[#FFFFFF]">повторить</span>
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    <div className="shrink-0">
-                      {isDue ? (
-                        <span className="flex items-center gap-[5px] bg-[#1A1A1A] border border-[#303030] rounded-full px-[10px] py-[4px]">
-                          <span className="w-[5px] h-[5px] rounded-full bg-[#FFFFFF]" />
-                          <span className="text-[12px] font-semibold text-[#FFFFFF] whitespace-nowrap">Повторить</span>
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div className="shrink-0 flex items-center gap-2">
+                    {/* Actions */}
+                    <div className="shrink-0 flex items-center gap-2 pt-[1px]">
                       {confirmDeleteLineId === line.id ? (
                         <>
-                          <span className="text-[13px] text-[#A0A0A0] whitespace-nowrap">Удалить?</span>
+                          <span className="text-[12px] text-[#606060] whitespace-nowrap">Удалить?</span>
                           <button
                             onClick={() => handleDeleteLine(line.id)}
                             disabled={deletingLineId === line.id}
-                            className="h-9 border border-[#505050] text-[#EF9A9A] hover:border-[#EF9A9A] rounded-full px-4 text-[13px] font-medium transition-colors bg-transparent disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                            className="h-8 border border-[#404040] text-[#EF9A9A] hover:border-[#EF9A9A] rounded-full px-3 text-[12px] font-medium transition-colors bg-transparent disabled:opacity-50 cursor-pointer whitespace-nowrap"
                           >
                             {deletingLineId === line.id ? '…' : 'Да'}
                           </button>
                           <button
                             onClick={() => setConfirmDeleteLineId(null)}
-                            className="h-9 border border-[#303030] text-[#808080] hover:border-[#505050] rounded-full px-4 text-[13px] transition-colors bg-transparent cursor-pointer"
+                            className="h-8 border border-[#262626] text-[#606060] hover:border-[#404040] rounded-full px-3 text-[12px] transition-colors bg-transparent cursor-pointer"
                           >
                             Нет
                           </button>
@@ -555,16 +599,16 @@ export default function OpeningDetailPage({ params }: Props) {
                         <>
                           <Link
                             href={`/openings/${id}/practice?line=${line.id}`}
-                            className="shrink-0 h-9 flex items-center border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent no-underline"
+                            className="shrink-0 h-8 flex items-center border border-[#262626] text-[#A0A0A0] hover:border-[#505050] hover:text-[#FFFFFF] rounded-full px-4 text-[13px] transition-colors bg-transparent no-underline"
                           >
-                            Практика
+                            Играть
                           </Link>
                           <button
                             onClick={() => setConfirmDeleteLineId(line.id)}
                             title="Удалить линию"
-                            className="shrink-0 w-9 h-9 flex items-center justify-center border border-transparent text-[#404040] hover:border-[#404040] hover:text-[#808080] rounded-full transition-colors bg-transparent cursor-pointer"
+                            className="shrink-0 w-8 h-8 flex items-center justify-center border border-transparent text-[#303030] hover:border-[#303030] hover:text-[#606060] rounded-full transition-colors bg-transparent cursor-pointer"
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                               <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
                             </svg>
                           </button>
@@ -577,40 +621,40 @@ export default function OpeningDetailPage({ params }: Props) {
             )}
 
             {showAddLine && (
-              <div className={`px-5 pb-5 pt-5 flex flex-col gap-5 ${lines.length > 0 ? 'border-t border-[#1E1E1E]' : ''}`}>
-                <h3 className="m-0 font-[500] text-[26px] leading-[1.1]">
+              <div className={`px-5 pb-6 pt-5 flex flex-col gap-5 ${lines.length > 0 ? 'border-t border-[#1A1A1A]' : ''}`}>
+                <h3 className="m-0 font-[500] text-[22px] leading-[1.1] text-[#E5E5E5]">
                   Добавить вариации
                 </h3>
 
-                <div className="flex flex-col gap-[10px]">
-                  <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                <div className="flex flex-col gap-[8px]">
+                  <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">
                     PGN
                   </label>
                   <textarea
                     value={addLinePgn}
                     onChange={(e) => handleAddLinePgnChange(e.target.value)}
-                    rows={8}
-                    placeholder="Вставь PGN вариаций для добавления..."
-                    className="bg-[#050505] border border-[#262626] rounded-[12px] px-4 py-3 text-[14px] text-[#F5F5F5] placeholder-[#4A4540] outline-none focus:border-[#FFFFFF] transition-colors font-mono resize-y leading-[1.6]"
+                    rows={7}
+                    placeholder="Вставь PGN вариаций..."
+                    className="bg-[#080808] border border-[#222222] rounded-[10px] px-4 py-3 text-[13px] text-[#E0E0E0] placeholder-[#383838] outline-none focus:border-[#505050] transition-colors font-mono resize-y leading-[1.7]"
                   />
                   {addLineCount !== null && (
                     <div
-                      className={`flex items-center gap-2 text-[13px] font-medium px-4 py-[8px] rounded-[10px] border ${
+                      className={`flex items-center gap-2 text-[12px] font-medium px-3 py-[7px] rounded-[8px] border ${
                         addLineCount > 0
-                          ? 'text-[#D0D0D0] bg-[#141414] border-[#303030]'
-                          : 'text-[#A0A0A0] bg-[#1A1A1A] border-[#404040]'
+                          ? 'text-[#C0C0C0] bg-[#111111] border-[#262626]'
+                          : 'text-[#808080] bg-[#0D0D0D] border-[#1E1E1E]'
                       }`}
                     >
                       {addLineCount > 0 ? (
                         <>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M20 6L9 17l-5-5" />
                           </svg>
                           Найдено {addLineCount} {pluralVariations(addLineCount)}
                         </>
                       ) : (
                         <>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
                           </svg>
                           Вариации не найдены — проверь PGN
@@ -621,8 +665,8 @@ export default function OpeningDetailPage({ params }: Props) {
                 </div>
 
                 {addLineError && (
-                  <div className="flex items-center gap-2 text-[14px] text-[#A0A0A0] bg-[#1A1A1A] border border-[#404040] rounded-[12px] px-5 py-3">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <div className="flex items-center gap-2 text-[13px] text-[#909090] bg-[#111111] border border-[#2A2A2A] rounded-[10px] px-4 py-3">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
                     </svg>
                     {addLineError}
@@ -633,7 +677,7 @@ export default function OpeningDetailPage({ params }: Props) {
                   <button
                     onClick={handleAddLines}
                     disabled={addingLine || !addLinePgn.trim()}
-                    className="h-9 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[14px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="h-9 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[13px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {addingLine ? 'Добавление...' : 'Добавить'}
                   </button>
@@ -644,7 +688,7 @@ export default function OpeningDetailPage({ params }: Props) {
                       setAddLineCount(null);
                       setAddLineError(null);
                     }}
-                    className="h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors bg-transparent cursor-pointer"
+                    className="h-9 border border-[#262626] text-[#808080] hover:border-[#404040] hover:text-[#E5E5E5] rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer"
                   >
                     Отмена
                   </button>
@@ -655,7 +699,7 @@ export default function OpeningDetailPage({ params }: Props) {
         </div>
 
         {/* ── Right: sticky action sidebar (desktop only) ─────────────────── */}
-        <div className="hidden lg:block w-[280px] shrink-0 sticky top-5">
+        <div className="hidden lg:block w-[270px] shrink-0 sticky top-5">
           <ActionCard />
         </div>
 

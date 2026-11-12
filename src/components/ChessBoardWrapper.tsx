@@ -118,18 +118,6 @@ export default function ChessBoardWrapper({
 
       // ── Helpers ─────────────────────────────────────────────────────────────
 
-      // Validate a premove using a temporary chess instance so we don't mutate
-      // the main board. Returns the SAN string if legal, null otherwise.
-      function validatePremoveSan(from: string, to: string): string | null {
-        try {
-          const temp = new Chess(chess.fen());
-          const result = temp.move({ from, to });
-          return result ? result.san : null;
-        } catch {
-          return null;
-        }
-      }
-
       function continueFromIndex(nextIdx: number, currentMoves: string[]) {
         if (nextIdx >= line.length) {
           if (mistakesRef.current.length > 0) {
@@ -170,8 +158,7 @@ export default function ChessBoardWrapper({
             setPremoveSquares({});
             setTimeout(() => {
               const expected = line[nextIdx];
-              const san = validatePremoveSan(pm.from, pm.to);
-              const isCorrect = san !== null && san === expected.san;
+              const isCorrect = pm.from === expected.from && pm.to === expected.to;
 
               if (isCorrect) {
                 const r = chess.move({ from: pm.from, to: pm.to });
@@ -321,6 +308,12 @@ export default function ChessBoardWrapper({
       // ── Normal play phase ───────────────────────────────────────────────────
       if (!isPlayerTurn) return false;
       if (currentMoveIndex >= line.length) return false;
+
+      // Discard any stale premove — player is making a manual move now
+      if (premoveRef.current) {
+        premoveRef.current = null;
+        setPremoveSquares({});
+      }
 
       const expected = line[currentMoveIndex];
       const isCorrect = sourceSquare === expected.from && targetSquare === expected.to;

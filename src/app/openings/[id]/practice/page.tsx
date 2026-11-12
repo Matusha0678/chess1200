@@ -690,28 +690,25 @@ export default function PracticePage({ params }: Props) {
 
             {/* ── Right sidebar ── */}
             <div
-              className="flex-shrink-0 w-[260px] bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-4 overflow-y-auto"
+              className="flex-shrink-0 w-[260px] bg-[#0A0A0A] border border-[#1E1E1E] rounded-[20px] p-5 flex flex-col gap-4 overflow-y-auto"
               style={{ maxHeight: `calc(${boardSize} + 98px)` }}
             >
               {/* Opening name + back link */}
               <div className="flex items-start justify-between gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="font-cormorant text-[22px] leading-none text-[#F5F5F5] font-[500]">
+                <div className="flex flex-col gap-[3px]">
+                  <Link
+                    href={`/openings/${id}`}
+                    className="flex items-center gap-[5px] text-[11px] font-bold tracking-[0.12em] uppercase text-[#404040] hover:text-[#707070] transition-colors no-underline"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M19 12H5M12 5l-7 7 7 7" />
+                    </svg>
+                    Дебют
+                  </Link>
+                  <span className="text-[18px] leading-tight text-[#E0E0E0] font-[500] tracking-[-0.01em]">
                     {opening.name}
                   </span>
-                  <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-[#505050]">
-                    Практика
-                  </span>
                 </div>
-                <Link
-                  href={`/openings/${id}`}
-                  className="shrink-0 h-8 flex items-center gap-1 text-[12px] text-[#505050] hover:text-[#A0A0A0] transition-colors no-underline"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M19 12H5M12 5l-7 7 7 7" />
-                  </svg>
-                  Назад
-                </Link>
               </div>
 
               {/* Session progress */}
@@ -776,16 +773,24 @@ export default function PracticePage({ params }: Props) {
               </div>
 
               {/* Hint button */}
-              <button
-                onClick={() => { setHintActive(true); setTimeout(() => setHintActive(false), 2000); }}
-                className="h-9 w-full border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer flex items-center justify-center gap-2"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
-                </svg>
-                Подсказка
-              </button>
-              <div className="flex justify-between text-[11px] text-[#404040]">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setHintActive(true); setTimeout(() => setHintActive(false), 2000); }}
+                  className="flex-1 h-8 border border-[#1E1E1E] text-[#707070] hover:border-[#383838] hover:text-[#C0C0C0] rounded-full text-[12px] transition-colors bg-transparent cursor-pointer flex items-center justify-center gap-[6px]"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+                  </svg>
+                  Подсказка
+                </button>
+                <button
+                  onClick={handleSkip}
+                  className="flex-1 h-8 border border-[#1E1E1E] text-[#707070] hover:border-[#383838] hover:text-[#C0C0C0] rounded-full text-[12px] transition-colors bg-transparent cursor-pointer"
+                >
+                  Следующая
+                </button>
+              </div>
+              <div className="flex justify-between text-[11px] text-[#333333]">
                 <span>H — подсказка</span>
                 <span>N / Space — следующая</span>
               </div>
@@ -874,15 +879,6 @@ export default function PracticePage({ params }: Props) {
                 })}
               </div>
 
-              <div className="border-t border-[#1E1E1E]" />
-
-              {/* Next button */}
-              <button
-                onClick={handleSkip}
-                className="h-10 w-full border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-6 text-[14px] font-medium transition-colors bg-transparent cursor-pointer"
-              >
-                Следующая
-              </button>
             </div>
 
           </div>
