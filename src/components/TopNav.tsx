@@ -10,6 +10,7 @@ export default function TopNav() {
   const homeActive = pathname === '/';
   const openingsActive = pathname === '/openings' || pathname.startsWith('/openings/');
   const coursesActive = pathname === '/courses' || pathname.startsWith('/courses/');
+  const gamesActive = pathname === '/games' || pathname.startsWith('/games/');
 
   return (
     <header style={{
@@ -25,7 +26,7 @@ export default function TopNav() {
       }}>
         {/* Logo */}
         <div style={{ flex: '1 1 0', minWidth: 160, display: 'flex', alignItems: 'center' }}>
-          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 44, color: 'var(--ivory)' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 44, color: 'var(--ivory)' }}>
             <span aria-hidden="true" style={{
               width: 32, height: 32, borderRadius: 4, background: 'var(--ivory)',
               color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -39,12 +40,12 @@ export default function TopNav() {
               Chess{' '}
               <span style={{ fontWeight: 500, color: 'var(--muted)' }}>1200</span>
             </span>
-          </a>
+          </Link>
         </div>
 
         {/* Nav */}
         <nav aria-label="Основная навигация" style={{ display: 'flex', gap: 40 }}>
-          <a
+          <Link
             href="/"
             aria-current={homeActive ? 'page' : undefined}
             style={{
@@ -56,7 +57,7 @@ export default function TopNav() {
           >
             <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>01</span>
             Сегодня
-          </a>
+          </Link>
           <Link
             href="/openings"
             aria-current={openingsActive ? 'page' : undefined}
@@ -82,6 +83,19 @@ export default function TopNav() {
           >
             <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>03</span>
             Курсы
+          </Link>
+          <Link
+            href="/games"
+            aria-current={gamesActive ? 'page' : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
+              borderBottom: gamesActive ? '2px solid var(--ivory)' : '2px solid transparent',
+              fontSize: 14, fontWeight: gamesActive ? 600 : 400,
+              color: gamesActive ? 'var(--ivory)' : 'var(--muted)',
+            }}
+          >
+            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>04</span>
+            Партии
           </Link>
         </nav>
 
