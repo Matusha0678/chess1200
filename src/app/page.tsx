@@ -138,6 +138,7 @@ export default function HomePage() {
   const [masteryDist, setMasteryDist] = useState<number[]>(Array(6).fill(0));
   const [totalLines, setTotalLines] = useState(0);
   const [mistakesDue, setMistakesDue] = useState(0);
+  const [ideasDue, setIdeasDue] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -145,12 +146,14 @@ export default function HomePage() {
       const now = new Date().toISOString();
       const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate() - 29); thirtyAgo.setHours(0,0,0,0);
 
-      const [{ data: ops }, { data: logData }, { count: mistakesCount }] = await Promise.all([
+      const [{ data: ops }, { data: logData }, { count: mistakesCount }, { count: ideasCount }] = await Promise.all([
         supabase.from('openings').select('*').order('created_at', { ascending: false }),
         supabase.from('opening_practice_log').select('practiced_at').gte('practiced_at', thirtyAgo.toISOString()),
         supabase.from('mistake_cards').select('id', { count: 'exact', head: true }).lte('next_review', now),
+        supabase.from('idea_progress').select('idea_key', { count: 'exact', head: true }).lte('next_review', now),
       ]);
       setMistakesDue(mistakesCount ?? 0);
+      setIdeasDue(ideasCount ?? 0);
 
       const practicedAts = (logData ?? []).map((r: { practiced_at: string }) => r.practiced_at);
       setStreak(calcStreak(practicedAts));
@@ -405,6 +408,29 @@ export default function HomePage() {
               style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 16px', background: mistakesDue > 0 ? 'var(--ivory)' : 'transparent', color: mistakesDue > 0 ? 'var(--ink)' : 'var(--muted)', border: mistakesDue > 0 ? 'none' : '1px solid var(--hairline)', fontSize: 13, fontWeight: mistakesDue > 0 ? 600 : 400, whiteSpace: 'nowrap' }}
             >
               {mistakesDue > 0 ? 'Повторять →' : 'Ошибки'}
+            </Link>
+          </div>
+        </section>
+
+        {/* 5c. Plans today */}
+        <section>
+          <div style={SECTION_HEADER}>
+            <h2 style={LABEL}>ПЛАНЫ НА СЕГОДНЯ</h2>
+          </div>
+          <div style={{ paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ ...HEADING, fontWeight: 700, fontSize: 36, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                {ideasDue}
+              </span>
+              <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+                {ideasDue === 0 ? 'нет идей для повторения' : 'идей ожидают повторения'}
+              </span>
+            </div>
+            <Link
+              href="/plans"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 16px', background: ideasDue > 0 ? 'var(--ivory)' : 'transparent', color: ideasDue > 0 ? 'var(--ink)' : 'var(--muted)', border: ideasDue > 0 ? 'none' : '1px solid var(--hairline)', fontSize: 13, fontWeight: ideasDue > 0 ? 600 : 400, whiteSpace: 'nowrap' }}
+            >
+              {ideasDue > 0 ? 'Повторять →' : 'Планы'}
             </Link>
           </div>
         </section>

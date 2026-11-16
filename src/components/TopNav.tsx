@@ -14,6 +14,7 @@ export default function TopNav() {
   const mistakesActive = pathname === '/mistakes' || pathname.startsWith('/mistakes/');
   const threatsActive = pathname === '/threats' || pathname.startsWith('/threats/');
   const endgamesActive = pathname === '/endgames' || pathname.startsWith('/endgames/');
+  const plansActive = pathname === '/plans' || pathname.startsWith('/plans/');
 
   return (
     <header style={{
@@ -138,6 +139,19 @@ export default function TopNav() {
           >
             <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>07</span>
             Эндшпиль
+          </Link>
+          <Link
+            href="/plans"
+            aria-current={plansActive ? 'page' : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
+              borderBottom: plansActive ? '2px solid var(--ivory)' : '2px solid transparent',
+              fontSize: 14, fontWeight: plansActive ? 600 : 400,
+              color: plansActive ? 'var(--ivory)' : 'var(--muted)',
+            }}
+          >
+            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>08</span>
+            Планы
           </Link>
         </nav>
 

@@ -43,11 +43,20 @@ export type QuizItem =
   | { type: 'choice'; question: string; options: Record<string, string>; answer: string; why: string }
   | { type: 'puzzle'; fen: string; question: string; answer: string; why: string };
 
+export interface IdeaItem {
+  fen: string;
+  question: string;
+  options: Record<string, string>;
+  answer: string;
+  why: string;
+}
+
 export type LessonBlock =
   | { type: 'text'; title?: string; md: string }
   | { type: 'line'; title: string; intro_md: string; moves: CourseLessonMove[]; outro_md: string }
   | { type: 'plan' | 'mistakes' | 'trap' | 'summary'; title: string; md: string }
-  | { type: 'quiz'; title: string; items: QuizItem[] };
+  | { type: 'quiz'; title: string; items: QuizItem[] }
+  | { type: 'idea'; title: string; items: IdeaItem[] };
 
 export interface CourseLesson {
   id: string;
