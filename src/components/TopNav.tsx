@@ -12,6 +12,7 @@ export default function TopNav() {
   const coursesActive = pathname === '/courses' || pathname.startsWith('/courses/');
   const gamesActive = pathname === '/games' || pathname.startsWith('/games/');
   const mistakesActive = pathname === '/mistakes' || pathname.startsWith('/mistakes/');
+  const threatsActive = pathname === '/threats' || pathname.startsWith('/threats/');
 
   return (
     <header style={{
@@ -110,6 +111,19 @@ export default function TopNav() {
           >
             <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>05</span>
             Ошибки
+          </Link>
+          <Link
+            href="/threats"
+            aria-current={threatsActive ? 'page' : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
+              borderBottom: threatsActive ? '2px solid var(--ivory)' : '2px solid transparent',
+              fontSize: 14, fontWeight: threatsActive ? 600 : 400,
+              color: threatsActive ? 'var(--ivory)' : 'var(--muted)',
+            }}
+          >
+            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>06</span>
+            Угрозы
           </Link>
         </nav>
 
