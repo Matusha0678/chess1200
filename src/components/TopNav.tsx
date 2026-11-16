@@ -13,6 +13,7 @@ export default function TopNav() {
   const gamesActive = pathname === '/games' || pathname.startsWith('/games/');
   const mistakesActive = pathname === '/mistakes' || pathname.startsWith('/mistakes/');
   const threatsActive = pathname === '/threats' || pathname.startsWith('/threats/');
+  const endgamesActive = pathname === '/endgames' || pathname.startsWith('/endgames/');
 
   return (
     <header style={{
@@ -124,6 +125,19 @@ export default function TopNav() {
           >
             <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>06</span>
             Угрозы
+          </Link>
+          <Link
+            href="/endgames"
+            aria-current={endgamesActive ? 'page' : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
+              borderBottom: endgamesActive ? '2px solid var(--ivory)' : '2px solid transparent',
+              fontSize: 14, fontWeight: endgamesActive ? 600 : 400,
+              color: endgamesActive ? 'var(--ivory)' : 'var(--muted)',
+            }}
+          >
+            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>07</span>
+            Эндшпиль
           </Link>
         </nav>
 
