@@ -9,6 +9,7 @@ import type {
   CourseLesson,
   LessonQuestion,
   SquareMark,
+  Arrow,
 } from '@/types/courses';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -66,69 +67,77 @@ function getCheckedKingSquare(fen: string): string | null {
 // ── Arrow SVG layer ───────────────────────────────────────────────────────────
 
 interface ArrowLayerProps {
-  arrows: { from: string; to: string; color?: string }[];
+  arrows: Arrow[];
+  fadingArrows: Arrow[];
   orientation: 'white' | 'black';
   animKey: number;         // changes → resets animations
   animEnabled: boolean;
 }
 
-function ArrowLayer({ arrows, orientation, animKey, animEnabled }: ArrowLayerProps) {
-  if (arrows.length === 0) return null;
+function ArrowLayer({ arrows, fadingArrows, orientation, animKey, animEnabled }: ArrowLayerProps) {
+  if (arrows.length === 0 && fadingArrows.length === 0) return null;
 
-  const SHAFT_W  = 10;   // units
+  const SHAFT_W  = 10;
   const HEAD_LEN = 28;
   const HEAD_W   = 22;
+
+  function drawArrow(arrow: Arrow, key: string, grow: boolean) {
+    const [x1, y1] = squareXY(arrow.from, orientation);
+    const [x2, y2] = squareXY(arrow.to, orientation);
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 1) return null;
+    const nx = dx / len, ny = dy / len;
+    const sx2 = x2 - nx * HEAD_LEN;
+    const sy2 = y2 - ny * HEAD_LEN;
+    const shaftLen = Math.sqrt((sx2 - x1) ** 2 + (sy2 - y1) ** 2);
+    const px = -ny, py = nx;
+    const color = arrowColor(arrow.color);
+
+    if (!grow) {
+      return (
+        <g key={key} style={{ animation: 'arrowFadeOut 0.32s ease-out forwards' }}>
+          <line x1={x1} y1={y1} x2={sx2} y2={sy2} stroke={color} strokeWidth={SHAFT_W} strokeLinecap="round" />
+          <polygon
+            points={`${x2},${y2} ${sx2 + px * HEAD_W / 2},${sy2 + py * HEAD_W / 2} ${sx2 - px * HEAD_W / 2},${sy2 - py * HEAD_W / 2}`}
+            fill={color}
+          />
+        </g>
+      );
+    }
+
+    const duration = animEnabled ? '0.28s' : '0s';
+    return (
+      <g key={key}>
+        <line
+          x1={x1} y1={y1} x2={sx2} y2={sy2}
+          stroke={color} strokeWidth={SHAFT_W} strokeLinecap="round"
+          style={{
+            strokeDasharray: shaftLen,
+            strokeDashoffset: animEnabled ? shaftLen : 0,
+            animation: animEnabled ? `arrowGrow ${duration} ease-out forwards` : undefined,
+          }}
+        />
+        <polygon
+          points={`${x2},${y2} ${sx2 + px * HEAD_W / 2},${sy2 + py * HEAD_W / 2} ${sx2 - px * HEAD_W / 2},${sy2 - py * HEAD_W / 2}`}
+          fill={color}
+          style={{
+            opacity: animEnabled ? 0 : 1,
+            animation: animEnabled ? `arrowHeadFade 0.1s ${duration} ease-out forwards` : undefined,
+          }}
+        />
+      </g>
+    );
+  }
 
   return (
     <svg
       viewBox="0 0 800 800"
-      style={{
-        position: 'absolute', inset: 0,
-        width: '100%', height: '100%',
-        pointerEvents: 'none', zIndex: 10,
-      }}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}
       aria-hidden="true"
     >
-      {arrows.map((arrow, i) => {
-        const [x1, y1] = squareXY(arrow.from, orientation);
-        const [x2, y2] = squareXY(arrow.to, orientation);
-        const dx = x2 - x1, dy = y2 - y1;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        if (len < 1) return null;
-        const nx = dx / len, ny = dy / len;
-        const sx2 = x2 - nx * HEAD_LEN;
-        const sy2 = y2 - ny * HEAD_LEN;
-        const shaftLen = Math.sqrt((sx2 - x1) ** 2 + (sy2 - y1) ** 2);
-        const px = -ny, py = nx;
-
-        const color = arrowColor(arrow.color);
-        const gKey = `${animKey}-${i}`;
-        const duration = animEnabled ? '0.28s' : '0s';
-
-        return (
-          <g key={gKey}>
-            <line
-              x1={x1} y1={y1} x2={sx2} y2={sy2}
-              stroke={color}
-              strokeWidth={SHAFT_W}
-              strokeLinecap="round"
-              style={{
-                strokeDasharray: shaftLen,
-                strokeDashoffset: animEnabled ? shaftLen : 0,
-                animation: animEnabled ? `arrowGrow ${duration} ease-out forwards` : undefined,
-              }}
-            />
-            <polygon
-              points={`${x2},${y2} ${sx2 + px * HEAD_W / 2},${sy2 + py * HEAD_W / 2} ${sx2 - px * HEAD_W / 2},${sy2 - py * HEAD_W / 2}`}
-              fill={color}
-              style={{
-                opacity: animEnabled ? 0 : 1,
-                animation: animEnabled ? `arrowHeadFade 0.1s ${duration} ease-out forwards` : undefined,
-              }}
-            />
-          </g>
-        );
-      })}
+      {fadingArrows.map((arrow, i) => drawArrow(arrow, `fade-${i}`, false))}
+      {arrows.map((arrow, i) => drawArrow(arrow, `${animKey}-${i}`, true))}
     </svg>
   );
 }
@@ -215,6 +224,20 @@ export function LessonViewer({
     for (const s of currentSquares) m[s.square] = s;
     return m;
   }, [currentSquares]);
+
+  // Fading arrows: when navigate, old arrows fade out before disappearing
+  const prevArrowsRef = useRef<Arrow[]>([]);
+  const [fadingArrows, setFadingArrows] = useState<Arrow[]>([]);
+
+  useEffect(() => {
+    const prevArrows = prevArrowsRef.current;
+    prevArrowsRef.current = currentArrows;
+    if (!animEnabled || prevArrows.length === 0) { setFadingArrows([]); return; }
+    setFadingArrows(prevArrows);
+    const t = setTimeout(() => setFadingArrows([]), 340);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIdx, animEnabled]); // currentArrows is derived from activeIdx — safe to omit
 
   // Key moments for progress bar
   const keyMoveIndices = useMemo(() =>
@@ -393,37 +416,45 @@ export function LessonViewer({
 
           {/* Board + arrow overlay */}
           <div style={{ position: 'relative', aspectRatio: '1', maxWidth: 560, width: '100%', border: '1px solid var(--board-border)', overflow: 'hidden' }}>
-            <Chessboard
-              key={boardKey}
-              options={{
-                position: currentFen,
-                boardOrientation: orientation,
-                allowDragging: false,
-                squareStyles,
-                squareRenderer,
-                // Don't pass library arrows — we draw our own animated layer
-                arrows: [],
-                boardStyle: { borderRadius: 0, width: '100%', height: '100%' },
-                darkSquareStyle:  { backgroundColor: boardTheme.dark },
-                lightSquareStyle: { backgroundColor: boardTheme.light },
-                pieces: customPieces,
-                showNotation,
-                animationDurationInMs: animEnabled ? animationMs : 0,
-                showAnimations: animEnabled,
-              }}
-            />
-            <ArrowLayer
-              arrows={currentArrows}
-              orientation={orientation}
-              animKey={activeIdx}
-              animEnabled={animEnabled}
-            />
-            {/* Variant mode indicator */}
+            {/* Inner wrapper: filter dims board in variant mode */}
+            <div style={{
+              width: '100%', height: '100%',
+              filter: variantMoves ? 'saturate(0.55) brightness(0.78)' : undefined,
+              transition: animEnabled ? 'filter 0.4s ease' : undefined,
+            }}>
+              <Chessboard
+                key={boardKey}
+                options={{
+                  position: currentFen,
+                  boardOrientation: orientation,
+                  allowDragging: false,
+                  squareStyles,
+                  squareRenderer,
+                  // Don't pass library arrows — we draw our own animated layer
+                  arrows: [],
+                  boardStyle: { borderRadius: 0, width: '100%', height: '100%' },
+                  darkSquareStyle:  { backgroundColor: boardTheme.dark },
+                  lightSquareStyle: { backgroundColor: boardTheme.light },
+                  pieces: customPieces,
+                  showNotation,
+                  animationDurationInMs: animEnabled ? animationMs : 0,
+                  showAnimations: animEnabled,
+                }}
+              />
+              <ArrowLayer
+                arrows={currentArrows}
+                fadingArrows={fadingArrows}
+                orientation={orientation}
+                animKey={activeIdx}
+                animEnabled={animEnabled}
+              />
+            </div>
+            {/* Variant mode badge — outside filter wrapper so it stays bright */}
             {variantMoves && (
               <div style={{
                 position: 'absolute', top: 8, left: 8,
                 padding: '3px 8px', fontSize: 11, letterSpacing: '0.08em',
-                background: 'rgba(20,20,18,0.85)', color: 'var(--muted)',
+                background: 'rgba(20,20,18,0.88)', color: 'var(--muted)',
                 border: '1px solid var(--hairline)',
                 backdropFilter: 'blur(4px)',
               }}>
@@ -479,7 +510,10 @@ export function LessonViewer({
           {currentVariants && !variantMoves && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 560 }}>
               {currentVariants.map((varMoves, vi) => {
-                const preview = varMoves.slice(0, 3).map(m => m.san).join(' ');
+                const firstVarMove = varMoves[0];
+                const moveNum = firstVarMove?.color === 'w' ? Math.ceil(moveIndex / 2) : Math.floor(moveIndex / 2);
+                const movePrefix = firstVarMove?.color === 'w' ? `${moveNum}. ` : `${moveNum}... `;
+                const preview = movePrefix + varMoves.slice(0, 3).map(m => m.san).join(' ');
                 return (
                   <div key={vi} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase', flexShrink: 0 }}>
