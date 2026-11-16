@@ -1,0 +1,804 @@
+'use client';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Chess } from 'chess.js';
+import { Chessboard } from 'react-chessboard';
+import type { SquareRenderer } from 'react-chessboard';
+import Link from 'next/link';
+import type {
+  CourseLessonMove,
+  CourseLesson,
+  LessonQuestion,
+  SquareMark,
+} from '@/types/courses';
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+const NAG_LABEL: Record<number, string> = {
+  1: '!', 2: '?', 3: '!!', 4: '??', 5: '!?', 6: '?!',
+};
+
+const MARK_COLORS: Record<string, string> = {
+  green:  'rgba(100, 200,  80, 0.55)',
+  red:    'rgba(220,  60,  60, 0.50)',
+  yellow: 'rgba(220, 180,  40, 0.50)',
+  blue:   'rgba(60,  130, 220, 0.50)',
+};
+
+// 100 units per square, viewBox 0 0 800 800
+const SQ = 100;
+
+function squareXY(sq: string, orientation: 'white' | 'black'): [number, number] {
+  const fi = sq.charCodeAt(0) - 97;      // 0-7
+  const ri = parseInt(sq[1], 10) - 1;   // 0-7
+  const x = orientation === 'white' ? fi * SQ + SQ / 2 : (7 - fi) * SQ + SQ / 2;
+  const y = orientation === 'white' ? (7 - ri) * SQ + SQ / 2 : ri * SQ + SQ / 2;
+  return [x, y];
+}
+
+function arrowColor(c?: string): string {
+  if (c === 'green')  return 'rgba(80,  200,  80, 0.80)';
+  if (c === 'red')    return 'rgba(220,  60,  60, 0.80)';
+  if (c === 'yellow') return 'rgba(220, 180,  40, 0.80)';
+  if (c === 'blue')   return 'rgba(60,  150, 220, 0.80)';
+  return 'rgba(220, 180, 40, 0.80)';
+}
+
+function getCheckedKingSquare(fen: string): string | null {
+  try {
+    const chess = new Chess(fen);
+    if (!chess.isCheck()) return null;
+    const turn = chess.turn();
+    const board = chess.board();
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const p = board[r][f];
+        if (p && p.type === 'k' && p.color === turn) {
+          return `${String.fromCharCode(97 + f)}${8 - r}`;
+        }
+      }
+    }
+  } catch { /* invalid fen */ }
+  return null;
+}
+
+// ── Arrow SVG layer ───────────────────────────────────────────────────────────
+
+interface ArrowLayerProps {
+  arrows: { from: string; to: string; color?: string }[];
+  orientation: 'white' | 'black';
+  animKey: number;         // changes → resets animations
+  animEnabled: boolean;
+}
+
+function ArrowLayer({ arrows, orientation, animKey, animEnabled }: ArrowLayerProps) {
+  if (arrows.length === 0) return null;
+
+  const SHAFT_W  = 10;   // units
+  const HEAD_LEN = 28;
+  const HEAD_W   = 22;
+
+  return (
+    <svg
+      viewBox="0 0 800 800"
+      style={{
+        position: 'absolute', inset: 0,
+        width: '100%', height: '100%',
+        pointerEvents: 'none', zIndex: 10,
+      }}
+      aria-hidden="true"
+    >
+      {arrows.map((arrow, i) => {
+        const [x1, y1] = squareXY(arrow.from, orientation);
+        const [x2, y2] = squareXY(arrow.to, orientation);
+        const dx = x2 - x1, dy = y2 - y1;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 1) return null;
+        const nx = dx / len, ny = dy / len;
+        const sx2 = x2 - nx * HEAD_LEN;
+        const sy2 = y2 - ny * HEAD_LEN;
+        const shaftLen = Math.sqrt((sx2 - x1) ** 2 + (sy2 - y1) ** 2);
+        const px = -ny, py = nx;
+
+        const color = arrowColor(arrow.color);
+        const gKey = `${animKey}-${i}`;
+        const duration = animEnabled ? '0.28s' : '0s';
+
+        return (
+          <g key={gKey}>
+            <line
+              x1={x1} y1={y1} x2={sx2} y2={sy2}
+              stroke={color}
+              strokeWidth={SHAFT_W}
+              strokeLinecap="round"
+              style={{
+                strokeDasharray: shaftLen,
+                strokeDashoffset: animEnabled ? shaftLen : 0,
+                animation: animEnabled ? `arrowGrow ${duration} ease-out forwards` : undefined,
+              }}
+            />
+            <polygon
+              points={`${x2},${y2} ${sx2 + px * HEAD_W / 2},${sy2 + py * HEAD_W / 2} ${sx2 - px * HEAD_W / 2},${sy2 - py * HEAD_W / 2}`}
+              fill={color}
+              style={{
+                opacity: animEnabled ? 0 : 1,
+                animation: animEnabled ? `arrowHeadFade 0.1s ${duration} ease-out forwards` : undefined,
+              }}
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ── Viewer ────────────────────────────────────────────────────────────────────
+
+type ActiveTab = 'moves' | 'summary' | 'plan' | 'mistakes' | 'trap' | 'questions';
+
+export interface LessonViewerProps {
+  moves: CourseLessonMove[];
+  boardOrientation: 'white' | 'black';
+  boardTheme: { dark: string; light: string };
+  customPieces?: Record<string, (props?: { fill?: string; square?: string; svgStyle?: React.CSSProperties }) => React.JSX.Element>;
+  animationMs: number;
+  showNotation: boolean;
+  boardThemeId: string;
+  pieceStyleId: string;
+  lesson: CourseLesson;
+  questions: LessonQuestion[];
+  courseId: string;
+  lessonId: string;
+  prevLesson: CourseLesson | null;
+  nextLesson: CourseLesson | null;
+}
+
+export function LessonViewer({
+  moves, boardOrientation, boardTheme, customPieces,
+  animationMs, showNotation, boardThemeId, pieceStyleId,
+  lesson, questions, courseId, lessonId, prevLesson, nextLesson,
+}: LessonViewerProps) {
+
+  // ── State ──────────────────────────────────────────────────────────────────
+
+  const [moveIndex, setMoveIndex] = useState(0);  // 0 = before first move
+  const [flipped,   setFlipped]   = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playSpeed, setPlaySpeed] = useState<0.5 | 1 | 2>(1);
+  const [animEnabled, setAnimEnabled] = useState(() =>
+    typeof window !== 'undefined'
+      ? !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : true
+  );
+  const [variantMoves, setVariantMoves] = useState<CourseLessonMove[] | null>(null);
+  const [variantIdx,   setVariantIdx]   = useState(0);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('moves');
+
+  // ── Derived ────────────────────────────────────────────────────────────────
+
+  const activeMoves = variantMoves ?? moves;
+  const activeIdx   = variantMoves ? variantIdx : moveIndex;
+
+  const orientation: 'white' | 'black' = flipped
+    ? (boardOrientation === 'white' ? 'black' : 'white')
+    : boardOrientation;
+
+  // FEN at current viewer position
+  const variantStartFen = variantMoves
+    ? (moves[moveIndex - 2]?.fen ?? INITIAL_FEN)
+    : INITIAL_FEN;
+
+  const currentFen = variantMoves
+    ? (variantIdx === 0 ? variantStartFen : variantMoves[variantIdx - 1].fen)
+    : (moveIndex === 0 ? INITIAL_FEN : moves[moveIndex - 1].fen);
+
+  const currentMove:  CourseLessonMove | null = activeIdx > 0 ? activeMoves[activeIdx - 1] : null;
+  const currentComment  = currentMove?.comment ?? null;
+  const currentArrows   = currentMove?.arrows   ?? [];
+  const currentVariants = !variantMoves && currentMove?.variations?.length
+    ? currentMove.variations : null;
+
+  // Check detection
+  const checkedKingSquare = useMemo(() => getCheckedKingSquare(currentFen), [currentFen]);
+
+  // Capture flash (derived — no state needed)
+  const captureSquare = currentMove?.san.includes('x') ? currentMove.to : null;
+
+  // Stable arrays for hooks
+  const currentSquares = useMemo(() => currentMove?.squares ?? [], [currentMove]);
+  const currentNags    = useMemo(() => currentMove?.nags    ?? [], [currentMove]);
+
+  // Square mark lookup
+  const squareMarkMap = useMemo(() => {
+    const m: Record<string, SquareMark> = {};
+    for (const s of currentSquares) m[s.square] = s;
+    return m;
+  }, [currentSquares]);
+
+  // Key moments for progress bar
+  const keyMoveIndices = useMemo(() =>
+    moves.reduce<number[]>((acc, m, i) => {
+      if ((m.nags?.length ?? 0) > 0 || (m.arrows?.length ?? 0) > 0 || (m.squares?.length ?? 0) > 0) acc.push(i + 1);
+      return acc;
+    }, []),
+  [moves]);
+
+  // Board key — remount on theme change only
+  const boardKey = `${boardThemeId}-${pieceStyleId}`;
+
+  // ── Navigation ─────────────────────────────────────────────────────────────
+
+  const goTo = useCallback((idx: number) => {
+    if (variantMoves) {
+      setVariantIdx(Math.max(0, Math.min(idx, variantMoves.length)));
+    } else {
+      setMoveIndex(Math.max(0, Math.min(idx, moves.length)));
+      setIsPlaying(false);
+    }
+  }, [variantMoves, moves.length]);
+
+  // keep stable refs for keyboard handler
+  const goToRef    = useRef(goTo);
+  const activeIdxRef = useRef(activeIdx);
+  const activeLenRef = useRef(activeMoves.length);
+  const isPlayingRef = useRef(isPlaying);
+  const variantRef = useRef(variantMoves);
+  const currentVariantsRef = useRef(currentVariants);
+  useEffect(() => { goToRef.current = goTo; }, [goTo]);
+  useEffect(() => { activeIdxRef.current = activeIdx; }, [activeIdx]);
+  useEffect(() => { activeLenRef.current = activeMoves.length; }, [activeMoves.length]);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+  useEffect(() => { variantRef.current = variantMoves; }, [variantMoves]);
+  useEffect(() => { currentVariantsRef.current = currentVariants; }, [currentVariants]);
+
+  const enterVariant = useCallback((varMoves: CourseLessonMove[]) => {
+    setVariantMoves(varMoves);
+    setVariantIdx(0);
+    setIsPlaying(false);
+  }, []);
+
+  const exitVariant = useCallback(() => {
+    setVariantMoves(null);
+    setVariantIdx(0);
+  }, []);
+
+  // ── Auto-play ──────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    if (activeIdx >= activeMoves.length) {
+      const t = setTimeout(() => setIsPlaying(false), 0);
+      return () => clearTimeout(t);
+    }
+    const nextMove = activeMoves[activeIdx];
+    const comment  = nextMove?.comment ?? '';
+    const baseMs   = 1100;
+    const extraMs  = Math.min(comment.length * 22, 2200);
+    const delay    = Math.round((baseMs + extraMs) / playSpeed);
+
+    const t = setTimeout(() => {
+      if (variantMoves) setVariantIdx(i => i + 1);
+      else setMoveIndex(i => i + 1);
+    }, delay);
+    return () => clearTimeout(t);
+  }, [isPlaying, activeIdx, activeMoves, playSpeed, variantMoves]);
+
+  // ── Keyboard ───────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      switch (e.key) {
+        case 'ArrowRight':
+          e.preventDefault();
+          goToRef.current(activeIdxRef.current + 1);
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          goToRef.current(activeIdxRef.current - 1);
+          break;
+        case ' ':
+          e.preventDefault();
+          setIsPlaying(p => !p);
+          break;
+        case 'f': case 'F':
+          e.preventDefault();
+          setFlipped(f => !f);
+          break;
+        case 'v': case 'V':
+          e.preventDefault();
+          if (variantRef.current) exitVariant();
+          else if (currentVariantsRef.current?.[0]) enterVariant(currentVariantsRef.current[0]);
+          break;
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [exitVariant, enterVariant]);
+
+  // ── squareRenderer ─────────────────────────────────────────────────────────
+
+  const squareRenderer = useCallback<SquareRenderer>(({ square, children }) => {
+    const isCheck   = square === checkedKingSquare;
+    const isCapture = square === captureSquare;
+    const mark      = squareMarkMap[square];
+    const nagNum    = currentMove?.to === square ? (currentNags[0] ?? null) : null;
+    const nagLabel  = nagNum !== null && nagNum !== undefined ? (NAG_LABEL[nagNum] ?? null) : null;
+
+    if (!isCheck && !isCapture && !mark && !nagLabel) {
+      // Most squares — zero overhead
+      return <>{children}</>;
+    }
+
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        {children}
+        {isCheck && animEnabled && (
+          <div className="sq-check" aria-hidden="true" />
+        )}
+        {isCheck && !animEnabled && (
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(220,50,50,0.30)', pointerEvents: 'none' }} aria-hidden="true" />
+        )}
+        {mark && (
+          <div
+            key={`mark-${activeIdx}-${square}`}
+            className={animEnabled ? 'sq-mark sq-mark-pulse' : 'sq-mark'}
+            style={{ background: MARK_COLORS[mark.color] ?? MARK_COLORS.yellow }}
+            aria-hidden="true"
+          />
+        )}
+        {isCapture && animEnabled && (
+          <div key={`flash-${activeIdx}`} className="sq-flash" aria-hidden="true" />
+        )}
+        {nagLabel && (
+          <div className="sq-nag" aria-hidden="true">{nagLabel}</div>
+        )}
+      </div>
+    );
+  }, [checkedKingSquare, captureSquare, squareMarkMap, currentMove, currentNags, activeIdx, animEnabled]);
+
+  // ── Last-move squareStyles ─────────────────────────────────────────────────
+
+  const squareStyles = useMemo((): Record<string, React.CSSProperties> => {
+    if (!currentMove) return {};
+    return {
+      [currentMove.from]: { background: 'rgba(255,255,255,0.09)' },
+      [currentMove.to]:   { background: 'rgba(255,255,255,0.20)' },
+    };
+  }, [currentMove]);
+
+  // ── Tabs ───────────────────────────────────────────────────────────────────
+
+  const tabs: { id: ActiveTab; label: string }[] = [
+    { id: 'moves',     label: 'Ходы' },
+    { id: 'summary',   label: 'Итог' },
+    { id: 'plan',      label: 'План' },
+    { id: 'mistakes',  label: 'Ошибки' },
+    ...(lesson.trap    ? [{ id: 'trap'      as ActiveTab, label: 'Ловушка' }] : []),
+    ...(questions.length > 0 ? [{ id: 'questions' as ActiveTab, label: `Задачи (${questions.length})` }] : []),
+  ];
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
+  const pct = activeMoves.length > 0 ? (activeIdx / activeMoves.length) * 100 : 0;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+      {/* 2-column grid */}
+      <div className="lesson-grid">
+
+        {/* ── LEFT: board area ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+          {/* Board + arrow overlay */}
+          <div style={{ position: 'relative', aspectRatio: '1', maxWidth: 560, width: '100%', border: '1px solid var(--board-border)', overflow: 'hidden' }}>
+            <Chessboard
+              key={boardKey}
+              options={{
+                position: currentFen,
+                boardOrientation: orientation,
+                allowDragging: false,
+                squareStyles,
+                squareRenderer,
+                // Don't pass library arrows — we draw our own animated layer
+                arrows: [],
+                boardStyle: { borderRadius: 0, width: '100%', height: '100%' },
+                darkSquareStyle:  { backgroundColor: boardTheme.dark },
+                lightSquareStyle: { backgroundColor: boardTheme.light },
+                pieces: customPieces,
+                showNotation,
+                animationDurationInMs: animEnabled ? animationMs : 0,
+                showAnimations: animEnabled,
+              }}
+            />
+            <ArrowLayer
+              arrows={currentArrows}
+              orientation={orientation}
+              animKey={activeIdx}
+              animEnabled={animEnabled}
+            />
+            {/* Variant mode indicator */}
+            {variantMoves && (
+              <div style={{
+                position: 'absolute', top: 8, left: 8,
+                padding: '3px 8px', fontSize: 11, letterSpacing: '0.08em',
+                background: 'rgba(20,20,18,0.85)', color: 'var(--muted)',
+                border: '1px solid var(--hairline)',
+                backdropFilter: 'blur(4px)',
+              }}>
+                ВАРИАНТ
+              </div>
+            )}
+          </div>
+
+          {/* Progress bar */}
+          <div
+            role="progressbar"
+            aria-valuenow={activeIdx}
+            aria-valuemax={activeMoves.length}
+            style={{ position: 'relative', height: 3, background: 'var(--track)', cursor: 'pointer', maxWidth: 560 }}
+            onClick={e => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const frac = (e.clientX - rect.left) / rect.width;
+              goTo(Math.round(frac * activeMoves.length));
+            }}
+          >
+            <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: 'var(--ivory)', transition: animEnabled ? 'width 0.15s' : 'none' }} />
+            {keyMoveIndices.map(idx => (
+              <div
+                key={idx}
+                onClick={e => { e.stopPropagation(); goTo(idx); }}
+                style={{
+                  position: 'absolute', top: -3, bottom: -3, width: 2,
+                  left: `${(idx / moves.length) * 100}%`,
+                  background: idx <= moveIndex ? 'var(--ivory)' : 'var(--control)',
+                  cursor: 'pointer',
+                  transform: 'translateX(-50%)',
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Comment box — key on activeIdx to restart fade animation */}
+          <div
+            key={`comment-${activeIdx}`}
+            style={{
+              minHeight: 44, maxWidth: 560,
+              padding: '10px 14px',
+              background: 'var(--surface)', border: '1px solid var(--hairline)',
+              fontSize: 14, lineHeight: 1.6,
+              color: currentComment ? 'var(--ivory)' : 'var(--muted)',
+              animation: animEnabled && currentComment ? 'fadeComment 0.22s ease-out' : undefined,
+            }}
+          >
+            {currentComment ?? 'Комментарий к ходу'}
+          </div>
+
+          {/* Variants */}
+          {currentVariants && !variantMoves && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 560 }}>
+              {currentVariants.map((varMoves, vi) => {
+                const preview = varMoves.slice(0, 3).map(m => m.san).join(' ');
+                return (
+                  <div key={vi} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase', flexShrink: 0 }}>
+                      Вариант
+                    </span>
+                    <code style={{ fontSize: 13, color: 'var(--muted)', flex: 1 }}>{preview}{varMoves.length > 3 ? '…' : ''}</code>
+                    <button
+                      onClick={() => enterVariant(varMoves)}
+                      style={{
+                        height: 28, padding: '0 12px', flexShrink: 0,
+                        background: 'transparent', border: '1px solid var(--hairline)',
+                        color: 'var(--muted)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer',
+                      }}
+                    >
+                      Смотреть
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {variantMoves && (
+            <div style={{ maxWidth: 560 }}>
+              <button
+                onClick={exitVariant}
+                style={{
+                  height: 32, padding: '0 14px',
+                  background: 'transparent', border: '1px solid var(--hairline)',
+                  color: 'var(--muted)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer',
+                }}
+              >
+                ← Вернуться к основной линии
+              </button>
+            </div>
+          )}
+
+          {/* Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', maxWidth: 560 }}>
+            {/* Prev */}
+            <button
+              onClick={() => goTo(activeIdx - 1)}
+              disabled={activeIdx === 0}
+              aria-label="Предыдущий ход"
+              style={ctrlBtn(activeIdx === 0)}
+            >
+              ←
+            </button>
+
+            {/* Play/Pause */}
+            <button
+              onClick={() => setIsPlaying(p => !p)}
+              disabled={activeIdx >= activeMoves.length && !isPlaying}
+              aria-label={isPlaying ? 'Пауза' : 'Автовоспроизведение'}
+              style={{ ...ctrlBtn(false), minWidth: 40 }}
+            >
+              {isPlaying ? '⏸' : '▶'}
+            </button>
+
+            {/* Next */}
+            <button
+              onClick={() => goTo(activeIdx + 1)}
+              disabled={activeIdx >= activeMoves.length}
+              aria-label="Следующий ход"
+              style={ctrlBtn(activeIdx >= activeMoves.length)}
+            >
+              →
+            </button>
+
+            {/* Position counter */}
+            <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums', marginLeft: 4 }}>
+              {activeIdx} / {activeMoves.length}
+            </span>
+
+            {/* Speed */}
+            <div style={{ display: 'flex', border: '1px solid var(--hairline)', marginLeft: 'auto' }}>
+              {([0.5, 1, 2] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => setPlaySpeed(s)}
+                  style={{
+                    height: 32, padding: '0 10px', border: 'none',
+                    background: playSpeed === s ? 'var(--track)' : 'transparent',
+                    color: playSpeed === s ? 'var(--ivory)' : 'var(--muted)',
+                    fontSize: 12, fontFamily: 'inherit', cursor: 'pointer',
+                  }}
+                >
+                  {s}×
+                </button>
+              ))}
+            </div>
+
+            {/* Flip */}
+            <button
+              onClick={() => setFlipped(f => !f)}
+              title="Перевернуть доску (F)"
+              style={ctrlBtn(false)}
+            >
+              ↕
+            </button>
+
+            {/* Animation toggle */}
+            <button
+              onClick={() => setAnimEnabled(a => !a)}
+              title="Анимации"
+              style={{
+                height: 32, padding: '0 10px',
+                border: '1px solid var(--hairline)',
+                background: 'transparent',
+                color: animEnabled ? 'var(--ivory)' : 'var(--muted)',
+                fontSize: 11, fontFamily: 'inherit', cursor: 'pointer',
+                letterSpacing: '0.08em',
+              }}
+            >
+              {animEnabled ? 'ANIM ✓' : 'ANIM'}
+            </button>
+          </div>
+        </div>
+
+        {/* ── RIGHT: lesson panel ── */}
+        <div style={{ border: '1px solid var(--hairline)', background: 'var(--surface)', display: 'flex', flexDirection: 'column' }}>
+          {/* Title */}
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--hairline)' }}>
+            <h2 style={{ fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)", margin: 0, fontSize: 18, fontWeight: 700, lineHeight: 1.2 }}>
+              {lesson.title}
+            </h2>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--hairline)', overflowX: 'auto' }}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '10px 14px', background: 'transparent', border: 'none',
+                  borderBottom: activeTab === tab.id ? '2px solid var(--ivory)' : '2px solid transparent',
+                  color: activeTab === tab.id ? 'var(--ivory)' : 'var(--muted)',
+                  fontSize: 13, fontWeight: activeTab === tab.id ? 600 : 400,
+                  cursor: 'pointer', flexShrink: 0, marginBottom: -1,
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          <div style={{ padding: 20, overflowY: 'auto', maxHeight: 480 }}>
+            {activeTab === 'moves' && (
+              <MoveListPanel
+                moves={moves}
+                currentIndex={variantMoves ? -1 : moveIndex}
+                onMoveClick={idx => { exitVariant(); goTo(idx); }}
+                animEnabled={animEnabled}
+              />
+            )}
+            {activeTab === 'summary' && (
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                {lesson.summary || 'Нет данных'}
+              </p>
+            )}
+            {activeTab === 'plan' && (
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                {lesson.plan || 'Нет данных'}
+              </p>
+            )}
+            {activeTab === 'mistakes' && (
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                {lesson.mistakes || 'Нет данных'}
+              </p>
+            )}
+            {activeTab === 'trap' && (
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                {lesson.trap || 'Нет данных'}
+              </p>
+            )}
+            {activeTab === 'questions' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {questions.map((q, i) => <QuestionBlock key={q.id} q={q} idx={i} />)}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom navigation */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: 16, flexWrap: 'wrap',
+        paddingTop: 24, borderTop: '1px solid var(--hairline)',
+      }}>
+        <div style={{ flex: 1, minWidth: 120 }}>
+          {prevLesson && (
+            <Link href={`/courses/${courseId}/${prevLesson.id}`} style={{ display: 'inline-flex', flexDirection: 'column', gap: 2, color: 'var(--muted)' }}>
+              <span style={{ fontSize: 11, letterSpacing: '0.08em' }}>← ПРЕДЫДУЩИЙ</span>
+              <span style={{ fontSize: 14, color: 'var(--ivory)' }}>{prevLesson.title}</span>
+            </Link>
+          )}
+        </div>
+        <Link href={`/courses/${courseId}/${lessonId}/practice`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 48, padding: '0 28px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 600, flexShrink: 0 }}>
+          Тренировать
+        </Link>
+        <div style={{ flex: 1, minWidth: 120, display: 'flex', justifyContent: 'flex-end' }}>
+          {nextLesson && (
+            <Link href={`/courses/${courseId}/${nextLesson.id}`} style={{ display: 'inline-flex', flexDirection: 'column', gap: 2, color: 'var(--muted)', textAlign: 'right' }}>
+              <span style={{ fontSize: 11, letterSpacing: '0.08em' }}>СЛЕДУЮЩИЙ →</span>
+              <span style={{ fontSize: 14, color: 'var(--ivory)' }}>{nextLesson.title}</span>
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Helper: control button style ──────────────────────────────────────────────
+
+function ctrlBtn(disabled: boolean): React.CSSProperties {
+  return {
+    height: 32, width: 32, padding: 0,
+    border: '1px solid var(--hairline)',
+    background: 'transparent',
+    color: disabled ? 'var(--track)' : 'var(--ivory)',
+    fontSize: 14, fontFamily: 'inherit', cursor: disabled ? 'default' : 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  };
+}
+
+// ── Question block ────────────────────────────────────────────────────────────
+
+function QuestionBlock({ q, idx }: { q: LessonQuestion; idx: number }) {
+  const [revealed, setRevealed] = useState(false);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 16px', border: '1px solid var(--hairline)', background: 'var(--surface)' }}>
+      <span style={{ fontSize: 11, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>Задача {idx + 1}</span>
+      <code style={{ fontSize: 11, color: 'var(--control)', wordBreak: 'break-all', fontFamily: 'monospace' }}>{q.fen}</code>
+      <p style={{ margin: 0, fontSize: 14, color: 'var(--ivory)', fontWeight: 500 }}>{q.question}</p>
+      {!revealed ? (
+        <button onClick={() => setRevealed(true)} style={{ alignSelf: 'flex-start', height: 32, padding: '0 14px', border: '1px solid var(--control)', background: 'transparent', color: 'var(--muted)', fontSize: 13, cursor: 'pointer' }}>
+          Показать ответ
+        </button>
+      ) : (
+        <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{q.answer}</p>
+      )}
+    </div>
+  );
+}
+
+// ── Move list panel ───────────────────────────────────────────────────────────
+
+function MoveListPanel({
+  moves, currentIndex, onMoveClick, animEnabled,
+}: {
+  moves: CourseLessonMove[];
+  currentIndex: number;
+  onMoveClick: (idx: number) => void;
+  animEnabled: boolean;
+}) {
+  const activeRef = useRef<HTMLButtonElement | null>(null);
+
+  // scroll active move into view
+  useEffect(() => {
+    if (animEnabled) {
+      activeRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    } else {
+      activeRef.current?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [currentIndex, animEnabled]);
+
+  if (moves.length === 0) return <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>Нет ходов</p>;
+
+  const pairs = Array.from({ length: Math.ceil(moves.length / 2) }, (_, i) => ({
+    w: moves[i * 2],  b: moves[i * 2 + 1],
+    wi: i * 2,        bi: i * 2 + 1,
+  }));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {pairs.map(({ w, b, wi, bi }) => (
+        <div key={wi} style={{ display: 'grid', gridTemplateColumns: '24px 1fr 1fr', gap: '0 4px', alignItems: 'center' }}>
+          <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+            {Math.floor(wi / 2) + 1}.
+          </span>
+          <MoveBtn m={w} idx={wi + 1} current={currentIndex} onClick={onMoveClick} refProp={wi + 1 === currentIndex ? activeRef : undefined} />
+          {b && <MoveBtn m={b} idx={bi + 1} current={currentIndex} onClick={onMoveClick} refProp={bi + 1 === currentIndex ? activeRef : undefined} />}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MoveBtn({
+  m, idx, current, onClick, refProp,
+}: {
+  m: CourseLessonMove;
+  idx: number;
+  current: number;
+  onClick: (idx: number) => void;
+  refProp?: React.RefObject<HTMLButtonElement | null>;
+}) {
+  const isActive = idx === current;
+  const nag = m.nags?.[0] !== undefined ? (NAG_LABEL[m.nags[0]] ?? '') : '';
+  const hasArrows = (m.arrows?.length ?? 0) > 0;
+  return (
+    <button
+      ref={refProp}
+      onClick={() => onClick(idx)}
+      style={{
+        padding: '3px 6px', fontSize: 13, fontFamily: 'monospace',
+        textAlign: 'left', cursor: 'pointer', border: 'none',
+        background: isActive ? 'var(--track)' : 'transparent',
+        color: idx <= current ? 'var(--ivory)' : 'var(--muted)',
+        fontWeight: isActive ? 700 : 400,
+        borderRadius: 2, display: 'flex', alignItems: 'center', gap: 3,
+      }}
+    >
+      {m.san}
+      {nag && <span style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'inherit' }}>{nag}</span>}
+      {hasArrows && !nag && <span style={{ fontSize: 9, color: 'var(--control)', lineHeight: 1 }}>▸</span>}
+    </button>
+  );
+}

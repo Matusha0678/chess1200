@@ -79,6 +79,33 @@ html, body {
 /* ── Spinner ─────────────────────────────────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── Lesson viewer animations ───────────────────────────────────────────── */
+@keyframes arrowGrow     { to   { stroke-dashoffset: 0; } }
+@keyframes arrowHeadFade { to   { opacity: 1; } }
+@keyframes squarePulse   { 0%,100% { opacity: 0.45; } 50% { opacity: 0.9; } }
+@keyframes captureFlash  { 0% { opacity: 0.95; transform: scale(0.35); } 70% { opacity: 0.5; transform: scale(1); } 100% { opacity: 0; } }
+@keyframes checkGlow     { 0%,100% { box-shadow: inset 0 0 0 100px rgba(220,50,50,0.28); } 50% { box-shadow: inset 0 0 0 100px rgba(220,50,50,0.52); } }
+@keyframes fadeComment   { from { opacity: 0; transform: translateY(5px); } }
+
+.sq-check   { position: absolute; inset: 0; pointer-events: none; animation: checkGlow 1.6s ease-in-out infinite; }
+.sq-mark    { position: absolute; inset: 0; pointer-events: none; opacity: 0.45; }
+.sq-mark-pulse { animation: squarePulse 0.75s ease-in-out 2; animation-fill-mode: forwards; }
+.sq-flash   { position: absolute; inset: 3px; pointer-events: none; border-radius: 50%; border: 3px solid rgba(220,160,40,0.9); animation: captureFlash 0.42s ease-out forwards; }
+.sq-nag     { position: absolute; top: 2px; right: 3px; font-size: 11px; font-weight: 700; line-height: 1; color: rgba(242,239,231,0.95); text-shadow: 0 0 5px rgba(0,0,0,0.9); pointer-events: none; font-family: monospace; user-select: none; z-index: 2; }
+
+/* Lesson viewer responsive grid */
+.lesson-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start; }
+@media (max-width: 899px) {
+  .lesson-grid { grid-template-columns: 1fr; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .sq-check   { animation: none; box-shadow: inset 0 0 0 100px rgba(220,50,50,0.30); }
+  .sq-mark-pulse { animation: none; }
+  .sq-flash   { animation: none; opacity: 0; }
+}
+
 /* ── Card and row hover effects ──────────────────────────────────────────── */
 .opening-card-link:hover { border-color: var(--card-hover) !important; }
 .row-hover-link:hover { background: var(--row-hover); }
