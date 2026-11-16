@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { parseCourse, type ParsedCourse } from '@/lib/course-parser';
+import { COURSE_FORMAT_SPEC } from '@/lib/course-format-spec';
 import { supabase } from '@/lib/supabase';
 
 const HEADING: React.CSSProperties = {
@@ -11,44 +12,60 @@ const HEADING: React.CSSProperties = {
 };
 
 const MD_TEMPLATE = `---
-name: Шотландский гамбит
+title: "Название курса"
+slug: kratkoe-nazvanie
 color: white
-opening: scotch
-difficulty: 2
-description: Агрессивный дебют за белых
+opening: Scotch Game
+level: 800-1400
+language: ru
+description: "Одно-два предложения о курсе."
 ---
 
-# Урок 1: Захват центра
+# Урок 1: Название урока
 
-## Линия
+> Цель: одна фраза, чему научится ученик.
 
-1. e4 {Захватываем центр →e2-e4} 1... e5 {Чёрные отвечают} 2. Nf3 {Развиваем коня} 2... Nc6 3. d4 {Шотландская атака →d2-d4}
+Вступление: 2-5 коротких предложений.
 
-## Итог
+## Линия: Главная линия
 
-После 3.d4 у белых активная игра.
+Что за линия и когда она встречается.
+
+\`\`\`pgn
+1. e4 {[%cal Ge2e4] Занимаем центр.} e5 {Чёрные делают то же.}
+2. Nf3 {Нападаем на пешку e5.} Nc6 {Конь защищает пешку.}
+(2... d6 {Другой ход соперника, в скобках.} 3. d4 {Открываем центр.})
+3. d4 {Открываем центр.} exd4 {Чёрные берут пешку.} *
+\`\`\`
+
+Итог линии: главная идея и честная оценка позиции.
 
 ## План
 
-- Разменять на d4
+- Что делать дальше и почему.
 
 ## Ошибки
 
-- 3.d3 уравнивает игру
+- Типичная ошибка и почему она плохая.
 
-## Ловушка
+## Проверь себя
 
-**Ловушка:** 5...Qf6?? 6.Qd5! — двойной удар
+\`\`\`quiz
+type: choice
+question: "Вопрос?"
+options:
+  A: "Первый вариант"
+  B: "Второй вариант"
+answer: A
+why: "Почему это верно."
+\`\`\`
 
-## Задачи
-
-### Задача 1
-
-FEN: r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq d3 0 3
-
-Вопрос: Как чёрные должны ответить?
-
-Ответ: 3...exd4 принимая вызов.
+\`\`\`puzzle
+fen: r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq d3 0 3
+question: "Найди ход чёрных."
+answer: exd4
+why: "Чёрные берут пешку."
+\`\`\`
 `;
 
 function ColorBadge({ color }: { color: 'white' | 'black' | 'both' }) {
@@ -62,6 +79,13 @@ function ColorBadge({ color }: { color: 'white' | 'black' | 'both' }) {
       {labels[color]}
     </span>
   );
+}
+
+function plural(n: number, one: string, few: string, many: string) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
 }
 
 function DifficultyDots({ value }: { value: number }) {
@@ -82,6 +106,9 @@ export default function ImportCoursePage() {
   const [mdText, setMdText] = useState('');
   const [parsed, setParsed] = useState<ParsedCourse | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [hintOpen, setHintOpen] = useState(false);
@@ -90,15 +117,29 @@ export default function ImportCoursePage() {
     setParseError(null);
     setParsed(null);
     setSaveError(null);
+    setErrors([]);
+    setWarnings([]);
     if (!mdText.trim()) {
       setParseError('Вставьте текст курса в формате Markdown');
       return;
     }
     try {
       const result = parseCourse(mdText);
-      setParsed(result);
+      setErrors(result.errors);
+      setWarnings(result.warnings);
+      setParsed(result.course);
     } catch (err) {
       setParseError(err instanceof Error ? err.message : 'Ошибка разбора файла');
+    }
+  }
+
+  async function handleCopySpec() {
+    try {
+      await navigator.clipboard.writeText(COURSE_FORMAT_SPEC);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setParseError('Не удалось скопировать. Выделите текст формата вручную.');
     }
   }
 
@@ -106,6 +147,14 @@ export default function ImportCoursePage() {
     if (!parsed) return;
     setSaving(true);
     setSaveError(null);
+
+    const fail = (msg: string) => {
+      const hint = /column|schema cache/i.test(msg)
+        ? ' Похоже, не выполнена миграция: запустите supabase-courses-v2.sql в Supabase.'
+        : '';
+      setSaveError(msg + hint);
+      setSaving(false);
+    };
 
     // Check slug conflict
     const { data: existing } = await supabase
@@ -115,8 +164,7 @@ export default function ImportCoursePage() {
       .maybeSingle();
 
     if (existing) {
-      setSaveError(`Курс со slug «${parsed.meta.slug}» уже существует. Измените название или добавьте поле slug: в frontmatter.`);
-      setSaving(false);
+      fail(`Курс со slug «${parsed.meta.slug}» уже существует. Измените slug в шапке файла.`);
       return;
     }
 
@@ -128,14 +176,18 @@ export default function ImportCoursePage() {
       .single();
 
     if (courseErr || !courseRow) {
-      setSaveError(courseErr?.message ?? 'Не удалось сохранить курс');
-      setSaving(false);
+      fail(courseErr?.message ?? 'Не удалось сохранить курс');
       return;
     }
 
     const courseId: string = courseRow.id;
 
-    // Insert lessons + lines + questions
+    // Insert lessons + lines + questions. If anything fails, remove the half-saved course.
+    const rollback = async (msg: string) => {
+      await supabase.from('courses').delete().eq('id', courseId);
+      fail(msg);
+    };
+
     for (const lesson of parsed.lessons) {
       const { data: lessonRow, error: lessonErr } = await supabase
         .from('course_lessons')
@@ -143,6 +195,8 @@ export default function ImportCoursePage() {
           course_id: courseId,
           lesson_order: lesson.order,
           title: lesson.title,
+          goal: lesson.goal,
+          blocks: lesson.blocks,
           summary: lesson.summary,
           plan: lesson.plan,
           mistakes: lesson.mistakes,
@@ -152,31 +206,38 @@ export default function ImportCoursePage() {
         .single();
 
       if (lessonErr || !lessonRow) {
-        setSaveError(lessonErr?.message ?? 'Не удалось сохранить урок');
-        setSaving(false);
+        await rollback(lessonErr?.message ?? 'Не удалось сохранить урок');
         return;
       }
 
       const lessonId: string = lessonRow.id;
 
-      if (lesson.moves.length > 0) {
-        await supabase.from('lesson_lines').insert({
-          lesson_id: lessonId,
-          line_order: 0,
-          moves: lesson.moves,
-        });
+      if (lesson.lines.length > 0) {
+        const { error } = await supabase.from('lesson_lines').insert(
+          lesson.lines.map((l, i) => ({
+            lesson_id: lessonId,
+            line_order: i,
+            title: l.title,
+            intro_md: l.intro_md,
+            outro_md: l.outro_md,
+            moves: l.moves,
+          }))
+        );
+        if (error) { await rollback(error.message); return; }
       }
 
       if (lesson.questions.length > 0) {
-        await supabase.from('lesson_questions').insert(
+        const { error } = await supabase.from('lesson_questions').insert(
           lesson.questions.map(q => ({
             lesson_id: lessonId,
             question_order: q.order,
             fen: q.fen,
             question: q.question,
             answer: q.answer,
+            why: q.why,
           }))
         );
+        if (error) { await rollback(error.message); return; }
       }
     }
 
@@ -233,6 +294,20 @@ export default function ImportCoursePage() {
         </button>
         {hintOpen && (
           <div style={{ padding: '0 20px 20px', borderTop: '1px solid var(--hairline)' }}>
+            <p style={{ margin: '16px 0 12px', fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>
+              Пример ниже. Чтобы ИИ написал курс, скопируйте полную инструкцию и вставьте её в чат с ИИ.
+            </p>
+            <button
+              onClick={handleCopySpec}
+              style={{
+                height: 40, padding: '0 20px', marginBottom: 16,
+                background: 'transparent', color: 'var(--ivory)',
+                border: '1px solid var(--control)', fontSize: 13, fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {copied ? 'Скопировано' : 'Скопировать инструкцию для ИИ'}
+            </button>
             <pre style={{
               margin: 0, padding: 16, background: 'var(--bg)',
               fontSize: 12, lineHeight: 1.6,
@@ -284,6 +359,30 @@ export default function ImportCoursePage() {
         </button>
       </div>
 
+      {/* Errors and warnings */}
+      {errors.length > 0 && (
+        <div style={{ padding: '14px 18px', border: '1px solid #503030', background: '#1A0D0D' }}>
+          <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 600, color: '#E06060' }}>
+            Курс не принят: {errors.length} {plural(errors.length, 'ошибка', 'ошибки', 'ошибок')}
+          </p>
+          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {errors.map((e, i) => (
+              <li key={i} style={{ fontSize: 13, lineHeight: 1.5, color: '#E06060' }}>{e}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {warnings.length > 0 && (
+        <div style={{ padding: '14px 18px', border: '1px solid var(--hairline)', background: 'var(--surface)' }}>
+          <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 600, color: 'var(--muted)' }}>Советы</p>
+          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {warnings.map((w, i) => (
+              <li key={i} style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--muted)' }}>{w}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Preview */}
       {parsed && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -327,8 +426,13 @@ export default function ImportCoursePage() {
                   </span>
                   <span style={{ flex: 1, fontSize: 15, fontWeight: 500 }}>{lesson.title}</span>
                   <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--muted)' }}>
-                    <span>{lesson.moves.length} ходов</span>
-                    {lesson.questions.length > 0 && <span>{lesson.questions.length} задач</span>}
+                    <span>{lesson.lines.length} {lesson.lines.length === 1 ? 'линия' : 'линий'}</span>
+                    <span>{lesson.lines.reduce((n, l) => n + l.moves.length, 0)} ходов</span>
+                    {lesson.blocks.some(b => b.type === 'quiz') && (
+                      <span>
+                        {lesson.blocks.reduce((n, b) => n + (b.type === 'quiz' ? b.items.length : 0), 0)} вопросов
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
