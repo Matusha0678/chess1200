@@ -2,8 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Chessboard } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
 import type { Opening, LineProgress } from '@/types/openings';
+import type { CourseLessonMove } from '@/types/courses';
+
+interface DailyTrap {
+  trap_key: string;
+  title: string;
+  opening: string;
+  course_name: string;
+  puzzle_fen: string;
+  final_fen: string;
+  trap_move_san: string;
+  trap_move_color: 'w' | 'b';
+}
 
 interface OpeningRow extends Opening {
   linesTotal: number;
@@ -139,6 +152,8 @@ export default function HomePage() {
   const [totalLines, setTotalLines] = useState(0);
   const [mistakesDue, setMistakesDue] = useState(0);
   const [ideasDue, setIdeasDue] = useState(0);
+  const [dailyTrap, setDailyTrap] = useState<DailyTrap | null>(null);
+  const [trapRevealed, setTrapRevealed] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -197,7 +212,68 @@ export default function HomePage() {
 
       setOpenings(rows);
       setLoading(false);
+
+      // Load daily trap in background (non-blocking)
+      void loadDailyTrap(ops ?? []);
     }
+
+    async function loadDailyTrap(userOpenings: Opening[]) {
+      const { data: rawLines } = await supabase
+        .from('lesson_lines')
+        .select('id, lesson_id, line_order, title, moves')
+        .ilike('title', '%ловушка%');
+
+      if (!rawLines || rawLines.length === 0) return;
+
+      const lessonIds = [...new Set(rawLines.map((l: { lesson_id: string }) => l.lesson_id))];
+      const { data: lessons } = await supabase
+        .from('course_lessons')
+        .select('id, course_id, lesson_order')
+        .in('id', lessonIds);
+
+      const courseIds = [...new Set((lessons ?? []).map((l: { course_id: string }) => l.course_id))];
+      const { data: courses } = await supabase
+        .from('courses')
+        .select('id, slug, name, color, opening')
+        .in('id', courseIds);
+
+      const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+      const allTraps: DailyTrap[] = [];
+
+      for (const ll of rawLines) {
+        const lesson = (lessons ?? []).find((ls: { id: string }) => ls.id === ll.lesson_id);
+        const course = lesson ? (courses ?? []).find((c: { id: string }) => c.id === lesson.course_id) : null;
+        if (!lesson || !course) continue;
+        const moves = ll.moves as CourseLessonMove[];
+        if (!moves || moves.length === 0) continue;
+        const last = moves[moves.length - 1];
+        const prev = moves.length >= 2 ? moves[moves.length - 2] : null;
+        allTraps.push({
+          trap_key: `${course.slug}/${lesson.lesson_order}/${ll.line_order}`,
+          title: ll.title as string,
+          opening: (course.opening as string) ?? '',
+          course_name: course.name as string,
+          puzzle_fen: prev?.fen ?? START_FEN,
+          final_fen: last.fen,
+          trap_move_san: last.san,
+          trap_move_color: last.color,
+        });
+      }
+
+      if (allTraps.length === 0) return;
+
+      // Deterministic daily selection — user's openings in priority
+      const userOpeningNames = userOpenings.map((o: Opening) => (o.name ?? '').toLowerCase());
+      const prioritized = allTraps.filter(t =>
+        userOpeningNames.some(n => n.includes(t.opening.toLowerCase()) || t.opening.toLowerCase().includes(n))
+      );
+      const pool = prioritized.length > 0 ? prioritized : allTraps;
+
+      const today = new Date();
+      const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+      setDailyTrap(pool[seed % pool.length]);
+    }
+
     load();
     const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) load(); };
     window.addEventListener('pageshow', onPageShow);
@@ -434,6 +510,53 @@ export default function HomePage() {
             </Link>
           </div>
         </section>
+
+        {/* 5d. Trap of the day */}
+        {dailyTrap && (
+          <section>
+            <div style={SECTION_HEADER}>
+              <h2 style={LABEL}>ЛОВУШКА ДНЯ</h2>
+              <Link href="/traps" style={{ fontSize: 12, color: 'var(--muted)' }}>Все →</Link>
+            </div>
+            <div style={{ paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+                {dailyTrap.opening || dailyTrap.course_name}
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ivory)', lineHeight: 1.3 }}>
+                {dailyTrap.title}
+              </div>
+              <Chessboard options={{
+                position: dailyTrap.puzzle_fen,
+                boardOrientation: dailyTrap.trap_move_color === 'w' ? 'white' : 'black',
+                allowDragging: false,
+                boardStyle: { width: 200, height: 200 },
+              }} />
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)' }}>Найди лучший ход</p>
+              {trapRevealed ? (
+                <div style={{
+                  padding: '8px 14px', border: '1px solid var(--hairline)',
+                  background: 'rgba(242,239,231,0.05)',
+                  fontSize: 15, fontWeight: 600, color: 'var(--ivory)',
+                  fontFamily: 'monospace', letterSpacing: '0.05em',
+                }}>
+                  {dailyTrap.trap_move_san}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setTrapRevealed(true)}
+                  style={{
+                    height: 36, padding: '0 16px', alignSelf: 'flex-start',
+                    background: 'transparent', border: '1px solid var(--control)',
+                    color: 'var(--muted)', fontSize: 13,
+                    fontFamily: 'inherit', cursor: 'pointer',
+                  }}
+                >
+                  Показать ответ
+                </button>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* 6. Repertoire progress */}
         {totalLines > 0 && (
