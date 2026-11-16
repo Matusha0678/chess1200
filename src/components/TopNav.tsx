@@ -1,36 +1,84 @@
 'use client';
 import Link from 'next/link';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useBoardTheme } from '@/contexts/BoardThemeContext';
+import { NAV, matchHref, sectionActive } from '@/lib/nav';
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function ChevronDown({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"
+      style={{ flexShrink: 0, transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : undefined }}
+    >
+      <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function TopNav() {
   const pathname = usePathname();
   const { openPanel } = useBoardTheme();
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  const headerRef = useRef<HTMLElement>(null);
 
-  const homeActive = pathname === '/';
-  const openingsActive = pathname === '/openings' || pathname.startsWith('/openings/');
-  const coursesActive = pathname === '/courses' || pathname.startsWith('/courses/');
-  const gamesActive = pathname === '/games' || pathname.startsWith('/games/');
-  const mistakesActive = pathname === '/mistakes' || pathname.startsWith('/mistakes/');
-  const threatsActive = pathname === '/threats' || pathname.startsWith('/threats/');
-  const endgamesActive = pathname === '/endgames' || pathname.startsWith('/endgames/');
-  const plansActive = pathname === '/plans' || pathname.startsWith('/plans/');
+  // Close both menus when the route changes (derived state from pathname — no effect needed)
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    if (openMenu !== null) setOpenMenu(null);
+    if (mobileOpen) setMobileOpen(false);
+  }
+
+  // Close on outside click
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (!headerRef.current?.contains(e.target as Node)) {
+        setOpenMenu(null);
+        setMobileOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, []);
+
+  // Escape to close
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') { setOpenMenu(null); setMobileOpen(false); }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  const NUM: React.CSSProperties = {
+    fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)',
+  };
 
   return (
-    <header style={{
-      position: 'sticky', top: 0, zIndex: 10,
-      background: 'var(--header-bg)', backdropFilter: 'blur(12px)',
-      borderTop: '2px solid var(--ivory)', borderBottom: '1px solid var(--hairline)',
-    }}>
+    <header
+      ref={headerRef}
+      style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        background: 'var(--header-bg)', backdropFilter: 'blur(12px)',
+        borderTop: '2px solid var(--ivory)', borderBottom: '1px solid var(--hairline)',
+      }}
+    >
       <div style={{
         maxWidth: 1600, margin: '0 auto', padding: '0 48px',
         minHeight: 66, display: 'flex', alignItems: 'stretch',
-        justifyContent: 'space-between', gap: 24, flexWrap: 'wrap',
+        justifyContent: 'space-between', gap: 24,
         boxSizing: 'border-box',
       }}>
-        {/* Logo */}
-        <div style={{ flex: '1 1 0', minWidth: 160, display: 'flex', alignItems: 'center' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 44, color: 'var(--ivory)' }}>
+
+        {/* ── Logo ── */}
+        <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', alignItems: 'center' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 44, color: 'var(--ivory)', flexShrink: 0 }}>
             <span aria-hidden="true" style={{
               width: 32, height: 32, borderRadius: 4, background: 'var(--ivory)',
               color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -47,124 +95,132 @@ export default function TopNav() {
           </Link>
         </div>
 
-        {/* Nav */}
-        <nav aria-label="Основная навигация" style={{ display: 'flex', gap: 40 }}>
-          <Link
-            href="/"
-            aria-current={homeActive ? 'page' : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
-              borderBottom: homeActive ? '2px solid var(--ivory)' : '2px solid transparent',
-              fontSize: 14, fontWeight: homeActive ? 600 : 400,
-              color: homeActive ? 'var(--ivory)' : 'var(--muted)',
-            }}
-          >
-            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>01</span>
-            Сегодня
-          </Link>
-          <Link
-            href="/openings"
-            aria-current={openingsActive ? 'page' : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
-              borderBottom: openingsActive ? '2px solid var(--ivory)' : '2px solid transparent',
-              fontSize: 14, fontWeight: openingsActive ? 600 : 400,
-              color: openingsActive ? 'var(--ivory)' : 'var(--muted)',
-            }}
-          >
-            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>02</span>
-            Дебюты
-          </Link>
-          <Link
-            href="/courses"
-            aria-current={coursesActive ? 'page' : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
-              borderBottom: coursesActive ? '2px solid var(--ivory)' : '2px solid transparent',
-              fontSize: 14, fontWeight: coursesActive ? 600 : 400,
-              color: coursesActive ? 'var(--ivory)' : 'var(--muted)',
-            }}
-          >
-            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>03</span>
-            Курсы
-          </Link>
-          <Link
-            href="/games"
-            aria-current={gamesActive ? 'page' : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
-              borderBottom: gamesActive ? '2px solid var(--ivory)' : '2px solid transparent',
-              fontSize: 14, fontWeight: gamesActive ? 600 : 400,
-              color: gamesActive ? 'var(--ivory)' : 'var(--muted)',
-            }}
-          >
-            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>04</span>
-            Партии
-          </Link>
-          <Link
-            href="/mistakes"
-            aria-current={mistakesActive ? 'page' : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
-              borderBottom: mistakesActive ? '2px solid var(--ivory)' : '2px solid transparent',
-              fontSize: 14, fontWeight: mistakesActive ? 600 : 400,
-              color: mistakesActive ? 'var(--ivory)' : 'var(--muted)',
-            }}
-          >
-            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>05</span>
-            Ошибки
-          </Link>
-          <Link
-            href="/threats"
-            aria-current={threatsActive ? 'page' : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
-              borderBottom: threatsActive ? '2px solid var(--ivory)' : '2px solid transparent',
-              fontSize: 14, fontWeight: threatsActive ? 600 : 400,
-              color: threatsActive ? 'var(--ivory)' : 'var(--muted)',
-            }}
-          >
-            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>06</span>
-            Угрозы
-          </Link>
-          <Link
-            href="/endgames"
-            aria-current={endgamesActive ? 'page' : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
-              borderBottom: endgamesActive ? '2px solid var(--ivory)' : '2px solid transparent',
-              fontSize: 14, fontWeight: endgamesActive ? 600 : 400,
-              color: endgamesActive ? 'var(--ivory)' : 'var(--muted)',
-            }}
-          >
-            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>07</span>
-            Эндшпиль
-          </Link>
-          <Link
-            href="/plans"
-            aria-current={plansActive ? 'page' : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
-              borderBottom: plansActive ? '2px solid var(--ivory)' : '2px solid transparent',
-              fontSize: 14, fontWeight: plansActive ? 600 : 400,
-              color: plansActive ? 'var(--ivory)' : 'var(--muted)',
-            }}
-          >
-            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>08</span>
-            Планы
-          </Link>
+        {/* ── Desktop nav (hidden <900px via CSS) ── */}
+        <nav
+          className="topnav-desktop"
+          aria-label="Основная навигация"
+          style={{ gap: 36, alignItems: 'stretch' }}
+        >
+          {NAV.map(item => {
+            const active = sectionActive(pathname, item);
+
+            if (!item.children) {
+              return (
+                <Link
+                  key={item.num}
+                  href={item.href}
+                  aria-current={active ? 'page' : undefined}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
+                    borderBottom: active ? '2px solid var(--ivory)' : '2px solid transparent',
+                    fontSize: 14, fontWeight: active ? 600 : 400,
+                    color: active ? 'var(--ivory)' : 'var(--muted)',
+                  }}
+                >
+                  <span style={NUM}>{item.num}</span>
+                  {item.label}
+                </Link>
+              );
+            }
+
+            const isOpen = openMenu === item.num;
+            return (
+              <div key={item.num} style={{ position: 'relative', display: 'flex', alignItems: 'stretch' }}>
+                <button
+                  aria-expanded={isOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setOpenMenu(isOpen ? null : item.num)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
+                    borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+                    borderBottom: active ? '2px solid var(--ivory)' : '2px solid transparent',
+                    background: 'transparent', padding: 0, margin: 0,
+                    fontSize: 14, fontWeight: active ? 600 : 400,
+                    color: active ? 'var(--ivory)' : 'var(--muted)',
+                    fontFamily: 'inherit', cursor: 'pointer',
+                  }}
+                >
+                  <span style={NUM}>{item.num}</span>
+                  {item.label}
+                  <ChevronDown open={isOpen} />
+                </button>
+
+                {isOpen && (
+                  <div
+                    role="menu"
+                    style={{
+                      position: 'absolute', top: '100%', left: 0,
+                      minWidth: 180,
+                      background: 'var(--bg)',
+                      borderLeft: '1px solid var(--hairline)',
+                      borderRight: '1px solid var(--hairline)',
+                      borderBottom: '1px solid var(--hairline)',
+                      zIndex: 20,
+                      paddingTop: 4, paddingBottom: 4,
+                    }}
+                  >
+                    {item.children.map(child => {
+                      const childActive = matchHref(pathname, child.href);
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          role="menuitem"
+                          aria-current={childActive ? 'page' : undefined}
+                          className="nav-dd-item"
+                          style={{
+                            display: 'block',
+                            padding: '10px 20px',
+                            fontSize: 14,
+                            color: childActive ? 'var(--ivory)' : 'var(--muted)',
+                            fontWeight: childActive ? 600 : 400,
+                            borderLeft: childActive ? '2px solid var(--ivory)' : '2px solid transparent',
+                          }}
+                        >
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
-        {/* Theme button */}
-        <div style={{ flex: '1 1 0', minWidth: 44, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+        {/* ── Right: mobile toggle + theme button ── */}
+        <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+
+          {/* Mobile "Меню" button — hidden ≥900px via CSS */}
+          <button
+            className="topnav-mobile"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-expanded={mobileOpen}
+            aria-label="Меню"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              height: 40, padding: '0 14px',
+              background: 'transparent',
+              borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+              borderBottom: 'none',
+              border: '1px solid var(--control)',
+              color: 'var(--ivory)', fontSize: 13, fontFamily: 'inherit',
+              cursor: 'pointer', flexShrink: 0,
+            }}
+          >
+            Меню
+            <ChevronDown open={mobileOpen} />
+          </button>
+
+          {/* Theme button */}
           <button
             onClick={openPanel}
             aria-label="Тема оформления"
             style={{
               width: 44, height: 44, border: '1px solid var(--control)',
               background: 'transparent', color: 'var(--ivory)', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', flexShrink: 0,
             }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -176,6 +232,78 @@ export default function TopNav() {
           </button>
         </div>
       </div>
+
+      {/* ── Mobile dropdown — hidden ≥900px via CSS ── */}
+      {mobileOpen && (
+        <div
+          className="topnav-mobile"
+          style={{
+            display: 'block',
+            position: 'absolute', top: '100%', left: 0, right: 0,
+            background: 'var(--bg)',
+            borderBottom: '1px solid var(--hairline)',
+            zIndex: 20,
+            maxHeight: 'calc(100vh - 66px)',
+            overflowY: 'auto',
+          }}
+        >
+          {NAV.map(item => {
+            if (item.children) {
+              return (
+                <div key={item.num}>
+                  <div style={{
+                    padding: '10px 24px 5px',
+                    fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase',
+                    color: 'var(--muted)', fontWeight: 600,
+                  }}>
+                    {item.num} {item.label}
+                  </div>
+                  {item.children.map(child => {
+                    const childActive = matchHref(pathname, child.href);
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        style={{
+                          display: 'block',
+                          padding: '12px 24px 12px 36px',
+                          fontSize: 14,
+                          color: childActive ? 'var(--ivory)' : 'var(--muted)',
+                          fontWeight: childActive ? 600 : 400,
+                          borderLeft: childActive ? '3px solid var(--ivory)' : '3px solid transparent',
+                          borderBottom: '1px solid var(--hairline)',
+                        }}
+                      >
+                        {child.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
+            }
+
+            const active = matchHref(pathname, item.href);
+            return (
+              <Link
+                key={item.num}
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '14px 24px',
+                  fontSize: 14, fontWeight: active ? 600 : 400,
+                  color: active ? 'var(--ivory)' : 'var(--muted)',
+                  borderLeft: active ? '3px solid var(--ivory)' : '3px solid transparent',
+                  borderBottom: '1px solid var(--hairline)',
+                }}
+              >
+                <span style={{ fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)' }}>{item.num}</span>
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </header>
   );
 }
