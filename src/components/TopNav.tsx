@@ -11,6 +11,7 @@ export default function TopNav() {
   const openingsActive = pathname === '/openings' || pathname.startsWith('/openings/');
   const coursesActive = pathname === '/courses' || pathname.startsWith('/courses/');
   const gamesActive = pathname === '/games' || pathname.startsWith('/games/');
+  const mistakesActive = pathname === '/mistakes' || pathname.startsWith('/mistakes/');
 
   return (
     <header style={{
@@ -96,6 +97,19 @@ export default function TopNav() {
           >
             <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>04</span>
             Партии
+          </Link>
+          <Link
+            href="/mistakes"
+            aria-current={mistakesActive ? 'page' : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
+              borderBottom: mistakesActive ? '2px solid var(--ivory)' : '2px solid transparent',
+              fontSize: 14, fontWeight: mistakesActive ? 600 : 400,
+              color: mistakesActive ? 'var(--ivory)' : 'var(--muted)',
+            }}
+          >
+            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>05</span>
+            Ошибки
           </Link>
         </nav>
 
