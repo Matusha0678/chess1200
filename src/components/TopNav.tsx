@@ -9,6 +9,7 @@ export default function TopNav() {
 
   const homeActive = pathname === '/';
   const openingsActive = pathname === '/openings' || pathname.startsWith('/openings/');
+  const coursesActive = pathname === '/courses' || pathname.startsWith('/courses/');
 
   return (
     <header style={{
@@ -68,6 +69,19 @@ export default function TopNav() {
           >
             <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>02</span>
             Дебюты
+          </Link>
+          <Link
+            href="/courses"
+            aria-current={coursesActive ? 'page' : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: -1,
+              borderBottom: coursesActive ? '2px solid var(--ivory)' : '2px solid transparent',
+              fontSize: 14, fontWeight: coursesActive ? 600 : 400,
+              color: coursesActive ? 'var(--ivory)' : 'var(--muted)',
+            }}
+          >
+            <span style={{ fontSize: 11, letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>03</span>
+            Курсы
           </Link>
         </nav>
 
