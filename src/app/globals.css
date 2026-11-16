@@ -64,6 +64,18 @@ html, body {
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 2px; }
 
+/* ── TopNav responsive utilities (900 px breakpoint) ─────────────────────── */
+/* topnav-desktop: visible ≥900px, hidden below */
+.topnav-desktop { display: flex; }
+@media (max-width: 899px) { .topnav-desktop { display: none !important; } }
+/* topnav-mobile: hidden ≥900px, visible below — each element keeps its own display value */
+@media (min-width: 900px) { .topnav-mobile { display: none !important; } }
+/* Dropdown item hover */
+.nav-dd-item:hover { color: var(--ivory) !important; background: var(--surface); }
+
+/* ── PlayButton hover ────────────────────────────────────────────────────── */
+.play-button-link:hover { color: var(--ivory) !important; border-color: var(--ivory) !important; }
+
 /* ── Card and row hover effects ──────────────────────────────────────────── */
 .opening-card-link:hover { border-color: var(--card-hover) !important; }
 .row-hover-link:hover { background: var(--row-hover); }

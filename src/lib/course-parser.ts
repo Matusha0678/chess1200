@@ -6,7 +6,7 @@
 
 import { Chess } from 'chess.js';
 import { parse as parseYaml } from 'yaml';
-import type { Course, CourseLessonMove, LessonBlock, QuizItem } from '@/types/courses';
+import type { Course, CourseLessonMove, LessonBlock, QuizItem, IdeaItem } from '@/types/courses';
 
 export const MAX_MAIN_MOVES = 12;
 export const MAX_VAR_MOVES = 8;
@@ -43,6 +43,8 @@ export interface ParsedLesson {
   trap: string;
   /** "puzzle" quiz items only (they have a FEN) */
   questions: ParsedQuestion[];
+  /** idea items from all "Идея позиции" sections */
+  ideas: IdeaItem[];
 }
 
 export interface ParsedCourse {
@@ -75,7 +77,7 @@ const ARROW_CMD_RE = /\[%(cal|csl)\s+([^\]]*)\]/g;
 const COLORS: Record<string, string> = { G: 'green', R: 'red', Y: 'yellow', B: 'blue' };
 const MARK_NAG: Record<string, number> = { '!': 1, '?': 2, '!!': 3, '??': 4, '!?': 5, '?!': 6 };
 
-type SectionKind = 'line' | 'plan' | 'mistakes' | 'trap' | 'summary' | 'quiz' | 'text';
+type SectionKind = 'line' | 'plan' | 'mistakes' | 'trap' | 'summary' | 'quiz' | 'idea' | 'text';
 const KINDS: [SectionKind, string[]][] = [
   ['line', ['линия', 'line']],
   ['plan', ['план', 'plan']],
@@ -83,6 +85,7 @@ const KINDS: [SectionKind, string[]][] = [
   ['trap', ['ловушка', 'trap']],
   ['summary', ['итог', 'summary']],
   ['quiz', ['проверь себя', 'quiz']],
+  ['idea', ['идея позиции', 'idea']],
 ];
 
 function sectionKind(title: string): SectionKind {
@@ -435,6 +438,34 @@ function checkPuzzle(body: string, where: string, rep: Report): QuizItem | null 
   };
 }
 
+function checkIdea(body: string, where: string, rep: Report): IdeaItem | null {
+  const q = readYamlMap(body, where, rep);
+  if (!q) return null;
+  for (const key of ['fen', 'question', 'answer', 'why']) {
+    if (!q[key]) rep.err(where, `нет поля ${key}`);
+  }
+  try {
+    new Chess(String(q.fen));
+  } catch (e) {
+    rep.err(where, `неверный fen: ${errText(e)}`);
+  }
+  const opts = q.options;
+  const optMap: Record<string, string> = {};
+  if (typeof opts !== 'object' || opts === null || Array.isArray(opts) || Object.keys(opts).length < 2) {
+    rep.err(where, 'нужно options: минимум 2 варианта (A, B, …)');
+  } else {
+    for (const [k, v] of Object.entries(opts as Record<string, unknown>)) optMap[k] = String(v);
+    if (!(String(q.answer) in optMap)) rep.err(where, 'answer не совпадает ни с одним вариантом');
+  }
+  return {
+    fen: String(q.fen ?? ''),
+    question: String(q.question ?? ''),
+    options: optMap,
+    answer: String(q.answer ?? ''),
+    why: String(q.why ?? ''),
+  };
+}
+
 // ── Header ──────────────────────────────────────────────────────────────────
 
 function splitFrontMatter(text: string, rep: Report): { meta: Record<string, unknown>; body: string } {
@@ -519,6 +550,7 @@ export function parseCourse(mdText: string): ParseResult {
     const blocks: LessonBlock[] = headText ? [{ type: 'text', md: headText }] : [];
     const lines: ParsedLine[] = [];
     const questions: ParsedQuestion[] = [];
+    const ideas: IdeaItem[] = [];
     let nLines = 0;
 
     for (const s of sections) {
@@ -557,6 +589,16 @@ export function parseCourse(mdText: string): ParseResult {
           }
         }
         blocks.push({ type: 'quiz', title: s.title, items });
+      } else if (s.kind === 'idea') {
+        const items: IdeaItem[] = [];
+        for (const p of parts) {
+          if (p.kind === 'idea') { const q = checkIdea(p.body, sw, rep); if (q) items.push(q); }
+          else if (p.kind === 'text') { /* intro text is ignored */ }
+          else rep.err(sw, `неизвестный блок \`\`\`${p.kind}`);
+        }
+        if (items.length === 0) rep.warn(sw, 'раздел «Идея позиции» не содержит ни одного блока idea');
+        ideas.push(...items);
+        blocks.push({ type: 'idea', title: s.title, items });
       } else {
         const md: string[] = [];
         for (const p of parts) {
@@ -599,6 +641,7 @@ export function parseCourse(mdText: string): ParseResult {
       mistakes: joinMd('mistakes'),
       trap: joinMd('trap'),
       questions,
+      ideas,
     });
   }
 
