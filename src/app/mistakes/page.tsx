@@ -9,6 +9,7 @@ import type { PieceDropHandlerArgs } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
 import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { useStockfish } from '@/hooks/useStockfish';
+import { PlayButton } from '@/components/PlayButton';
 import {
   type MistakeCard, type MistakeTag, type GamePhase,
   TAG_LABEL, PHASE_LABEL, nextReviewDate,
@@ -490,6 +491,13 @@ export default function MistakesPage() {
                     {PHASE_LABEL[card.phase]} · потеря {card.eval_loss}cp
                   </span>
                 </div>
+
+                {/* Play from this position */}
+                <PlayButton
+                  fen={card.fen_before}
+                  color={card.fen_before.split(' ')[1] as 'w' | 'b'}
+                  label="Играть отсюда"
+                />
 
                 {/* Next button */}
                 <button

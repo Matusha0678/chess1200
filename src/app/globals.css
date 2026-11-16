@@ -73,6 +73,9 @@ html, body {
 /* Dropdown item hover */
 .nav-dd-item:hover { color: var(--ivory) !important; background: var(--surface); }
 
+/* ── PlayButton hover ────────────────────────────────────────────────────── */
+.play-button-link:hover { color: var(--ivory) !important; border-color: var(--ivory) !important; }
+
 /* ── Card and row hover effects ──────────────────────────────────────────── */
 .opening-card-link:hover { border-color: var(--card-hover) !important; }
 .row-hover-link:hover { background: var(--row-hover); }

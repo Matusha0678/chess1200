@@ -4,6 +4,7 @@ import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import type { PieceDropHandlerArgs } from 'react-chessboard';
 import { ENDGAMES, CATEGORY_LABELS, type Endgame, type EndgameCategory } from '@/data/endgames';
+import { PlayButton } from '@/components/PlayButton';
 import { useStockfish } from '@/hooks/useStockfish';
 import { createClient } from '@supabase/supabase-js';
 
@@ -428,16 +429,23 @@ export default function EndgamesPage() {
               ← Список
             </button>
             {phase === 'done' && (
-              <button
-                onClick={() => startEndgame(current)}
-                style={{
-                  flex: 1, padding: '8px 12px', background: 'var(--surface)',
-                  border: '1px solid var(--control)', borderRadius: 4,
-                  color: 'var(--ivory)', cursor: 'pointer', fontSize: 13,
-                }}
-              >
-                Повторить
-              </button>
+              <>
+                <button
+                  onClick={() => startEndgame(current)}
+                  style={{
+                    flex: 1, padding: '8px 12px', background: 'var(--surface)',
+                    border: '1px solid var(--control)', borderRadius: 4,
+                    color: 'var(--ivory)', cursor: 'pointer', fontSize: 13,
+                  }}
+                >
+                  Повторить
+                </button>
+                <PlayButton
+                  fen={current.fen}
+                  color={new Chess(current.fen).turn()}
+                  label="Играть отсюда"
+                />
+              </>
             )}
           </div>
         </div>

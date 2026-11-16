@@ -27,9 +27,11 @@ export const NAV: NavSection[] = [
   {
     num: '05', label: 'Тренировка', href: '/threats',
     children: [
-      { label: 'Угрозы',   href: '/threats' },
-      { label: 'Эндшпили', href: '/endgames' },
-      { label: 'Планы',    href: '/plans' },
+      { label: 'Угрозы',          href: '/threats' },
+      { label: 'Эндшпили',       href: '/endgames' },
+      { label: 'Планы',          href: '/plans' },
+      { label: 'Конвертация',    href: '/play?mode=convert' },
+      { label: 'С форой',        href: '/play?mode=handicap' },
     ],
   },
 ];
