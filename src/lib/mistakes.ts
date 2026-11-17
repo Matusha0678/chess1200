@@ -143,63 +143,38 @@ export function classifyMistake(
 // ── PGN parser ────────────────────────────────────────────────────────────────
 
 export function parsePgnMoves(pgn: string): ParsedMove[] {
-  // Strip headers (lines starting with [)
-  const body = pgn
-    .split('\n')
-    .filter(line => !line.trim().startsWith('['))
-    .join(' ')
-    .trim();
+  const loader = new Chess();
+  try {
+    loader.loadPgn(pgn);
+  } catch {
+    return [];
+  }
 
-  // Match SAN tokens and their optional comments
-  // Pattern: castling first (longest), then standard SAN, then capture comment
-  const movePattern = /(O-O-O[+#!?]*|O-O[+#!?]*|[NBRQK]?[a-h]?[1-8]?x?[a-h][1-8](?:=[NBRQ])?[+#!?]*)\s*(?:\{([^}]*)\})?/g;
+  const history = loader.history({ verbose: true });
+  if (!history.length) return [];
 
-  const chess = new Chess();
+  const fenHeader = loader.header()['FEN'];
+  const replay = fenHeader ? new Chess(fenHeader) : new Chess();
   const results: ParsedMove[] = [];
-  let match: RegExpExecArray | null;
 
-  while ((match = movePattern.exec(body)) !== null) {
-    const san = match[1]
-      .replace(/[!?]+$/, '') // strip annotation characters
-      .trim();
-    const comment = match[2] ?? '';
+  for (const h of history) {
+    const fen_before = replay.fen();
+    const colorToMove = replay.turn() as 'w' | 'b';
+    const moveNumber = replay.moveNumber();
 
-    // Parse eval from comment: [%eval #?(-?\d+\.?\d*)]
-    let evalCp: number | null = null;
-    const evalMatch = comment.match(/\[%eval\s+(#)?(-?\d+\.?\d*)\]/);
-    if (evalMatch) {
-      if (evalMatch[1] === '#') {
-        // Mate annotation
-        const mateIn = parseFloat(evalMatch[2]);
-        evalCp = mateIn > 0 ? 9000 : -9000;
-      } else {
-        evalCp = Math.round(parseFloat(evalMatch[2]) * 100);
-      }
-    }
-
-    const fenBefore = chess.fen();
-    const colorToMove = chess.turn();
-    // Calculate move_number (chess move number, not ply)
-    const moveNumber = chess.moveNumber();
-
-    let result;
     try {
-      result = chess.move(san);
+      replay.move(h.san);
     } catch {
-      // If chess.js can't parse this token as a move, skip it
-      continue;
+      break;
     }
 
-    if (!result) continue;
-
-    const fenAfter = chess.fen();
     results.push({
-      san: result.san,
-      fen_before: fenBefore,
-      fen_after: fenAfter,
-      eval_after_cp: evalCp,
+      san: h.san,
+      fen_before,
+      fen_after: replay.fen(),
+      eval_after_cp: null,
       move_number: moveNumber,
-      color: colorToMove as 'w' | 'b',
+      color: colorToMove,
     });
   }
 
