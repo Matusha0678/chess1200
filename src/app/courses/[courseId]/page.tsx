@@ -3,7 +3,8 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import type { Course, CourseLesson, LessonProgress, LessonLine } from '@/types/courses';
+import type { Course, CourseLesson, LessonProgress, LessonLine, TestQuestion } from '@/types/courses';
+import { LessonTest } from '@/components/LessonTest';
 
 const HEADING: React.CSSProperties = {
   fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
@@ -17,6 +18,8 @@ interface LessonWithMeta extends CourseLesson {
   moveCount: number;
   progress?: LessonProgress;
 }
+
+interface WeakSpot { q: TestQuestion; count: number; }
 
 function DifficultyDots({ value }: { value: number }) {
   return (
@@ -42,6 +45,9 @@ export default function CourseOverviewPage({ params }: Props) {
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<LessonWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
+  const [weakSpots, setWeakSpots] = useState<WeakSpot[]>([]);
+  const [latestTestMap, setLatestTestMap] = useState<Record<string, { score: number; max: number; pct: number }>>({});
+  const [showWeakTest, setShowWeakTest] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -86,6 +92,48 @@ export default function CourseOverviewPage({ params }: Props) {
 
       const progressMap: Record<string, LessonProgress> = {};
       (progressData ?? []).forEach((p: LessonProgress) => { progressMap[p.lesson_id] = p; });
+
+      // Fetch test results (latest per lesson)
+      const { data: testsData } = await supabase
+        .from('lesson_tests')
+        .select('lesson_id, score, max, taken_at')
+        .in('lesson_id', lessonIds)
+        .order('taken_at', { ascending: false });
+
+      // Fetch wrong records for weak spots
+      const { data: wrongData } = await supabase
+        .from('lesson_tests')
+        .select('lesson_id, wrong')
+        .in('lesson_id', lessonIds);
+
+      // Build latestTestMap — first (latest) result per lesson
+      const latestMap: Record<string, { score: number; max: number; pct: number }> = {};
+      (testsData ?? []).forEach((t: { lesson_id: string; score: number; max: number }) => {
+        if (!latestMap[t.lesson_id]) {
+          const pct = t.max > 0 ? Math.round((t.score / t.max) * 100) : 0;
+          latestMap[t.lesson_id] = { score: t.score, max: t.max, pct };
+        }
+      });
+      setLatestTestMap(latestMap);
+
+      // Build weak spots: collect all wrong records, group by question
+      const questionCounts: Map<string, { q: TestQuestion; count: number }> = new Map();
+      (wrongData ?? []).forEach((row: { wrong: TestQuestion[] }) => {
+        const wrongArr: TestQuestion[] = Array.isArray(row.wrong) ? row.wrong : [];
+        for (const wr of wrongArr) {
+          if (!wr?.question) continue;
+          const existing = questionCounts.get(wr.question);
+          if (existing) {
+            existing.count += 1;
+          } else {
+            questionCounts.set(wr.question, { q: wr, count: 1 });
+          }
+        }
+      });
+      const sortedWeak = Array.from(questionCounts.values())
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+      setWeakSpots(sortedWeak);
 
       // Count moves per lesson (from first line)
       const moveCountMap: Record<string, number> = {};
@@ -171,9 +219,14 @@ export default function CourseOverviewPage({ params }: Props) {
             </span>
           )}
           <DifficultyDots value={course.difficulty} />
-          <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-            {completedCount} / {lessons.length} уроков
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+              Пройдено {completedCount} / {lessons.length}
+            </span>
+            <div style={{ height: 2, background: 'var(--track)', width: '100%', maxWidth: 200 }}>
+              <div style={{ height: '100%', width: `${lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0}%`, background: 'var(--ivory)' }} />
+            </div>
+          </div>
         </div>
         {course.description && (
           <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)', lineHeight: 1.6 }}>
@@ -237,6 +290,11 @@ export default function CourseOverviewPage({ params }: Props) {
                   <div style={{ display: 'flex', gap: 10, fontSize: 12, color: 'var(--muted)' }}>
                     <span>{lesson.moveCount} ходов</span>
                     {done && <span style={{ color: 'var(--ivory)' }}>✓ Пройден</span>}
+                    {latestTestMap[lesson.id] !== undefined && (
+                      <span style={{ color: latestTestMap[lesson.id].pct >= 80 ? 'rgba(130,220,100,0.95)' : 'var(--muted)' }}>
+                        {latestTestMap[lesson.id].pct}%
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -270,6 +328,40 @@ export default function CourseOverviewPage({ params }: Props) {
           })
         )}
       </div>
+
+      {/* Weak spots */}
+      {weakSpots.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ borderTop: '2px solid var(--ivory)', paddingTop: 16, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>Слабые места</h2>
+            <button
+              onClick={() => setShowWeakTest(true)}
+              style={{ height: 36, padding: '0 16px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' }}
+            >
+              Повторить слабые места ({weakSpots.length})
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {weakSpots.slice(0, 5).map((ws, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', border: '1px solid var(--hairline)', background: 'var(--surface)' }}>
+                <span style={{ fontSize: 11, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums', flexShrink: 0, minWidth: 20, textAlign: 'right' }}>
+                  ×{ws.count}
+                </span>
+                <span style={{ fontSize: 14, color: 'var(--ivory)', flex: 1, minWidth: 0 }}>{ws.q.question}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showWeakTest && (
+        <LessonTest
+          forcedQuestions={weakSpots.map(ws => ws.q)}
+          courseId={courseId}
+          title="Слабые места"
+          onClose={() => setShowWeakTest(false)}
+        />
+      )}
     </main>
   );
 }

@@ -113,3 +113,24 @@ export interface CourseWithLessons extends Course {
   lessonsTotal: number;
   lessonsCompleted: number;
 }
+
+export interface TestQuestion {
+  question: string;
+  options: string[];
+  answerIdx: number;
+  why?: string;
+  fen?: string;
+}
+
+export interface WrongRecord extends TestQuestion {
+  userAnswerIdx: number;
+}
+
+export interface LessonTestRecord {
+  id: string;
+  lesson_id: string;
+  score: number;
+  max: number;
+  wrong: WrongRecord[];
+  taken_at: string;
+}

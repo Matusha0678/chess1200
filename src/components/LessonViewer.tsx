@@ -5,6 +5,7 @@ import { Chessboard } from 'react-chessboard';
 import type { SquareRenderer } from 'react-chessboard';
 import Link from 'next/link';
 import { playMove, playCapture, playCorrect, playWrong, playComplete } from '@/lib/sounds';
+import { LessonTest } from '@/components/LessonTest';
 import type {
   CourseLessonMove,
   CourseLesson,
@@ -197,6 +198,8 @@ export function LessonViewer({
   const [isCinema,    setIsCinema]    = useState(false);
   const [soundOn,     setSoundOn]     = useState(false);
   const [showEndPanel,setShowEndPanel]= useState(false);
+  const [showTest,    setShowTest]    = useState(false);
+  const [lessonPassed,setLessonPassed]= useState(false);
 
   const soundOnRef = useRef(false);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
@@ -712,9 +715,17 @@ export function LessonViewer({
             </Link>
           )}
         </div>
-        <Link href={`/courses/${courseId}/${lessonId}/practice`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 48, padding: '0 28px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 600, flexShrink: 0 }}>
-          Тренировать
-        </Link>
+        <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+          <Link href={`/courses/${courseId}/${lessonId}/practice`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 48, padding: '0 28px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 600 }}>
+            Тренировать
+          </Link>
+          <button
+            onClick={() => setShowTest(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', height: 48, padding: '0 20px', background: 'transparent', color: 'var(--muted)', fontSize: 13, fontWeight: 500, border: '1px solid var(--hairline)', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Тест
+          </button>
+        </div>
         <div style={{ flex: 1, minWidth: 120, display: 'flex', justifyContent: 'flex-end' }}>
           {nextLesson && (
             <Link href={`/courses/${courseId}/${nextLesson.id}`} style={{ display: 'inline-flex', flexDirection: 'column', gap: 2, color: 'var(--muted)', textAlign: 'right' }}>
@@ -729,7 +740,9 @@ export function LessonViewer({
       {showEndPanel && !variantMoves && (
         <div style={{ padding: '24px 28px', border: '1px solid var(--hairline)', background: 'var(--surface)', animation: animEnabled ? 'fadeIn 0.4s ease-out' : undefined }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16, gap: 16, flexWrap: 'wrap' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Урок завершён</h3>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>
+              Урок завершён{lessonPassed ? ' ✓' : ''}
+            </h3>
             {isGuessMode && guessTotal > 0 && (
               <span style={{ fontSize: 14, color: 'var(--muted)' }}>
                 Угадано с первого раза: <strong style={{ color: 'var(--ivory)' }}>{guessScore} / {guessTotal}</strong>
@@ -754,8 +767,27 @@ export function LessonViewer({
                 Следующий урок →
               </Link>
             )}
+            <button
+              onClick={() => setShowTest(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', height: 40, padding: '0 20px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600, flexShrink: 0, border: 'none', cursor: 'pointer' }}
+            >
+              Тест →
+            </button>
           </div>
         </div>
+      )}
+
+      {/* Lesson test overlay */}
+      {showTest && (
+        <LessonTest
+          lesson={lesson}
+          moves={moves}
+          lessonId={lessonId}
+          courseId={courseId}
+          nextLesson={nextLesson}
+          onClose={() => setShowTest(false)}
+          onPassed={() => setLessonPassed(true)}
+        />
       )}
 
       {/* Cinema overlay */}
