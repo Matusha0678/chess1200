@@ -276,15 +276,17 @@ export function useStockfish() {
     }
   }, [isReady]);
 
-  // Promise-based: evaluate a position, return { cp (white's POV), bestMove }.
-  // Mate is encoded as ±9000. Limit: movetime 120 ms.
+  // Promise-based: evaluate a position, return { cp (WHITE's POV always), bestMove }.
+  // Stockfish score cp/mate is from the side-to-move perspective — we convert here.
+  // Mate encoded as ±9000. Default limit: movetime 120 ms.
   const evalPosition = useCallback(
-    (fen: string): Promise<{ cp: number; bestMove: string }> => {
+    (fen: string, movetime = 120): Promise<{ cp: number; bestMove: string }> => {
       return new Promise((resolve, reject) => {
         if (!workerRef.current || !isReady) {
           reject(new Error('Stockfish not ready'));
           return;
         }
+        const sideToMove = fen.split(' ')[1] ?? 'w';
         if (isAnalyzingRef.current) skipBestMoveRef.current = true;
         isAnalyzingRef.current  = false;
         onAnalysisRef.current   = null;
@@ -293,14 +295,21 @@ export function useStockfish() {
         multiPVRef.current      = null;
         lastInfoRef.current     = {};
         evalCallbackRef.current = (r: EvalResult) => {
-          const cp = r.mate !== undefined
-            ? (r.mate > 0 ? 9000 : -9000)
-            : (r.cp ?? 0);
+          // Convert from side-to-move perspective to white's perspective
+          let cp: number;
+          if (r.mate !== undefined) {
+            const absVal = r.mate > 0 ? 9000 : -9000;
+            cp = sideToMove === 'b' ? -absVal : absVal;
+          } else {
+            cp = sideToMove === 'b' ? -(r.cp ?? 0) : (r.cp ?? 0);
+          }
           resolve({ cp, bestMove: r.bestMove ?? '' });
         };
         workerRef.current.postMessage('stop');
+        workerRef.current.postMessage('setoption name Skill Level value 20');
+        workerRef.current.postMessage('setoption name MultiPV value 1');
         workerRef.current.postMessage(`position fen ${fen}`);
-        workerRef.current.postMessage('go movetime 120');
+        workerRef.current.postMessage(`go movetime ${movetime}`);
       });
     },
     [isReady],

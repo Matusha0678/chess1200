@@ -81,11 +81,23 @@ function uciToSan(fen: string, uci: string): string {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
+interface ComputedLine {
+  uci: string;
+  evalWhite: number; // centipawns, always white's perspective
+}
+
 interface AnswerState {
   correct: boolean;
   alternate: boolean;
   userSan: string;
   xpEarned: number;
+  evalMyMoveCp?: number;  // centipawns, user's perspective
+  evalBestCp?: number;    // centipawns, user's perspective
+}
+
+function fmtEval(cp: number): string {
+  const s = cp >= 0 ? '+' : '';
+  return `${s}${(cp / 100).toFixed(2)}`;
 }
 
 interface Filters {
@@ -116,13 +128,35 @@ export default function MistakesPage() {
   const [buildError, setBuildError] = useState<string | null>(null);
 
   const { boardTheme, customPieces, showNotation: notationEnabled, animationMs, boardThemeId, pieceStyleId } = useBoardTheme();
-  const { startAnalysis, stopAnalysis, isReady } = useStockfish();
-  const lastEvalRef = useRef<number>(0);
+  const { getMultiPV, evalPosition, setSkillLevel, isReady } = useStockfish();
+  const cardLinesRef = useRef<ComputedLine[] | null>(null);
 
   useEffect(() => {
     void loadCards();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
+
+  // Precompute top-3 lines for the current card (Skill Level 20, depth 14)
+  useEffect(() => {
+    const currentCard = cards[index] ?? null;
+    if (!currentCard || !isReady) return;
+    cardLinesRef.current = null;
+    setSkillLevel(20);
+    const sideToMove = currentCard.fen_before.split(' ')[1] ?? 'w';
+    getMultiPV(currentCard.fen_before, 14, 3, (lines) => {
+      cardLinesRef.current = lines.map(l => {
+        let evalWhite: number;
+        if (l.mate !== undefined) {
+          const absVal = l.mate > 0 ? 9000 : -9000;
+          evalWhite = sideToMove === 'b' ? -absVal : absVal;
+        } else {
+          evalWhite = sideToMove === 'b' ? -(l.cp ?? 0) : (l.cp ?? 0);
+        }
+        return { uci: l.move, evalWhite };
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards[index]?.id, isReady]);
 
   async function loadCards() {
     setLoading(true);
@@ -254,14 +288,11 @@ export default function MistakesPage() {
     if (!card || answered || checking) return false;
     if (!targetSquare) return false;
 
-    // Validate move
     const chess = new Chess(card.fen_before);
     let moveResult;
     try {
       moveResult = chess.move({ from: sourceSquare as Square, to: targetSquare as Square });
-    } catch {
-      return false;
-    }
+    } catch { return false; }
     if (!moveResult) return false;
 
     const userSan = moveResult.san;
@@ -269,56 +300,81 @@ export default function MistakesPage() {
     const newFen = chess.fen();
     setCurrentFen(newFen);
 
-    // Check if exact best move
+    const userColor = card.fen_before.split(' ')[1] as 'w' | 'b';
+
+    // Exact best move — instant correct
     if (userUci === card.best_move) {
       void handleCorrect(userSan, false);
       return true;
     }
 
-    // Run Stockfish analysis to check close-enough
-    setChecking(true);
-    lastEvalRef.current = 0;
-
-    if (!isReady) {
-      void handleWrong(userSan);
-      return true;
+    // Fast path: check against precomputed top-3 lines
+    const lines = cardLinesRef.current;
+    if (lines && lines.length > 0) {
+      const bestEvalUser = userColor === 'w' ? lines[0].evalWhite : -lines[0].evalWhite;
+      const match = lines.find(l => l.uci === userUci);
+      if (match) {
+        const lineEvalUser = userColor === 'w' ? match.evalWhite : -match.evalWhite;
+        const loss = bestEvalUser - lineEvalUser;
+        if (loss <= 80 || (bestEvalUser > 500 && lineEvalUser > 400)) {
+          void handleCorrect(userSan, true, lineEvalUser, bestEvalUser);
+          return true;
+        }
+      }
     }
 
-    startAnalysis(newFen, (info) => {
-      if (info.cp !== undefined) lastEvalRef.current = info.cp;
-    });
+    // Async fallback: evalPosition on resulting position (~1 s, Skill 20)
+    if (!isReady) {
+      void handleWrong(userSan, undefined, undefined);
+      return true;
+    }
+    setChecking(true);
 
-    setTimeout(() => {
-      stopAnalysis();
-      setChecking(false);
+    const evalBeforeWhite = card.eval_before ?? 0;
+    const evalBeforeUser = userColor === 'w' ? evalBeforeWhite : -evalBeforeWhite;
+    const bestEvalUser = lines && lines.length > 0
+      ? (userColor === 'w' ? lines[0].evalWhite : -lines[0].evalWhite)
+      : evalBeforeUser;
 
-      const userColor = card.fen_before.split(' ')[1] as 'w' | 'b';
-      const evalLoss = userColor === 'w'
-        ? (card.eval_before ?? 0) - lastEvalRef.current
-        : lastEvalRef.current - (card.eval_before ?? 0);
-
-      if (evalLoss <= 50) {
-        void handleCorrect(userSan, true);
-      } else {
-        void handleWrong(userSan);
+    void (async () => {
+      try {
+        const { cp: evalAfterWhite } = await evalPosition(newFen, 1000);
+        const evalAfterUser = userColor === 'w' ? evalAfterWhite : -evalAfterWhite;
+        const evalLoss = evalBeforeUser - evalAfterUser;
+        setChecking(false);
+        if (evalLoss <= 80 || evalAfterUser > 500) {
+          void handleCorrect(userSan, true, evalAfterUser, bestEvalUser);
+        } else {
+          void handleWrong(userSan, evalAfterUser, bestEvalUser);
+        }
+      } catch {
+        setChecking(false);
+        void handleWrong(userSan, undefined, undefined);
       }
-    }, 800);
+    })();
 
     return true;
   }
 
-  async function handleCorrect(userSan: string, alternate: boolean) {
+  async function handleCorrect(userSan: string, alternate: boolean, evalMyMoveCp?: number, evalBestCp?: number) {
     if (!card) return;
     const xp = alternate ? 5 : 10;
-    setAnswered({ correct: true, alternate, userSan, xpEarned: xp });
+    setAnswered({ correct: true, alternate, userSan, xpEarned: xp, evalMyMoveCp, evalBestCp });
     await updateCard(card, true);
     await addXp(xp);
   }
 
-  async function handleWrong(userSan: string) {
+  async function handleWrong(userSan: string, evalMyMoveCp?: number, evalBestCp?: number) {
     if (!card) return;
-    setAnswered({ correct: false, alternate: false, userSan, xpEarned: 0 });
+    setAnswered({ correct: false, alternate: false, userSan, xpEarned: 0, evalMyMoveCp, evalBestCp });
     await updateCard(card, false);
+  }
+
+  async function handleCorrectManual() {
+    if (!card || !answered || answered.correct) return;
+    setAnswered(prev => prev ? { ...prev, correct: true, alternate: true, xpEarned: 5 } : prev);
+    await updateCard(card, true);
+    await addXp(5);
   }
 
   function goNext() {
@@ -607,6 +663,22 @@ export default function MistakesPage() {
                         </span>
                       </div>
                     )}
+                    {answered.evalMyMoveCp !== undefined && answered.evalBestCp !== undefined && (
+                      <span style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+                        Твой ход: {fmtEval(answered.evalMyMoveCp)} · лучший: {fmtEval(answered.evalBestCp)}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => void handleCorrectManual()}
+                      style={{
+                        alignSelf: 'flex-start', height: 32, padding: '0 14px',
+                        fontSize: 12, fontWeight: 500,
+                        background: 'transparent', color: 'var(--muted)',
+                        border: '1px solid var(--hairline)', cursor: 'pointer',
+                      }}
+                    >
+                      Мой ход тоже хороший
+                    </button>
                   </div>
                 )}
 
