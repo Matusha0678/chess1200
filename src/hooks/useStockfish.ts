@@ -25,6 +25,12 @@ export interface MultiPVLine {
   mate?: number;
 }
 
+/** MultiPV result with scores already converted to white's perspective. */
+export interface WhitePovLine {
+  move: string;
+  cpWhite: number;   // white's POV always; mate encoded as ±9000
+}
+
 interface MultiPVRequest {
   count: number;
   collected: Map<number, MultiPVLine>;
@@ -276,6 +282,49 @@ export function useStockfish() {
     }
   }, [isReady]);
 
+  // Promise-based: evaluate a position with MultiPV, return top N lines (white's POV).
+  // Useful for detecting great moves, accurate classification, and training analysis.
+  const evalPositionMultiPV = useCallback(
+    (fen: string, count: number, movetime = 250): Promise<WhitePovLine[]> => {
+      return new Promise((resolve, reject) => {
+        if (!workerRef.current || !isReady) {
+          reject(new Error('Stockfish not ready'));
+          return;
+        }
+        const sideToMove = fen.split(' ')[1] ?? 'w';
+        if (isAnalyzingRef.current) skipBestMoveRef.current = true;
+        isAnalyzingRef.current  = false;
+        onAnalysisRef.current   = null;
+        onBestMoveRef.current   = null;
+        evalCallbackRef.current = null;
+        topMovesRef.current     = null;
+        multiPVRef.current      = {
+          count,
+          collected: new Map(),
+          callback: (lines) => {
+            const result: WhitePovLine[] = lines.map(l => {
+              let cpWhite: number;
+              if (l.mate !== undefined) {
+                const absVal = l.mate > 0 ? 9000 : -9000;
+                cpWhite = sideToMove === 'b' ? -absVal : absVal;
+              } else {
+                cpWhite = sideToMove === 'b' ? -(l.cp ?? 0) : (l.cp ?? 0);
+              }
+              return { move: l.move, cpWhite };
+            });
+            resolve(result);
+          },
+        };
+        workerRef.current.postMessage('stop');
+        workerRef.current.postMessage('setoption name Skill Level value 20');
+        workerRef.current.postMessage(`setoption name MultiPV value ${count}`);
+        workerRef.current.postMessage(`position fen ${fen}`);
+        workerRef.current.postMessage(`go movetime ${movetime}`);
+      });
+    },
+    [isReady],
+  );
+
   // Promise-based: evaluate a position, return { cp (WHITE's POV always), bestMove }.
   // Stockfish score cp/mate is from the side-to-move perspective — we convert here.
   // Mate encoded as ±9000. Default limit: movetime 120 ms.
@@ -315,5 +364,5 @@ export function useStockfish() {
     [isReady],
   );
 
-  return { getBestMove, getEval, getTopMoves, getMultiPV, startAnalysis, stopAnalysis, setSkillLevel, isReady, evalPosition };
+  return { getBestMove, getEval, getTopMoves, getMultiPV, startAnalysis, stopAnalysis, setSkillLevel, isReady, evalPosition, evalPositionMultiPV };
 }

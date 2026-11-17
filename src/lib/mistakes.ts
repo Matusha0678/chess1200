@@ -41,6 +41,10 @@ export interface GameAnalysis {
 
 export interface ParsedMove {
   san: string;
+  from: Square;
+  to: Square;
+  piece: string;        // piece type that moved
+  captured?: string;    // piece type that was captured (if any)
   fen_before: string;
   fen_after: string;
   eval_after_cp: number | null;
@@ -170,6 +174,10 @@ export function parsePgnMoves(pgn: string): ParsedMove[] {
 
     results.push({
       san: h.san,
+      from: h.from as Square,
+      to: h.to as Square,
+      piece: h.piece,
+      captured: h.captured,
       fen_before,
       fen_after: replay.fen(),
       eval_after_cp: null,
