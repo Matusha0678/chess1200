@@ -6,10 +6,6 @@ import { supabase } from '@/lib/supabase';
 import type { Course, CourseLesson, LessonProgress, LessonLine, TestQuestion } from '@/types/courses';
 import { LessonTest } from '@/components/LessonTest';
 
-const HEADING: React.CSSProperties = {
-  fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-};
-
 interface Props {
   params: Promise<{ courseId: string }>;
 }
@@ -158,145 +154,95 @@ export default function CourseOverviewPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box' }}>
-        <div className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ height: 14, width: 80, background: 'var(--track)' }} />
-          <div style={{ height: 52, width: '55%', background: 'var(--track)' }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} style={{ height: 72, background: 'var(--surface)', border: '1px solid var(--hairline)' }} />
-            ))}
-          </div>
-        </div>
-      </main>
+      <div className="page animate-pulse">
+        <div style={{ height: 14, width: 80, background: 'var(--track)', borderRadius: 4 }} />
+        <div style={{ height: 52, width: '55%', background: 'var(--track)', borderRadius: 'var(--radius-card)' }} />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} style={{ height: 72, background: 'var(--surface)', borderRadius: 'var(--radius-card)' }} />
+        ))}
+      </div>
     );
   }
 
   if (!course) {
     return (
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box' }}>
-        <Link href="/courses" style={{ fontSize: 13, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          ← Курсы
-        </Link>
-        <p style={{ color: 'var(--muted)', marginTop: 32 }}>Курс не найден.</p>
-      </main>
+      <div className="page">
+        <Link href="/courses" className="page-back">← Курсы</Link>
+        <p style={{ color: 'var(--muted)' }}>Курс не найден.</p>
+      </div>
     );
   }
 
   const completedCount = lessons.filter(l => l.progress?.completed).length;
 
   return (
-    <main style={{
-      maxWidth: 900, margin: '0 auto',
-      padding: '40px 48px 72px',
-      display: 'flex', flexDirection: 'column', gap: 32,
-      boxSizing: 'border-box',
-    }}>
-      {/* Breadcrumb */}
-      <Link
-        href="/courses"
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          fontSize: 13, color: 'var(--muted)',
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M19 12H5M12 5l-7 7 7 7" />
-        </svg>
-        Курсы
-      </Link>
-
+    <div className="page">
       {/* Course header */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <h1 style={{ ...HEADING, margin: 0, fontSize: 56, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1 }}>
-          {course.name}
-        </h1>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-          <ColorLabel color={course.color} />
-          {course.opening && (
-            <span style={{ fontSize: 13, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              {course.opening}
-            </span>
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link href="/courses" className="page-back">← Курсы</Link>
+          <h1 className="page-title">{course.name}</h1>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <ColorLabel color={course.color} />
+            {course.opening && (
+              <span style={{ fontSize: 13, color: 'var(--muted)' }}>{course.opening}</span>
+            )}
+            <DifficultyDots value={course.difficulty} />
+          </div>
+          {course.description && (
+            <p className="page-lead">{course.description}</p>
           )}
-          <DifficultyDots value={course.difficulty} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-              Пройдено {completedCount} / {lessons.length}
-            </span>
-            <div style={{ height: 2, background: 'var(--track)', width: '100%', maxWidth: 200 }}>
-              <div style={{ height: '100%', width: `${lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0}%`, background: 'var(--ivory)' }} />
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <div className="progress-track" style={{ width: 120 }}>
+                <div className="progress-fill" style={{ width: `${lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0}%` }} />
+              </div>
+              <span style={{ fontSize: 13, color: 'var(--muted)' }}>{completedCount}/{lessons.length}</span>
             </div>
           </div>
         </div>
-        {course.description && (
-          <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)', lineHeight: 1.6 }}>
-            {course.description}
-          </p>
-        )}
-        <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-          <Link href={`/courses/${courseId}/cheatsheet`} style={{ display: 'inline-flex', alignItems: 'center', height: 36, padding: '0 16px', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 13, textDecoration: 'none' }}>
-            Шпаргалка
-          </Link>
-        </div>
+        <Link href={`/courses/${courseId}/cheatsheet`} className="ui-btn ui-btn-outline" style={{ textDecoration: 'none' }}>
+          Шпаргалка
+        </Link>
       </div>
 
       {/* Lessons list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <div style={{ borderTop: '2px solid var(--ivory)', marginBottom: 16 }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
         {lessons.length === 0 ? (
-          <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>Нет уроков в этом курсе</p>
+          <div className="empty-state">
+            <div className="empty-state-title">Нет уроков</div>
+            <div className="empty-state-text">В этом курсе пока нет уроков.</div>
+          </div>
         ) : (
           lessons.map((lesson, idx) => {
             const done = lesson.progress?.completed ?? false;
             return (
-              <div
-                key={lesson.id}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 16,
-                  padding: '16px 20px',
-                  border: '1px solid var(--hairline)',
-                  background: 'var(--surface)',
-                  marginBottom: 8,
-                }}
-              >
+              <div key={lesson.id} className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 {/* Number */}
-                <span style={{
-                  fontSize: 12, color: 'var(--muted)',
-                  fontVariantNumeric: 'tabular-nums',
-                  flexShrink: 0, minWidth: 24, textAlign: 'right',
-                }}>
+                <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums', flexShrink: 0, minWidth: 24, textAlign: 'right' }}>
                   {String(idx + 1).padStart(2, '0')}
                 </span>
 
                 {/* Completion indicator */}
                 {done ? (
-                  <span style={{
-                    flexShrink: 0, width: 20, height: 20,
-                    borderRadius: '50%', background: 'var(--ivory)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <span style={{ flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12.5l4.5 4.5L19 7.5" />
                     </svg>
                   </span>
                 ) : (
-                  <span style={{
-                    flexShrink: 0, width: 20, height: 20,
-                    borderRadius: '50%', border: '1px solid var(--control)',
-                  }} />
+                  <span style={{ flexShrink: 0, width: 20, height: 20, borderRadius: '50%', border: '1px solid var(--hairline)' }} />
                 )}
 
                 {/* Title + meta */}
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', lineHeight: 1.2 }}>
-                    {lesson.title}
-                  </span>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', lineHeight: 1.2 }}>{lesson.title}</span>
                   <div style={{ display: 'flex', gap: 10, fontSize: 12, color: 'var(--muted)' }}>
                     <span>{lesson.moveCount} ходов</span>
-                    {done && <span style={{ color: 'var(--ivory)' }}>✓ Пройден</span>}
+                    {done && <span style={{ color: 'var(--accent)' }}>✓ Пройден</span>}
                     {latestTestMap[lesson.id] !== undefined && (
-                      <span style={{ color: latestTestMap[lesson.id].pct >= 80 ? 'rgba(130,220,100,0.95)' : 'var(--muted)' }}>
+                      <span style={{ color: latestTestMap[lesson.id].pct >= 80 ? 'var(--accent)' : 'var(--muted)' }}>
                         {latestTestMap[lesson.id].pct}%
                       </span>
                     )}
@@ -305,26 +251,10 @@ export default function CourseOverviewPage({ params }: Props) {
 
                 {/* Action buttons */}
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                  <Link
-                    href={`/courses/${courseId}/${lesson.id}`}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      height: 36, padding: '0 16px',
-                      border: '1px solid var(--control)', background: 'transparent',
-                      color: 'var(--ivory)', fontSize: 13, fontWeight: 500,
-                    }}
-                  >
+                  <Link href={`/courses/${courseId}/${lesson.id}`} className="ui-btn ui-btn-outline ui-btn-sm" style={{ textDecoration: 'none' }}>
                     Изучить
                   </Link>
-                  <Link
-                    href={`/courses/${courseId}/${lesson.id}/practice`}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      height: 36, padding: '0 16px',
-                      background: 'var(--ivory)', color: 'var(--ink)',
-                      fontSize: 13, fontWeight: 600,
-                    }}
-                  >
+                  <Link href={`/courses/${courseId}/${lesson.id}/practice`} className="ui-btn ui-btn-primary ui-btn-sm" style={{ textDecoration: 'none' }}>
                     Тренировать
                   </Link>
                 </div>
@@ -336,19 +266,16 @@ export default function CourseOverviewPage({ params }: Props) {
 
       {/* Weak spots */}
       {weakSpots.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ borderTop: '2px solid var(--ivory)', paddingTop: 16, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>Слабые места</h2>
-            <button
-              onClick={() => setShowWeakTest(true)}
-              style={{ height: 36, padding: '0 16px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' }}
-            >
-              Повторить слабые места ({weakSpots.length})
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--hairline)', paddingBottom: 10 }}>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--ivory)' }}>Слабые места</h2>
+            <button onClick={() => setShowWeakTest(true)} className="ui-btn ui-btn-outline ui-btn-sm">
+              Повторить ({weakSpots.length})
             </button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {weakSpots.slice(0, 5).map((ws, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', border: '1px solid var(--hairline)', background: 'var(--surface)' }}>
+              <div key={i} className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ fontSize: 11, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums', flexShrink: 0, minWidth: 20, textAlign: 'right' }}>
                   ×{ws.count}
                 </span>
@@ -367,6 +294,6 @@ export default function CourseOverviewPage({ params }: Props) {
           onClose={() => setShowWeakTest(false)}
         />
       )}
-    </main>
+    </div>
   );
 }

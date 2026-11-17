@@ -78,16 +78,13 @@ function PlayContent() {
 
   if (mode === 'handicap' && !handicapReady) {
     return (
-      <main style={{ maxWidth: 480, margin: '0 auto', padding: '48px 24px' }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 24 }}>
-          Игра с форой
+      <div className="page" style={{ maxWidth: 480 }}>
+        <div className="page-head">
+          <div className="page-head-text">
+            <h1 className="page-title">Выбери форy</h1>
+            <p className="page-lead">Стокфиш начнёт без одной фигуры. Ты играешь белыми.</p>
+          </div>
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ivory)', marginBottom: 8 }}>
-          Выбери форy
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 32 }}>
-          Стокфиш начнёт без одной фигуры. Ты играешь белыми.
-        </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {(['queen', 'rook', 'knight'] as HandicapPiece[]).map(p => {
             const labels: Record<HandicapPiece, string> = { queen: 'Без ферзя', rook: 'Без ладьи (h8)', knight: 'Без коня (g8)' };
@@ -96,13 +93,8 @@ function PlayContent() {
               <button
                 key={p}
                 onClick={() => setHandicapPiece(p)}
-                style={{
-                  height: 44, border: `1px solid ${isSelected ? 'var(--ivory)' : 'var(--hairline)'}`,
-                  background: isSelected ? 'rgba(242,239,231,0.08)' : 'transparent',
-                  color: isSelected ? 'var(--ivory)' : 'var(--muted)',
-                  borderRadius: 8, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left',
-                  padding: '0 16px',
-                }}
+                className={`ui-btn ${isSelected ? 'ui-btn-primary' : 'ui-btn-outline'}`}
+                style={{ justifyContent: 'flex-start' }}
               >
                 {labels[p]}
               </button>
@@ -112,17 +104,12 @@ function PlayContent() {
         <button
           disabled={!handicapPiece}
           onClick={() => setHandicapReady(true)}
-          style={{
-            marginTop: 24, width: '100%', height: 44,
-            background: handicapPiece ? 'var(--ivory)' : 'var(--surface)',
-            color: handicapPiece ? 'var(--ink)' : 'var(--muted)',
-            border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600,
-            fontFamily: 'inherit', cursor: handicapPiece ? 'pointer' : 'default',
-          }}
+          className="ui-btn ui-btn-primary"
+          style={{ marginTop: 24, width: '100%' }}
         >
           Начать игру
         </button>
-      </main>
+      </div>
     );
   }
 
@@ -131,46 +118,36 @@ function PlayContent() {
   const convert = mode === 'convert' ? CONVERT_POSITIONS[convertIdx] : null;
 
   return (
-    <main style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 32px' }}>
+    <div className="page">
 
       {/* Header */}
-      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+      <div className="page-head">
+        <div className="page-head-text">
+          <p className="page-crumbs">
             {mode === 'convert' ? 'Конвертация преимущества'
               : mode === 'handicap' ? 'Игра с форой'
               : 'Играть с позиции'}
-          </div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ivory)', margin: 0 }}>
+          </p>
+          <h1 className="page-title">
             {convert ? convert.idea : mode === 'handicap' ? `Без ${handicapPiece === 'queen' ? 'ферзя' : handicapPiece === 'rook' ? 'ладьи' : 'коня'}` : 'Позиция'}
           </h1>
         </div>
 
         {mode === 'convert' && convertStats !== null && convertStats.total > 0 && (
-          <div style={{
-            padding: '8px 16px', border: '1px solid var(--hairline)', borderRadius: 6,
-            fontSize: 13, color: 'var(--muted)', textAlign: 'right',
-          }}>
-            Статистика побед
-            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ivory)', lineHeight: 1.2 }}>
-              {Math.round(convertStats.wins / convertStats.total * 100)}%
-            </div>
-            <div style={{ fontSize: 11 }}>{convertStats.wins} из {convertStats.total}</div>
+          <div className="stat-card" style={{ textAlign: 'right', minWidth: 100 }}>
+            <div className="stat-value">{Math.round(convertStats.wins / convertStats.total * 100)}%</div>
+            <div className="stat-label">побед ({convertStats.wins}/{convertStats.total})</div>
           </div>
         )}
       </div>
 
       {/* Convert mode: position switcher */}
       {mode === 'convert' && (
-        <div style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>
             Позиция {convertIdx + 1} из {CONVERT_POSITIONS.length}
           </span>
-          <button onClick={nextConvertPosition} style={{
-            height: 28, padding: '0 12px', border: '1px solid var(--hairline)',
-            background: 'transparent', color: 'var(--muted)', borderRadius: 14,
-            fontSize: 12, fontFamily: 'inherit', cursor: 'pointer',
-          }}>
+          <button onClick={nextConvertPosition} className="ui-btn ui-btn-outline ui-btn-sm">
             Следующая →
           </button>
         </div>
@@ -185,7 +162,7 @@ function PlayContent() {
         mode={mode}
         onNewGame={mode === 'convert' ? nextConvertPosition : undefined}
       />
-    </main>
+    </div>
   );
 }
 
@@ -194,9 +171,9 @@ function PlayContent() {
 export default function PlayPage() {
   return (
     <Suspense fallback={
-      <main style={{ maxWidth: 480, margin: '80px auto', padding: '0 24px', textAlign: 'center', fontSize: 14, color: 'var(--muted)' }}>
+      <div className="page" style={{ textAlign: 'center', paddingTop: 80, color: 'var(--muted)', fontSize: 14 }}>
         Загрузка…
-      </main>
+      </div>
     }>
       <PlayContent />
     </Suspense>

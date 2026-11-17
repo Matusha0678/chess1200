@@ -395,13 +395,15 @@ html, body {
 }
 [data-site-theme^="soft"] .ui-eyebrow-line { display: none; }
 
-/* page-title: scale down slightly in soft theme for warmth */
-[data-site-theme^="soft"] .page-title {
+/* page-title / ui-h1: scale down in soft theme for warmth */
+[data-site-theme^="soft"] .page-title,
+[data-site-theme^="soft"] .ui-h1 {
   font-size: 32px;
   letter-spacing: -0.01em;
 }
 @media (max-width: 599px) {
-  [data-site-theme^="soft"] .page-title { font-size: 26px; }
+  [data-site-theme^="soft"] .page-title,
+  [data-site-theme^="soft"] .ui-h1 { font-size: 26px; }
 }
 
 /* sidebar link: use accent bg instead of left border in soft theme */

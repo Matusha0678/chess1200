@@ -256,55 +256,55 @@ export default function ExamPage({ params }: Props) {
   }
 
   if (loading) return (
-    <main style={{ maxWidth: 760, margin: '0 auto', padding: '40px 24px 72px' }}>
+    <div className="page">
       <div style={{ color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
-    </main>
+    </div>
   );
 
   if (sqlMissing) return (
-    <main style={{ maxWidth: 760, margin: '0 auto', padding: '40px 24px 72px' }}>
+    <div className="page">
       <Link href={`/openings/${id}`} style={{ fontSize: 13, color: 'var(--muted)' }}>← Дебют</Link>
       <div style={{ marginTop: 24, padding: '16px 20px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 14, color: 'var(--muted)' }}>
         Выполни <strong>supabase/21-exam-log.sql</strong>, затем повтори.
       </div>
-    </main>
+    </div>
   );
 
   if (phase === 'setup') {
     return (
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '40px 24px 72px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <Link href={`/openings/${id}`} style={{ fontSize: 13, color: 'var(--muted)' }}>← {opening?.name ?? 'Дебют'}</Link>
-        <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
-          Экзамен
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>
-          Линии идут в случайном порядке. Без подсказок и подсветки. Ошибка — показывается правильный ход, следующая линия.
-        </p>
+      <div className="page">
+        <div className="page-head">
+          <div className="page-head-text">
+            <Link href={`/openings/${id}`} className="page-back">← {opening?.name ?? 'Дебют'}</Link>
+            <h1 className="page-title">Экзамен</h1>
+            <p className="page-lead">Линии идут в случайном порядке. Без подсказок и подсветки. Ошибка — показывается правильный ход, следующая линия.</p>
+          </div>
+        </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ fontSize: 12, letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase' }}>Режим</div>
-            <div style={{ display: 'flex', gap: 0, border: '1px solid var(--hairline)' }}>
-              <button onClick={() => setMode('all')} style={{ flex: 1, height: 36, border: 'none', background: mode === 'all' ? 'var(--track)' : 'transparent', color: mode === 'all' ? 'var(--ivory)' : 'var(--muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>Режим</div>
+            <div className="ui-segmented">
+              <button onClick={() => setMode('all')} className={`ui-segment ${mode === 'all' ? 'ui-segment-active' : ''}`}>
                 Все линии ({allLines.length})
               </button>
-              <button onClick={() => setMode('review')} style={{ flex: 1, height: 36, border: 'none', borderLeft: '1px solid var(--hairline)', background: mode === 'review' ? 'var(--track)' : 'transparent', color: mode === 'review' ? 'var(--ivory)' : 'var(--muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => setMode('review')} className={`ui-segment ${mode === 'review' ? 'ui-segment-active' : ''}`}>
                 Только на повтор
               </button>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ fontSize: 12, letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase' }}>Таймер (минуты)</div>
+            <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>Таймер (минуты)</div>
             <input type="number" value={timerLimit / 60} onChange={e => setTimerLimit(Math.max(1, parseInt(e.target.value) || 10) * 60)} min={1} max={60}
-              style={{ width: 80, height: 36, padding: '0 10px', fontSize: 14, background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ivory)', outline: 'none', fontFamily: 'inherit' }} />
+              className="ui-input" style={{ width: 80 }} />
           </div>
 
-          <button onClick={startExam} disabled={allLines.length === 0} style={{ height: 48, padding: '0 32px', background: 'var(--ivory)', color: 'var(--ink)', border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}>
+          <button onClick={startExam} disabled={allLines.length === 0} className="ui-btn ui-btn-primary">
             Начать экзамен
           </button>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -316,32 +316,34 @@ export default function ExamPage({ params }: Props) {
     const secs = Math.round((Date.now() - startTimeRef.current) / 1000);
 
     return (
-      <main style={{ maxWidth: 640, margin: '0 auto', padding: '40px 24px 72px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <Link href={`/openings/${id}`} style={{ fontSize: 13, color: 'var(--muted)' }}>← {opening?.name ?? 'Дебют'}</Link>
-        <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
-          Экзамен завершён
-        </h1>
-
-        <div style={{ padding: '20px 24px', border: '1px solid var(--hairline)', background: 'var(--surface)', display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: 48, fontWeight: 700, letterSpacing: '-0.03em', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)", color: pct >= 75 ? 'rgba(100,220,100,0.95)' : pct >= 60 ? 'rgba(220,180,40,0.9)' : 'rgba(220,80,60,0.9)' }}>{pct}%</div>
-            <div style={{ fontSize: 13, color: 'var(--muted)' }}>Линий без ошибок: {perfect} / {total}</div>
+      <div className="page">
+        <div className="page-head">
+          <div className="page-head-text">
+            <Link href={`/openings/${id}`} className="page-back">← {opening?.name ?? 'Дебют'}</Link>
+            <h1 className="page-title">Экзамен завершён</h1>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--ivory)' }}>{gradeLabel(pct)}</div>
-            <div style={{ fontSize: 13, color: 'var(--muted)' }}>{fmtTime(secs)} затрачено</div>
+        </div>
+
+        <div className="stat-grid">
+          <div className="stat-card">
+            <div className="stat-value" style={{ color: pct >= 75 ? 'var(--accent)' : pct >= 60 ? 'rgba(220,180,40,0.9)' : 'rgba(220,80,60,0.9)' }}>{pct}%</div>
+            <div className="stat-label">линий без ошибок ({perfect}/{total})</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{gradeLabel(pct)}</div>
+            <div className="stat-label">{fmtTime(secs)} затрачено</div>
           </div>
         </div>
 
         {failed.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 12, letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase' }}>Линии с ошибками ({failed.length})</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>Линии с ошибками ({failed.length})</div>
             {failed.map(({ line }) => {
               const preview = line.moves.slice(0, 8).reduce((acc, m, i) => {
                 return acc + (m.color === 'w' ? `${Math.floor(i/2)+1}. ` : '') + m.san + ' ';
               }, '').trim();
               return (
-                <div key={line.id} style={{ padding: '10px 14px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 13, color: 'var(--muted)', fontFamily: 'monospace' }}>
+                <div key={line.id} className="ui-card" style={{ fontSize: 13, color: 'var(--muted)', fontFamily: 'monospace' }}>
                   {preview}{line.moves.length > 8 ? '…' : ''}
                 </div>
               );
@@ -350,20 +352,16 @@ export default function ExamPage({ params }: Props) {
         )}
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button onClick={() => { setPhase('setup'); }} style={{ height: 44, padding: '0 24px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>
-            Ещё раз
-          </button>
-          <Link href={`/openings/${id}`} style={{ height: 44, padding: '0 24px', display: 'inline-flex', alignItems: 'center', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
-            К дебюту
-          </Link>
+          <button onClick={() => { setPhase('setup'); }} className="ui-btn ui-btn-outline">Ещё раз</button>
+          <Link href={`/openings/${id}`} className="ui-btn ui-btn-primary" style={{ textDecoration: 'none' }}>К дебюту</Link>
         </div>
-      </main>
+      </div>
     );
   }
 
   // Running
   return (
-    <main style={{ maxWidth: 900, margin: '0 auto', padding: '24px 24px 72px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="page">
       {/* Header bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 13, color: 'var(--muted)' }}>Осталось: <strong style={{ color: 'var(--ivory)' }}>{totalInQueue}</strong></span>
@@ -403,6 +401,6 @@ export default function ExamPage({ params }: Props) {
       </div>
 
       <div style={{ fontSize: 13, color: 'var(--muted)' }}>Сыграно: {results.length} / {results.length + totalInQueue}</div>
-    </main>
+    </div>
   );
 }

@@ -87,37 +87,34 @@ export default function NotesPage() {
 
   if (sqlMissing) {
     return (
-      <main style={{ maxWidth: 760, margin: '0 auto', padding: '40px 24px 72px', boxSizing: 'border-box' }}>
-        <Link href="/courses" style={{ fontSize: 13, color: 'var(--muted)' }}>← Курсы</Link>
-        <div style={{ marginTop: 32, padding: '20px 24px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 14, color: 'var(--muted)', lineHeight: 1.7 }}>
+      <div className="page">
+        <Link href="/courses" className="page-back">← Курсы</Link>
+        <div className="ui-card" style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.7 }}>
           Таблица <code>lesson_notes</code> не создана.<br />
           Выполни <strong>supabase/18-lesson-notes.sql</strong> в Supabase.
         </div>
-      </main>
+      </div>
     );
   }
 
   const confusedCount = notes.filter(n => n.kind === 'confused').length;
 
   return (
-    <main style={{ maxWidth: 760, margin: '0 auto', padding: '40px 24px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="page">
       {/* Header */}
-      <div>
-        <Link href="/courses" style={{ fontSize: 13, color: 'var(--muted)' }}>← Курсы</Link>
-        <h1 style={{ margin: '12px 0 4px', fontSize: 36, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
-          Заметки
-        </h1>
-        {confusedCount > 0 && (
-          <p style={{ margin: 0, fontSize: 14, color: 'rgba(220,80,60,0.9)' }}>
-            Не понял: <strong>{confusedCount}</strong>
-          </p>
-        )}
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link href="/courses" className="page-back">← Курсы</Link>
+          <h1 className="page-title">Заметки</h1>
+          {confusedCount > 0 && (
+            <p className="page-lead">Не понял: <strong style={{ color: 'rgba(220,80,60,0.9)' }}>{confusedCount}</strong></p>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <select value={filterKind} onChange={e => setFilterKind(e.target.value as '' | 'note' | 'confused')}
-          style={{ height: 34, padding: '0 10px', fontSize: 13, background: 'var(--surface)', color: 'var(--ivory)', border: '1px solid var(--hairline)', cursor: 'pointer', outline: 'none' }}>
+        <select value={filterKind} onChange={e => setFilterKind(e.target.value as '' | 'note' | 'confused')} className="ui-input" style={{ width: 'auto' }}>
           <option value="">Все типы</option>
           <option value="note">Заметки</option>
           <option value="confused">Не понял</option>
@@ -132,30 +129,33 @@ export default function NotesPage() {
       {loading ? (
         <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
       ) : notes.length === 0 ? (
-        <div style={{ padding: '32px 0', color: 'var(--muted)', fontSize: 14 }}>Нет заметок</div>
+        <div className="empty-state">
+          <div className="empty-state-title">Нет заметок</div>
+          <div className="empty-state-text">Заметки появятся здесь когда ты добавишь их в уроках.</div>
+        </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {notes.map(note => {
             const info = lessonMap[note.lesson_id];
             const href = info ? `/courses/${info.course_id}/${note.lesson_id}?ply=${note.ply}` : '#';
             return (
-              <div key={note.id} style={{ padding: '14px 18px', border: '1px solid var(--hairline)', background: 'var(--surface)', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              <div key={note.id} className="ui-card" style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
                 <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1, color: note.kind === 'confused' ? 'rgba(220,80,60,0.9)' : 'rgba(100,180,255,0.9)' }}>
                   {note.kind === 'confused' ? '?' : '✎'}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {info && (
-                    <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4, letterSpacing: '0.06em' }}>
+                    <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
                       {info.courseTitle} → {info.title} · ход {note.ply}
                     </div>
                   )}
                   <div style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.5 }}>{note.body}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexDirection: 'column', alignItems: 'flex-end' }}>
-                  <Link href={href} style={{ fontSize: 12, color: 'var(--muted)', textDecoration: 'none', border: '1px solid var(--hairline)', padding: '3px 8px' }}>
+                  <Link href={href} className="ui-btn ui-btn-outline ui-btn-sm" style={{ textDecoration: 'none', fontSize: 12 }}>
                     Открыть
                   </Link>
-                  <button onClick={() => void markResolved(note.id)} style={{ fontSize: 12, color: 'var(--muted)', background: 'transparent', border: '1px solid var(--hairline)', padding: '3px 8px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <button onClick={() => void markResolved(note.id)} className="ui-btn ui-btn-outline ui-btn-sm" style={{ fontSize: 12 }}>
                     Понял
                   </button>
                 </div>
@@ -164,6 +164,6 @@ export default function NotesPage() {
           })}
         </div>
       )}
-    </main>
+    </div>
   );
 }
