@@ -258,6 +258,7 @@ interface LessonTestProps {
   nextLesson?: { id: string; title: string } | null;
   title?: string;
   forcedQuestions?: TestQuestion[];
+  extraQuestions?: TestQuestion[];
   onClose: () => void;
   onPassed?: () => void;
 }
@@ -272,14 +273,18 @@ export function LessonTest({
   nextLesson,
   title,
   forcedQuestions,
+  extraQuestions,
   onClose,
   onPassed,
 }: LessonTestProps) {
   const { boardTheme } = useBoardTheme();
 
   const makeQuestions = useCallback(() => {
-    return forcedQuestions ?? buildTestQuestions(lesson, moves) ?? [];
-  }, [forcedQuestions, lesson, moves]);
+    if (forcedQuestions) return forcedQuestions;
+    const base = buildTestQuestions(lesson, moves) ?? [];
+    if (extraQuestions?.length) return shuffle([...base, ...extraQuestions]);
+    return base;
+  }, [forcedQuestions, extraQuestions, lesson, moves]);
 
   const [questions, setQuestions] = useState<TestQuestion[]>(() => makeQuestions());
   const [qIdx, setQIdx] = useState(0);

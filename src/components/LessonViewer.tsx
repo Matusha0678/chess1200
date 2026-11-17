@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { playMove, playCapture, playCorrect, playWrong, playComplete } from '@/lib/sounds';
 import { LessonTest } from '@/components/LessonTest';
 import { DeviationMode } from '@/components/DeviationMode';
+import { ExplainMode } from '@/components/ExplainMode';
 import { supabase } from '@/lib/supabase';
 import type {
   CourseLessonMove,
@@ -15,6 +16,7 @@ import type {
   SquareMark,
   Arrow,
   QuizItem,
+  TestQuestion,
 } from '@/types/courses';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -204,6 +206,8 @@ export function LessonViewer({
   const [lessonPassed,  setLessonPassed]  = useState(false);
   const [showDeviation, setShowDeviation] = useState(false);
   const [devStats,      setDevStats]      = useState<{ ok: number; total: number } | null>(null);
+  const [showExplain,   setShowExplain]   = useState(false);
+  const [explainFailed, setExplainFailed] = useState<TestQuestion[]>([]);
 
   const soundOnRef = useRef(false);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
@@ -685,6 +689,14 @@ export function LessonViewer({
             >
               ОТКЛ
             </button>
+
+            <button
+              onClick={() => setShowExplain(true)}
+              title="Объясни сам — режим вопросов по комментариям"
+              style={{ height: 32, padding: '0 10px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '0.08em' }}
+            >
+              ОБЪЯСНИ
+            </button>
           </div>
 
           {/* Deviation stats */}
@@ -816,8 +828,23 @@ export function LessonViewer({
           lessonId={lessonId}
           courseId={courseId}
           nextLesson={nextLesson}
+          extraQuestions={explainFailed.length > 0 ? explainFailed : undefined}
           onClose={() => setShowTest(false)}
           onPassed={() => setLessonPassed(true)}
+        />
+      )}
+
+      {/* Explain mode overlay */}
+      {showExplain && (
+        <ExplainMode
+          moves={moves}
+          lessonId={lessonId}
+          boardOrientation={orientation}
+          boardTheme={boardTheme}
+          customPieces={customPieces}
+          showNotation={showNotation}
+          onClose={() => setShowExplain(false)}
+          onDone={(failed) => { setExplainFailed(failed); setShowExplain(false); }}
         />
       )}
 
