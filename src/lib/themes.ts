@@ -19,6 +19,11 @@ export type SiteTheme = {
 };
 
 export const BOARD_THEMES: BoardTheme[] = [
+  // Soft-first presets (chess.com palette)
+  { id: 'chess-green', name: 'Зелёная',    dark: '#769656', light: '#EEEED2' },
+  { id: 'chess-brown', name: 'Коричневая', dark: '#B58863', light: '#F0D9B5' },
+  { id: 'chess-grey',  name: 'Серо-синяя', dark: '#8CA2AD', light: '#DEE3E6' },
+  // Legacy / advanced
   { id: 'dark',     name: 'Тёмный',   dark: '#3A3A3A', light: '#8A8A8A' },
   { id: 'classic',  name: 'Классика', dark: '#B58863', light: '#F0D9B5' },
   { id: 'green',    name: 'Лесной',   dark: '#538A6E', light: '#FFFFDD' },
@@ -54,7 +59,17 @@ export const PIECE_STYLES: PieceStyle[] = [
 
 export const PIECE_KEYS = ['wP','wN','wB','wR','wQ','wK','bP','bN','bB','bR','bQ','bK'] as const;
 
+export type SiteThemeFamily = 'newspaper' | 'soft';
+
+export function getSiteThemeFamily(id: string): SiteThemeFamily {
+  return id.startsWith('soft') ? 'soft' : 'newspaper';
+}
+
 export const SITE_THEMES: SiteTheme[] = [
+  // ── Мягкий ──────────────────────────────────────────────────────────────────
+  { id: 'soft-dark',  name: 'Мягкий тёмный',  bg: '#302E2B', card: '#262522' },
+  { id: 'soft-light', name: 'Мягкий светлый',  bg: '#F3F3F1', card: '#FFFFFF' },
+  // ── Газетный (цветовые варианты) ─────────────────────────────────────────────
   { id: 'dark',     name: 'Уголь',      bg: '#050505', card: '#0D0D0D' },
   { id: 'midnight', name: 'Полночь',    bg: '#05070F', card: '#0C0E1A' },
   { id: 'indigo',   name: 'Индиго',     bg: '#030306', card: '#090A11' },

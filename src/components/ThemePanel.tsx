@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useBoardTheme, type AnimationSpeed } from '@/contexts/BoardThemeContext';
-import { BOARD_THEMES, PIECE_STYLES, SITE_THEMES } from '@/lib/themes';
+import { BOARD_THEMES, PIECE_STYLES, SITE_THEMES, getSiteThemeFamily } from '@/lib/themes';
 
 export default function ThemePanel() {
   const {
@@ -54,45 +54,96 @@ export default function ThemePanel() {
 
         <div className="flex flex-col gap-7 px-5 py-5">
 
-          {/* Site theme */}
+          {/* Site theme – family selector */}
           <section>
             <h2 className="text-[11px] font-semibold text-[#505050] uppercase tracking-widest mb-3">
-              Тема сайта
+              Стиль
             </h2>
-            <div className="grid grid-cols-4 gap-1.5">
-              {SITE_THEMES.map(theme => {
-                const active = theme.id === siteThemeId;
-                const isLight = theme.id === 'light';
+            {/* 3 primary choices */}
+            <div className="flex flex-col gap-1.5 mb-4">
+              {[
+                { id: 'dark',       label: 'Газетный',       desc: 'Острые углы, большой контраст', isSoft: false },
+                { id: 'soft-dark',  label: 'Мягкий тёмный',  desc: 'Скругления, зелёный акцент',   isSoft: true  },
+                { id: 'soft-light', label: 'Мягкий светлый', desc: 'Светлый фон, зелёный акцент',  isSoft: true  },
+              ].map(opt => {
+                const currentFamily = getSiteThemeFamily(siteThemeId);
+                const optFamily = opt.isSoft ? 'soft' : 'newspaper';
+                const active = opt.isSoft
+                  ? siteThemeId === opt.id
+                  : !siteThemeId.startsWith('soft') && opt.id === 'dark'
+                    ? currentFamily === 'newspaper'
+                    : siteThemeId === opt.id;
+                const handleClick = () => {
+                  if (opt.isSoft) {
+                    setSiteThemeId(opt.id);
+                  } else if (currentFamily === 'soft') {
+                    // switching from soft → newspaper: pick dark as default
+                    setSiteThemeId('dark');
+                  }
+                  // else already in newspaper family: keep current color variant
+                };
+                void optFamily;
                 return (
                   <button
-                    key={theme.id}
-                    onClick={() => setSiteThemeId(theme.id)}
+                    key={opt.id}
+                    onClick={handleClick}
                     className={[
-                      'flex flex-col items-center gap-1.5 rounded p-1.5 transition-colors',
+                      'flex items-center gap-3 w-full px-3 py-2.5 rounded text-left transition-colors',
                       active ? 'bg-[#1E1E1E] ring-1 ring-white/20' : 'hover:bg-[#161616]',
                     ].join(' ')}
-                    title={theme.name}
                   >
-                    {/* Mini app preview: outer = bg, inner = card */}
-                    <div
-                      className="w-10 h-7 rounded overflow-hidden relative"
-                      style={{ background: theme.bg }}
-                    >
-                      {/* Top bar */}
-                      <div className="absolute top-0 left-0 right-0 h-[6px]" style={{ background: theme.bg, borderBottom: `1px solid ${isLight ? '#D0D0D0' : '#1E1E1E'}` }} />
-                      {/* Card block */}
-                      <div className="absolute bottom-[3px] left-[3px] right-[3px] rounded-sm" style={{ height: '10px', background: theme.card, border: `1px solid ${isLight ? '#D0D0D0' : '#1E1E1E'}` }} />
+                    <div className="w-8 h-8 rounded-md overflow-hidden relative shrink-0"
+                      style={{ background: opt.isSoft ? (opt.id === 'soft-light' ? '#F3F3F1' : '#302E2B') : '#050505', borderRadius: opt.isSoft ? 6 : 0 }}>
+                      <div className="absolute bottom-[3px] left-[3px] right-[3px]"
+                        style={{ height: 9, background: opt.isSoft ? (opt.id === 'soft-light' ? '#FFFFFF' : '#262522') : '#141414', borderRadius: opt.isSoft ? 3 : 0, border: opt.isSoft ? 'none' : '1px solid #1E1E1E' }} />
+                      {opt.isSoft && (
+                        <div className="absolute top-[4px] right-[4px] w-[6px] h-[6px] rounded-full" style={{ background: '#81B64C' }} />
+                      )}
                     </div>
-                    <span className={[
-                      'text-[9px] leading-tight text-center truncate w-full',
-                      active ? 'text-[#F5F5F5]' : 'text-[#606060]',
-                    ].join(' ')}>
-                      {theme.name}
-                    </span>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className={['text-[12px] font-semibold truncate', active ? 'text-[#F5F5F5]' : 'text-[#A0A0A0]'].join(' ')}>
+                        {opt.label}
+                      </span>
+                      <span className="text-[10px] text-[#606060] truncate">{opt.desc}</span>
+                    </div>
                   </button>
                 );
               })}
             </div>
+
+            {/* Color variants – only shown for newspaper family */}
+            {!siteThemeId.startsWith('soft') && (
+              <>
+                <h3 className="text-[10px] font-semibold text-[#505050] uppercase tracking-widest mb-2">
+                  Оттенок
+                </h3>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {SITE_THEMES.filter(t => !t.id.startsWith('soft')).map(theme => {
+                    const active = theme.id === siteThemeId;
+                    const isLight = theme.id === 'light';
+                    return (
+                      <button
+                        key={theme.id}
+                        onClick={() => setSiteThemeId(theme.id)}
+                        className={[
+                          'flex flex-col items-center gap-1.5 rounded p-1.5 transition-colors',
+                          active ? 'bg-[#1E1E1E] ring-1 ring-white/20' : 'hover:bg-[#161616]',
+                        ].join(' ')}
+                        title={theme.name}
+                      >
+                        <div className="w-10 h-7 rounded overflow-hidden relative" style={{ background: theme.bg }}>
+                          <div className="absolute top-0 left-0 right-0 h-[6px]" style={{ background: theme.bg, borderBottom: `1px solid ${isLight ? '#D0D0D0' : '#1E1E1E'}` }} />
+                          <div className="absolute bottom-[3px] left-[3px] right-[3px] rounded-sm" style={{ height: '10px', background: theme.card, border: `1px solid ${isLight ? '#D0D0D0' : '#1E1E1E'}` }} />
+                        </div>
+                        <span className={['text-[9px] leading-tight text-center truncate w-full', active ? 'text-[#F5F5F5]' : 'text-[#606060]'].join(' ')}>
+                          {theme.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </section>
 
           {/* Board theme */}

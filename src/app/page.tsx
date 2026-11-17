@@ -6,6 +6,8 @@ import { Chessboard } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
 import type { Opening, LineProgress } from '@/types/openings';
 import type { CourseLessonMove } from '@/types/courses';
+import { useBoardTheme } from '@/contexts/BoardThemeContext';
+import { SoftToday } from '@/components/SoftToday';
 
 interface DailyTrap {
   trap_key: string;
@@ -144,6 +146,7 @@ const MASTERY_COLORS = ['#6E6A61','#A8A499','#BFBBB4','#CFCCC6','#DEDAD7','#F2EF
 const MASTERY_LABELS = ['Новые','Ур. 1','Ур. 2','Ур. 3','Ур. 4','Ур. 5'];
 
 export default function HomePage() {
+  const { siteThemeId } = useBoardTheme();
   const [loading, setLoading] = useState(true);
   const [openings, setOpenings] = useState<OpeningRow[]>([]);
   const [streak, setStreak] = useState(0);
@@ -381,6 +384,26 @@ export default function HomePage() {
           <div style={{ height: 300, background: 'var(--surface)' }} />
         </aside>
       </main>
+    );
+  }
+
+  if (siteThemeId.startsWith('soft')) {
+    return (
+      <SoftToday
+        streak={streak}
+        todayTotal={todayTotal}
+        totalDue={totalDue}
+        totalNew={totalNew}
+        mistakesDue={mistakesDue}
+        ideasDue={ideasDue}
+        totalMastered={totalMastered}
+        totalLines={totalLines}
+        firstOpeningId={firstOpening?.id ?? null}
+        firstOpeningName={firstOpening?.name ?? null}
+        pathCard={pathCard}
+        dateLabel={dateLabel}
+        dayLabel={dayLabelUpper}
+      />
     );
   }
 
