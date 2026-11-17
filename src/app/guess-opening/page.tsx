@@ -103,10 +103,12 @@ export default function GuessOpeningPage() {
     const idx = Math.floor(rng() * STATIC_OPENINGS.length);
     const t = STATIC_OPENINGS[idx];
     const opts = buildInitialOptions(STATIC_OPENINGS, t, gameSeed);
+    // Reveal first move immediately
+    const firstRevealed = t.moves.length > 0 ? [t.moves[0]] : [];
     setScored(isScored);
     setTarget(t);
     setInitOptions(opts);
-    setRevealed([]);
+    setRevealed(firstRevealed);
     setSelectedId(null);
     setCorrect(null);
     setFinalScore(0);
@@ -243,11 +245,7 @@ export default function GuessOpeningPage() {
             {/* Moves text */}
             <div className="ui-card ui-card-sm" style={{ fontFamily: 'ui-monospace, monospace',
               fontSize: 14, lineHeight: 1.7, color: 'var(--ivory)', minHeight: 48 }}>
-              {revealed.length === 0 ? (
-                <span style={{ color: 'var(--muted)', fontFamily: 'inherit', fontSize: 13 }}>
-                  Ходы появятся здесь после начала игры…
-                </span>
-              ) : movesToDisplay(revealed)}
+              {movesToDisplay(revealed)}
             </div>
           </div>
 
@@ -326,11 +324,14 @@ export default function GuessOpeningPage() {
 
             {/* Playing controls */}
             {phase === 'playing' && (
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                 {revealed.length < target.moves.length && (
-                  <button className="ui-btn ui-btn-ghost" onClick={revealNext}>
+                  <button className="ui-btn ui-btn-ghost" onClick={revealNext} title="Нажми, чтобы увидеть следующий ход">
                     Следующий ход →
                   </button>
+                )}
+                {revealed.length < target.moves.length && (
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>Нажми, чтобы увидеть следующий ход</span>
                 )}
                 {revealed.length >= target.moves.length && currentOptions.length > 1 && (
                   <div style={{ fontSize: 13, color: 'var(--muted)', alignSelf: 'center' }}>
