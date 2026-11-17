@@ -6,6 +6,8 @@ import Link from 'next/link';
 import ChessBoardWrapper from '@/components/ChessBoardWrapper';
 import { supabase } from '@/lib/supabase';
 import type { Opening, OpeningLine, LineProgress, ChessMove } from '@/types/openings';
+import { useBoardKeys } from '@/hooks/useBoardKeys';
+import { KeyHelpDialog } from '@/components/KeyHelpDialog';
 
 interface LineWithProgress extends OpeningLine {
   line_progress: LineProgress[];
@@ -167,6 +169,9 @@ export default function PracticePage({ params }: Props) {
 
   // Board flip
   const [boardFlipped, setBoardFlipped] = useState(false);
+
+  // Help dialog
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Session-done: all due/new lines exhausted
   const [sessionDone, setSessionDone] = useState(false);
@@ -466,24 +471,23 @@ export default function PracticePage({ params }: Props) {
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === 'h' || e.key === 'H') {
-        setHintActive(true);
-        setTimeout(() => setHintActive(false), 2000);
-      }
-      if ((e.key === 'n' || e.key === 'N' || e.key === ' ') && !celebrating) {
-        e.preventDefault();
-        setAllLines((latest) => {
-          pickNextLine(latest);
-          return latest;
-        });
-      }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [pickNextLine, celebrating]);
+  const showHint = useCallback(() => {
+    setHintActive(true);
+    setTimeout(() => setHintActive(false), 2000);
+  }, []);
+
+  const skipLine = useCallback(() => {
+    if (celebrating) return;
+    setAllLines((latest) => { pickNextLine(latest); return latest; });
+  }, [celebrating, pickNextLine]);
+
+  useBoardKeys({
+    enabled: !helpOpen && !celebrating,
+    onFlip:     () => setBoardFlipped(f => !f),
+    onHint:     showHint,
+    onNextLine: skipLine,
+    onHelp:     () => setHelpOpen(true),
+  });
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -791,8 +795,8 @@ export default function PracticePage({ params }: Props) {
                 </button>
               </div>
               <div className="flex justify-between text-[11px] text-[#333333]">
-                <span>H — подсказка</span>
-                <span>N / Space — следующая</span>
+                <span>Пробел — подсказка</span>
+                <span>N — следующая · ? — клавиши</span>
               </div>
 
               <div className="border-t border-[#1E1E1E]" />
@@ -884,6 +888,19 @@ export default function PracticePage({ params }: Props) {
           </div>
         </div>
       </main>
+
+      {helpOpen && (
+        <KeyHelpDialog
+          onClose={() => setHelpOpen(false)}
+          keys={[
+            { key: 'F',      desc: 'Перевернуть доску' },
+            { key: 'Пробел', desc: 'Подсказка' },
+            { key: 'N',      desc: 'Следующая линия' },
+            { key: '?',      desc: 'Список клавиш' },
+            { key: 'Ctrl+K', desc: 'Поиск' },
+          ]}
+        />
+      )}
     </>
   );
 }

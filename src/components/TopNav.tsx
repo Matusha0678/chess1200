@@ -22,7 +22,7 @@ function ChevronDown({ open }: { open: boolean }) {
 
 export default function TopNav() {
   const pathname = usePathname();
-  const { openPanel } = useBoardTheme();
+  const { openPanel, openSearch } = useBoardTheme();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [prevPathname, setPrevPathname] = useState(pathname);
@@ -190,6 +190,36 @@ export default function TopNav() {
 
         {/* ── Right: mobile toggle + theme button ── */}
         <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+
+          {/* Search button — always visible, Ctrl+K hint on desktop */}
+          <button
+            onClick={openSearch}
+            aria-label="Поиск"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              height: 36, padding: '0 12px',
+              background: 'transparent',
+              border: '1px solid var(--control)',
+              color: 'var(--muted)', fontSize: 13, fontFamily: 'inherit',
+              cursor: 'pointer', flexShrink: 0, borderRadius: 'var(--radius-btn)',
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <span>Поиск</span>
+            <kbd
+              className="topnav-desktop"
+              style={{
+                fontSize: 10, letterSpacing: 0, lineHeight: 1,
+                border: '1px solid var(--control)',
+                borderRadius: 3, padding: '1px 5px',
+                fontFamily: 'monospace', color: 'var(--muted)',
+                background: 'transparent',
+              }}
+            >⌘K</kbd>
+          </button>
 
           {/* Mobile "Меню" button — hidden ≥900px via CSS */}
           <button

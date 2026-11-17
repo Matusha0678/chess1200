@@ -36,6 +36,9 @@ interface BoardThemeContextValue extends BoardThemeSettings {
   isPanelOpen: boolean;
   openPanel: () => void;
   closePanel: () => void;
+  isSearchOpen: boolean;
+  openSearch: () => void;
+  closeSearch: () => void;
 }
 
 const DEFAULT_SETTINGS: BoardThemeSettings = {
@@ -81,6 +84,7 @@ const BoardThemeContext = createContext<BoardThemeContextValue | null>(null);
 export function BoardThemeProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<BoardThemeSettings>(DEFAULT_SETTINGS);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     setSettings(loadSettings());
@@ -90,6 +94,18 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.siteTheme = settings.siteThemeId;
   }, [settings.siteThemeId]);
+
+  // Global Ctrl+K / Cmd+K → open search
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   // Functional update pattern — no stale closure possible
   const save = useCallback((updater: (prev: BoardThemeSettings) => BoardThemeSettings) => {
@@ -139,6 +155,9 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
       isPanelOpen,
       openPanel: () => setIsPanelOpen(true),
       closePanel: () => setIsPanelOpen(false),
+      isSearchOpen,
+      openSearch: () => setIsSearchOpen(true),
+      closeSearch: () => setIsSearchOpen(false),
     }}>
       {children}
     </BoardThemeContext.Provider>

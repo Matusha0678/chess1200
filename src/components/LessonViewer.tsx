@@ -9,6 +9,7 @@ import { LessonTest } from '@/components/LessonTest';
 import { DeviationMode } from '@/components/DeviationMode';
 import { ExplainMode } from '@/components/ExplainMode';
 import { MoveBadge, nagToLabel, ALL_LABELS, LABEL_META } from '@/components/MoveBadge';
+import { KeyHelpDialog } from '@/components/KeyHelpDialog';
 import type { MoveLabel } from '@/types/courses';
 import { supabase } from '@/lib/supabase';
 import type {
@@ -357,15 +358,22 @@ export function LessonViewer({
 
   // ── Keyboard ───────────────────────────────────────────────────────────────
 
+  const [keyHelpOpen, setKeyHelpOpen] = useState(false);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (isCinemaRef.current && e.key === 'Escape') { setIsCinema(false); return; }
+      if (keyHelpOpen && (e.key === 'Escape' || e.key === '?')) { e.preventDefault(); setKeyHelpOpen(false); return; }
       switch (e.key) {
         case 'ArrowRight':
           if (!isGuessPendingRef.current) { e.preventDefault(); goToRef.current(activeIdxRef.current + 1); }
           break;
         case 'ArrowLeft':
+          e.preventDefault();
+          goToRef.current(activeIdxRef.current - 1);
+          break;
+        case 'z': case 'Z':
           e.preventDefault();
           goToRef.current(activeIdxRef.current - 1);
           break;
@@ -382,11 +390,15 @@ export function LessonViewer({
           if (variantRef.current) exitVariant();
           else if (currentVariantsRef.current?.[0]) enterVariant(currentVariantsRef.current[0]);
           break;
+        case '?':
+          e.preventDefault();
+          setKeyHelpOpen(true);
+          break;
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [exitVariant, enterVariant]);
+  }, [exitVariant, enterVariant, keyHelpOpen]);
 
   // ── Effects: sound, end-of-lesson, cinema ─────────────────────────────────
 
@@ -872,6 +884,22 @@ export function LessonViewer({
           customPieces={customPieces}
           showNotation={showNotation}
           onClose={() => setShowDeviation(false)}
+        />
+      )}
+
+      {/* Key help dialog */}
+      {keyHelpOpen && (
+        <KeyHelpDialog
+          onClose={() => setKeyHelpOpen(false)}
+          keys={[
+            { key: '← →',    desc: 'Шаг назад / вперёд' },
+            { key: 'Z',      desc: 'Шаг назад (отмена)' },
+            { key: 'Пробел', desc: 'Воспроизвести / пауза' },
+            { key: 'F',      desc: 'Перевернуть доску' },
+            { key: 'V',      desc: 'Войти / выйти из варианта' },
+            { key: '?',      desc: 'Список клавиш' },
+            { key: 'Ctrl+K', desc: 'Поиск' },
+          ]}
         />
       )}
 

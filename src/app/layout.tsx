@@ -4,6 +4,7 @@ import './globals.css';
 import TopNav from '@/components/TopNav';
 import { BoardThemeProvider } from '@/contexts/BoardThemeContext';
 import ThemePanel from '@/components/ThemePanel';
+import SearchDialog from '@/components/SearchDialog';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <BoardThemeProvider>
           <TopNav />
           <ThemePanel />
+          <SearchDialog />
           {children}
         </BoardThemeProvider>
       </body>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, use } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Chess } from 'chess.js';
@@ -8,6 +8,8 @@ import { Chessboard } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
 import { DeviationMode } from '@/components/DeviationMode';
 import { useBoardTheme } from '@/contexts/BoardThemeContext';
+import { useBoardKeys } from '@/hooks/useBoardKeys';
+import { KeyHelpDialog } from '@/components/KeyHelpDialog';
 import type { Opening, OpeningLine } from '@/types/openings';
 
 interface Props {
@@ -44,6 +46,8 @@ export default function StudyPage({ params }: Props) {
   const [chess] = useState(() => new Chess());
   const [autoPlay, setAutoPlay] = useState(false);
   const [highlightSquares, setHighlightSquares] = useState<Record<string, React.CSSProperties>>({});
+  const [flipped, setFlipped] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Deviation state
   const [showDeviation, setShowDeviation] = useState(false);
@@ -166,21 +170,19 @@ export default function StudyPage({ params }: Props) {
 
   // ── Keyboard navigation ────────────────────────────────────────────────────
 
-  // Keep stable refs so the keydown listener doesn't need re-registration
-  const handleNextRef = useRef(handleNext);
-  const handlePrevRef = useRef(handlePrev);
-  useEffect(() => { handleNextRef.current = handleNext; }, [handleNext]);
-  useEffect(() => { handlePrevRef.current = handlePrev; }, [handlePrev]);
+  const handleNextLine = useCallback(() => {
+    if (currentLineIndex < allLines.length - 1) resetBoard(currentLineIndex + 1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLineIndex, allLines.length]);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === 'ArrowRight') { e.preventDefault(); handleNextRef.current(); }
-      if (e.key === 'ArrowLeft')  { e.preventDefault(); handlePrevRef.current(); }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  useBoardKeys({
+    enabled: !helpOpen && !showDeviation,
+    onPrev:     handlePrev,
+    onNext:     handleNext,
+    onFlip:     () => setFlipped(f => !f),
+    onNextLine: handleNextLine,
+    onHelp:     () => setHelpOpen(true),
+  });
 
   // Auto-play
   useEffect(() => {
@@ -268,7 +270,8 @@ export default function StudyPage({ params }: Props) {
   }
 
   const lineDone = currentMoveIndex >= (currentLine?.moves.length ?? 0);
-  const boardOrientation = opening.color === 'black' ? 'black' : 'white';
+  const baseOrientation: 'white' | 'black' = opening.color === 'black' ? 'black' : 'white';
+  const boardOrientation: 'white' | 'black' = flipped ? (baseOrientation === 'white' ? 'black' : 'white') : baseOrientation;
   const playerColorCode: 'w' | 'b' = opening.color === 'black' ? 'b' : 'w';
   const nextOpponentMove = currentLine && currentMoveIndex < currentLine.moves.length
     ? currentLine.moves[currentMoveIndex]
@@ -392,6 +395,18 @@ export default function StudyPage({ params }: Props) {
               </button>
             )}
 
+            <button onClick={() => setFlipped(f => !f)} title="F — перевернуть доску"
+              className="h-9 w-9 flex items-center justify-center border border-[#303030] text-[#505050] hover:text-[#A0A0A0] hover:border-[#505050] rounded-[8px] bg-transparent cursor-pointer transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+              </svg>
+            </button>
+
+            <button onClick={() => setHelpOpen(true)} title="? — клавиши"
+              className="h-9 w-9 flex items-center justify-center border border-[#303030] text-[#505050] hover:text-[#A0A0A0] hover:border-[#505050] rounded-[8px] bg-transparent cursor-pointer transition-colors text-[13px] font-semibold">
+              ?
+            </button>
+
             <button
               onClick={() => setShowDeviation(true)}
               disabled={!deviationAvailable}
@@ -489,6 +504,19 @@ export default function StudyPage({ params }: Props) {
           customPieces={customPieces}
           showNotation={showNotation}
           onClose={() => setShowDeviation(false)}
+        />
+      )}
+
+      {helpOpen && (
+        <KeyHelpDialog
+          onClose={() => setHelpOpen(false)}
+          keys={[
+            { key: '← →',    desc: 'Шаг назад / вперёд' },
+            { key: 'N',       desc: 'Следующая линия' },
+            { key: 'F',       desc: 'Перевернуть доску' },
+            { key: '?',       desc: 'Список клавиш' },
+            { key: 'Ctrl+K',  desc: 'Поиск' },
+          ]}
         />
       )}
     </main>

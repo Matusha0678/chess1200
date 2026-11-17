@@ -375,3 +375,6 @@ html, body {
 @media (max-width: 899px) {
   .soft-two-col { grid-template-columns: 1fr !important; }
 }
+
+/* Search input placeholder */
+.search-input::placeholder { color: var(--placeholder, var(--muted)); }
