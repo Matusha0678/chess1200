@@ -8,6 +8,83 @@ import { supabase } from '@/lib/supabase';
 const MONTH_NAMES = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const DAY_NAMES   = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
 
+// ── T14: Тема недели ──────────────────────────────────────────────────────────
+
+interface WeekTheme {
+  id: string;
+  label: string;
+  reason: string;
+  trainers: Array<{ label: string; href: string }>;
+}
+
+const WEEK_THEMES: WeekTheme[] = [
+  {
+    id: 'hanging',
+    label: 'Зевки фигур',
+    reason: '',
+    trainers: [
+      { label: 'Проверка угроз',    href: '/threats' },
+      { label: 'Банк ошибок',       href: '/mistakes?tag=hanging' },
+      { label: 'Оцени позицию',     href: '/evaluate' },
+    ],
+  },
+  {
+    id: 'missed_tactic',
+    label: 'Пропущенная тактика',
+    reason: '',
+    trainers: [
+      { label: 'Жертвы',            href: '/sac' },
+      { label: 'Банк ошибок',       href: '/mistakes?tag=missed_tactic' },
+      { label: 'Угадай ход',        href: '/masters' },
+    ],
+  },
+  {
+    id: 'endgame',
+    label: 'Эндшпили',
+    reason: '',
+    trainers: [
+      { label: 'Эндшпили',          href: '/endgames' },
+      { label: 'Мастера (эндшпиль)', href: '/masters' },
+    ],
+  },
+  {
+    id: 'deviation',
+    label: 'Дебют',
+    reason: '',
+    trainers: [
+      { label: 'Экзамен дебюта',    href: '/openings' },
+      { label: 'Угадай дебют',      href: '/guess-opening' },
+      { label: 'Дебюты',            href: '/openings' },
+    ],
+  },
+  {
+    id: 'middlegame',
+    label: 'Миттельшпиль',
+    reason: '',
+    trainers: [
+      { label: 'Оцени позицию',     href: '/evaluate' },
+      { label: 'Идеи позиций',      href: '/plans' },
+    ],
+  },
+];
+
+/** Returns Monday of the current week as YYYY-MM-DD */
+function getWeekStart(): string {
+  const d = new Date();
+  const day = d.getDay(); // 0=Sun
+  const diff = (day === 0 ? -6 : 1 - day);
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+interface WeekFocusState {
+  theme: WeekTheme;
+  reason: string;
+  chosenBy: 'auto' | 'manual';
+  progress: number; // tasks done this week
+  sqlMissing: boolean;
+}
+
 interface DayCounts {
   openingsDue:  number;
   mistakesDue:  number;
@@ -127,9 +204,10 @@ function buildPlan(counts: DayCounts): Task[] {
 }
 
 export default function HomePage() {
-  const [counts, setCounts]       = useState<DayCounts | null>(null);
-  const [dailyGame, setDailyGame] = useState<DailyGame | null>(null);
-  const [dailyComb, setDailyComb] = useState<DailyCombination | null>(null);
+  const [counts, setCounts]           = useState<DayCounts | null>(null);
+  const [dailyGame, setDailyGame]     = useState<DailyGame | null>(null);
+  const [dailyComb, setDailyComb]     = useState<DailyCombination | null>(null);
+  const [weekFocus, setWeekFocus]     = useState<WeekFocusState | null>(null);
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   // Load daily picks (T12)
@@ -182,6 +260,120 @@ export default function HomePage() {
       }
     })();
   }, [today]);
+
+  // T14: Тема недели
+  useEffect(() => {
+    (async () => {
+      const weekStart = getWeekStart();
+      const weekEnd = (() => {
+        const d = new Date(weekStart + 'T00:00:00');
+        d.setDate(d.getDate() + 7);
+        return d.toISOString().slice(0, 10);
+      })();
+
+      // Try to load from week_focus table
+      const { data: existing, error: fetchErr } = await supabase
+        .from('week_focus')
+        .select('theme, reason, chosen_by')
+        .eq('week_start', weekStart)
+        .maybeSingle();
+
+      if (fetchErr?.code === '42P01') {
+        // Table doesn't exist yet — use default theme without crash
+        const def = WEEK_THEMES[0];
+        setWeekFocus({ theme: def, reason: '', chosenBy: 'auto', progress: 0, sqlMissing: true });
+        return;
+      }
+
+      let themeId: string;
+      let reason: string;
+      let chosenBy: 'auto' | 'manual' = 'auto';
+
+      if (existing) {
+        themeId = (existing as { theme: string; reason: string; chosen_by: string }).theme;
+        reason = (existing as { theme: string; reason: string; chosen_by: string }).reason;
+        chosenBy = (existing as { theme: string; reason: string; chosen_by: string }).chosen_by as 'auto' | 'manual';
+      } else {
+        // Auto-select: pick theme with most mistakes in last 30 days
+        const since = (() => {
+          const d = new Date();
+          d.setDate(d.getDate() - 30);
+          return d.toISOString().slice(0, 10);
+        })();
+        const { data: mistakeData } = await supabase
+          .from('mistake_cards')
+          .select('tag')
+          .gte('created_at', since + 'T00:00:00');
+
+        const tagCounts: Record<string, number> = { hanging: 0, missed_tactic: 0, endgame: 0, deviation: 0, middlegame: 0 };
+        const total = (mistakeData ?? []).length;
+        for (const row of (mistakeData ?? []) as Array<{ tag: string }>) {
+          const t = row.tag;
+          if (t in tagCounts) tagCounts[t]++;
+        }
+
+        // Pick the theme with the most matching tag
+        let bestTag = 'hanging';
+        let bestCount = 0;
+        for (const [tag, cnt] of Object.entries(tagCounts)) {
+          if (cnt > bestCount) { bestCount = cnt; bestTag = tag; }
+        }
+
+        themeId = bestTag;
+        const themeLabel = WEEK_THEMES.find(t => t.id === bestTag)?.label ?? 'Зевки фигур';
+        reason = total > 0
+          ? `${themeLabel}: ${bestCount} из ${total} ошибок за 30 дней`
+          : 'Нет данных об ошибках — используем тему по умолчанию';
+
+        // Persist choice
+        await supabase.from('week_focus').upsert({ week_start: weekStart, theme: themeId, reason, chosen_by: 'auto' });
+      }
+
+      const theme = WEEK_THEMES.find(t => t.id === themeId) ?? WEEK_THEMES[0];
+
+      // Count progress this week: tasks done in various logs
+      const [threatLogRes, mistakeLogRes, sacLogRes, evalLogRes, examLogRes, endgameLogRes] = await Promise.all([
+        supabase.from('threat_log').select('id', { count: 'exact', head: true }).gte('played_at', weekStart + 'T00:00:00').lt('played_at', weekEnd + 'T00:00:00'),
+        supabase.from('mistake_cards').select('id', { count: 'exact', head: true }).gte('last_practiced', weekStart + 'T00:00:00').lt('last_practiced', weekEnd + 'T00:00:00'),
+        supabase.from('sac_log').select('id', { count: 'exact', head: true }).gte('played_at', weekStart + 'T00:00:00').lt('played_at', weekEnd + 'T00:00:00'),
+        supabase.from('eval_log').select('id', { count: 'exact', head: true }).gte('played_at', weekStart + 'T00:00:00').lt('played_at', weekEnd + 'T00:00:00'),
+        supabase.from('exam_log').select('id', { count: 'exact', head: true }).gte('taken_at', weekStart + 'T00:00:00').lt('taken_at', weekEnd + 'T00:00:00'),
+        supabase.from('endgame_log').select('id', { count: 'exact', head: true }).gte('played_at', weekStart + 'T00:00:00').lt('played_at', weekEnd + 'T00:00:00'),
+      ]);
+
+      const progress = Math.min(10,
+        (threatLogRes.count ?? 0) +
+        (mistakeLogRes.count ?? 0) +
+        (sacLogRes.count ?? 0) +
+        (evalLogRes.count ?? 0) +
+        (examLogRes.count ?? 0) +
+        (endgameLogRes.count ?? 0),
+      );
+
+      // Store trainer hrefs in localStorage for sidebar badge
+      try {
+        localStorage.setItem('chess1200-week-focus', JSON.stringify({
+          theme: themeId,
+          trainers: theme.trainers.map(t => t.href.split('?')[0]),
+        }));
+      } catch { /* ignore */ }
+
+      setWeekFocus({ theme, reason, chosenBy, progress, sqlMissing: false });
+    })();
+  }, []);
+
+  async function changeWeekTheme(themeId: string) {
+    const theme = WEEK_THEMES.find(t => t.id === themeId) ?? WEEK_THEMES[0];
+    const weekStart = getWeekStart();
+    await supabase.from('week_focus').upsert({ week_start: weekStart, theme: themeId, reason: 'Выбрано вручную', chosen_by: 'manual' });
+    try {
+      localStorage.setItem('chess1200-week-focus', JSON.stringify({
+        theme: themeId,
+        trainers: theme.trainers.map(t => t.href.split('?')[0]),
+      }));
+    } catch { /* ignore */ }
+    setWeekFocus(prev => prev ? { ...prev, theme, reason: 'Выбрано вручную', chosenBy: 'manual' } : null);
+  }
 
   useEffect(() => {
     (async () => {
@@ -249,6 +441,56 @@ export default function HomePage() {
           Начать
         </Link>
       </div>
+
+      {/* T14: Тема недели */}
+      {weekFocus && !weekFocus.sqlMissing && (
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="ui-eyebrow">
+            <span>Тема недели</span>
+            <span className="ui-eyebrow-line" />
+            <span style={{ color: 'var(--muted)', fontSize: 12 }}>{weekFocus.progress}/10</span>
+          </div>
+          <div className="ui-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ivory)', marginBottom: 2 }}>{weekFocus.theme.label}</div>
+                {weekFocus.reason && <div style={{ fontSize: 12, color: 'var(--muted)' }}>{weekFocus.reason}</div>}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ivory)' }}>{weekFocus.progress}/10</div>
+                <div style={{ width: 80, height: 4, background: 'var(--surface)', borderRadius: 'var(--radius-btn)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${Math.min(100, weekFocus.progress * 10)}%`, background: 'var(--accent)', transition: 'width 300ms', borderRadius: 'inherit' }} />
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {weekFocus.theme.trainers.slice(0, 1).map(tr => (
+                <Link key={tr.href} href={tr.href}
+                  className="ui-btn ui-btn-primary"
+                  style={{ fontSize: 13, height: 34, padding: '0 16px' }}>
+                  Тренировать тему
+                </Link>
+              ))}
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <select
+                  value={weekFocus.theme.id}
+                  onChange={e => void changeWeekTheme(e.target.value)}
+                  style={{ height: 34, padding: '0 10px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', borderRadius: 'var(--radius-btn)' }}
+                >
+                  {WEEK_THEMES.map(t => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+      {weekFocus?.sqlMissing && (
+        <div style={{ padding: '10px 14px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 13, color: 'var(--muted)' }}>
+          Выполни <strong>supabase/24-week-focus.sql</strong>, чтобы включить «Тему недели».
+        </div>
+      )}
 
       {/* Plan */}
       <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

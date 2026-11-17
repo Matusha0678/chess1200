@@ -57,6 +57,18 @@ function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
 
 function SidebarItems({ onNav }: { onNav?: () => void }) {
   const pathname = usePathname();
+  const [weekFocusHrefs] = useState<string[]>(() => {
+    try {
+      if (typeof localStorage === 'undefined') return [];
+      const raw = localStorage.getItem('chess1200-week-focus');
+      if (raw) {
+        const parsed = JSON.parse(raw) as { trainers?: string[] };
+        return parsed.trainers ?? [];
+      }
+    } catch { /* ignore */ }
+    return [];
+  });
+
   return (
     <nav className="app-sidebar-nav" aria-label="Основная навигация">
       {NAV_GROUPS.map((group, gi) => (
@@ -65,6 +77,7 @@ function SidebarItems({ onNav }: { onNav?: () => void }) {
           <ul>
             {group.items.map(item => {
               const active = matchHref(pathname, item.href);
+              const isWeekTheme = weekFocusHrefs.includes(item.href);
               return (
                 <li key={item.href}>
                   <Link
@@ -73,7 +86,12 @@ function SidebarItems({ onNav }: { onNav?: () => void }) {
                     className={`app-sidebar-link ${active ? 'app-sidebar-link-active' : ''}`}
                     aria-current={active ? 'page' : undefined}
                   >
-                    {item.label}
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {isWeekTheme && (
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.03em', padding: '1px 5px', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 2, flexShrink: 0 }}>
+                        ТЕМА
+                      </span>
+                    )}
                   </Link>
                 </li>
               );
