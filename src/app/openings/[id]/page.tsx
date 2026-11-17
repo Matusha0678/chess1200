@@ -77,6 +77,22 @@ export default function OpeningDetailPage({ params }: Props) {
   const [addLineSuccess, setAddLineSuccess] = useState(false);
   const parseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [exportFlash, setExportFlash] = useState(false);
+  const [bestExam, setBestExam] = useState<{ perfect: number; total: number; pct: number } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.from('exam_log').select('perfect, total').eq('opening_id', id);
+        if (!data || data.length === 0) return;
+        let best = { perfect: 0, total: 0, pct: 0 };
+        for (const r of (data as Array<{ perfect: number; total: number }>)) {
+          const pct = r.total > 0 ? Math.round(r.perfect / r.total * 100) : 0;
+          if (pct > best.pct) best = { perfect: r.perfect, total: r.total, pct };
+        }
+        setBestExam(best);
+      } catch { /* exam_log not yet created */ }
+    })();
+  }, [id]);
 
   const now = new Date().toISOString();
 
@@ -329,6 +345,13 @@ export default function OpeningDetailPage({ params }: Props) {
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
           </svg>
           Учёба
+        </Link>
+
+        <Link
+          href={`/openings/${id}/exam`}
+          className="h-10 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-[10px] px-6 text-[14px] font-medium transition-colors no-underline"
+        >
+          Экзамен {bestExam && bestExam.total > 0 ? <span className="text-[12px] text-[#A0A0A0] ml-1">Лучший: {bestExam.pct}%</span> : null}
         </Link>
 
         <div className="flex gap-2">
