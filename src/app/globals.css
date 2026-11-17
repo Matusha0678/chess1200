@@ -376,6 +376,115 @@ html, body {
   .soft-two-col { grid-template-columns: 1fr !important; }
 }
 
+/* ── Soft theme — fix gazette artefacts ──────────────────────────────────── */
+
+/* stat-label: no uppercase in soft theme */
+[data-site-theme^="soft"] .stat-label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+}
+
+/* ui-eyebrow: hide lines, lowercase, lighter weight in soft theme */
+[data-site-theme^="soft"] .ui-eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+[data-site-theme^="soft"] .ui-eyebrow-line { display: none; }
+
+/* page-title / ui-h1: scale down in soft theme for warmth */
+[data-site-theme^="soft"] .page-title,
+[data-site-theme^="soft"] .ui-h1 {
+  font-size: 32px;
+  letter-spacing: -0.01em;
+}
+@media (max-width: 599px) {
+  [data-site-theme^="soft"] .page-title,
+  [data-site-theme^="soft"] .ui-h1 { font-size: 26px; }
+}
+
+/* sidebar link: use accent bg instead of left border in soft theme */
+[data-site-theme^="soft"] .app-sidebar-link-active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  border-left-color: var(--accent);
+  border-radius: 0 var(--radius-btn) var(--radius-btn) 0;
+}
+[data-site-theme^="soft"] .app-sidebar-link:hover {
+  background: var(--row-hover);
+  border-radius: 0 var(--radius-btn) var(--radius-btn) 0;
+}
+
+/* sidebar group label: bigger, clearer in soft */
+[data-site-theme^="soft"] .app-sidebar-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* soft: ui-tabs underline uses accent */
+[data-site-theme^="soft"] .ui-tab-active {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+/* soft: list-card hover tints with accent */
+[data-site-theme^="soft"] .list-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  transform: translateY(-1px);
+}
+
+/* soft: opening-card-link border radius */
+[data-site-theme^="soft"] .opening-card-link {
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-card) !important;
+  border-color: transparent !important;
+}
+[data-site-theme^="soft"] .opening-card-link:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+  border-color: transparent !important;
+  transform: translateY(-1px);
+}
+
+/* soft: random-banner-link */
+[data-site-theme^="soft"] .random-banner-link {
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-card) !important;
+  border-color: transparent !important;
+}
+
+/* progress bar: accent fill in soft */
+[data-site-theme^="soft"] .soft-prog-fill {
+  background: var(--accent);
+}
+
+/* soft: global button border-radius override for pages using inline-style buttons */
+[data-site-theme^="soft"] button:not(.ui-btn):not(.ui-chip):not(.ui-tab):not(.ui-segment):not(.app-sidebar-link):not(.app-bottom-item):not(.app-sidebar-group-btn):not(.app-icon-btn):not(.app-search-btn):not(.app-menu-btn) {
+  border-radius: var(--radius-btn) !important;
+}
+
+/* soft: input fields border-radius */
+[data-site-theme^="soft"] input:not(.ui-search),
+[data-site-theme^="soft"] select {
+  border-radius: var(--radius-btn) !important;
+}
+
+/* soft: difficulty dots replaced by accent bar pattern */
+[data-site-theme^="soft"] .diff-dots-soft {
+  display: flex; gap: 3px; align-items: center;
+}
+[data-site-theme^="soft"] .diff-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+[data-site-theme^="soft"] .diff-dot-on  { background: var(--accent); }
+[data-site-theme^="soft"] .diff-dot-off { background: var(--track); }
+
 /* Search input placeholder */
 .search-input::placeholder { color: var(--placeholder, var(--muted)); }
 
@@ -490,6 +599,54 @@ html, body {
   color: var(--ivory); font-weight: 600;
   background: var(--row-hover);
   border-left-color: var(--accent);
+}
+
+/* Sidebar link with icon */
+.app-sidebar-link-icon {
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* Collapsible group button */
+.app-sidebar-group-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 0 24px 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+  color: var(--muted); text-transform: uppercase;
+  background: none; border: none; cursor: pointer;
+  font-family: inherit;
+  transition: color 0.1s;
+}
+.app-sidebar-group-btn:hover { color: var(--ivory); }
+.app-sidebar-group-btn-active { color: var(--ivory); }
+
+/* ── Mobile bottom bar ──────────────────────────────────────────────────── */
+.app-bottom-bar {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+  height: 56px;
+  background: var(--header-bg); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--hairline);
+  padding: 0 4px;
+  align-items: stretch; justify-content: space-around;
+}
+@media (max-width: 899px) { .app-bottom-bar { display: flex; } }
+
+.app-bottom-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; flex: 1 1 0; min-width: 0;
+  padding: 4px 8px;
+  color: var(--muted); font-size: 10px; font-weight: 500;
+  text-decoration: none;
+  border: none; background: none; cursor: pointer; font-family: inherit;
+  transition: color 0.15s;
+  border-radius: var(--radius-btn);
+}
+.app-bottom-item:hover { color: var(--ivory); }
+.app-bottom-item-active { color: var(--accent); }
+
+/* Push main content above bottom bar on mobile */
+@media (max-width: 899px) {
+  .app-main { padding-bottom: 60px; }
 }
 
 /* ── Mobile overlay sidebar ────────────────────────────────────────────── */

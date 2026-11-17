@@ -135,7 +135,7 @@ export default function OpeningStatsPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
+      <div className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         <div className="animate-pulse flex flex-col gap-6">
           <div className="h-4 w-40 bg-[#1E1E1E] rounded-full" />
           <div className="h-10 w-80 bg-[#1E1E1E] rounded-[10px]" />
@@ -146,7 +146,7 @@ export default function OpeningStatsPage({ params }: Props) {
           </div>
           <div className="h-64 bg-[#0D0D0D] border border-[#262626] rounded-[20px]" />
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -155,7 +155,7 @@ export default function OpeningStatsPage({ params }: Props) {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-10">
+    <div className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-10">
 
       {/* Back */}
       <Link
@@ -391,6 +391,6 @@ export default function OpeningStatsPage({ params }: Props) {
         </div>
       )}
 
-    </main>
+    </div>
   );
 }

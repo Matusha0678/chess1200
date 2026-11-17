@@ -521,18 +521,18 @@ export default function PracticePage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="h-[calc(100vh-64px)] overflow-hidden flex flex-col items-center justify-center px-5 pt-5 pb-6">
+      <div className="h-[calc(100vh-64px)] overflow-hidden flex flex-col items-center justify-center px-5 pt-5 pb-6">
         <div
           className="bg-[#0D0D0D] border border-[#262626] rounded-[4px] animate-pulse"
           style={{ width: boardSize, height: boardSize }}
         />
-      </main>
+      </div>
     );
   }
 
   if (!opening || allLines.length === 0) {
     return (
-      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
+      <div className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         <Link
           href={`/openings/${id}`}
           className="inline-flex items-center gap-2 text-[13px] text-[#A0A0A0] hover:text-[#F5F5F5] transition-colors no-underline mb-6"
@@ -546,7 +546,7 @@ export default function PracticePage({ params }: Props) {
           <p className="font-cormorant text-[32px] mb-3">Нет линий для тренировки</p>
           <p className="text-[15px]">Добавь PGN с вариациями к этому дебюту.</p>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -624,7 +624,7 @@ export default function PracticePage({ params }: Props) {
       )}
 
       {/* Full-viewport container — no scroll, nav=64px already above */}
-      <main className="h-[calc(100vh-64px)] overflow-hidden flex flex-col px-5 md:px-10 pt-5 pb-6">
+      <div className="h-[calc(100vh-64px)] overflow-hidden flex flex-col px-5 md:px-10 pt-5 pb-6">
 
         {/* Center group: board + sidebar */}
         <div className="flex-1 flex items-center justify-center min-h-0">
@@ -887,7 +887,7 @@ export default function PracticePage({ params }: Props) {
 
           </div>
         </div>
-      </main>
+      </div>
 
       {helpOpen && (
         <KeyHelpDialog

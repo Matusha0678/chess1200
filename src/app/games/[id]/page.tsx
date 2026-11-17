@@ -7,17 +7,6 @@ import { supabase } from '@/lib/supabase';
 import type { MistakeCard } from '@/lib/mistakes';
 import { TAG_LABEL, PHASE_LABEL } from '@/lib/mistakes';
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
-
-const HEADING: React.CSSProperties = {
-  fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-};
-
-const SECTION_LABEL: React.CSSProperties = {
-  fontSize: 11, fontWeight: 600, letterSpacing: '0.16em',
-  color: 'var(--muted)', textTransform: 'uppercase',
-};
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface GameRow {
@@ -284,21 +273,19 @@ export default function GameViewerPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} className="animate-pulse">
-          <div style={{ height: 60, width: 220, background: 'var(--surface)' }} />
-          <div style={{ height: 400, background: 'var(--surface)' }} />
-        </div>
-      </main>
+      <div className="page animate-pulse">
+        <div style={{ height: 60, width: 220, background: 'var(--surface)', borderRadius: 'var(--radius-card)' }} />
+        <div style={{ height: 400, background: 'var(--surface)', borderRadius: 'var(--radius-card)' }} />
+      </div>
     );
   }
 
   if (!game) {
     return (
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box' }}>
+      <div className="page">
+        <Link href="/games" className="page-back">← Партии</Link>
         <p style={{ color: 'var(--muted)' }}>Партия не найдена.</p>
-        <Link href="/games" style={{ fontSize: 13, color: 'var(--muted)' }}>← Партии</Link>
-      </main>
+      </div>
     );
   }
 
@@ -317,53 +304,43 @@ export default function GameViewerPage({ params }: Props) {
   const hasAnalysis = !!game.analyzed_at;
 
   return (
-    <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 32 }}>
-
-      {/* Back link */}
-      <Link href="/games" style={{ fontSize: 13, color: 'var(--muted)', alignSelf: 'flex-start' }}>
-        ← Партии
-      </Link>
+    <div className="page">
 
       {/* Game header */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
-          <h1 style={{ ...HEADING, margin: 0, fontSize: 40, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.02em' }}>
-            vs {game.opp_name}
-            {game.rating_opp && (
-              <span style={{ fontSize: 20, fontWeight: 400, color: 'var(--muted)', marginLeft: 8 }}>
-                {game.rating_opp}
-              </span>
-            )}
-          </h1>
-          <span style={{ fontSize: 20, fontWeight: 600, color: RESULT_COLOR[game.result] }}>
-            {RESULT_LABEL[game.result]}
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: 20, fontSize: 13, color: 'var(--muted)', flexWrap: 'wrap' }}>
-          <span>{fmtDate(game.played_at)}</span>
-          <span>{game.color === 'white' ? '♙ Белые' : '♟ Чёрные'}</span>
-          {game.time_class && <span>{TIME_CLASS_RU[game.time_class] ?? game.time_class}</span>}
-          {game.eco_name && <span style={{ color: 'var(--ivory)' }}>{game.eco_name}</span>}
-          {game.rating_me && <span>Мой рейтинг: {game.rating_me}</span>}
-          <a
-            href={game.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'var(--muted)', textDecoration: 'underline' }}
-          >
-            Открыть на chess.com ↗
-          </a>
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link href="/games" className="page-back">← Партии</Link>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
+            <h1 className="page-title">
+              vs {game.opp_name}
+              {game.rating_opp && (
+                <span style={{ fontSize: '0.5em', fontWeight: 400, color: 'var(--muted)', marginLeft: 8 }}>
+                  {game.rating_opp}
+                </span>
+              )}
+            </h1>
+            <span style={{ fontSize: 18, fontWeight: 600, color: RESULT_COLOR[game.result] }}>
+              {RESULT_LABEL[game.result]}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 20, fontSize: 13, color: 'var(--muted)', flexWrap: 'wrap' }}>
+            <span>{fmtDate(game.played_at)}</span>
+            <span>{game.color === 'white' ? '♙ Белые' : '♟ Чёрные'}</span>
+            {game.time_class && <span>{TIME_CLASS_RU[game.time_class] ?? game.time_class}</span>}
+            {game.eco_name && <span style={{ color: 'var(--ivory)' }}>{game.eco_name}</span>}
+            {game.rating_me && <span>Мой рейтинг: {game.rating_me}</span>}
+            <a href={game.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--muted)', textDecoration: 'underline' }}>
+              Открыть на chess.com ↗
+            </a>
+          </div>
         </div>
       </div>
 
       {/* Analyze banner */}
       {!hasAnalysis && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 20px', background: 'var(--surface)', border: '1px solid var(--hairline)' }}>
+        <div className="ui-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <span style={{ fontSize: 14, color: 'var(--muted)' }}>Партия ещё не проанализирована</span>
-          <Link
-            href="/games/analyze"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 20px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}
-          >
+          <Link href="/games/analyze" className="ui-btn ui-btn-primary ui-btn-sm" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>
             Анализировать
           </Link>
         </div>
@@ -371,9 +348,9 @@ export default function GameViewerPage({ params }: Props) {
 
       {/* Move list */}
       <section>
-        <div style={{ borderTop: '2px solid var(--ivory)', paddingTop: 16, marginBottom: 16 }}>
+        <div style={{ borderBottom: '1px solid var(--hairline)', paddingBottom: 10, marginBottom: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={SECTION_LABEL}>ХОДЫ</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>Ходы</span>
             {mistakes.size > 0 && (
               <span style={{ fontSize: 13, color: 'var(--control)' }}>
                 {mistakes.size} {mistakes.size === 1 ? 'ошибка' : mistakes.size < 5 ? 'ошибки' : 'ошибок'}
@@ -387,9 +364,9 @@ export default function GameViewerPage({ params }: Props) {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '32px 1fr 1fr', gap: 0 }}>
             {/* Header */}
-            <span style={{ ...SECTION_LABEL, padding: '8px 0', borderBottom: '1px solid var(--hairline)' }}>#</span>
-            <span style={{ ...SECTION_LABEL, padding: '8px 12px', borderBottom: '1px solid var(--hairline)' }}>Белые</span>
-            <span style={{ ...SECTION_LABEL, padding: '8px 12px', borderBottom: '1px solid var(--hairline)' }}>Чёрные</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', padding: '8px 0', borderBottom: '1px solid var(--hairline)' }}>#</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', padding: '8px 12px', borderBottom: '1px solid var(--hairline)' }}>Белые</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', padding: '8px 12px', borderBottom: '1px solid var(--hairline)' }}>Чёрные</span>
 
             {movePairs.map((pair) => {
               const wMistake = pair.white ? mistakes.get(pair.white.san) : null;
@@ -449,11 +426,8 @@ export default function GameViewerPage({ params }: Props) {
 
       {/* Link to mistakes */}
       {hasAnalysis && mistakes.size > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, paddingTop: 8 }}>
-          <Link
-            href="/mistakes"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, height: 44, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600 }}
-          >
+        <div style={{ paddingTop: 8 }}>
+          <Link href="/mistakes" className="ui-btn ui-btn-primary" style={{ textDecoration: 'none' }}>
             Тренировать ошибки →
           </Link>
         </div>
@@ -461,8 +435,8 @@ export default function GameViewerPage({ params }: Props) {
 
       {/* Course match block (T9) */}
       {courseMatch && (
-        <section style={{ padding: '20px 24px', border: '1px solid var(--hairline)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>Курс</div>
+        <section className="ui-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>Курс</div>
           <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)' }}>
             {courseMatch.courseName} · {courseMatch.lessonTitle}
           </div>
@@ -474,24 +448,18 @@ export default function GameViewerPage({ params }: Props) {
               )}
             </div>
           ) : (
-            <div style={{ fontSize: 14, color: 'rgba(100,220,100,0.9)' }}>Линия сыграна по курсу!</div>
+            <div style={{ fontSize: 14, color: 'var(--accent)' }}>Линия сыграна по курсу!</div>
           )}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <Link
-              href={`/courses/${courseMatch.courseId}/${courseMatch.lessonId}`}
-              style={{ height: 36, padding: '0 16px', display: 'inline-flex', alignItems: 'center', border: '1px solid var(--hairline)', color: 'var(--ivory)', fontSize: 13, textDecoration: 'none' }}
-            >
+            <Link href={`/courses/${courseMatch.courseId}/${courseMatch.lessonId}`} className="ui-btn ui-btn-outline ui-btn-sm" style={{ textDecoration: 'none' }}>
               Открыть урок
             </Link>
-            <Link
-              href={`/courses/${courseMatch.courseId}/${courseMatch.lessonId}/practice`}
-              style={{ height: 36, padding: '0 16px', display: 'inline-flex', alignItems: 'center', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
-            >
+            <Link href={`/courses/${courseMatch.courseId}/${courseMatch.lessonId}/practice`} className="ui-btn ui-btn-primary ui-btn-sm" style={{ textDecoration: 'none' }}>
               Повторить линию
             </Link>
           </div>
         </section>
       )}
-    </main>
+    </div>
   );
 }

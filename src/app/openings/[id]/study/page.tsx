@@ -211,19 +211,19 @@ export default function StudyPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="max-w-[1600px] mx-auto px-6 pt-8 pb-10">
+      <div className="max-w-[1600px] mx-auto px-6 pt-8 pb-10">
         <div className="animate-pulse flex flex-col gap-5">
           <div className="h-4 w-40 bg-[#1E1E1E] rounded-full" />
           <div className="h-10 w-72 bg-[#1E1E1E] rounded-[8px]" />
           <div className="h-[500px] bg-[#0D0D0D] border border-[#262626] rounded-[12px]" />
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!opening || allLines.length === 0) {
     return (
-      <main className="max-w-[1600px] mx-auto px-6 pt-8 pb-10">
+      <div className="max-w-[1600px] mx-auto px-6 pt-8 pb-10">
         <Link href={`/openings/${id}`}
           className="inline-flex items-center gap-2 text-[13px] text-[#A0A0A0] hover:text-[#F5F5F5] no-underline mb-6">
           ← Назад
@@ -232,14 +232,14 @@ export default function StudyPage({ params }: Props) {
           <p className="text-[28px] font-semibold mb-3 text-[#F5F5F5]">Нет линий для изучения</p>
           <p className="text-[15px]">Добавь PGN с вариациями к этому дебюту.</p>
         </div>
-      </main>
+      </div>
     );
   }
 
   // Completion screen
   if (allDone) {
     return (
-      <main className="max-w-[1600px] mx-auto px-6 pt-10 pb-16 flex flex-col items-center justify-center min-h-[60vh] gap-8 text-center">
+      <div className="max-w-[1600px] mx-auto px-6 pt-10 pb-16 flex flex-col items-center justify-center min-h-[60vh] gap-8 text-center">
         <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#050505" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12.5l4.5 4.5L19 7.5" />
@@ -265,7 +265,7 @@ export default function StudyPage({ params }: Props) {
             К дебюту
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -279,7 +279,7 @@ export default function StudyPage({ params }: Props) {
   const deviationAvailable = !!nextOpponentMove && nextOpponentMove.color !== playerColorCode;
 
   return (
-    <main className="max-w-[1600px] mx-auto px-6 pt-6 pb-10">
+    <div className="max-w-[1600px] mx-auto px-6 pt-6 pb-10">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
         <Link href={`/openings/${id}`}
@@ -519,6 +519,6 @@ export default function StudyPage({ params }: Props) {
           ]}
         />
       )}
-    </main>
+    </div>
   );
 }

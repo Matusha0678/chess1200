@@ -134,27 +134,33 @@ export default function GameCoursesPage() {
   }
 
   return (
-    <main style={{ maxWidth: 760, margin: '0 auto', padding: '40px 24px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div>
-        <Link href="/games" style={{ fontSize: 13, color: 'var(--muted)' }}>← Партии</Link>
-        <h1 style={{ margin: '12px 0 4px', fontSize: 36, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
-          Я против курсов
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>Где я ухожу от курсов чаще всего (последние 50 партий)</p>
+    <div className="page">
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link href="/games" className="page-back">← Партии</Link>
+          <h1 className="page-title">Я против курсов</h1>
+          <p className="page-lead">Где я ухожу от курсов чаще всего (последние 50 партий)</p>
+        </div>
       </div>
 
       {loading ? (
         <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Анализируем…</div>
       ) : noGames ? (
-        <div style={{ color: 'var(--muted)', fontSize: 14 }}>Нет загруженных партий.</div>
+        <div className="empty-state">
+          <div className="empty-state-title">Нет загруженных партий</div>
+          <div className="empty-state-text">Загрузи партии на странице Партии.</div>
+        </div>
       ) : stats.length === 0 ? (
-        <div style={{ color: 'var(--muted)', fontSize: 14 }}>Не найдено совпадений с линиями курсов.</div>
+        <div className="empty-state">
+          <div className="empty-state-title">Совпадений не найдено</div>
+          <div className="empty-state-text">Не найдено совпадений с линиями курсов.</div>
+        </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {stats.map((s, i) => {
             const pct = s.matched > 0 ? Math.round((s.deviations / s.matched) * 100) : 0;
             return (
-              <div key={s.lessonId} style={{ padding: '14px 18px', border: '1px solid var(--hairline)', background: 'var(--surface)', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              <div key={s.lessonId} className="ui-card" style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
                 <span style={{ fontSize: 11, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums', flexShrink: 0, minWidth: 20, marginTop: 3 }}>{i + 1}</span>
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>{s.courseName}</div>
@@ -164,7 +170,7 @@ export default function GameCoursesPage() {
                     {s.avgPly > 0 && <span>Средний ход: {Math.ceil(s.avgPly / 2)}</span>}
                   </div>
                 </div>
-                <Link href={`/courses/${s.courseId}/${s.lessonId}`} style={{ height: 34, padding: '0 14px', display: 'inline-flex', alignItems: 'center', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 12, textDecoration: 'none', flexShrink: 0 }}>
+                <Link href={`/courses/${s.courseId}/${s.lessonId}`} className="ui-btn ui-btn-outline ui-btn-sm" style={{ flexShrink: 0, textDecoration: 'none' }}>
                   Открыть
                 </Link>
               </div>
@@ -172,6 +178,6 @@ export default function GameCoursesPage() {
           })}
         </div>
       )}
-    </main>
+    </div>
   );
 }

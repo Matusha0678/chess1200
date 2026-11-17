@@ -6,18 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useStockfish } from '@/hooks/useStockfish';
 import { parsePgnMoves, classifyMistake, detectPhase, type ParsedMove } from '@/lib/mistakes';
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
-
-const HEADING: React.CSSProperties = {
-  fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-};
-
-const SECTION_LABEL: React.CSSProperties = {
-  fontSize: 11, fontWeight: 600, letterSpacing: '0.16em',
-  color: 'var(--muted)', textTransform: 'uppercase',
-};
-
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Game row type ─────────────────────────────────────────────────────────────
 
 interface GameRow {
   id: string;
@@ -233,132 +222,96 @@ export default function AnalyzePage() {
   }
 
   return (
-    <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 36 }}>
+    <div className="page">
 
       {/* Header */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <Link href="/games" style={{ fontSize: 13, color: 'var(--muted)' }}>
-          ← Партии
-        </Link>
-        <h1 style={{ ...HEADING, margin: 0, fontSize: 48, fontWeight: 700, lineHeight: 0.92, letterSpacing: '-0.02em' }}>
-          Анализ партий
-        </h1>
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link href="/games" className="page-back">← Партии</Link>
+          <h1 className="page-title">Анализ партий</h1>
+        </div>
       </div>
 
-      {/* Status */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ borderTop: '2px solid var(--ivory)', paddingTop: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={SECTION_LABEL}>НЕ ПРОАНАЛИЗИРОВАНО</span>
-              <span style={{ ...HEADING, fontSize: 44, fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-                {unanalyzedCount ?? '…'}
-              </span>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                {unanalyzedCount === 0 ? 'все партии проанализированы' : 'партий ожидают анализа'}
-              </span>
-            </div>
-
-            {!running && (
-              <button
-                onClick={() => void analyzeGames()}
-                disabled={!isReady || unanalyzedCount === 0}
-                style={{
-                  height: 48, padding: '0 28px', fontSize: 14, fontWeight: 600,
-                  background: (!isReady || unanalyzedCount === 0) ? 'var(--track)' : 'var(--ivory)',
-                  color: (!isReady || unanalyzedCount === 0) ? 'var(--muted)' : 'var(--ink)',
-                  border: 'none', cursor: (!isReady || unanalyzedCount === 0) ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {!isReady ? 'Загрузка движка…' : 'Начать анализ'}
-              </button>
-            )}
-          </div>
+      {/* Status bar */}
+      <div className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>Не проанализировано</span>
+          <span style={{ fontSize: 44, fontWeight: 700, lineHeight: 1, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
+            {unanalyzedCount ?? '…'}
+          </span>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+            {unanalyzedCount === 0 ? 'все партии проанализированы' : 'партий ожидают анализа'}
+          </span>
         </div>
 
-        {/* Running progress */}
-        {running && progress && (
-          <div style={{ padding: '20px 24px', background: 'var(--surface)', border: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 8, height: 8, background: 'var(--ivory)', borderRadius: '50%', animation: 'pulse 1.5s infinite' }} />
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ivory)' }}>Анализируем…</span>
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>Не закрывай вкладку</span>
-              </div>
-              <button
-                onClick={stopAnalysis}
-                style={{
-                  height: 32, padding: '0 16px', fontSize: 13, fontWeight: 600,
-                  background: 'transparent', color: 'var(--muted)',
-                  border: '1px solid var(--hairline)', cursor: 'pointer',
-                }}
-              >
-                Стоп
-              </button>
+        {!running && (
+          <button
+            onClick={() => void analyzeGames()}
+            disabled={!isReady || unanalyzedCount === 0}
+            className="ui-btn ui-btn-primary"
+          >
+            {!isReady ? 'Загрузка движка…' : 'Начать анализ'}
+          </button>
+        )}
+      </div>
+
+      {/* Running progress */}
+      {running && progress && (
+        <div className="ui-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 8, height: 8, background: 'var(--accent)', borderRadius: '50%', animation: 'pulse 1.5s infinite' }} />
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ivory)' }}>Анализируем…</span>
             </div>
-            <span style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
-              Партия {progress.gameIndex}/{progress.gameTotal} · ход {progress.positionIndex}/{progress.positionTotal} · найдено {progress.errorsFound} ошибок
+            <button onClick={stopAnalysis} className="ui-btn ui-btn-outline ui-btn-sm">Стоп</button>
+          </div>
+          <span style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+            Партия {progress.gameIndex}/{progress.gameTotal} · ход {progress.positionIndex}/{progress.positionTotal} · найдено {progress.errorsFound} ошибок
+          </span>
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: `${Math.round((progress.gameIndex / progress.gameTotal) * 100)}%` }} />
+          </div>
+        </div>
+      )}
+
+      {/* Done */}
+      {done && (
+        <div className="ui-card" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)' }}>
+              Готово. Создано {done.cardsAdded} карточек.
             </span>
-            <div style={{ height: 2, background: 'var(--track)' }}>
-              <div style={{
-                height: '100%', background: 'var(--ivory)',
-                width: `${Math.round((progress.gameIndex / progress.gameTotal) * 100)}%`,
-                transition: 'width 0.3s',
-              }} />
-            </div>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+              Партии обработаны и добавлены в банк ошибок
+            </span>
           </div>
-        )}
-
-        {/* Done */}
-        {done && (
-          <div style={{ padding: '20px 24px', background: 'var(--surface)', border: '1px solid var(--hairline)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)' }}>
-                Готово. Создано {done.cardsAdded} карточек.
-              </span>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                Партии обработаны и добавлены в банк ошибок
-              </span>
-            </div>
-            <Link
-              href="/mistakes"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                height: 44, padding: '0 24px',
-                background: 'var(--ivory)', color: 'var(--ink)',
-                fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap',
-              }}
-            >
-              Банк ошибок →
-            </Link>
-          </div>
-        )}
-
-        {/* Error */}
-        {loadError && (
-          <div style={{ padding: '16px', background: 'var(--surface)', border: '1px solid var(--control)', fontSize: 13, color: 'var(--control)' }}>
-            {loadError}
-          </div>
-        )}
-
-        {/* How it works */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 8 }}>
-          <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 16 }}>
-            <span style={SECTION_LABEL}>КАК РАБОТАЕТ</span>
-          </div>
-          <ul style={{ margin: 0, padding: '0 0 0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              `Загружаются до ${BATCH} непроанализированных партий — сначала проигранные, свежие первыми`,
-              `Первые ${SKIP_PLIES} полуходов пропускаются (дебютная теория)`,
-              'Stockfish оценивает каждую позицию (~120 мс) прямо в браузере',
-              `Ошибка: потеря ≥ ${MIN_LOSS} сентипешек с позиции, которая не была уже проигранной`,
-              'Карточки добавляются в банк ошибок для интервальных повторений',
-            ].map((text, i) => (
-              <li key={i} style={{ fontSize: 13, color: 'var(--muted)' }}>{text}</li>
-            ))}
-          </ul>
+          <Link href="/mistakes" className="ui-btn ui-btn-primary">
+            Банк ошибок →
+          </Link>
         </div>
+      )}
+
+      {/* Error */}
+      {loadError && (
+        <div className="ui-card" style={{ fontSize: 13, color: 'var(--control)' }}>
+          {loadError}
+        </div>
+      )}
+
+      {/* Info */}
+      <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 16 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)', marginBottom: 10 }}>Как работает</p>
+        <ul style={{ margin: 0, padding: '0 0 0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[
+            'Загружаются партии с оценками %eval из chess.com',
+            'Ходы с потерей > 100 сентипешек помечаются как ошибки',
+            'Stockfish ищет лучший ход для каждой позиции',
+            'Создаются карточки для повторения по методу интервальных повторений',
+          ].map((text, i) => (
+            <li key={i} style={{ fontSize: 13, color: 'var(--muted)' }}>{text}</li>
+          ))}
+        </ul>
       </div>
-    </main>
+    </div>
   );
 }

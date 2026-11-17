@@ -142,7 +142,7 @@ export default function NewOpeningPage() {
   }
 
   return (
-    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
+    <div className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
       {/* Back link */}
       <Link
         href="/openings"
@@ -281,6 +281,6 @@ export default function NewOpeningPage() {
           </form>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -296,21 +296,21 @@ export default function EditOpeningPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
+      <div className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         <div className="animate-pulse flex flex-col gap-6 max-w-[760px]">
           <div className="h-[13px] w-[180px] bg-[#1E1E1E] rounded-full" />
           <div className="h-[72px] w-[360px] bg-[#1E1E1E] rounded-[16px]" />
           <div className="h-[220px] bg-[#0D0D0D] border border-[#262626] rounded-[20px]" />
           <div className="h-[220px] bg-[#0D0D0D] border border-[#262626] rounded-[20px]" />
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!opening) return null;
 
   return (
-    <main className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
+    <div className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
       {/* Back */}
       <Link
         href={`/openings/${id}`}
@@ -597,6 +597,6 @@ export default function EditOpeningPage({ params }: Props) {
         </section>
 
       </div>
-    </main>
+    </div>
   );
 }

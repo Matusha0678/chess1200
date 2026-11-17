@@ -334,9 +334,9 @@ export default function SacPage() {
   }
 
   if (loading) return (
-    <main className="page-wrap">
+    <div className="page-wrap">
       <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
-    </main>
+    </div>
   );
 
   const sideToMove = current?.fen.split(' ')[1] === 'w' ? 'white' : 'black';
@@ -351,7 +351,7 @@ export default function SacPage() {
   })();
 
   return (
-    <main className="page-wrap">
+    <div className="page-wrap">
       {/* Header */}
       <div className="page-header">
         <Link href="/masters" className="ui-back">← Мастера</Link>
@@ -614,6 +614,6 @@ export default function SacPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

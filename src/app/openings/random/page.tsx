@@ -672,9 +672,9 @@ export default function RandomOpeningPage() {
 
   if (phase === 'loading') {
     return (
-      <main className="h-[calc(100vh-64px)] flex items-center justify-center">
+      <div className="h-[calc(100vh-64px)] flex items-center justify-center">
         <div className="text-[#505050] text-[14px]">Загрузка дебютов…</div>
-      </main>
+      </div>
     );
   }
 
@@ -682,7 +682,7 @@ export default function RandomOpeningPage() {
 
   if (phase === 'ready' && allOpenings.length === 0) {
     return (
-      <main className="max-w-[600px] mx-auto px-5 pt-16 pb-6 text-center">
+      <div className="max-w-[600px] mx-auto px-5 pt-16 pb-6 text-center">
         <div className="font-cormorant text-[40px] text-[#F5F5F5] mb-4">Нет дебютов</div>
         <p className="text-[15px] text-[#808080] mb-8">
           Сначала добавь дебютные линии в разделе «Дебюты».
@@ -693,14 +693,14 @@ export default function RandomOpeningPage() {
         >
           Перейти к дебютам
         </Link>
-      </main>
+      </div>
     );
   }
 
   // ── Render: main game ─────────────────────────────────────────────────────
 
   return (
-    <main className="h-[calc(100vh-64px)] overflow-hidden flex flex-col px-5 md:px-10 pt-5 pb-6">
+    <div className="h-[calc(100vh-64px)] overflow-hidden flex flex-col px-5 md:px-10 pt-5 pb-6">
       <div className="flex-1 flex items-center justify-center min-h-0">
         <div className="flex items-start gap-6 w-full max-w-[1100px]">
 
@@ -1039,6 +1039,6 @@ export default function RandomOpeningPage() {
 
         </div>
       </div>
-    </main>
+    </div>
   );
 }

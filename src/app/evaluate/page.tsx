@@ -289,31 +289,29 @@ export default function EvaluatePage() {
 
   if (sqlMissing) {
     return (
-      <main style={{ maxWidth: 760, margin: '0 auto', padding: '40px 24px 72px' }}>
+      <div className="page" style={{ maxWidth: 760 }}>
         <div style={{ padding: '20px 24px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 14, color: 'var(--muted)' }}>
           Таблица <code>eval_log</code> не создана. Выполни <strong>supabase/20-eval-log.sql</strong>.
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="page" style={{ maxWidth: 900 }}>
       {/* Header */}
-      <div>
-        <Link href="/" style={{ fontSize: 13, color: 'var(--muted)' }}>← Сегодня</Link>
-        <h1 style={{ margin: '12px 0 4px', fontSize: 36, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
-          Оцени позицию
-        </h1>
-        <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
-          Факторы — приблизительные правила, а не мнение движка.
-        </p>
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link href="/" className="page-back">← Сегодня</Link>
+          <h1 className="page-title">Оцени позицию</h1>
+          <p className="page-lead">Факторы — приблизительные правила, а не мнение движка.</p>
+        </div>
       </div>
 
       {/* Mode selector */}
-      <div style={{ display: 'flex', gap: 0, border: '1px solid var(--hairline)' }}>
+      <div className="ui-segmented" style={{ alignSelf: 'flex-start' }}>
         {(['all', 'my_games', 'masters'] as Mode[]).map(m => (
-          <button key={m} onClick={() => setMode(m)} style={{ flex: 1, height: 36, border: 'none', borderRight: '1px solid var(--hairline)', background: mode === m ? 'var(--track)' : 'transparent', color: mode === m ? 'var(--ivory)' : 'var(--muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button key={m} onClick={() => setMode(m)} className={`ui-segment ${mode === m ? 'ui-segment-active' : ''}`}>
             {m === 'all' ? 'Все' : m === 'my_games' ? 'Мои партии' : 'Мастера'}
           </button>
         ))}
@@ -445,6 +443,6 @@ export default function EvaluatePage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

@@ -272,14 +272,14 @@ export default function OpeningDetailPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main className="max-w-[1200px] mx-auto px-5 lg:px-10 pt-5 pb-10">
+      <div className="page">
         <div className="animate-pulse flex flex-col gap-6">
           <div className="h-[13px] w-[200px] bg-[#1E1E1E] rounded-full" />
           <div className="h-[72px] w-[480px] bg-[#1E1E1E] rounded-[16px]" />
           <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] h-[100px]" />
           <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] h-[300px]" />
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -426,7 +426,7 @@ export default function OpeningDetailPage({ params }: Props) {
   }
 
   return (
-    <main className="max-w-[1200px] mx-auto px-5 lg:px-10 pt-5 pb-10">
+    <div className="page">
       {/* Back */}
       <Link
         href="/openings"
@@ -727,6 +727,6 @@ export default function OpeningDetailPage({ params }: Props) {
         </div>
 
       </div>
-    </main>
+    </div>
   );
 }

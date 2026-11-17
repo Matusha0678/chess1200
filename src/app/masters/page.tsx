@@ -315,7 +315,7 @@ export default function MastersPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <main className="page-wrap">
+    <div className="page-wrap">
       {/* Header */}
       <div className="page-header">
         <div className="ui-eyebrow">
@@ -491,6 +491,6 @@ export default function MastersPage() {
           {games.length >= 500 && <> · показаны последние 500</>}
         </div>
       )}
-    </main>
+    </div>
   );
 }

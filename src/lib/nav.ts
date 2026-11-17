@@ -1,6 +1,7 @@
 export interface NavItem {
   label: string;
   href:  string;
+  icon?: string; // svg path(s) or key
 }
 
 export interface NavGroup {
@@ -13,34 +14,34 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: null,
     items: [
-      { label: 'Сегодня', href: '/' },
+      { label: 'Сегодня', href: '/', icon: 'today' },
     ],
   },
   {
     label: 'УЧИТЬСЯ',
     items: [
-      { label: 'Дебюты',           href: '/openings' },
-      { label: 'Курсы',            href: '/courses' },
-      { label: 'Ловушки',          href: '/traps' },
-      { label: 'Идеи позиций',     href: '/plans' },
+      { label: 'Дебюты',       href: '/openings',  icon: 'openings' },
+      { label: 'Курсы',        href: '/courses',   icon: 'courses'  },
+      { label: 'Ловушки',      href: '/traps',     icon: 'traps'    },
+      { label: 'Идеи позиций', href: '/plans',     icon: 'plans'    },
     ],
   },
   {
     label: 'ТРЕНИРОВАТЬСЯ',
     items: [
-      { label: 'Ошибки',           href: '/mistakes' },
-      { label: 'Проверка угроз',   href: '/threats' },
-      { label: 'Эндшпили',         href: '/endgames' },
-      { label: 'Жертвы',           href: '/sac' },
-      { label: 'Угадай дебют',     href: '/guess-opening' },
-      { label: 'Играть',           href: '/play' },
+      { label: 'Ошибки',         href: '/mistakes',      icon: 'mistakes'  },
+      { label: 'Проверка угроз', href: '/threats',       icon: 'threats'   },
+      { label: 'Эндшпили',       href: '/endgames',      icon: 'endgames'  },
+      { label: 'Жертвы',         href: '/sac',           icon: 'sac'       },
+      { label: 'Угадай дебют',   href: '/guess-opening', icon: 'guess'     },
+      { label: 'Играть',         href: '/play',          icon: 'play'      },
     ],
   },
   {
     label: 'ПАРТИИ',
     items: [
-      { label: 'Мои партии',       href: '/games' },
-      { label: 'Мастера',          href: '/masters' },
+      { label: 'Мои партии', href: '/games',   icon: 'games'   },
+      { label: 'Мастера',    href: '/masters', icon: 'masters' },
     ],
   },
 ];
