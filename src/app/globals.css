@@ -91,12 +91,14 @@ html, body {
 @keyframes fadeOut        { from { opacity: 1; } to { opacity: 0; } }
 @keyframes guessCorrect   { 0%,100% { box-shadow: none; } 35%,70% { box-shadow: 0 0 0 3px rgba(80,200,80,0.6); } }
 @keyframes guessWrong     { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-7px); } 40%,80% { transform: translateX(7px); } }
+@keyframes badgePop       { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
 
 .sq-check   { position: absolute; inset: 0; pointer-events: none; animation: checkGlow 1.6s ease-in-out infinite; }
 .sq-mark    { position: absolute; inset: 0; pointer-events: none; opacity: 0.45; }
 .sq-mark-pulse { animation: squarePulse 0.75s ease-in-out 2; animation-fill-mode: forwards; }
 .sq-flash   { position: absolute; inset: 3px; pointer-events: none; border-radius: 50%; border: 3px solid rgba(220,160,40,0.9); animation: captureFlash 0.42s ease-out forwards; }
 .sq-nag     { position: absolute; top: 2px; right: 3px; font-size: 13px; font-weight: 700; line-height: 1; color: rgba(242,239,231,0.95); text-shadow: 0 0 6px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.7); pointer-events: none; font-family: monospace; user-select: none; z-index: 2; }
+.move-badge-sq-inner { animation: badgePop 0.2s ease-out; }
 .board-guess-correct { animation: guessCorrect 0.6s ease-out; }
 .board-guess-wrong   { animation: guessWrong 0.42s ease-out; }
 
@@ -113,6 +115,7 @@ html, body {
   .sq-flash            { animation: none; opacity: 0; }
   .board-guess-correct { animation: none; }
   .board-guess-wrong   { animation: none; }
+  .move-badge-sq-inner { animation: none; }
 }
 
 /* ── Card and row hover effects ──────────────────────────────────────────── */

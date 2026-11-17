@@ -1,5 +1,17 @@
 export type CourseKind = 'opening' | 'theme' | 'endgame' | 'tactics' | 'structure' | 'games';
 
+export type MoveLabel =
+  | '!!'   // Блестящий
+  | '!'    // Сильный
+  | '!?'   // Интересный
+  | 'best' // Лучший
+  | 'book' // Книжный
+  | 'good' // Хороший
+  | '?!'   // Неточность
+  | '?'    // Ошибка
+  | 'miss' // Пропуск
+  | '??';  // Зевок
+
 export interface Course {
   id: string;
   slug: string;
@@ -37,6 +49,7 @@ export interface CourseLessonMove {
   arrows: Arrow[];
   squares?: SquareMark[];
   nags?: number[];
+  label?: MoveLabel;
   /** Alternatives to THIS move: each one starts from the same position as this move. */
   variations?: CourseLessonMove[][];
 }

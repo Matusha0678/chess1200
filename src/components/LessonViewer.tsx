@@ -8,6 +8,8 @@ import { playMove, playCapture, playCorrect, playWrong, playComplete } from '@/l
 import { LessonTest } from '@/components/LessonTest';
 import { DeviationMode } from '@/components/DeviationMode';
 import { ExplainMode } from '@/components/ExplainMode';
+import { MoveBadge, nagToLabel, ALL_LABELS, LABEL_META } from '@/components/MoveBadge';
+import type { MoveLabel } from '@/types/courses';
 import { supabase } from '@/lib/supabase';
 import type {
   CourseLessonMove,
@@ -23,9 +25,11 @@ import type {
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
-const NAG_LABEL: Record<number, string> = {
-  1: '!', 2: '?', 3: '!!', 4: '??', 5: '!?', 6: '?!',
-};
+function getEffectiveLabel(m: CourseLessonMove | null | undefined): MoveLabel | null {
+  if (!m) return null;
+  if (m.label) return m.label;
+  return nagToLabel(m.nags?.[0] ?? -1);
+}
 
 const MARK_COLORS: Record<string, string> = {
   green:  'rgba(100, 200,  80, 0.55)',
@@ -242,7 +246,7 @@ export function LessonViewer({
   const checkedKingSquare = useMemo(() => getCheckedKingSquare(currentFen), [currentFen]);
   const captureSquare     = currentMove?.san.includes('x') ? currentMove.to : null;
   const currentSquares    = useMemo(() => currentMove?.squares ?? [], [currentMove]);
-  const currentNags       = useMemo(() => currentMove?.nags    ?? [], [currentMove]);
+  const currentLabel      = getEffectiveLabel(currentMove);
 
   const squareMarkMap = useMemo(() => {
     const m: Record<string, SquareMark> = {};
@@ -424,11 +428,10 @@ export function LessonViewer({
     const isCheck      = square === checkedKingSquare;
     const isCapture    = square === captureSquare;
     const mark         = squareMarkMap[square];
-    const nagNum       = currentMove?.to === square ? (currentNags[0] ?? null) : null;
-    const nagLabel     = nagNum !== null && nagNum !== undefined ? (NAG_LABEL[nagNum] ?? null) : null;
+    const moveLabel    = currentMove?.to === square ? currentLabel : null;
     const isGuessTo    = isGuessPending && nextMoveForGuess?.to === square;
 
-    if (!isCheck && !isCapture && !mark && !nagLabel && !isGuessTo) return <>{children}</>;
+    if (!isCheck && !isCapture && !mark && !moveLabel && !isGuessTo) return <>{children}</>;
 
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -446,13 +449,13 @@ export function LessonViewer({
           />
         )}
         {isCapture && animEnabled && <div key={`flash-${activeIdx}`} className="sq-flash" aria-hidden="true" />}
-        {nagLabel && <div className="sq-nag" aria-hidden="true">{nagLabel}</div>}
+        {moveLabel && <MoveBadge key={`badge-${activeIdx}`} label={moveLabel} variant="square" />}
         {isGuessTo && (
           <div style={{ position: 'absolute', inset: 0, border: '2px dashed rgba(220,180,40,0.5)', pointerEvents: 'none', zIndex: 5 }} aria-hidden="true" />
         )}
       </div>
     );
-  }, [checkedKingSquare, captureSquare, squareMarkMap, currentMove, currentNags, activeIdx, animEnabled, isGuessPending, nextMoveForGuess]);
+  }, [checkedKingSquare, captureSquare, squareMarkMap, currentMove, currentLabel, activeIdx, animEnabled, isGuessPending, nextMoveForGuess]);
 
   // ── squareStyles ───────────────────────────────────────────────────────────
 
@@ -611,7 +614,13 @@ export function LessonViewer({
             key={`comment-${activeIdx}`}
             style={{ minHeight: 44, maxWidth: 560, padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 14, lineHeight: 1.6, color: currentComment ? 'var(--ivory)' : 'var(--muted)', animation: animEnabled && currentComment ? 'fadeComment 0.22s ease-out' : undefined }}
           >
-            {currentComment ?? 'Комментарий к ходу'}
+            {currentComment
+              ? <span style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  {currentLabel && <MoveBadge label={currentLabel} variant="inline" />}
+                  <span>{currentComment}</span>
+                </span>
+              : 'Комментарий к ходу'
+            }
           </div>
 
           {/* Variants */}
@@ -724,7 +733,7 @@ export function LessonViewer({
             ))}
           </div>
           <div style={{ padding: 20, overflowY: 'auto', maxHeight: 480 }}>
-            {activeTab === 'moves'    && <MoveListPanel moves={moves} currentIndex={variantMoves ? -1 : moveIndex} onMoveClick={idx => { exitVariant(); goTo(idx); }} animEnabled={animEnabled} />}
+            {activeTab === 'moves'    && <><MoveListPanel moves={moves} currentIndex={variantMoves ? -1 : moveIndex} onMoveClick={idx => { exitVariant(); goTo(idx); }} animEnabled={animEnabled} /><BadgeLegend /></>}
             {activeTab === 'summary'  && <LessonText text={lesson.summary} />}
             {activeTab === 'plan'     && <LessonText text={lesson.plan} />}
             {activeTab === 'mistakes' && <LessonText text={lesson.mistakes} />}
@@ -902,9 +911,10 @@ export function LessonViewer({
             {currentComment && (
               <p
                 key={`sub-${activeIdx}`}
-                style={{ margin: 0, fontSize: 17, lineHeight: 1.6, color: 'var(--ivory)', animation: animEnabled ? 'fadeComment 0.3s ease-out' : undefined }}
+                style={{ margin: 0, fontSize: 17, lineHeight: 1.6, color: 'var(--ivory)', animation: animEnabled ? 'fadeComment 0.3s ease-out' : undefined, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 8 }}
               >
-                {currentComment}
+                {currentLabel && <MoveBadge label={currentLabel} variant="inline" />}
+                <span>{currentComment}</span>
               </p>
             )}
           </div>
@@ -1084,17 +1094,41 @@ function MoveBtn({ m, idx, current, onClick, refProp }: {
   refProp?: React.RefObject<HTMLButtonElement | null>;
 }) {
   const isActive  = idx === current;
-  const nag       = m.nags?.[0] !== undefined ? (NAG_LABEL[m.nags[0]] ?? '') : '';
+  const label     = getEffectiveLabel(m);
   const hasArrows = (m.arrows?.length ?? 0) > 0;
   return (
     <button
       ref={refProp}
       onClick={() => onClick(idx)}
-      style={{ padding: '3px 6px', fontSize: 13, fontFamily: 'monospace', textAlign: 'left', cursor: 'pointer', border: 'none', background: isActive ? 'var(--track)' : 'transparent', color: idx <= current ? 'var(--ivory)' : 'var(--muted)', fontWeight: isActive ? 700 : 400, borderRadius: 2, display: 'flex', alignItems: 'center', gap: 3 }}
+      style={{ padding: '3px 6px', fontSize: 13, fontFamily: 'monospace', textAlign: 'left', cursor: 'pointer', border: 'none', background: isActive ? 'var(--track)' : 'transparent', color: idx <= current ? 'var(--ivory)' : 'var(--muted)', fontWeight: isActive ? 700 : 400, borderRadius: 2, display: 'flex', alignItems: 'center', gap: 4 }}
     >
       {m.san}
-      {nag       && <span style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'inherit' }}>{nag}</span>}
-      {hasArrows && !nag && <span style={{ fontSize: 9, color: 'var(--control)', lineHeight: 1 }}>▸</span>}
+      {label     && <MoveBadge label={label} variant="inline" />}
+      {hasArrows && !label && <span style={{ fontSize: 9, color: 'var(--control)', lineHeight: 1 }}>▸</span>}
     </button>
+  );
+}
+
+function BadgeLegend() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--hairline)' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: 0, letterSpacing: '0.08em' }}
+      >
+        {open ? '▾' : '▸'} ЧТО ЗНАЧАТ ЗНАЧКИ
+      </button>
+      {open && (
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {ALL_LABELS.map(lbl => (
+            <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <MoveBadge label={lbl} variant="inline" />
+              <span style={{ fontSize: 11, color: 'var(--muted)' }}>{LABEL_META[lbl].name}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

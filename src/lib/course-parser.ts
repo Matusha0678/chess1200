@@ -6,7 +6,7 @@
 
 import { Chess } from 'chess.js';
 import { parse as parseYaml } from 'yaml';
-import type { Course, CourseLessonMove, LessonBlock, QuizItem, IdeaItem } from '@/types/courses';
+import type { Course, CourseLessonMove, LessonBlock, QuizItem, IdeaItem, MoveLabel } from '@/types/courses';
 
 export const MAX_MAIN_MOVES = 12;
 export const MAX_VAR_MOVES = 8;
@@ -74,7 +74,9 @@ const LESSON_RE = /^#\s+(?:Урок|Lesson)\s+(\d+)\s*:\s*(.+?)\s*$/;
 const SECTION_RE = /^##\s+(.+?)\s*$/;
 const CMD_RE = /\[%[^\]]*\]/g;
 const GOOD_CMD_RE = /^\[%(cal|csl)\s+(?:[GRYB][a-h][1-8](?:[a-h][1-8])?,?)+\]$/;
+const GOOD_LABEL_RE = /^\[%m\s+(best|book|good|miss)\]$/;
 const ARROW_CMD_RE = /\[%(cal|csl)\s+([^\]]*)\]/g;
+const LABEL_CMD_RE = /\[%m\s+(best|book|good|miss)\]/;
 const COLORS: Record<string, string> = { G: 'green', R: 'red', Y: 'yellow', B: 'blue' };
 const MARK_NAG: Record<string, number> = { '!': 1, '?': 2, '!!': 3, '??': 4, '!?': 5, '?!': 6 };
 
@@ -310,8 +312,8 @@ function buildTree(toks: Tok[], rep: Report, where: string, startFen?: string): 
     for (const m of ms) {
       const text = (raw.get(m) ?? []).join(' ');
       for (const cmd of text.match(CMD_RE) ?? []) {
-        if (!GOOD_CMD_RE.test(cmd) && !/^\[%(clk|eval)/.test(cmd)) {
-          rep.err(where, `странная команда ${cmd} (разрешены [%cal …] и [%csl …])`);
+        if (!GOOD_CMD_RE.test(cmd) && !GOOD_LABEL_RE.test(cmd) && !/^\[%(clk|eval)/.test(cmd)) {
+          rep.err(where, `странная команда ${cmd} (разрешены [%cal …], [%csl …] и [%m best|book|good|miss])`);
         }
       }
       for (const cmd of text.matchAll(ARROW_CMD_RE)) {
@@ -323,6 +325,8 @@ function buildTree(toks: Tok[], rep: Report, where: string, startFen?: string): 
           else m.arrows.push({ from: a[2], to: a[3], color });
         }
       }
+      const labelMatch = LABEL_CMD_RE.exec(text);
+      if (labelMatch) m.label = labelMatch[1] as MoveLabel;
       const clean = cleanComment(text);
       if (/[[\]]/.test(clean)) rep.err(where, `в комментарии к ${m.san} есть квадратные скобки`);
       m.comment = clean || null;
