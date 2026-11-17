@@ -2,39 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Chessboard } from 'react-chessboard';
+
 import { supabase } from '@/lib/supabase';
-import type { Opening, LineProgress } from '@/types/openings';
-import type { CourseLessonMove } from '@/types/courses';
-import { useBoardTheme } from '@/contexts/BoardThemeContext';
-import { SoftToday } from '@/components/SoftToday';
-
-interface DailyTrap {
-  trap_key: string;
-  title: string;
-  opening: string;
-  course_name: string;
-  puzzle_fen: string;
-  final_fen: string;
-  trap_move_san: string;
-  trap_move_color: 'w' | 'b';
-}
-
-interface OpeningRow extends Opening {
-  linesTotal: number;
-  linesDue: number;
-  linesNew: number;
-  linesMastered: number;
-  earliestNextReview: string | null;
-}
 
 const MONTH_NAMES = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-const DAY_NAMES_RU = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
-const DAY_NAMES_RU_UPPER = ['ВОСКРЕСЕНЬЕ','ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА'];
-const DAY_SHORT = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const DAY_NAMES   = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
 
-// suppress unused variable warnings
-void DAY_NAMES_RU;
+interface DayCounts {
+  openingsDue:  number;
+  mistakesDue:  number;
+  ideasDue:     number;
+  guessedToday: boolean;
+  totalLines:   number;
+  totalMastered: number;
+  streak:       number;
+}
 
 function plural(n: number, one: string, few: string, many: string) {
   const m100 = n % 100, m10 = n % 10;
@@ -42,17 +24,6 @@ function plural(n: number, one: string, few: string, many: string) {
   if (m10 === 1) return `${n} ${one}`;
   if (m10 >= 2 && m10 <= 4) return `${n} ${few}`;
   return `${n} ${many}`;
-}
-
-function formatNext(iso: string): string {
-  const diff = new Date(iso).getTime() - Date.now();
-  const h = Math.floor(diff / 3600000);
-  const d = Math.floor(diff / 86400000);
-  if (h < 1) return 'скоро';
-  if (h < 24) return `через ${h} ч.`;
-  if (d === 1) return 'завтра';
-  if (d < 7) return `через ${d} дн.`;
-  return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 }
 
 function calcStreak(practicedAts: string[]): number {
@@ -74,711 +45,211 @@ function calcStreak(practicedAts: string[]): number {
   return streak;
 }
 
-const EYEBROW: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 12,
-  fontSize: 11, fontWeight: 600, letterSpacing: '0.18em',
-  color: 'var(--muted)', textTransform: 'uppercase',
-};
-
-const EYEBROW_LINE: React.CSSProperties = {
-  width: 48, height: 1, background: 'var(--eyebrow-line)', flexShrink: 0,
-};
-
-const SECTION_HEADER: React.CSSProperties = {
-  borderTop: '2px solid var(--ivory)',
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-  minHeight: 48,
-};
-
-const LABEL: React.CSSProperties = {
-  margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.18em',
-  color: 'var(--ivory)', textTransform: 'uppercase',
-};
-
-const HEADING: React.CSSProperties = {
-  fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-};
-
-function ActivityChart({ counts }: { counts: number[] }) {
-  const today = new Date();
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today); d.setDate(d.getDate() - 6 + i);
-    return { dow: d.getDay(), count: counts[i], isToday: i === 6 };
-  });
-  const maxVal = Math.max(...counts, 1);
-
-  return (
-    <div
-      role="img"
-      aria-label={`Активность за 7 дней: ${counts.reduce((a, b) => a + b, 0)} тренировок`}
-      style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 8, paddingTop: 8 }}
-    >
-      {days.map((day, i) => {
-        const barH = day.count > 0 ? Math.max(4, Math.round((day.count / maxVal) * 68)) : 0;
-        return (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{
-              position: 'relative', height: 72,
-              borderBottom: `2px solid ${day.isToday ? 'var(--ivory)' : 'var(--track)'}`,
-            }}>
-              {barH > 0 && (
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0,
-                  height: barH, background: 'var(--ivory)',
-                }} />
-              )}
-            </div>
-            <span style={{
-              fontSize: 12, textAlign: 'center',
-              color: day.isToday ? 'var(--ivory)' : 'var(--muted)',
-              fontWeight: day.isToday ? 600 : 400,
-            }}>
-              {DAY_SHORT[day.dow]}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
+interface Task {
+  key: string;
+  label: string;
+  count: number;
+  href: string;
+  hint: string;
+  cta: string;
+  done?: boolean;
 }
 
-const MASTERY_COLORS = ['#6E6A61','#A8A499','#BFBBB4','#CFCCC6','#DEDAD7','#F2EFE7'];
-const MASTERY_LABELS = ['Новые','Ур. 1','Ур. 2','Ур. 3','Ур. 4','Ур. 5'];
+function buildPlan(counts: DayCounts): Task[] {
+  const tasks: Task[] = [];
+  if (counts.openingsDue > 0) {
+    tasks.push({
+      key: 'openings',
+      label: 'Повторить дебюты',
+      count: counts.openingsDue,
+      href: '/openings',
+      hint: `${plural(counts.openingsDue, 'линия ждёт повторения', 'линии ждут повторения', 'линий ждут повторения')}`,
+      cta: 'К дебютам',
+    });
+  }
+  if (counts.mistakesDue > 0) {
+    tasks.push({
+      key: 'mistakes',
+      label: 'Разобрать ошибки',
+      count: counts.mistakesDue,
+      href: '/mistakes',
+      hint: `${plural(counts.mistakesDue, 'карточка', 'карточки', 'карточек')} в банке ошибок`,
+      cta: 'Решать',
+    });
+  }
+  if (counts.ideasDue > 0) {
+    tasks.push({
+      key: 'ideas',
+      label: 'Идеи позиций',
+      count: counts.ideasDue,
+      href: '/plans',
+      hint: `${plural(counts.ideasDue, 'идея', 'идеи', 'идей')} на повторении`,
+      cta: 'Повторить',
+    });
+  }
+  tasks.push({
+    key: 'guess',
+    label: 'Угадай дебют',
+    count: counts.guessedToday ? 1 : 0,
+    href: '/guess-opening',
+    hint: counts.guessedToday ? 'Сегодня уже сыграно' : 'Ежедневная игра — 1 раунд в день',
+    cta: counts.guessedToday ? 'Тренировка' : 'Играть',
+    done: counts.guessedToday,
+  });
+  if (tasks.length < 3) {
+    tasks.push({
+      key: 'endgames',
+      label: 'Эндшпиль дня',
+      count: 1,
+      href: '/endgames',
+      hint: 'Случайная позиция — отработай технику',
+      cta: 'Выбрать',
+    });
+  }
+  return tasks.slice(0, 5);
+}
 
 export default function HomePage() {
-  const { siteThemeId } = useBoardTheme();
-  const [loading, setLoading] = useState(true);
-  const [openings, setOpenings] = useState<OpeningRow[]>([]);
-  const [streak, setStreak] = useState(0);
-  const [weekCounts, setWeekCounts] = useState<number[]>(Array(7).fill(0));
-  const [masteryDist, setMasteryDist] = useState<number[]>(Array(6).fill(0));
-  const [totalLines, setTotalLines] = useState(0);
-  const [mistakesDue, setMistakesDue] = useState(0);
-  const [ideasDue, setIdeasDue] = useState(0);
-  const [dailyTrap, setDailyTrap] = useState<DailyTrap | null>(null);
-  const [trapRevealed, setTrapRevealed] = useState(false);
-
-  const [pathCard, setPathCard] = useState<{
-    pathId: string; pathTitle: string;
-    stepOrd: number; courseId: string; courseName: string; pct: number;
-  } | null>(null);
+  const [counts, setCounts] = useState<DayCounts | null>(null);
 
   useEffect(() => {
-    async function loadPathCard() {
-      const { data: pathRow } = await supabase
-        .from('course_paths').select('id, title').order('created_at').limit(1).maybeSingle();
-      if (!pathRow) return;
-
-      const { data: rawItems } = await supabase
-        .from('course_path_items').select('id, course_id, ord').eq('path_id', pathRow.id).order('ord');
-      if (!rawItems || rawItems.length === 0) return;
-
-      const courseIds = rawItems.map(i => i.course_id as string);
-
-      const { data: unlockRows } = await supabase
-        .from('course_path_unlocks').select('course_id').eq('path_id', pathRow.id);
-      const unlockedSet = new Set((unlockRows ?? []).map(u => u.course_id as string));
-
-      const { data: lessonRows } = await supabase
-        .from('course_lessons').select('id, course_id').in('course_id', courseIds);
-      const lessonIds = (lessonRows ?? []).map(l => l.id as string);
-      const testRows = lessonIds.length > 0
-        ? (await supabase.from('lesson_tests').select('lesson_id, score, max').in('lesson_id', lessonIds)).data ?? []
-        : [];
-      const bestPct = new Map<string, number>();
-      for (const t of testRows) {
-        const pct = Math.round((t.score / t.max) * 100);
-        if (pct > (bestPct.get(t.lesson_id) ?? 0)) bestPct.set(t.lesson_id, pct);
-      }
-      const prog = new Map<string, { passed: number; total: number }>();
-      for (const cid of courseIds) {
-        const lessons = (lessonRows ?? []).filter(l => l.course_id === cid);
-        const passed = lessons.filter(l => (bestPct.get(l.id) ?? 0) >= 80).length;
-        prog.set(cid, { passed, total: lessons.length });
-      }
-      const isDone = (cid: string) => { const p = prog.get(cid); return !!p && p.total > 0 && p.passed === p.total; };
-
-      for (let i = 0; i < rawItems.length; i++) {
-        const cid = rawItems[i].course_id as string;
-        const open = i === 0 || unlockedSet.has(cid) || isDone(rawItems[i - 1].course_id as string);
-        if (!open || isDone(cid)) continue;
-        const { data: courseRow } = await supabase.from('courses').select('name').eq('id', cid).single();
-        const p = prog.get(cid);
-        setPathCard({
-          pathId: pathRow.id,
-          pathTitle: pathRow.title,
-          stepOrd: rawItems[i].ord as number,
-          courseId: cid,
-          courseName: (courseRow?.name as string) ?? '',
-          pct: p && p.total > 0 ? Math.round(p.passed / p.total * 100) : 0,
-        });
-        return;
-      }
-    }
-    loadPathCard();
-  }, []);
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
+    (async () => {
       const now = new Date().toISOString();
-      const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate() - 29); thirtyAgo.setHours(0,0,0,0);
+      const today = new Date().toISOString().slice(0, 10);
 
-      const [{ data: ops }, { data: logData }, { count: mistakesCount }, { count: ideasCount }] = await Promise.all([
-        supabase.from('openings').select('*').order('created_at', { ascending: false }),
-        supabase.from('opening_practice_log').select('practiced_at').gte('practiced_at', thirtyAgo.toISOString()),
+      const [lineProgRes, mistakesRes, ideasRes, guessRes, totalLinesRes] = await Promise.all([
+        supabase.from('line_progress').select('mastery, next_review, last_practiced'),
         supabase.from('mistake_cards').select('id', { count: 'exact', head: true }).lte('next_review', now),
-        supabase.from('idea_progress').select('idea_key', { count: 'exact', head: true }).lte('next_review', now),
+        supabase.from('idea_progress').select('id', { count: 'exact', head: true }).lte('next_review', now),
+        supabase.from('opening_guess_log').select('score').eq('day', today).maybeSingle(),
+        supabase.from('opening_lines').select('id', { count: 'exact', head: true }),
       ]);
-      setMistakesDue(mistakesCount ?? 0);
-      setIdeasDue(ideasCount ?? 0);
 
-      const practicedAts = (logData ?? []).map((r: { practiced_at: string }) => r.practiced_at);
-      setStreak(calcStreak(practicedAts));
+      const progress = lineProgRes.data ?? [];
+      const openingsDue = progress.filter((p: { next_review: string; mastery: number }) =>
+        p.mastery < 5 && p.next_review && p.next_review <= now
+      ).length;
+      const mastered = progress.filter((p: { mastery: number }) => p.mastery >= 5).length;
+      const practicedAts = progress
+        .map((p: { last_practiced: string | null }) => p.last_practiced)
+        .filter((s: string | null): s is string => !!s);
+      const streak = calcStreak(practicedAts);
 
-      const todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
-      const counts = Array(7).fill(0);
-      practicedAts.forEach((iso) => {
-        const d = new Date(iso); d.setHours(0,0,0,0);
-        const diff = Math.round((todayMidnight.getTime() - d.getTime()) / 86400000);
-        if (diff >= 0 && diff < 7) counts[6 - diff]++;
+      setCounts({
+        openingsDue,
+        mistakesDue:  mistakesRes.count ?? 0,
+        ideasDue:     ideasRes.count ?? 0,
+        guessedToday: !!guessRes.data,
+        totalLines:   totalLinesRes.count ?? 0,
+        totalMastered: mastered,
+        streak,
       });
-      setWeekCounts(counts);
-
-      if (!ops || ops.length === 0) { setLoading(false); return; }
-
-      const ids = ops.map((o: Opening) => o.id);
-      const { data: lines } = await supabase.from('opening_lines').select('id, opening_id').in('opening_id', ids);
-      const lineIds = (lines ?? []).map((l: { id: string }) => l.id);
-      const { data: prog } = lineIds.length > 0
-        ? await supabase.from('line_progress').select('*').in('line_id', lineIds)
-        : { data: [] as LineProgress[] };
-
-      const dist = Array(6).fill(0);
-      const practicedLineIds = new Set((prog ?? []).map((p: LineProgress) => p.line_id));
-      (prog ?? []).forEach((p: LineProgress) => { dist[Math.min(p.mastery ?? 0, 5)]++; });
-      dist[0] += lineIds.filter((id: string) => !practicedLineIds.has(id)).length;
-      setMasteryDist(dist);
-      setTotalLines(lineIds.length);
-
-      const rows: OpeningRow[] = ops.map((op: Opening) => {
-        const opLines = (lines ?? []).filter((l: { id: string; opening_id: string }) => l.opening_id === op.id);
-        const opLineIds = opLines.map((l: { id: string }) => l.id);
-        const opProg = (prog ?? []).filter((p: LineProgress) => opLineIds.includes(p.line_id));
-        const practicedIds = opProg.map((p: LineProgress) => p.line_id);
-        const linesNew = opLineIds.filter((id: string) => !practicedIds.includes(id)).length;
-        const linesDue = opProg.filter((p: LineProgress) => p.next_review <= now && p.mastery < 5).length;
-        const linesMastered = opProg.filter((p: LineProgress) => p.mastery >= 5).length;
-        const futureReviews = opProg.filter((p: LineProgress) => p.next_review > now && p.mastery < 5).map((p: LineProgress) => p.next_review).sort();
-        return { ...(op as Opening), linesTotal: opLines.length, linesNew, linesDue, linesMastered, earliestNextReview: futureReviews[0] ?? null };
-      });
-
-      setOpenings(rows);
-      setLoading(false);
-
-      // Load daily trap in background (non-blocking)
-      void loadDailyTrap(ops ?? []);
-    }
-
-    async function loadDailyTrap(userOpenings: Opening[]) {
-      const { data: rawLines } = await supabase
-        .from('lesson_lines')
-        .select('id, lesson_id, line_order, title, moves')
-        .ilike('title', '%ловушка%');
-
-      if (!rawLines || rawLines.length === 0) return;
-
-      const lessonIds = [...new Set(rawLines.map((l: { lesson_id: string }) => l.lesson_id))];
-      const { data: lessons } = await supabase
-        .from('course_lessons')
-        .select('id, course_id, lesson_order')
-        .in('id', lessonIds);
-
-      const courseIds = [...new Set((lessons ?? []).map((l: { course_id: string }) => l.course_id))];
-      const { data: courses } = await supabase
-        .from('courses')
-        .select('id, slug, name, color, opening')
-        .in('id', courseIds);
-
-      const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-      const allTraps: DailyTrap[] = [];
-
-      for (const ll of rawLines) {
-        const lesson = (lessons ?? []).find((ls: { id: string }) => ls.id === ll.lesson_id);
-        const course = lesson ? (courses ?? []).find((c: { id: string }) => c.id === lesson.course_id) : null;
-        if (!lesson || !course) continue;
-        const moves = ll.moves as CourseLessonMove[];
-        if (!moves || moves.length === 0) continue;
-        const last = moves[moves.length - 1];
-        const prev = moves.length >= 2 ? moves[moves.length - 2] : null;
-        allTraps.push({
-          trap_key: `${course.slug}/${lesson.lesson_order}/${ll.line_order}`,
-          title: ll.title as string,
-          opening: (course.opening as string) ?? '',
-          course_name: course.name as string,
-          puzzle_fen: prev?.fen ?? START_FEN,
-          final_fen: last.fen,
-          trap_move_san: last.san,
-          trap_move_color: last.color,
-        });
-      }
-
-      if (allTraps.length === 0) return;
-
-      // Deterministic daily selection — user's openings in priority
-      const userOpeningNames = userOpenings.map((o: Opening) => (o.name ?? '').toLowerCase());
-      const prioritized = allTraps.filter(t =>
-        userOpeningNames.some(n => n.includes(t.opening.toLowerCase()) || t.opening.toLowerCase().includes(n))
-      );
-      const pool = prioritized.length > 0 ? prioritized : allTraps;
-
-      const today = new Date();
-      const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-      setDailyTrap(pool[seed % pool.length]);
-    }
-
-    load();
-    const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) load(); };
-    window.addEventListener('pageshow', onPageShow);
-    return () => window.removeEventListener('pageshow', onPageShow);
+    })();
   }, []);
 
-  const totalDue = openings.reduce((s, o) => s + o.linesDue, 0);
-  const totalNew = openings.reduce((s, o) => s + o.linesNew, 0);
-  const todayTotal = totalDue + totalNew;
-  const totalMastered = openings.reduce((s, o) => s + o.linesMastered, 0);
-  const nextReviewGlobal = openings.map(o => o.earliestNextReview).filter(Boolean).sort()[0] ?? null;
-  const firstOpening = [...openings].filter(o => o.linesDue + o.linesNew > 0).sort((a, b) => (b.linesDue - a.linesDue) || (b.linesNew - a.linesNew))[0] ?? null;
-
-  const today = new Date();
-  const dateLabel = `${today.getDate()} ${MONTH_NAMES[today.getMonth()]}`;
-  const dayLabelUpper = DAY_NAMES_RU_UPPER[today.getDay()];
-  const masteryPct = totalLines > 0 ? Math.round(totalMastered / totalLines * 100) : 0;
-  const sortedOpenings = [...openings].filter(o => o.linesTotal > 0).sort((a, b) => (b.linesDue + b.linesNew) - (a.linesDue + a.linesNew));
-
-  const linesTodayWord = (() => {
-    const n = todayTotal;
-    const m100 = n % 100, m10 = n % 10;
-    if (m100 >= 11 && m100 <= 19) return 'линий';
-    if (m10 === 1) return 'линия';
-    if (m10 >= 2 && m10 <= 4) return 'линии';
-    return 'линий';
-  })();
-
-  const ctaSubtext = totalDue > 0 && totalNew > 0
-    ? `${plural(totalDue, 'повторение', 'повторения', 'повторений')} · ${plural(totalNew, 'новая', 'новые', 'новых')}`
-    : totalDue > 0 ? 'пора повторить — забываешь' : 'ещё ни разу не тренировал';
-
-  if (loading) {
+  if (!counts) {
     return (
-      <main style={{ maxWidth: 1600, margin: '0 auto', padding: '40px 48px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
-        <div style={{ flex: '999 1 520px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
-          <div style={{ height: 88, width: 220, background: 'var(--surface)' }} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '2px solid var(--hairline)' }}>
-            {[0,1,2].map(i => <div key={i} style={{ height: 100, background: i > 0 ? 'var(--surface)' : undefined }} />)}
-          </div>
-          <div style={{ height: 160, background: 'var(--surface)' }} />
-          <div style={{ height: 100, background: 'var(--surface)' }} />
-        </div>
-        <aside style={{ flex: '1 1 340px', maxWidth: 400, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }} className="animate-pulse">
-          <div style={{ height: 300, background: 'var(--surface)' }} />
-        </aside>
-      </main>
+      <div className="page">
+        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
+      </div>
     );
   }
 
-  if (siteThemeId.startsWith('soft')) {
-    return (
-      <SoftToday
-        streak={streak}
-        todayTotal={todayTotal}
-        totalDue={totalDue}
-        totalNew={totalNew}
-        mistakesDue={mistakesDue}
-        ideasDue={ideasDue}
-        totalMastered={totalMastered}
-        totalLines={totalLines}
-        firstOpeningId={firstOpening?.id ?? null}
-        firstOpeningName={firstOpening?.name ?? null}
-        pathCard={pathCard}
-        dateLabel={dateLabel}
-        dayLabel={dayLabelUpper}
-      />
-    );
-  }
-
-  if (openings.length === 0) {
-    return (
-      <main style={{ maxWidth: 1600, margin: '0 auto', padding: '44px 48px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, textAlign: 'center' }}>
-        <h1 style={{ ...HEADING, fontSize: 88, fontWeight: 700, lineHeight: 0.88, letterSpacing: '-0.015em', margin: 0 }}>{dateLabel}</h1>
-        <p style={{ fontSize: 15, color: 'var(--muted)', maxWidth: 320, margin: 0 }}>Добавь первый дебют — и можно начинать тренировки</p>
-        <Link href="/openings/new" style={{ display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600 }}>
-          + Добавить дебют
-        </Link>
-      </main>
-    );
-  }
+  const now = new Date();
+  const dateLabel = `${DAY_NAMES[now.getDay()]}, ${now.getDate()} ${MONTH_NAMES[now.getMonth()]}`;
+  const plan = buildPlan(counts);
+  const pendingTasks = plan.filter(t => !t.done && t.count > 0);
+  const startHref = pendingTasks[0]?.href ?? plan[0]?.href ?? '/openings';
 
   return (
-    <main style={{ maxWidth: 1600, margin: '0 auto', padding: '40px 48px 72px', display: 'flex', flexWrap: 'wrap', gap: 48, alignItems: 'flex-start', boxSizing: 'border-box' }}>
-
-      {/* ── Left column ── */}
-      <div style={{ flex: '999 1 520px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }}>
-
-        {/* 1. Date hero */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={EYEBROW}>
-            <span>СЕГОДНЯ</span>
-            <span style={EYEBROW_LINE} />
-            <span>{dayLabelUpper}</span>
-          </div>
-          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 88, lineHeight: 0.88, letterSpacing: '0.01em' }}>{dateLabel}</h1>
-        </div>
-
-        {/* 2. Stats band */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '2px solid var(--ivory)' }}>
-          {/* СЕРИЯ */}
-          <div style={{ padding: '16px 20px 18px 0', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>СЕРИЯ</span>
-            <span style={{ ...HEADING, fontWeight: 700, fontSize: 44, lineHeight: 1, letterSpacing: '0', fontVariantNumeric: 'tabular-nums' }}>{streak}</span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-              {streak === 0 ? 'начни сегодня' : streak === 1 ? 'день подряд' : streak < 5 ? 'дня подряд' : 'дней подряд'}
-            </span>
-          </div>
-          {/* СЕГОДНЯ */}
-          <div style={{ padding: '16px 20px 18px', borderLeft: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>СЕГОДНЯ</span>
-            <span style={{ ...HEADING, fontWeight: 700, fontSize: 44, lineHeight: 1, letterSpacing: '0', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-              {todayTotal === 0 ? 'всё готово' : totalDue > 0 && totalNew > 0 ? `${totalDue} повт. · ${totalNew} нов.` : totalDue > 0 ? 'на повторение' : 'новые'}
-            </span>
-          </div>
-          {/* ОСВОЕНО */}
-          <div style={{ padding: '16px 0 18px 20px', borderLeft: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' }}>ОСВОЕНО</span>
-            <span style={{ ...HEADING, fontWeight: 700, fontSize: 44, lineHeight: 1, letterSpacing: '0', fontVariantNumeric: 'tabular-nums' }}>
-              {totalMastered}
-              <span style={{ fontSize: 18, fontWeight: 400, letterSpacing: '0', color: 'var(--muted)' }}> /{totalLines}</span>
-            </span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>{masteryPct}% репертуара</span>
-          </div>
-        </div>
-
-        {/* 3. Train CTA */}
-        {todayTotal === 0 ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '24px 28px', background: 'var(--surface)', border: '1px solid var(--hairline)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ ...HEADING, fontWeight: 600, fontSize: 22, letterSpacing: '0', color: 'var(--ivory)' }}>Всё готово на сегодня</span>
-              <span style={{ fontSize: 14, color: 'var(--muted)' }}>
-                {nextReviewGlobal ? `Следующее повторение — ${formatNext(nextReviewGlobal)}` : 'Добавь новые линии в дебюты'}
-              </span>
-            </div>
-            <Link href="/openings" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: 48, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap' }}>
-              Дебюты →
-            </Link>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, padding: '24px 28px', background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ivory)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                <span style={{ ...HEADING, fontWeight: 700, fontSize: 80, lineHeight: 0.9, letterSpacing: '0', fontVariantNumeric: 'tabular-nums' }}>{todayTotal}</span>
-                <span style={{ ...HEADING, fontWeight: 500, fontSize: 20, lineHeight: 1, letterSpacing: '0', color: 'var(--muted)' }}>{linesTodayWord}</span>
-              </div>
-              <span style={{ fontSize: 14, color: 'var(--muted)' }}>{ctaSubtext}</span>
-            </div>
-            {firstOpening && (
-              <Link
-                href={`/openings/${firstOpening.id}/practice`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: 52, padding: '0 28px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap' }}
-              >
-                Начать тренировку
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
-              </Link>
+    <div className="page">
+      {/* Header */}
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">Сегодня</h1>
+          <p className="page-lead">
+            {dateLabel}
+            {counts.streak > 0 && (
+              <> · серия <strong style={{ color: 'var(--ivory)' }}>{plural(counts.streak, 'день', 'дня', 'дней')}</strong></>
             )}
-          </div>
-        )}
-
-        {/* 4. Activity */}
-        <section>
-          <div style={SECTION_HEADER}>
-            <h2 style={LABEL}>АКТИВНОСТЬ</h2>
-            <span style={{ fontSize: 12, color: 'var(--muted)' }}>7 дней</span>
-          </div>
-          <ActivityChart counts={weekCounts} />
-        </section>
-
-        {/* Mobile openings list */}
-        <section style={{ display: 'block' }} className="lg:hidden">
-          <div style={SECTION_HEADER}>
-            <h2 style={LABEL}>ДЕБЮТЫ</h2>
-            <div style={{ display: 'flex', gap: 4, marginRight: -8 }}>
-              <Link href="/openings" style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 8px', fontSize: 13, color: 'var(--muted)' }}>
-                Все
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
-              </Link>
-              <Link href="/openings/new" style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 8px', fontSize: 13, color: 'var(--muted)' }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                Добавить
-              </Link>
-            </div>
-          </div>
-          <OpeningsList openings={sortedOpenings} />
-        </section>
-
+          </p>
+        </div>
+        <Link href={startHref} className="ui-btn ui-btn-primary ui-btn-lg">
+          Начать
+        </Link>
       </div>
 
-      {/* ── Right aside ── */}
-      <aside style={{ flex: '1 1 340px', maxWidth: 400, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {/* Plan */}
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="ui-eyebrow">
+          <span>План на сегодня</span>
+          <span className="ui-eyebrow-line" />
+          <span>{plan.length}</span>
+        </div>
 
-        {/* 5. Openings list (desktop) */}
-        <section className="hidden lg:block">
-          <div style={SECTION_HEADER}>
-            <h2 style={LABEL}>ДЕБЮТЫ</h2>
-            <div style={{ display: 'flex', gap: 4, marginRight: -8 }}>
-              <Link href="/openings" style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 8px', fontSize: 13, color: 'var(--muted)' }}>
-                Все
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
-              </Link>
-              <Link href="/openings/new" style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 8px', fontSize: 13, color: 'var(--muted)' }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                Добавить
-              </Link>
-            </div>
-          </div>
-          <OpeningsList openings={sortedOpenings} />
-        </section>
-
-        {/* 5b. Mistakes today */}
-        <section>
-          <div style={SECTION_HEADER}>
-            <h2 style={LABEL}>ОШИБКИ НА СЕГОДНЯ</h2>
-          </div>
-          <div style={{ paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ ...HEADING, fontWeight: 700, fontSize: 36, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-                {mistakesDue}
-              </span>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                {mistakesDue === 0 ? 'нет карточек для повторения' : 'карточек ожидают повторения'}
-              </span>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {plan.map(t => (
             <Link
-              href="/mistakes"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 16px', background: mistakesDue > 0 ? 'var(--ivory)' : 'transparent', color: mistakesDue > 0 ? 'var(--ink)' : 'var(--muted)', border: mistakesDue > 0 ? 'none' : '1px solid var(--hairline)', fontSize: 13, fontWeight: mistakesDue > 0 ? 600 : 400, whiteSpace: 'nowrap' }}
-            >
-              {mistakesDue > 0 ? 'Повторять →' : 'Ошибки'}
-            </Link>
-          </div>
-        </section>
-
-        {/* 5c. Plans today */}
-        <section>
-          <div style={SECTION_HEADER}>
-            <h2 style={LABEL}>ПЛАНЫ НА СЕГОДНЯ</h2>
-          </div>
-          <div style={{ paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ ...HEADING, fontWeight: 700, fontSize: 36, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-                {ideasDue}
-              </span>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                {ideasDue === 0 ? 'нет идей для повторения' : 'идей ожидают повторения'}
-              </span>
-            </div>
-            <Link
-              href="/plans"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 16px', background: ideasDue > 0 ? 'var(--ivory)' : 'transparent', color: ideasDue > 0 ? 'var(--ink)' : 'var(--muted)', border: ideasDue > 0 ? 'none' : '1px solid var(--hairline)', fontSize: 13, fontWeight: ideasDue > 0 ? 600 : 400, whiteSpace: 'nowrap' }}
-            >
-              {ideasDue > 0 ? 'Повторять →' : 'Планы'}
-            </Link>
-          </div>
-        </section>
-
-        {/* 5d. Trap of the day */}
-        {dailyTrap && (
-          <section>
-            <div style={SECTION_HEADER}>
-              <h2 style={LABEL}>ЛОВУШКА ДНЯ</h2>
-              <Link href="/traps" style={{ fontSize: 12, color: 'var(--muted)' }}>Все →</Link>
-            </div>
-            <div style={{ paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-                {dailyTrap.opening || dailyTrap.course_name}
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ivory)', lineHeight: 1.3 }}>
-                {dailyTrap.title}
-              </div>
-              <Chessboard options={{
-                position: dailyTrap.puzzle_fen,
-                boardOrientation: dailyTrap.trap_move_color === 'w' ? 'white' : 'black',
-                allowDragging: false,
-                boardStyle: { width: 200, height: 200 },
-              }} />
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)' }}>Найди лучший ход</p>
-              {trapRevealed ? (
-                <div style={{
-                  padding: '8px 14px', border: '1px solid var(--hairline)',
-                  background: 'rgba(242,239,231,0.05)',
-                  fontSize: 15, fontWeight: 600, color: 'var(--ivory)',
-                  fontFamily: 'monospace', letterSpacing: '0.05em',
-                }}>
-                  {dailyTrap.trap_move_san}
-                </div>
-              ) : (
-                <button
-                  onClick={() => setTrapRevealed(true)}
-                  style={{
-                    height: 36, padding: '0 16px', alignSelf: 'flex-start',
-                    background: 'transparent', border: '1px solid var(--control)',
-                    color: 'var(--muted)', fontSize: 13,
-                    fontFamily: 'inherit', cursor: 'pointer',
-                  }}
-                >
-                  Показать ответ
-                </button>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* 5e. My path */}
-        <section>
-          <div style={SECTION_HEADER}>
-            <h2 style={LABEL}>МОЙ ПУТЬ</h2>
-            <Link href="/courses/path" style={{ fontSize: 12, color: 'var(--muted)' }}>Все →</Link>
-          </div>
-          {pathCard ? (
-            <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-                {pathCard.pathTitle}
-              </span>
-              <span style={{ ...HEADING, fontSize: 15, fontWeight: 700, color: 'var(--ivory)', lineHeight: 1.3 }}>
-                {String(pathCard.stepOrd).padStart(2, '0')}. {pathCard.courseName}
-              </span>
-              {pathCard.pct > 0 && (
-                <div style={{ height: 3, background: 'var(--track)', borderRadius: 99, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', background: 'var(--ivory)', width: `${pathCard.pct}%` }} />
-                </div>
-              )}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                {pathCard.pct > 0 && (
-                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>Пройдено {pathCard.pct}%</span>
-                )}
-                <Link
-                  href={`/courses/${pathCard.courseId}`}
-                  style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 16px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600 }}
-                >
-                  Продолжить →
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div style={{ paddingTop: 12 }}>
-              <Link
-                href="/courses/path"
-                style={{ fontSize: 13, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-              >
-                Создать путь обучения →
-              </Link>
-            </div>
-          )}
-        </section>
-
-        {/* 6. Repertoire progress */}
-        {totalLines > 0 && (
-          <section>
-            <div style={SECTION_HEADER}>
-              <h2 style={LABEL}>ПРОГРЕСС РЕПЕРТУАРА</h2>
-              <span style={{ fontSize: 12, color: 'var(--muted)' }}>{totalLines} линий</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4 }}>
-              <div
-                role="img"
-                aria-label={`Прогресс: ${masteryDist[0]} новые, ${masteryDist.slice(1).reduce((a,b)=>a+b,0)} в прогрессе`}
-                style={{ display: 'flex', height: 12, background: 'var(--track)' }}
-              >
-                {masteryDist.map((count, level) => count > 0 ? (
-                  <span key={level} style={{ flex: `${count} 1 0`, background: MASTERY_COLORS[level] }} />
-                ) : null)}
-              </div>
-              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 13, color: 'var(--muted)' }}>
-                {masteryDist.map((count, level) => count > 0 ? (
-                  <span key={level} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 9, height: 9, background: MASTERY_COLORS[level], flexShrink: 0 }} />
-                    {MASTERY_LABELS[level]}: <span style={{ color: 'var(--ivory)', fontWeight: 600 }}>{count}</span>
-                  </span>
-                ) : null)}
-              </div>
-            </div>
-          </section>
-        )}
-
-      </aside>
-
-    </main>
-  );
-}
-
-function OpeningsList({ openings }: { openings: OpeningRow[] }) {
-  return (
-    <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-      {openings.map((o, i) => {
-        const dueCount = o.linesDue > 0 ? `${o.linesDue} повт.` : o.linesNew > 0 ? `${o.linesNew} нов.` : null;
-        const isLast = i === openings.length - 1;
-        const isWhite = o.color === 'white';
-        const isBoth = o.color === 'both';
-        return (
-          <li key={o.id}>
-            <Link
-              href={`/openings/${o.id}/practice`}
+              key={t.key}
+              href={t.href}
+              className="ui-card"
               style={{
-                display: 'grid',
-                gridTemplateColumns: '18px minmax(0, 1fr) auto',
-                columnGap: 14, rowGap: 10,
-                alignItems: 'center', padding: '16px 0',
-                borderTop: '1px solid var(--hairline)',
-                borderBottom: isLast ? '1px solid var(--hairline)' : undefined,
-                color: 'var(--ivory)',
+                display: 'flex', alignItems: 'center', gap: 16,
+                textDecoration: 'none', color: 'inherit',
+                padding: '14px 18px',
+                opacity: t.done ? 0.65 : 1,
               }}
-              className="row-hover-link"
             >
-              {/* Row 1 col 1: king icon */}
-              <span
-                role="img"
-                aria-label={isWhite ? 'Белые' : isBoth ? 'Оба цвета' : 'Чёрные'}
-                style={{
-                  fontFamily: "'Segoe UI Symbol','Apple Symbols','Noto Sans Symbols 2','DejaVu Sans',sans-serif",
-                  fontSize: 18, lineHeight: 1,
-                  color: isWhite || isBoth ? 'var(--ivory)' : 'var(--ink)',
-                  WebkitTextStroke: isWhite || isBoth ? 'none' : '0.8px var(--ivory)',
-                }}
-              >♚</span>
-              {/* Row 1 col 2: name */}
-              <span style={{
-                fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-                fontSize: 16, fontWeight: 600, letterSpacing: '0',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>{o.name}</span>
-              {/* Row 1 col 3: count */}
-              <span style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                {dueCount}
-              </span>
-              {/* Row 2 col 1: empty */}
-              <span />
-              {/* Row 2 col 2: progress track */}
-              <span style={{ display: 'block', height: 2, background: 'var(--track)' }}>
-                {o.linesTotal > 0 && o.linesMastered > 0 && (
-                  <span style={{ display: 'block', height: '100%', width: `${(o.linesMastered / o.linesTotal) * 100}%`, background: 'var(--ivory)' }} />
-                )}
-              </span>
-              {/* Row 2 col 3: fraction */}
-              <span style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                {o.linesMastered}/{o.linesTotal}
-              </span>
+              <div style={{
+                width: 44, height: 44, borderRadius: 'var(--radius-btn)',
+                background: t.done ? 'var(--surface)' : 'color-mix(in srgb, var(--accent) 15%, transparent)',
+                color: t.done ? 'var(--muted)' : 'var(--accent)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 18, fontWeight: 700, flexShrink: 0,
+                fontFamily: 'var(--font-inter-tight, Inter Tight, Inter, sans-serif)',
+              }}>
+                {t.done ? '✓' : t.count}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', marginBottom: 2 }}>
+                  {t.label}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>{t.hint}</div>
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', flexShrink: 0 }}>
+                {t.cta} →
+              </div>
             </Link>
-          </li>
-        );
-      })}
-    </ul>
+          ))}
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="ui-eyebrow">
+          <span>Статистика</span>
+          <span className="ui-eyebrow-line" />
+          <span>репертуар</span>
+        </div>
+        <div className="stat-grid">
+          <div className="stat-card">
+            <div className="stat-value">{counts.streak}</div>
+            <div className="stat-label">{plural(counts.streak, 'день подряд', 'дня подряд', 'дней подряд')}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{counts.totalLines}</div>
+            <div className="stat-label">линий всего</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{counts.totalMastered}</div>
+            <div className="stat-label">изучено</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{counts.openingsDue + counts.mistakesDue + counts.ideasDue}</div>
+            <div className="stat-label">на повторении</div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

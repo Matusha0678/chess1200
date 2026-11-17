@@ -1,49 +1,70 @@
-export interface NavChild {
+export interface NavItem {
   label: string;
-  href: string;
+  href:  string;
 }
 
-export interface NavSection {
-  num: string;
-  label: string;
-  href: string;
-  children?: NavChild[];
+export interface NavGroup {
+  label: string | null;  // null = ungrouped (Сегодня)
+  items: NavItem[];
 }
 
-// Add a new page by appending to the relevant children array (or as a top-level item).
-// The TopNav reads this list at render time — no other file needs changing.
-export const NAV: NavSection[] = [
-  { num: '01', label: 'Сегодня',    href: '/' },
-  { num: '02', label: 'Дебюты',     href: '/openings' },
-  { num: '03', label: 'Курсы',      href: '/courses' },
+// Grouped sidebar for the new layout. URLs point at existing pages only.
+export const NAV_GROUPS: NavGroup[] = [
   {
-    num: '04', label: 'Партии', href: '/games',
-    children: [
-      { label: 'Список партий', href: '/games' },
-      { label: 'Анализ',        href: '/games/analyze' },
-      { label: 'Банк ошибок',   href: '/mistakes' },
+    label: null,
+    items: [
+      { label: 'Сегодня', href: '/' },
     ],
   },
   {
-    num: '05', label: 'Тренировка', href: '/threats',
-    children: [
-      { label: 'Угрозы',          href: '/threats' },
-      { label: 'Эндшпили',       href: '/endgames' },
-      { label: 'Планы',          href: '/plans' },
-      { label: 'Конвертация',    href: '/play?mode=convert' },
-      { label: 'С форой',        href: '/play?mode=handicap' },
-      { label: 'Ловушки',        href: '/traps' },
+    label: 'УЧИТЬСЯ',
+    items: [
+      { label: 'Дебюты',           href: '/openings' },
+      { label: 'Курсы',            href: '/courses' },
+      { label: 'Ловушки',          href: '/traps' },
+      { label: 'Идеи позиций',     href: '/plans' },
     ],
   },
   {
-    num: '06', label: 'Мастера', href: '/masters',
-    children: [
-      { label: 'Библиотека',         href: '/masters' },
-      { label: 'Угадай дебют',       href: '/guess-opening' },
-      { label: 'Жертва или нет?',    href: '/sac' },
+    label: 'ТРЕНИРОВАТЬСЯ',
+    items: [
+      { label: 'Ошибки',           href: '/mistakes' },
+      { label: 'Проверка угроз',   href: '/threats' },
+      { label: 'Эндшпили',         href: '/endgames' },
+      { label: 'Жертвы',           href: '/sac' },
+      { label: 'Угадай дебют',     href: '/guess-opening' },
+      { label: 'Играть',           href: '/play' },
+    ],
+  },
+  {
+    label: 'ПАРТИИ',
+    items: [
+      { label: 'Мои партии',       href: '/games' },
+      { label: 'Мастера',          href: '/masters' },
     ],
   },
 ];
+
+// Flat list used by SearchDialog
+export const NAV_FLAT: NavItem[] = NAV_GROUPS.flatMap(g => g.items);
+
+// ── Legacy types (kept so old TopNav/SearchDialog compile until migrated) ──
+
+export interface NavChild { label: string; href: string; }
+export interface NavSection {
+  num:      string;
+  label:    string;
+  href:     string;
+  children?: NavChild[];
+}
+// Rebuilt from NAV_GROUPS for SearchDialog backward compat.
+export const NAV: NavSection[] = NAV_GROUPS.flatMap((g, gi) =>
+  g.items.map((it, ii) => ({
+    num:   String(gi * 10 + ii + 1).padStart(2, '0'),
+    label: it.label,
+    href:  it.href,
+  })),
+);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -53,6 +74,5 @@ export function matchHref(pathname: string, href: string): boolean {
 }
 
 export function sectionActive(pathname: string, item: NavSection): boolean {
-  if (matchHref(pathname, item.href)) return true;
-  return item.children?.some(c => matchHref(pathname, c.href)) ?? false;
+  return matchHref(pathname, item.href);
 }

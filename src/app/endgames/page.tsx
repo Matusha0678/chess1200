@@ -1,11 +1,12 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import type { PieceDropHandlerArgs } from 'react-chessboard';
 import { ENDGAMES, CATEGORY_LABELS, type Endgame, type EndgameCategory } from '@/data/endgames';
 import { PlayButton } from '@/components/PlayButton';
 import { useStockfish } from '@/hooks/useStockfish';
+import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -54,51 +55,43 @@ function playerColor(endgame: Endgame): 'w' | 'b' {
   return new Chess(endgame.fen).turn();
 }
 
-// ── Category stat row ─────────────────────────────────────────────────────────
-
-function CategoryRow({ cat, stats }: { cat: EndgameCategory; stats: Stats }) {
-  const { achieved, failed } = stats.byCategory[cat];
-  const total = achieved + failed;
-  const pct = total > 0 ? Math.round((achieved / total) * 100) : 0;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0', borderBottom: '1px solid var(--hairline)' }}>
-      <span style={{ flex: 1, fontSize: 13, color: 'var(--ivory)' }}>{CATEGORY_LABELS[cat]}</span>
-      {total > 0 ? (
-        <>
-          <div style={{ width: 80, height: 4, background: 'var(--track)', borderRadius: 2, overflow: 'hidden' }}>
-            <div style={{ width: `${pct}%`, height: '100%', background: 'var(--ivory)', transition: 'width 0.3s' }} />
-          </div>
-          <span style={{ fontSize: 12, color: 'var(--muted)', width: 50, textAlign: 'right' }}>{achieved}/{total}</span>
-        </>
-      ) : (
-        <span style={{ fontSize: 12, color: 'var(--muted)' }}>—</span>
-      )}
-    </div>
-  );
-}
-
 // ── Endgame card in list view ─────────────────────────────────────────────────
 
-function EndgameCard({ eg, onSelect }: { eg: Endgame; onSelect: () => void }) {
-  const stars = '●'.repeat(eg.difficulty) + '○'.repeat(3 - eg.difficulty);
+const DIFF_LABEL = { 1: 'Легко', 2: 'Средне', 3: 'Сложно' } as const;
+const DIFF_CLASS = { 1: 'diff-easy', 2: 'diff-mid', 3: 'diff-hard' } as const;
+
+function EndgameListCard({
+  eg, onSelect, boardDark, boardLight,
+}: {
+  eg: Endgame;
+  onSelect: () => void;
+  boardDark: string;
+  boardLight: string;
+}) {
   const goalLabel = eg.goal === 'win' ? 'Выиграть' : 'Сделать ничью';
   return (
-    <button
-      onClick={onSelect}
-      style={{
-        display: 'block', width: '100%', textAlign: 'left',
-        background: 'var(--surface)', border: '1px solid var(--hairline)',
-        borderRadius: 4, padding: '12px 16px', cursor: 'pointer',
-        transition: 'border-color 0.15s',
-      }}
-      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--control)')}
-      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--hairline)')}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-        <span style={{ fontSize: 13, color: 'var(--muted)', letterSpacing: '0.06em' }}>{stars}</span>
-        <span style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{goalLabel}</span>
+    <button onClick={onSelect} className="list-card" style={{ border: 0, padding: 0, font: 'inherit', textAlign: 'left', background: 'inherit', cursor: 'pointer' }}>
+      <div className="list-card-board">
+        <Chessboard
+          options={{
+            position: eg.fen,
+            allowDragging: false,
+            boardStyle: { width: '100%', height: '100%' },
+            darkSquareStyle:  { backgroundColor: boardDark  },
+            lightSquareStyle: { backgroundColor: boardLight },
+            showNotation: false,
+            animationDurationInMs: 0,
+          }}
+        />
       </div>
-      <div style={{ fontSize: 13, color: 'var(--ivory)', lineHeight: 1.4 }}>{eg.idea}</div>
+      <div className="list-card-body">
+        <div className="list-card-title">{CATEGORY_LABELS[eg.category]}</div>
+        <div className="list-card-lead">{eg.idea}</div>
+        <div className="list-card-foot">
+          <span className={`diff-pill ${DIFF_CLASS[eg.difficulty]}`}>{DIFF_LABEL[eg.difficulty]}</span>
+          <span style={{ color: 'var(--muted)' }}>· {goalLabel}</span>
+        </div>
+      </div>
     </button>
   );
 }
@@ -253,53 +246,167 @@ export default function EndgamesPage() {
 
   const categories = Object.keys(CATEGORY_LABELS) as EndgameCategory[];
 
+  return (
+    <ListOrPlay
+      phase={phase}
+      categories={categories}
+      stats={stats}
+      startEndgame={startEndgame}
+      current={current}
+      chess={chess}
+      fen={fen}
+      hintMove={hintMove}
+      handleDrop={handleDrop}
+      moveCount={moveCount}
+      status={status}
+      hintIdea={hintIdea}
+      setHintIdea={setHintIdea}
+      requestHintMove={requestHintMove}
+      achieved={achieved}
+      setPhase={setPhase}
+    />
+  );
+}
+
+// ── List + Play container (uses board theme for list thumbnails) ──────────────
+
+function ListOrPlay(props: {
+  phase: Phase;
+  categories: EndgameCategory[];
+  stats: Stats;
+  startEndgame: (eg: Endgame) => void;
+  current: Endgame | null;
+  chess: Chess;
+  fen: string;
+  hintMove: string | null;
+  handleDrop: (args: PieceDropHandlerArgs) => boolean;
+  moveCount: number;
+  status: string;
+  hintIdea: boolean;
+  setHintIdea: (v: boolean) => void;
+  requestHintMove: () => void;
+  achieved: boolean;
+  setPhase: (p: Phase) => void;
+}) {
+  const { boardTheme } = useBoardTheme();
+  const { phase, categories, stats, startEndgame } = props;
+
+  const [catFilter, setCatFilter] = useState<EndgameCategory | 'all'>('all');
+  const [diffFilter, setDiffFilter] = useState<1 | 2 | 3 | 'all'>('all');
+
+  const items = useMemo(() => ENDGAMES.filter(e => {
+    if (catFilter  !== 'all' && e.category   !== catFilter)  return false;
+    if (diffFilter !== 'all' && e.difficulty !== diffFilter) return false;
+    return true;
+  }), [catFilter, diffFilter]);
+
+  function pickRandom() {
+    if (items.length === 0) return;
+    const idx = Math.floor(Math.random() * items.length);
+    startEndgame(items[idx]);
+  }
+
   if (phase === 'list') {
     const totalAchieved = stats.achieved;
     const totalPlayed = stats.achieved + stats.failed;
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginBottom: 8 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ivory)', margin: 0 }}>Эндшпиль</h1>
-            {totalPlayed > 0 && (
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                Конвертировано: {totalAchieved}/{totalPlayed}
-              </span>
-            )}
+      <div className="page">
+        <div className="page-head">
+          <div className="page-head-text">
+            <h1 className="page-title">Эндшпили</h1>
+            <p className="page-lead">
+              Отыгрывай типовые позиции против Stockfish.
+              {totalPlayed > 0 && <> Конвертировано: <strong style={{ color: 'var(--ivory)' }}>{totalAchieved}/{totalPlayed}</strong>.</>}
+            </p>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>
-            Играй против Stockfish за сторону с целью. Подсказка хода стоит XP.
-          </p>
+          <button className="ui-btn ui-btn-primary" onClick={pickRandom} disabled={items.length === 0}>
+            Случайная позиция
+          </button>
         </div>
 
-        {/* Stats by category */}
-        {totalPlayed > 0 && (
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 4, padding: '12px 16px', marginBottom: 32 }}>
-            <div style={{ fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 8, textTransform: 'uppercase' }}>Статистика по категориям</div>
-            {categories.map(cat => <CategoryRow key={cat} cat={cat} stats={stats} />)}
+        {/* Category chips */}
+        <div className="chip-row">
+          <button
+            className={`ui-chip ${catFilter === 'all' ? 'ui-chip-active' : ''}`}
+            onClick={() => setCatFilter('all')}
+          >
+            Все ({ENDGAMES.length})
+          </button>
+          {categories.map(cat => {
+            const count = ENDGAMES.filter(e => e.category === cat).length;
+            return (
+              <button
+                key={cat}
+                className={`ui-chip ${catFilter === cat ? 'ui-chip-active' : ''}`}
+                onClick={() => setCatFilter(cat)}
+              >
+                {CATEGORY_LABELS[cat]} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Difficulty chips */}
+        <div className="chip-row">
+          <button className={`ui-chip ${diffFilter === 'all' ? 'ui-chip-active' : ''}`} onClick={() => setDiffFilter('all')}>
+            Любая сложность
+          </button>
+          <button className={`ui-chip ${diffFilter === 1 ? 'ui-chip-active' : ''}`} onClick={() => setDiffFilter(1)}>
+            Легко
+          </button>
+          <button className={`ui-chip ${diffFilter === 2 ? 'ui-chip-active' : ''}`} onClick={() => setDiffFilter(2)}>
+            Средне
+          </button>
+          <button className={`ui-chip ${diffFilter === 3 ? 'ui-chip-active' : ''}`} onClick={() => setDiffFilter(3)}>
+            Сложно
+          </button>
+        </div>
+
+        {/* Cards grid */}
+        {items.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">♜</div>
+            <div className="empty-state-title">Ничего не найдено</div>
+            <div className="empty-state-text">Попробуй другую категорию или сложность.</div>
+          </div>
+        ) : (
+          <div className="card-grid">
+            {items.map(eg => (
+              <EndgameListCard
+                key={eg.id} eg={eg}
+                onSelect={() => startEndgame(eg)}
+                boardDark={boardTheme.dark}
+                boardLight={boardTheme.light}
+              />
+            ))}
           </div>
         )}
-
-        {/* Positions by category */}
-        {categories.map(cat => {
-          const items = ENDGAMES.filter(e => e.category === cat);
-          return (
-            <div key={cat} style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', fontWeight: 400, margin: '0 0 12px 0' }}>
-                {CATEGORY_LABELS[cat]}
-              </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
-                {items.map(eg => (
-                  <EndgameCard key={eg.id} eg={eg} onSelect={() => startEndgame(eg)} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
       </div>
     );
   }
 
+  return <PlayView {...props} />;
+}
+
+// ── Playing view (kept largely as before) ─────────────────────────────────────
+
+function PlayView(props: {
+  current: Endgame | null;
+  chess: Chess;
+  fen: string;
+  hintMove: string | null;
+  handleDrop: (args: PieceDropHandlerArgs) => boolean;
+  moveCount: number;
+  phase: Phase;
+  status: string;
+  hintIdea: boolean;
+  setHintIdea: (v: boolean) => void;
+  requestHintMove: () => void;
+  achieved: boolean;
+  setPhase: (p: Phase) => void;
+  startEndgame: (eg: Endgame) => void;
+}) {
+  const { current, chess, fen, hintMove, handleDrop, moveCount, phase, status, hintIdea, setHintIdea, requestHintMove, achieved, setPhase, startEndgame } = props;
   if (!current) return null;
 
   const pColor = playerColor(current);

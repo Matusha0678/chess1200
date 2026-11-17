@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Inter_Tight } from 'next/font/google';
 import './globals.css';
-import TopNav from '@/components/TopNav';
+import AppShell from '@/components/AppShell';
 import { BoardThemeProvider } from '@/contexts/BoardThemeContext';
 import ThemePanel from '@/components/ThemePanel';
 import SearchDialog from '@/components/SearchDialog';
@@ -43,10 +43,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <BoardThemeProvider>
-          <TopNav />
+          <AppShell>{children}</AppShell>
           <ThemePanel />
           <SearchDialog />
-          {children}
         </BoardThemeProvider>
       </body>
     </html>
