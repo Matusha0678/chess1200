@@ -45,42 +45,52 @@ function replayFen(moves: string[]): string {
   return chess.fen();
 }
 
+function pluralMoves(n: number): string {
+  if (n === 1) return 'ход';
+  if (n >= 2 && n <= 4) return 'хода';
+  return 'ходов';
+}
+
+function pluralOptions(n: number): string {
+  if (n === 1) return 'вариант';
+  if (n >= 2 && n <= 4) return 'варианта';
+  return 'вариантов';
+}
+
+function pluralPoints(n: number): string {
+  if (n === 1) return 'очко';
+  if (n >= 2 && n <= 4) return 'очка';
+  return 'очков';
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function GuessOpeningPage() {
   const { boardTheme, customPieces, animationMs, boardThemeId, pieceStyleId } = useBoardTheme();
 
-  const today      = useMemo(() => new Date(), []);
-  const todayStr   = today.toISOString().slice(0, 10);
-  const seed       = dateToSeed(today);
+  const today    = useMemo(() => new Date(), []);
+  const todayStr = today.toISOString().slice(0, 10);
+  const seed     = dateToSeed(today);
 
-  // All available openings (static + user's from DB)
-  const [pool, setPool]       = useState<OpeningDef[]>(STATIC_OPENINGS);
   const [dayRecord, setDayRecord] = useState<DayRecord | null>(null);
-  const [phase, setPhase]     = useState<Phase>('loading');
+  const [phase, setPhase]         = useState<Phase>('loading');
 
   // Game state
-  const [scored, setScored]   = useState(false);
-  const [target, setTarget]   = useState<OpeningDef | null>(null);
-  const [revealed, setRevealed]   = useState<string[]>([]);
+  const [scored, setScored]           = useState(false);
+  const [target, setTarget]           = useState<OpeningDef | null>(null);
+  const [revealed, setRevealed]       = useState<string[]>([]);
   const [initOptions, setInitOptions] = useState<OpeningDef[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [correct, setCorrect]      = useState<boolean | null>(null);
-  const [finalScore, setFinalScore] = useState(0);
+  const [selectedId, setSelectedId]   = useState<string | null>(null);
+  const [correct, setCorrect]         = useState<boolean | null>(null);
+  const [finalScore, setFinalScore]   = useState(0);
 
-  // Load user openings + today's record
   useEffect(() => {
     async function load() {
-      const [openingsRes, dayRes] = await Promise.all([
-        supabase.from('openings').select('id,name').limit(100),
-        supabase.from('opening_guess_log').select('opening_id,score,moves_shown').eq('day', todayStr).maybeSingle(),
-      ]);
-      const userOpenings: OpeningDef[] = (openingsRes.data ?? []).map(
-        (o: { id: string; name: string }) => ({ id: `user-${o.id}`, name: o.name, moves: [] }),
-      ).filter((o: OpeningDef) => o.moves.length === 0); // skip: no moves, can't be a target
-      void userOpenings;
-      // We only use static openings as targets (user openings have no moves in STATIC_OPENINGS)
-      setPool(STATIC_OPENINGS);
+      const dayRes = await supabase
+        .from('opening_guess_log')
+        .select('opening_id,score,moves_shown')
+        .eq('day', todayStr)
+        .maybeSingle();
       if (dayRes.data) setDayRecord(dayRes.data as DayRecord);
       setPhase('idle');
     }
@@ -88,10 +98,11 @@ export default function GuessOpeningPage() {
   }, [todayStr]);
 
   function startGame(isScored: boolean) {
-    const rng = seededRNG(seed + (isScored ? 0 : Date.now()));
-    const idx = Math.floor(rng() * pool.length);
-    const t = pool[idx];
-    const opts = buildInitialOptions(pool, t, seed + (isScored ? 0 : Date.now()));
+    const gameSeed = isScored ? seed : (seed + Date.now());
+    const rng = seededRNG(gameSeed);
+    const idx = Math.floor(rng() * STATIC_OPENINGS.length);
+    const t = STATIC_OPENINGS[idx];
+    const opts = buildInitialOptions(STATIC_OPENINGS, t, gameSeed);
     setScored(isScored);
     setTarget(t);
     setInitOptions(opts);
@@ -115,12 +126,8 @@ export default function GuessOpeningPage() {
     if (nextIdx >= target.moves.length) return;
     const newRevealed = [...revealed, target.moves[nextIdx]];
     setRevealed(newRevealed);
-
-    // If only 1 option remains after reveal, auto-finish
     const remaining = filterOptions(initOptions, newRevealed);
-    if (remaining.length === 1) {
-      handlePick(remaining[0].id, newRevealed);
-    }
+    if (remaining.length === 1) handlePick(remaining[0].id, newRevealed);
   }
 
   async function handlePick(id: string, rev?: string[]) {
@@ -134,8 +141,7 @@ export default function GuessOpeningPage() {
     setFinalScore(sc);
     setPhase('done');
 
-    // Save scored round (only once per day)
-    if (scored && isCorrect) {
+    if (scored) {
       await supabase.from('opening_guess_log').upsert({
         day: todayStr,
         opening_id: target.id,
@@ -143,108 +149,81 @@ export default function GuessOpeningPage() {
         moves_shown: usedRevealed.length,
       }, { onConflict: 'day' });
       setDayRecord({ opening_id: target.id, score: sc, moves_shown: usedRevealed.length });
-    } else if (scored && !isCorrect) {
-      await supabase.from('opening_guess_log').upsert({
-        day: todayStr,
-        opening_id: target.id,
-        score: 0,
-        moves_shown: usedRevealed.length,
-      }, { onConflict: 'day' });
-      setDayRecord({ opening_id: target.id, score: 0, moves_shown: usedRevealed.length });
     }
   }
 
   const boardKey = `${boardThemeId}-${pieceStyleId}`;
+  const nextPts  = target ? guessScore(revealed.length + 1) : 10;
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Loading ────────────────────────────────────────────────────────────────
 
   if (phase === 'loading') {
     return (
-      <main style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>
-        Загрузка…
+      <main className="page-wrap">
+        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
       </main>
     );
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <main style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 20px 40px' }}>
+    <main className="page-wrap">
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <Link href="/" style={{ fontSize: 13, color: 'var(--muted)', textDecoration: 'none' }}>
-          ← Сегодня
-        </Link>
-        <h1 style={{ margin: '10px 0 4px', fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ivory)' }}>
-          Угадай дебют
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>
-          {todayStr} · Смотри ходы и определи дебют
-        </p>
+      <div className="page-header">
+        <Link href="/" className="ui-back">← Сегодня</Link>
+        <div className="ui-eyebrow">
+          <span>Ежедневная игра</span>
+          <span className="ui-eyebrow-line" />
+          <span>{todayStr}</span>
+        </div>
+        <h1 className="ui-h1">Угадай дебют</h1>
+        <p className="ui-sub">Смотри ходы и определи дебют. Чем раньше угадаешь — тем больше очков.</p>
       </div>
 
       {/* Idle — start screen */}
       {phase === 'idle' && (
-        <div style={{ maxWidth: 480 }}>
+        <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {dayRecord ? (
-            <div style={{
-              background: 'var(--surface)', border: '1px solid var(--hairline)',
-              borderRadius: 'var(--radius-card)', padding: 24, marginBottom: 24,
-            }}>
-              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
-                Сегодня сыграно
+            <div className="ui-card ui-card-lg">
+              <div className="ui-eyebrow" style={{ marginBottom: 10 }}>
+                <span>Сегодня сыграно</span>
               </div>
-              <div style={{ fontSize: 36, fontWeight: 700, color: 'var(--ivory)', marginBottom: 4 }}>
-                {dayRecord.score} очков
+              <div style={{ fontSize: 44, fontWeight: 700, color: 'var(--ivory)', lineHeight: 1,
+                fontFamily: 'var(--font-inter-tight, Inter Tight, Inter, sans-serif)' }}>
+                {dayRecord.score} {pluralPoints(dayRecord.score)}
               </div>
-              <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                {dayRecord.moves_shown} {dayRecord.moves_shown === 1 ? 'ход' : 'хода'} показано
+              <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 8 }}>
+                {dayRecord.moves_shown} {pluralMoves(dayRecord.moves_shown)} показано
               </div>
             </div>
           ) : (
-            <div style={{
-              background: 'var(--surface)', border: '1px solid var(--hairline)',
-              borderRadius: 'var(--radius-card)', padding: 24, marginBottom: 24,
-            }}>
-              <div style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>
+            <div className="ui-card ui-card-lg">
+              <div style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.65 }}>
                 Ходы открываются по одному. После каждого хода можно угадать дебют из предложенных вариантов.
-                Чем раньше угадаешь — тем больше очков. Один зачётный раунд в день.
+                Один зачётный раунд в день — потом можно тренироваться без очков.
               </div>
             </div>
           )}
-
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {!dayRecord && (
-              <button
-                onClick={() => startGame(true)}
-                style={{
-                  height: 40, padding: '0 20px', borderRadius: 'var(--radius-btn)',
-                  background: 'var(--accent)', color: '#fff', border: 'none',
-                  fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                }}
-              >
+              <button className="ui-btn ui-btn-primary" onClick={() => startGame(true)}>
                 Играть (зачётный)
               </button>
             )}
-            <button
-              onClick={() => startGame(false)}
-              style={{
-                height: 40, padding: '0 20px', borderRadius: 'var(--radius-btn)',
-                background: 'transparent', color: 'var(--ivory)',
-                border: '1px solid var(--hairline)', fontSize: 14, cursor: 'pointer',
-              }}
-            >
+            <button className="ui-btn ui-btn-ghost" onClick={() => startGame(false)}>
               Тренировка
             </button>
           </div>
         </div>
       )}
 
-      {/* Playing or done */}
+      {/* Playing / Done */}
       {(phase === 'playing' || phase === 'done') && target && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px,400px) 1fr', gap: 32, alignItems: 'start' }}>
-
-          {/* Left — board */}
-          <div>
-            <div style={{ width: '100%', aspectRatio: '1', border: '1px solid var(--hairline)', borderRadius: 4, overflow: 'hidden' }}>
+        <div className="board-layout">
+          {/* ── Board column ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="board-wrap">
               <Chessboard
                 key={boardKey}
                 options={{
@@ -261,113 +240,96 @@ export default function GuessOpeningPage() {
               />
             </div>
 
-            {/* Moves shown */}
-            <div style={{
-              marginTop: 12, padding: '10px 14px',
-              background: 'var(--surface)', border: '1px solid var(--hairline)',
-              borderRadius: 'var(--radius-card)', fontSize: 15, fontFamily: 'monospace',
-              color: 'var(--ivory)', lineHeight: 1.7,
-              minHeight: 44,
-            }}>
-              {revealed.length === 0
-                ? <span style={{ color: 'var(--muted)', fontFamily: 'inherit', fontSize: 13 }}>Ходы появятся здесь…</span>
-                : movesToDisplay(revealed)
-              }
+            {/* Moves text */}
+            <div className="ui-card ui-card-sm" style={{ fontFamily: 'ui-monospace, monospace',
+              fontSize: 14, lineHeight: 1.7, color: 'var(--ivory)', minHeight: 48 }}>
+              {revealed.length === 0 ? (
+                <span style={{ color: 'var(--muted)', fontFamily: 'inherit', fontSize: 13 }}>
+                  Ходы появятся здесь после начала игры…
+                </span>
+              ) : movesToDisplay(revealed)}
             </div>
           </div>
 
-          {/* Right — options + controls */}
-          <div>
-            {/* Score bar */}
+          {/* ── Right column ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Status bar */}
             {phase === 'playing' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
                 <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                  {currentOptions.length} {currentOptions.length === 1 ? 'вариант' : currentOptions.length <= 4 ? 'варианта' : 'вариантов'} осталось
+                  <strong style={{ color: 'var(--ivory)' }}>{currentOptions.length}</strong> {pluralOptions(currentOptions.length)} осталось
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ivory)' }}>
-                  {guessScore(revealed.length)} {guessScore(revealed.length) === 1 ? 'очко' : 'очков'} за правильный ответ сейчас
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                  Сейчас: <strong style={{ color: 'var(--ivory)' }}>{guessScore(revealed.length)}</strong> {pluralPoints(guessScore(revealed.length))}
                 </div>
-              </div>
-            )}
-
-            {/* Result banner */}
-            {phase === 'done' && (
-              <div style={{
-                marginBottom: 20, padding: '14px 18px',
-                background: correct ? 'rgba(129,182,76,0.15)' : 'rgba(200,80,80,0.12)',
-                border: `1px solid ${correct ? 'rgba(129,182,76,0.4)' : 'rgba(200,80,80,0.3)'}`,
-                borderRadius: 'var(--radius-card)',
-              }}>
-                {correct ? (
-                  <div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ivory)', marginBottom: 4 }}>
-                      Верно! +{finalScore} очков
-                    </div>
-                    <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                      {target.name} · {revealed.length} {revealed.length === 1 ? 'ход' : 'хода'} показано
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', marginBottom: 4 }}>
-                      Неверно — 0 очков
-                    </div>
-                    <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                      Правильный ответ: <strong style={{ color: 'var(--ivory)' }}>{target.name}</strong>
-                    </div>
-                    {target.eco && (
-                      <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>ECO {target.eco}</div>
-                    )}
+                {revealed.length < target.moves.length && (
+                  <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                    След. ход: {nextPts} {pluralPoints(nextPts)}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Options grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+            {/* Result banner */}
+            {phase === 'done' && (
+              <div className={`ui-banner ${correct ? 'ui-banner-success' : 'ui-banner-danger'}`}>
+                {correct ? (
+                  <>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ivory)', marginBottom: 6,
+                      fontFamily: 'var(--font-inter-tight, Inter Tight, Inter, sans-serif)' }}>
+                      Верно! +{finalScore} {pluralPoints(finalScore)}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                      <strong style={{ color: 'var(--ivory)' }}>{target.name}</strong>
+                      {target.eco && <span> · ECO {target.eco}</span>}
+                      <span> · {revealed.length} {pluralMoves(revealed.length)} показано</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--ivory)', marginBottom: 6 }}>
+                      Неверно — 0 очков
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                      Правильный ответ: <strong style={{ color: 'var(--ivory)' }}>{target.name}</strong>
+                      {target.eco && <span> · ECO {target.eco}</span>}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Options */}
+            <div className="options-grid">
               {currentOptions.map(opt => {
                 const isPicked  = selectedId === opt.id;
                 const isTarget  = opt.id === target.id;
                 const showState = phase === 'done';
-                let bg = 'var(--surface)';
-                let border = '1px solid var(--hairline)';
-                let textColor = 'var(--ivory)';
-                if (showState && isTarget)       { bg = 'rgba(129,182,76,0.15)'; border = '1px solid rgba(129,182,76,0.5)'; }
-                if (showState && isPicked && !isTarget) { bg = 'rgba(200,80,80,0.12)'; border = '1px solid rgba(200,80,80,0.4)'; textColor = 'var(--muted)'; }
+                const cls = showState && isTarget
+                  ? 'option-card option-card-correct'
+                  : showState && isPicked && !isTarget
+                  ? 'option-card option-card-wrong'
+                  : 'option-card';
                 return (
                   <button
                     key={opt.id}
+                    className={cls}
                     disabled={phase === 'done'}
                     onClick={() => handlePick(opt.id)}
-                    style={{
-                      padding: '12px 14px', textAlign: 'left',
-                      background: bg, border, borderRadius: 'var(--radius-card)',
-                      color: textColor, fontSize: 13, lineHeight: 1.4,
-                      cursor: phase === 'done' ? 'default' : 'pointer',
-                      fontWeight: showState && isTarget ? 600 : 400,
-                      transition: 'background 0.15s, border-color 0.15s',
-                    }}
                   >
                     {opt.name}
-                    {opt.eco && <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{opt.eco}</span>}
+                    {opt.eco && <span className="option-card-eco">ECO {opt.eco}</span>}
                   </button>
                 );
               })}
             </div>
 
-            {/* Controls */}
+            {/* Playing controls */}
             {phase === 'playing' && (
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {revealed.length < target.moves.length && (
-                  <button
-                    onClick={revealNext}
-                    style={{
-                      height: 38, padding: '0 18px', borderRadius: 'var(--radius-btn)',
-                      background: 'var(--surface)', border: '1px solid var(--hairline)',
-                      color: 'var(--ivory)', fontSize: 14, cursor: 'pointer',
-                    }}
-                  >
-                    Следующий ход
+                  <button className="ui-btn ui-btn-ghost" onClick={revealNext}>
+                    Следующий ход →
                   </button>
                 )}
                 {revealed.length >= target.moves.length && currentOptions.length > 1 && (
@@ -378,60 +340,32 @@ export default function GuessOpeningPage() {
               </div>
             )}
 
+            {/* Done controls */}
             {phase === 'done' && (
-              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                <button
-                  onClick={() => startGame(false)}
-                  style={{
-                    height: 38, padding: '0 18px', borderRadius: 'var(--radius-btn)',
-                    background: 'var(--surface)', border: '1px solid var(--hairline)',
-                    color: 'var(--ivory)', fontSize: 14, cursor: 'pointer',
-                  }}
-                >
-                  Тренировка снова
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button className="ui-btn ui-btn-primary" onClick={() => startGame(false)}>
+                  Ещё раз (тренировка)
                 </button>
-                <Link
-                  href="/"
-                  style={{
-                    height: 38, padding: '0 18px', borderRadius: 'var(--radius-btn)',
-                    background: 'transparent', border: '1px solid var(--hairline)',
-                    color: 'var(--muted)', fontSize: 14, textDecoration: 'none',
-                    display: 'flex', alignItems: 'center',
-                  }}
-                >
-                  На главную
-                </Link>
+                <Link href="/" className="ui-btn ui-btn-outline">На главную</Link>
               </div>
             )}
 
             {/* Scoring legend */}
             {phase === 'playing' && (
-              <div style={{ marginTop: 20, padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card)' }}>
-                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
-                  Очки за правильный ответ
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
-                  {[1,2,3,4,5].map(n => (
-                    <div key={n} style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: revealed.length + 1 === n ? 'var(--accent)' : 'var(--muted)' }}>
-                        {guessScore(n)}
-                      </div>
-                      <div style={{ fontSize: 10, color: 'var(--muted)' }}>{n} ход{n === 1 ? '' : n <= 4 ? 'а' : 'ов'}</div>
+              <div className="scoring-legend">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <div key={n} className="scoring-slot">
+                    <div className={`scoring-slot-pts ${revealed.length + 1 === n ? 'scoring-slot-pts-active' : ''}`}>
+                      {guessScore(n)}
                     </div>
-                  ))}
-                </div>
+                    <div className="scoring-slot-label">после {n} {pluralMoves(n)}</div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
       )}
-
-      {/* Mobile: stack columns */}
-      <style>{`
-        @media (max-width: 700px) {
-          .guess-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </main>
   );
 }
