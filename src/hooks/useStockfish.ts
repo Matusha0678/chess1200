@@ -19,6 +19,18 @@ interface TopMovesRequest {
   callback: (moves: string[]) => void;
 }
 
+export interface MultiPVLine {
+  move: string;
+  cp?:   number;
+  mate?: number;
+}
+
+interface MultiPVRequest {
+  count: number;
+  collected: Map<number, MultiPVLine>;
+  callback: (lines: MultiPVLine[]) => void;
+}
+
 export function useStockfish() {
   const workerRef = useRef<Worker | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -26,6 +38,7 @@ export function useStockfish() {
   const onAnalysisRef      = useRef<((info: AnalysisInfo) => void) | null>(null);
   const evalCallbackRef    = useRef<((r: EvalResult) => void) | null>(null);
   const topMovesRef        = useRef<TopMovesRequest | null>(null);
+  const multiPVRef         = useRef<MultiPVRequest | null>(null);
   const lastInfoRef        = useRef<{ cp?: number; mate?: number }>({});
   const isAnalyzingRef     = useRef(false);
   const skipBestMoveRef    = useRef(false);
@@ -55,10 +68,23 @@ export function useStockfish() {
         if (cpMatch)   lastInfoRef.current.cp   = parseInt(cpMatch[1], 10);
         if (mateMatch) lastInfoRef.current.mate = parseInt(mateMatch[1], 10);
 
-        // Collect multipv moves
+        // Collect multipv moves (simple variant)
         if (topMovesRef.current) {
           const pvMatch = line.match(/ multipv (\d+) .* pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
           if (pvMatch) topMovesRef.current.collected.set(parseInt(pvMatch[1], 10), pvMatch[2]);
+        }
+
+        // Collect multipv lines with scores (rich variant)
+        if (multiPVRef.current) {
+          const pvNumMatch = line.match(/ multipv (\d+) /);
+          const pvMatch    = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+          if (pvNumMatch && pvMatch) {
+            multiPVRef.current.collected.set(parseInt(pvNumMatch[1], 10), {
+              move: pvMatch[1],
+              cp:   cpMatch   ? parseInt(cpMatch[1], 10)   : undefined,
+              mate: mateMatch ? parseInt(mateMatch[1], 10) : undefined,
+            });
+          }
         }
 
         if (isAnalyzingRef.current && onAnalysisRef.current) {
@@ -91,6 +117,20 @@ export function useStockfish() {
             if (m) moves.push(m);
           }
           callback(moves);
+          return;
+        }
+
+        // getMultiPV path (with scores)
+        if (multiPVRef.current) {
+          const { count, collected, callback } = multiPVRef.current;
+          multiPVRef.current = null;
+          workerRef.current?.postMessage('setoption name MultiPV value 1');
+          const lines: MultiPVLine[] = [];
+          for (let i = 1; i <= count; i++) {
+            const slot = collected.get(i);
+            if (slot) lines.push(slot);
+          }
+          callback(lines);
           return;
         }
 
@@ -139,6 +179,7 @@ export function useStockfish() {
       onAnalysisRef.current   = null;
       evalCallbackRef.current = null;
       topMovesRef.current     = null;
+      multiPVRef.current      = null;
       onBestMoveRef.current   = callback;
       workerRef.current.postMessage('stop');
       workerRef.current.postMessage(`position fen ${fen}`);
@@ -155,6 +196,7 @@ export function useStockfish() {
       onAnalysisRef.current   = null;
       onBestMoveRef.current   = null;
       topMovesRef.current     = null;
+      multiPVRef.current      = null;
       lastInfoRef.current     = {};
       evalCallbackRef.current = callback;
       workerRef.current.postMessage('stop');
@@ -172,7 +214,26 @@ export function useStockfish() {
       onAnalysisRef.current   = null;
       onBestMoveRef.current   = null;
       evalCallbackRef.current = null;
+      multiPVRef.current      = null;
       topMovesRef.current     = { count, collected: new Map(), callback };
+      workerRef.current.postMessage(`setoption name MultiPV value ${count}`);
+      workerRef.current.postMessage('stop');
+      workerRef.current.postMessage(`position fen ${fen}`);
+      workerRef.current.postMessage(`go depth ${depth}`);
+    },
+    [isReady],
+  );
+
+  const getMultiPV = useCallback(
+    (fen: string, depth: number, count: number, callback: (lines: MultiPVLine[]) => void) => {
+      if (!workerRef.current || !isReady) return;
+      if (isAnalyzingRef.current) skipBestMoveRef.current = true;
+      isAnalyzingRef.current  = false;
+      onAnalysisRef.current   = null;
+      onBestMoveRef.current   = null;
+      evalCallbackRef.current = null;
+      topMovesRef.current     = null;
+      multiPVRef.current      = { count, collected: new Map(), callback };
       workerRef.current.postMessage(`setoption name MultiPV value ${count}`);
       workerRef.current.postMessage('stop');
       workerRef.current.postMessage(`position fen ${fen}`);
@@ -188,6 +249,7 @@ export function useStockfish() {
       onBestMoveRef.current   = null;
       evalCallbackRef.current = null;
       topMovesRef.current     = null;
+      multiPVRef.current      = null;
       onAnalysisRef.current   = onInfo;
       isAnalyzingRef.current  = true;
       workerRef.current.postMessage('stop');
@@ -214,5 +276,5 @@ export function useStockfish() {
     }
   }, [isReady]);
 
-  return { getBestMove, getEval, getTopMoves, startAnalysis, stopAnalysis, setSkillLevel, isReady };
+  return { getBestMove, getEval, getTopMoves, getMultiPV, startAnalysis, stopAnalysis, setSkillLevel, isReady };
 }

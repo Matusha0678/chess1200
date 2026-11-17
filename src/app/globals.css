@@ -665,6 +665,118 @@ html, body {
 .scoring-slot-pts-active { color: var(--accent); }
 .scoring-slot-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
 
+/* ── Big-board layout (used on /masters/[id]) ───────────────────────────── */
+/* Board sized to min(100% of column, 75vh, 760px). Layout: board left, panel right. */
+.master-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+  gap: 32px;
+  align-items: start;
+}
+@media (max-width: 1099px) {
+  .master-layout { grid-template-columns: 1fr; gap: 20px; }
+}
+.master-board-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.master-board-inner {
+  width: min(100%, 75vh, 760px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.master-board-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--board-border);
+  border-radius: calc(var(--radius-card) * 0.4 + 2px);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+/* ── Eval bar (thin, above the board) ───────────────────────────────────── */
+.eval-bar {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(to right, #E8E6DF 0%, #E8E6DF 50%, #2A2A28 50%, #2A2A28 100%);
+  border-radius: 99px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+.eval-bar-fill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 50%;
+  background: #E8E6DF;
+  transition: width 0.5s ease;
+}
+.eval-bar-text {
+  position: absolute;
+  top: 8px; right: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+}
+.eval-bar-row {
+  position: relative;
+  padding-bottom: 20px;
+}
+
+/* ── Mode segmented control ─────────────────────────────────────────────── */
+.ui-segmented {
+  display: inline-flex;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-btn);
+  box-shadow: var(--shadow-card);
+  gap: 2px;
+}
+[data-site-theme^="soft"] .ui-segmented { border-color: transparent; }
+.ui-segment {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: calc(var(--radius-btn) - 3px);
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.ui-segment:hover { color: var(--ivory); }
+.ui-segment-active {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+.ui-segment-active:hover { color: #FFFFFF; }
+
+/* Number/text field in prepare-style forms */
+.ui-input {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--ivory);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-btn);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  box-shadow: var(--shadow-card);
+}
+.ui-input:focus { border-color: var(--card-hover); }
+[data-site-theme^="soft"] .ui-input { border-color: transparent; }
+
 /* ── Textarea ───────────────────────────────────────────────────────────── */
 .ui-textarea {
   width: 100%; box-sizing: border-box;
