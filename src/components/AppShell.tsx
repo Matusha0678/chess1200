@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { NAV_GROUPS, matchHref } from '@/lib/nav';
+import { NavIcon } from './NavIcon';
 
-// ── TopBar: logo (left), search + theme + mobile menu (right) ────────────────
+// ── TopBar ────────────────────────────────────────────────────────────────────
 
 function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const { openPanel, openSearch } = useBoardTheme();
@@ -53,52 +54,181 @@ function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   );
 }
 
-// ── Sidebar: grouped nav list ────────────────────────────────────────────────
+// ── Chevron ───────────────────────────────────────────────────────────────────
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="12" height="12" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}
+    >
+      <path d="M9 18l6-6-6-6"/>
+    </svg>
+  );
+}
+
+// ── SidebarItems ──────────────────────────────────────────────────────────────
+
+const COLLAPSED_KEY = 'chess1200-nav-collapsed';
 
 function SidebarItems({ onNav }: { onNav?: () => void }) {
   const pathname = usePathname();
+
+  // Which group contains the active page
+  const activeGroupIdx = NAV_GROUPS.findIndex(g =>
+    g.label !== null && g.items.some(item => matchHref(pathname, item.href))
+  );
+
+  // collapsed state: set of group labels that are collapsed
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
+
+  // On mount: load from localStorage; ensure active group is open
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? '[]') as string[];
+      const set = new Set(stored);
+      // Always open the active group
+      if (activeGroupIdx >= 0 && NAV_GROUPS[activeGroupIdx].label) {
+        set.delete(NAV_GROUPS[activeGroupIdx].label!);
+      }
+      setCollapsed(set);
+    } catch { /* ignore */ }
+  }, [activeGroupIdx]);
+
+  function toggleGroup(label: string) {
+    setCollapsed(prev => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
   return (
     <nav className="app-sidebar-nav" aria-label="Основная навигация">
-      {NAV_GROUPS.map((group, gi) => (
-        <div key={gi} className="app-sidebar-group">
-          {group.label && <div className="app-sidebar-label">{group.label}</div>}
-          <ul>
-            {group.items.map(item => {
-              const active = matchHref(pathname, item.href);
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={onNav}
-                    className={`app-sidebar-link ${active ? 'app-sidebar-link-active' : ''}`}
-                    aria-current={active ? 'page' : undefined}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
+      {NAV_GROUPS.map((group, gi) => {
+        if (group.label === null) {
+          // Ungrouped (Сегодня)
+          return (
+            <div key={gi} className="app-sidebar-group">
+              <ul>
+                {group.items.map(item => {
+                  const active = matchHref(pathname, item.href);
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={onNav}
+                        className={`app-sidebar-link app-sidebar-link-icon ${active ? 'app-sidebar-link-active' : ''}`}
+                        aria-current={active ? 'page' : undefined}
+                      >
+                        <NavIcon iconKey={item.icon} />
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        }
+
+        const isOpen = !collapsed.has(group.label);
+        const hasActive = group.items.some(item => matchHref(pathname, item.href));
+
+        return (
+          <div key={gi} className="app-sidebar-group">
+            <button
+              className={`app-sidebar-group-btn ${hasActive ? 'app-sidebar-group-btn-active' : ''}`}
+              onClick={() => toggleGroup(group.label!)}
+              aria-expanded={isOpen}
+            >
+              <span>{group.label}</span>
+              <Chevron open={isOpen} />
+            </button>
+
+            {isOpen && (
+              <ul>
+                {group.items.map(item => {
+                  const active = matchHref(pathname, item.href);
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={onNav}
+                        className={`app-sidebar-link app-sidebar-link-icon ${active ? 'app-sidebar-link-active' : ''}`}
+                        aria-current={active ? 'page' : undefined}
+                      >
+                        <NavIcon iconKey={item.icon} />
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        );
+      })}
     </nav>
   );
 }
 
-// ── Full component ───────────────────────────────────────────────────────────
+// ── Mobile bottom bar ─────────────────────────────────────────────────────────
+
+const BOTTOM_NAV = [
+  { href: '/',             icon: 'today',    label: 'Сегодня' },
+  { href: '/openings',     icon: 'openings', label: 'Дебюты' },
+  { href: '/mistakes',     icon: 'mistakes', label: 'Ошибки' },
+  { href: '/games',        icon: 'games',    label: 'Партии' },
+];
+
+function MobileBottomBar({ onMoreClick }: { onMoreClick: () => void }) {
+  const pathname = usePathname();
+  return (
+    <nav className="app-bottom-bar" aria-label="Нижняя навигация">
+      {BOTTOM_NAV.map(item => {
+        const active = matchHref(pathname, item.href);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`app-bottom-item ${active ? 'app-bottom-item-active' : ''}`}
+            aria-current={active ? 'page' : undefined}
+          >
+            <NavIcon iconKey={item.icon} />
+            <span>{item.label}</span>
+          </Link>
+        );
+      })}
+      <button className="app-bottom-item" onClick={onMoreClick} aria-label="Ещё">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+          <circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+        </svg>
+        <span>Ещё</span>
+      </button>
+    </nav>
+  );
+}
+
+// ── Full component ────────────────────────────────────────────────────────────
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
-  // Close mobile sidebar on route change — derived from pathname, not an effect
+  // Close mobile sidebar on route change
   const [prevPath, setPrevPath] = useState(pathname);
   if (pathname !== prevPath) {
     setPrevPath(pathname);
     if (mobileOpen) setMobileOpen(false);
   }
 
-  // Escape to close
   useEffect(() => {
     if (!mobileOpen) return;
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setMobileOpen(false); }
@@ -106,7 +236,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [mobileOpen]);
 
-  // Lock body scroll when mobile sidebar is open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
@@ -123,6 +252,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </aside>
         <main className="app-main">{children}</main>
       </div>
+
+      {/* Mobile bottom bar */}
+      <MobileBottomBar onMoreClick={() => setMobileOpen(true)} />
 
       {/* Mobile overlay */}
       {mobileOpen && (

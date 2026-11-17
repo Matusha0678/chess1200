@@ -339,7 +339,7 @@ export default function HomePage() {
         <div className="stat-grid">
           <div className="stat-card">
             <div className="stat-value">{counts.streak}</div>
-            <div className="stat-label">{plural(counts.streak, 'день подряд', 'дня подряд', 'дней подряд')}</div>
+            <div className="stat-label">дней подряд</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{counts.totalLines}</div>

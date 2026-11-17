@@ -9,10 +9,6 @@ import type { Opening, LineProgress, ChessMove } from '@/types/openings';
 interface OpeningStats { linesTotal: number; linesMastered: number; linesDue: number; }
 interface OpeningWithStats extends Opening { stats: OpeningStats; firstLineMoves?: ChessMove[]; }
 
-const HEADING: React.CSSProperties = { fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" };
-const EYEBROW: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--muted)', textTransform: 'uppercase' };
-const EYEBROW_LINE: React.CSSProperties = { width: 48, height: 1, background: 'var(--eyebrow-line)', flexShrink: 0 };
-
 export default function OpeningsPage() {
   const [openings, setOpenings] = useState<OpeningWithStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,40 +65,32 @@ export default function OpeningsPage() {
       return b.stats.linesTotal - a.stats.linesTotal;
     });
 
-  const filters: Array<{ value: 'all' | 'white' | 'black' | 'both'; label: string; icon?: string }> = [
-    { value: 'all', label: 'Все' },
-    { value: 'white', label: 'Белые', icon: 'white' },
-    { value: 'black', label: 'Чёрные', icon: 'black' },
-    { value: 'both', label: 'Оба', icon: 'both' },
+  const filters: Array<{ value: 'all' | 'white' | 'black' | 'both'; label: string }> = [
+    { value: 'all',   label: 'Все' },
+    { value: 'white', label: 'Белые' },
+    { value: 'black', label: 'Чёрные' },
+    { value: 'both',  label: 'Оба' },
   ];
 
   return (
-    <main style={{ maxWidth: 1600, margin: '0 auto', padding: '40px 48px 72px', display: 'flex', flexDirection: 'column', gap: 24, boxSizing: 'border-box' }}>
-
-      {/* Hero row */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={EYEBROW}>
-            <span>РЕПЕРТУАР</span>
-            <span style={EYEBROW_LINE} />
-            <span>ДЕБЮТЫ</span>
-          </div>
-          <h1 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 72, lineHeight: 0.9, letterSpacing: '0.01em' }}>Дебюты</h1>
+    <div className="page">
+      {/* Header */}
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">Дебюты</h1>
+          <p className="page-lead">Репертуар и тренировка дебютных линий</p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <a
             href="https://www.chess.com/explorer"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 22px', border: '1px solid var(--ivory)', fontSize: 14, fontWeight: 600, color: 'var(--ivory)', boxSizing: 'border-box' }}
+            className="ui-btn ui-btn-outline"
           >
-            Opening Explorer
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+            Explorer
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
           </a>
-          <Link
-            href="/openings/new"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 24px', border: '1px solid var(--ivory)', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600, boxSizing: 'border-box' }}
-          >
+          <Link href="/openings/new" className="ui-btn ui-btn-primary">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
             Добавить дебют
           </Link>
@@ -112,11 +100,17 @@ export default function OpeningsPage() {
       {/* Random banner */}
       <Link
         href="/openings/random"
-        style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '20px 24px', background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ivory)' }}
-        className="random-banner-link"
+        className="ui-card random-banner-link"
+        style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', color: 'inherit' }}
       >
-        <span style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', border: '1px solid var(--control)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <span style={{
+          flexShrink: 0, width: 44, height: 44,
+          borderRadius: 'var(--radius-btn)',
+          background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+          color: 'var(--accent)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <rect x="4" y="4" width="16" height="16" rx="3"/>
             <circle cx="9" cy="9" r="0.8" fill="currentColor"/>
             <circle cx="15" cy="9" r="0.8" fill="currentColor"/>
@@ -124,17 +118,21 @@ export default function OpeningsPage() {
             <circle cx="15" cy="15" r="0.8" fill="currentColor"/>
           </svg>
         </span>
-        <span style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
-          <span style={{ ...HEADING, fontSize: 22, fontWeight: 600, letterSpacing: '0', lineHeight: 1.1 }}>Дебют Рандом</span>
-          <span style={{ fontSize: 14, color: 'var(--muted)' }}>Играй против Stockfish — он тренирует твои сохранённые дебюты</span>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', lineHeight: 1.2 }}>Дебют Рандом</span>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>Играй против Stockfish — он тренирует твои сохранённые дебюты</span>
         </span>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, color: 'var(--muted)' }}>
+          <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
+        </svg>
       </Link>
 
       {/* Toolbar */}
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        {/* Search */}
-        <div style={{ position: 'relative', flex: '1 1 280px', minWidth: 0 }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="ui-search-wrap" style={{ flex: '1 1 240px' }}>
+          <svg className="ui-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+          </svg>
           <label htmlFor="q-openings" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Поиск дебюта</label>
           <input
             id="q-openings"
@@ -142,86 +140,53 @@ export default function OpeningsPage() {
             placeholder="Поиск дебюта…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%', height: 48, boxSizing: 'border-box',
-              padding: '0 16px 0 32px', background: 'transparent',
-              border: 0, borderBottom: '1px solid var(--ivory)', borderRadius: 0,
-              color: 'var(--ivory)', fontSize: 15, outline: 'none',
-              fontFamily: 'inherit',
-            }}
+            className="ui-search search-input"
           />
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ position: 'absolute', left: 4, top: 16 }}>
-            <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
-          </svg>
         </div>
 
-        {/* Filter chips */}
-        <div role="group" aria-label="Фильтр по цвету" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {filters.map(f => {
-            const active = colorFilter === f.value;
-            return (
-              <button
-                key={f.value}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setColorFilter(f.value)}
-                style={{
-                  height: 44,
-                  padding: active && f.value === 'all' ? '0 20px' : '0 18px',
-                  border: active ? '1px solid var(--ivory)' : '1px solid var(--control)',
-                  borderRadius: 999,
-                  background: active ? 'var(--ivory)' : 'transparent',
-                  color: active ? 'var(--ink)' : 'var(--ivory)',
-                  fontSize: 13, fontWeight: active ? 600 : 500, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  fontFamily: 'inherit',
-                }}
-              >
-                {f.icon === 'white' && (
-                  <span aria-hidden="true" style={{ fontFamily: "'Segoe UI Symbol','Apple Symbols',sans-serif", fontSize: 18, lineHeight: 1, color: active ? 'var(--ink)' : 'var(--ivory)' }}>♚</span>
-                )}
-                {f.icon === 'black' && (
-                  <span aria-hidden="true" style={{ fontFamily: "'Segoe UI Symbol','Apple Symbols',sans-serif", fontSize: 18, lineHeight: 1, color: active ? 'var(--ivory)' : 'var(--ink)', WebkitTextStroke: `0.8px ${active ? 'var(--ink)' : 'var(--ivory)'}` }}>♚</span>
-                )}
-                {f.icon === 'both' && (
-                  <span aria-hidden="true" style={{ display: 'inline-flex', fontFamily: "'Segoe UI Symbol','Apple Symbols',sans-serif", fontSize: 18, lineHeight: 1 }}>
-                    <span style={{ color: active ? 'var(--ink)' : 'var(--ivory)' }}>♚</span>
-                    <span style={{ marginLeft: -4, color: active ? 'var(--ivory)' : 'var(--ink)', WebkitTextStroke: `0.8px ${active ? 'var(--ink)' : 'var(--ivory)'}` }}>♚</span>
-                  </span>
-                )}
-                {f.label}
-              </button>
-            );
-          })}
+        <div className="chip-row" role="group" aria-label="Фильтр по цвету">
+          {filters.map(f => (
+            <button
+              key={f.value}
+              type="button"
+              aria-pressed={colorFilter === f.value}
+              onClick={() => setColorFilter(f.value)}
+              className={`ui-chip ${colorFilter === f.value ? 'ui-chip-active' : ''}`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Grid of opening cards */}
+      {/* Grid */}
       {loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(440px, 100%), 1fr))', gap: 16 }}>
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} style={{ display: 'flex', flexWrap: 'wrap', gap: 20, padding: 16, border: '1px solid var(--hairline)', background: 'var(--surface)', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
-              <div style={{ flex: '0 1 220px', minWidth: 160, aspectRatio: '1/1', background: 'var(--track)' }} />
-              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ height: 14, width: 80, background: 'var(--track)' }} />
-                <div style={{ height: 34, width: '70%', background: 'var(--track)' }} />
-                <div style={{ marginTop: 'auto', height: 2, background: 'var(--track)' }} />
+            <div key={i} className="ui-card animate-pulse" style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
+              <div style={{ flex: '0 1 220px', minWidth: 160, aspectRatio: '1/1', background: 'var(--track)', borderRadius: 'calc(var(--radius-card) * 0.5)' }} />
+              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ height: 12, width: 80, background: 'var(--track)', borderRadius: 4 }} />
+                <div style={{ height: 28, width: '70%', background: 'var(--track)', borderRadius: 4 }} />
+                <div style={{ marginTop: 'auto', height: 4, background: 'var(--track)', borderRadius: 99 }} />
               </div>
             </div>
           ))}
         </div>
       ) : openings.length === 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: '80px 0', textAlign: 'center' }}>
-          <h2 style={{ ...HEADING, margin: 0, fontWeight: 700, fontSize: 56, letterSpacing: '-0.03em', lineHeight: 1 }}>Нет дебютов</h2>
-          <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>Добавь свой первый дебют, чтобы начать тренировки</p>
-          <Link href="/openings/new" style={{ display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600 }}>
-            + Добавить первый дебют
+        <div className="empty-state">
+          <div className="empty-state-icon">♟</div>
+          <div className="empty-state-title">Нет дебютов</div>
+          <p className="empty-state-text">Добавь первый дебют, чтобы начать тренировки</p>
+          <Link href="/openings/new" className="ui-btn ui-btn-primary">
+            Добавить первый дебют
           </Link>
         </div>
       ) : filteredOpenings.length === 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '64px 0', textAlign: 'center' }}>
-          <p style={{ margin: 0, fontSize: 20, color: 'var(--muted)' }}>Ничего не найдено</p>
-          <p style={{ margin: 0, fontSize: 15, color: 'var(--control)' }}>Попробуй изменить запрос или фильтр</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">🔍</div>
+          <div className="empty-state-title">Ничего не найдено</div>
+          <p className="empty-state-text">Попробуй изменить запрос или фильтр</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(440px, 100%), 1fr))', gap: 16 }}>
@@ -239,6 +204,6 @@ export default function OpeningsPage() {
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }

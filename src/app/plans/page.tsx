@@ -21,16 +21,6 @@ interface IdeaCard {
 
 type Phase = 'loading' | 'list' | 'practice' | 'done' | 'empty';
 
-const LABEL: React.CSSProperties = {
-  margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.18em',
-  color: 'var(--ivory)', textTransform: 'uppercase',
-};
-
-const SECTION_HEADER: React.CSSProperties = {
-  borderTop: '2px solid var(--ivory)',
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-  minHeight: 48,
-};
 
 export default function PlansPage() {
   const [phase, setPhase] = useState<Phase>('loading');
@@ -182,11 +172,14 @@ export default function PlansPage() {
 
   if (phase === 'empty') {
     return (
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={SECTION_HEADER}>
-          <h1 style={LABEL}>Планы</h1>
+      <div className="page" style={{ maxWidth: 760 }}>
+        <div className="page-head">
+          <div className="page-head-text">
+            <h1 className="page-title">Идеи позиций</h1>
+            <p className="page-lead">Идеи из курсов на повторение</p>
+          </div>
         </div>
-        <div style={{ paddingTop: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <p style={{ fontSize: 15, color: 'var(--ivory)', margin: 0, fontWeight: 600 }}>
             Нет идей в курсах
           </p>
@@ -197,18 +190,11 @@ export default function PlansPage() {
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button
               onClick={() => void copySpec()}
-              style={{
-                height: 40, padding: '0 20px',
-                background: 'var(--ivory)', color: 'var(--ink)',
-                border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              }}
+              className="ui-btn ui-btn-primary"
             >
               {copied ? 'Скопировано!' : 'Копировать инструкцию для ИИ'}
             </button>
-            <Link
-              href="/courses"
-              style={{ display: 'flex', alignItems: 'center', height: 40, padding: '0 20px', border: '1px solid var(--hairline)', fontSize: 14, color: 'var(--muted)' }}
-            >
+            <Link href="/courses" className="ui-btn ui-btn-outline">
               Курсы →
             </Link>
           </div>
@@ -221,33 +207,18 @@ export default function PlansPage() {
 
   if (phase === 'done') {
     return (
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={SECTION_HEADER}>
-          <h1 style={LABEL}>Планы</h1>
-        </div>
-        <div style={{ paddingTop: 40, display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'flex-start' }}>
-          <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--ivory)', margin: 0, letterSpacing: '-0.02em' }}>
-            Готово!
-          </p>
-          <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-            {practiceCards.length === 1
-              ? '1 идея проработана сегодня.'
-              : `${practiceCards.length} идей проработано сегодня.`}
-          </p>
-          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-            <Link
-              href="/"
-              style={{ display: 'flex', alignItems: 'center', height: 40, padding: '0 20px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600 }}
-            >
-              На главную
-            </Link>
-            <button
-              onClick={() => { setPhase('list'); }}
-              style={{ height: 40, padding: '0 20px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 14, cursor: 'pointer' }}
-            >
-              Ещё раз
-            </button>
+      <div className="page" style={{ maxWidth: 640 }}>
+        <div className="page-head">
+          <div className="page-head-text">
+            <h1 className="page-title">Готово!</h1>
+            <p className="page-lead">
+              {practiceCards.length === 1 ? '1 идея проработана сегодня.' : `${practiceCards.length} идей проработано сегодня.`}
+            </p>
           </div>
+        </div>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <Link href="/" className="ui-btn ui-btn-primary">На главную</Link>
+          <button onClick={() => setPhase('list')} className="ui-btn ui-btn-outline">Ещё раз</button>
         </div>
       </div>
     );
@@ -257,25 +228,22 @@ export default function PlansPage() {
 
   if (phase === 'list') {
     return (
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={SECTION_HEADER}>
-          <h1 style={LABEL}>Планы</h1>
+      <div className="page" style={{ maxWidth: 640 }}>
+        <div className="page-head">
+          <div className="page-head-text">
+            <h1 className="page-title">Идеи позиций</h1>
+            <p className="page-lead">Концептуальные идеи из курсов</p>
+          </div>
         </div>
 
         {/* Opening filter */}
         {openings.length > 1 && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 16 }}>
+          <div className="chip-row">
             {['all', ...openings].map(op => (
               <button
                 key={op}
                 onClick={() => setOpeningFilter(op)}
-                style={{
-                  height: 32, padding: '0 14px',
-                  background: openingFilter === op ? 'var(--ivory)' : 'transparent',
-                  color: openingFilter === op ? 'var(--ink)' : 'var(--muted)',
-                  border: openingFilter === op ? 'none' : '1px solid var(--hairline)',
-                  fontSize: 13, cursor: 'pointer',
-                }}
+                className={`ui-chip ${openingFilter === op ? 'ui-chip-active' : ''}`}
               >
                 {op === 'all' ? 'Все' : op}
               </button>
