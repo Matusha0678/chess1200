@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Chess } from 'chess.js';
 import type { Square } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
@@ -92,7 +93,18 @@ interface Filters {
   phase: GamePhase | '';
 }
 
+// ── Tag rules (шаблоны для мини-курса) ──────────────────────────────────────
+
+const TAG_RULE: Record<string, string> = {
+  hanging:        'Перед ходом спроси: что хочет сделать соперник? Проверь, не осталась ли фигура без защиты.',
+  missed_check:   'Всегда проверяй, есть ли шах или взятие, прежде чем делать другой ход.',
+  missed_tactic:  'Ищи тактические удары: вилки, связки, отвлечения — перед каждым ходом.',
+  positional:     'Оцени пешечную структуру и активность фигур перед ходом.',
+  deviation:      'Выучи линию точно: каждое отклонение даёт сопернику преимущество.',
+};
+
 export default function MistakesPage() {
+  const router = useRouter();
   const [cards, setCards] = useState<MistakeCard[]>([]);
   const [index, setIndex] = useState(0);
   const [answered, setAnswered] = useState<AnswerState | null>(null);
@@ -100,6 +112,8 @@ export default function MistakesPage() {
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [currentFen, setCurrentFen] = useState<string>('');
+  const [buildingCourse, setBuildingCourse] = useState(false);
+  const [buildError, setBuildError] = useState<string | null>(null);
 
   const { boardTheme, customPieces, showNotation: notationEnabled, animationMs, boardThemeId, pieceStyleId } = useBoardTheme();
   const { startAnalysis, stopAnalysis, isReady } = useStockfish();
@@ -129,6 +143,109 @@ export default function MistakesPage() {
       setCurrentFen(loaded[0].fen_before);
     }
     setLoading(false);
+  }
+
+  async function buildMiniCourse() {
+    setBuildingCourse(true);
+    setBuildError(null);
+    try {
+      // Get top-10 cards by eval_loss for selected tag (or all)
+      let q = supabase.from('mistake_cards').select('*').order('eval_loss', { ascending: false }).limit(10);
+      if (filters.tag) q = q.eq('tag', filters.tag);
+      const { data: topCards } = await q;
+      const selectedCards = (topCards ?? []) as MistakeCard[];
+      if (selectedCards.length === 0) {
+        setBuildError('Нет карточек для курса.');
+        setBuildingCourse(false);
+        return;
+      }
+
+      const tagKey = filters.tag || 'hanging';
+      const tagLabel = TAG_LABEL[tagKey as keyof typeof TAG_LABEL] ?? 'Ошибки';
+      const rule = TAG_RULE[tagKey] ?? TAG_RULE.hanging;
+      const slug = `personal-mistakes-${Date.now()}`;
+
+      // Create course
+      const { data: courseRow, error: courseErr } = await supabase.from('courses').insert({
+        slug,
+        name: `Мини-курс: ${tagLabel}`,
+        color: 'both',
+        opening: '',
+        kind: 'personal',
+        description: `Курс из ${selectedCards.length} твоих ошибок по теме «${tagLabel}».`,
+        difficulty: 3,
+      }).select('id').single();
+
+      if (courseErr || !courseRow) {
+        // If kind constraint fails
+        if (courseErr?.message?.includes('kind')) {
+          setBuildError('Выполни supabase/19-courses-personal.sql, затем повтори.');
+        } else {
+          setBuildError(courseErr?.message ?? 'Не удалось создать курс.');
+        }
+        setBuildingCourse(false);
+        return;
+      }
+
+      const courseId: string = (courseRow as { id: string }).id;
+
+      // Create one lesson per card
+      for (let i = 0; i < selectedCards.length; i++) {
+        const c = selectedCards[i];
+        const chess = new Chess(c.fen_before);
+        const bestSan = (() => {
+          if (!c.best_move || c.best_move.length < 4) return '';
+          try {
+            const from = c.best_move.slice(0, 2) as Square;
+            const to   = c.best_move.slice(2, 4) as Square;
+            const prom = c.best_move.length === 5 ? c.best_move[4] as 'q'|'r'|'b'|'n' : undefined;
+            const mv   = chess.move({ from, to, promotion: prom });
+            return mv?.san ?? '';
+          } catch { return ''; }
+        })();
+
+        const lessonTitle = `Зевок ${i + 1}: ${tagLabel.toLowerCase()}${bestSan ? ` (${bestSan})` : ''}`;
+        const summary = `Позиция после моего хода ${c.my_move}. Лучший ход: ${bestSan || c.best_move}.`;
+        const plan    = rule;
+        const mistakes = `Мой ход: ${c.my_move}. Потеря: ${c.eval_loss} сотых пешки.`;
+
+        const { data: lessonRow, error: lessonErr } = await supabase.from('course_lessons').insert({
+          course_id: courseId,
+          lesson_order: i,
+          title: lessonTitle,
+          summary,
+          plan,
+          mistakes,
+          trap: '',
+          blocks: [
+            { type: 'text', md: `**Запомни:** ${rule}` },
+            {
+              type: 'puzzle',
+              fen: c.fen_before,
+              question: 'Найди лучший ход',
+              answer: bestSan || c.best_move,
+              why: `Лучший ход: ${bestSan || c.best_move}. Потеря составила ${c.eval_loss} сотых пешки.`,
+            },
+          ],
+        }).select('id').single();
+
+        if (lessonErr || !lessonRow) continue;
+
+        // Add empty line (position before my move)
+        await supabase.from('lesson_lines').insert({
+          lesson_id: (lessonRow as { id: string }).id,
+          line_order: 0,
+          moves: [],
+          start_fen: c.fen_before,
+        });
+      }
+
+      setBuildingCourse(false);
+      router.push(`/courses/${courseId}`);
+    } catch (e) {
+      setBuildError(e instanceof Error ? e.message : 'Ошибка');
+      setBuildingCourse(false);
+    }
   }
 
   const card = cards[index] ?? null;
@@ -301,6 +418,17 @@ export default function MistakesPage() {
             >
               × Сбросить
             </button>
+          )}
+          <button
+            onClick={() => void buildMiniCourse()}
+            disabled={buildingCourse}
+            style={{ height: 36, padding: '0 14px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }}
+            title="Собрать мини-курс из ошибок выбранного типа"
+          >
+            {buildingCourse ? 'Собираем…' : 'Собрать мини-курс'}
+          </button>
+          {buildError && (
+            <span style={{ fontSize: 12, color: 'rgba(220,80,60,0.9)' }}>{buildError}</span>
           )}
         </div>
       </div>
