@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS sac_positions (
   eval_before integer,           -- centipawns, side-to-move POV
   eval_after  integer,
   source      text    NOT NULL DEFAULT 'master',
-  created_at  timestamptz DEFAULT now()
+  created_at  timestamptz DEFAULT now(),
+  UNIQUE (fen, move)
 );
 
 ALTER TABLE sac_positions ENABLE ROW LEVEL SECURITY;
