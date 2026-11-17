@@ -384,7 +384,7 @@ export default function PlayFromPosition({
     <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
       {/* ── Board ── */}
-      <div style={{ position: 'relative', flexShrink: 0 }}>
+      <div style={{ position: 'relative', flexShrink: 0, width: 'min(480px, 100%)' }}>
         {showAnalysis && (
           <div style={{
             position: 'absolute', top: 0, bottom: 0, right: 'calc(100% + 6px)',
