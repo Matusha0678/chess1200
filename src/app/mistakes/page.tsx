@@ -334,12 +334,12 @@ export default function MistakesPage() {
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box' }}>
+      <div className="page" style={{ maxWidth: 900 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} className="animate-pulse">
-          <div style={{ height: 60, width: 220, background: 'var(--surface)' }} />
-          <div style={{ height: 480, background: 'var(--surface)' }} />
+          <div style={{ height: 40, width: 180, background: 'var(--surface)', borderRadius: 'var(--radius-btn)' }} />
+          <div className="ui-card" style={{ height: 480 }} />
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -374,14 +374,12 @@ export default function MistakesPage() {
   const boardKey = `${boardThemeId}-${pieceStyleId}-${boardOrientation}-${card?.id ?? 'none'}`;
 
   return (
-    <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 28 }}>
+    <div className="page" style={{ maxWidth: 900 }}>
 
       {/* Header */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, flexWrap: 'wrap' }}>
-          <h1 style={{ ...HEADING, margin: 0, fontSize: 48, fontWeight: 700, lineHeight: 0.92, letterSpacing: '-0.02em' }}>
-            Ошибки
-          </h1>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
+          <h1 className="page-title">Ошибки</h1>
           {!loading && (
             <span style={{ fontSize: 14, color: 'var(--muted)' }}>
               Осталось: <span style={{ color: 'var(--ivory)', fontWeight: 600 }}>{remaining > 0 ? remaining : 0}</span>
@@ -643,6 +641,6 @@ export default function MistakesPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

@@ -329,104 +329,75 @@ export default function ThreatsPage() {
 
   if (phase === 'loading' && !loadError) {
     return (
-      <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 48px', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Link href="/" style={{ fontSize: 13, color: 'var(--muted)' }}>← Сегодня</Link>
-          <h1 style={{ ...HEADING, margin: 0, fontSize: 48, fontWeight: 700, letterSpacing: '-0.02em' }}>Угрозы</h1>
-        </div>
-        <p style={{ fontSize: 14, color: 'var(--muted)', marginTop: 32 }}>Загрузка позиций…</p>
-      </main>
+      <div className="page" style={{ maxWidth: 800 }}>
+        <Link href="/" className="page-back">← Сегодня</Link>
+        <h1 className="page-title">Проверка угроз</h1>
+        <p style={{ fontSize: 14, color: 'var(--muted)' }}>Загрузка позиций…</p>
+      </div>
     );
   }
 
   if (loadError) {
     return (
-      <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 48px', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Link href="/" style={{ fontSize: 13, color: 'var(--muted)' }}>← Сегодня</Link>
-          <h1 style={{ ...HEADING, margin: 0, fontSize: 48, fontWeight: 700, letterSpacing: '-0.02em' }}>Угрозы</h1>
-        </div>
-        <p style={{ fontSize: 14, color: 'var(--control)', marginTop: 32 }}>{loadError}</p>
-        <Link href="/games/analyze" style={{ fontSize: 13, color: 'var(--ivory)', marginTop: 16, display: 'block' }}>
+      <div className="page" style={{ maxWidth: 800 }}>
+        <Link href="/" className="page-back">← Сегодня</Link>
+        <h1 className="page-title">Проверка угроз</h1>
+        <div className="ui-banner ui-banner-warn" style={{ fontSize: 14 }}>{loadError}</div>
+        <Link href="/games/analyze" className="ui-btn ui-btn-outline" style={{ alignSelf: 'flex-start' }}>
           → Анализ партий
         </Link>
-      </main>
+      </div>
     );
   }
 
   if (phase === 'done') {
     return (
-      <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 48px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 36 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Link href="/" style={{ fontSize: 13, color: 'var(--muted)' }}>← Сегодня</Link>
-          <h1 style={{ ...HEADING, margin: 0, fontSize: 48, fontWeight: 700, letterSpacing: '-0.02em' }}>Угрозы</h1>
-        </div>
-        <div style={{ borderTop: '2px solid var(--ivory)', paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <span style={SECTION_LABEL}>ИТОГИ СЕССИИ</span>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
-            {[
-              { label: 'НАЙДЕНО', value: score.found },
-              { label: 'ПРОПУЩЕНО', value: score.missed },
-              { label: 'ЛОЖНЫХ', value: score.falseAlarms },
-              { label: 'XP', value: `+${score.xp}` },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ padding: '16px 0', borderTop: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={SECTION_LABEL}>{label}</span>
-                <span style={{ ...HEADING, fontSize: 36, fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-                  {value}
-                </span>
-              </div>
-            ))}
-          </div>
-          {score.streak > 2 && (
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-              Серия точных ответов: {score.streak}
-            </span>
-          )}
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button
-              onClick={() => {
-                setScore({ found: 0, missed: 0, falseAlarms: 0, xp: 0, streak: 0 });
-                setPositions([]);
-                setPhase('loading');
-                void loadPositions();
-              }}
-              style={{
-                height: 44, padding: '0 24px', fontSize: 14, fontWeight: 600,
-                background: 'var(--ivory)', color: 'var(--ink)', border: 'none', cursor: 'pointer',
-              }}
-            >
-              Ещё раз
-            </button>
-            <Link
-              href="/"
-              style={{
-                display: 'flex', alignItems: 'center',
-                height: 44, padding: '0 24px', fontSize: 14, fontWeight: 600,
-                background: 'transparent', color: 'var(--muted)',
-                border: '1px solid var(--hairline)',
-              }}
-            >
-              На главную
-            </Link>
+      <div className="page" style={{ maxWidth: 760 }}>
+        <div className="page-head">
+          <div className="page-head-text">
+            <h1 className="page-title">Итоги сессии</h1>
+            <p className="page-lead">Проверка угроз</p>
           </div>
         </div>
-      </main>
+        <div className="stat-grid">
+          {[
+            { label: 'Найдено', value: score.found },
+            { label: 'Пропущено', value: score.missed },
+            { label: 'Ложных', value: score.falseAlarms },
+            { label: 'XP', value: `+${score.xp}` },
+          ].map(({ label, value }) => (
+            <div key={label} className="stat-card">
+              <div className="stat-value">{value}</div>
+              <div className="stat-label">{label}</div>
+            </div>
+          ))}
+        </div>
+        {score.streak > 2 && (
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>Серия точных ответов: {score.streak}</span>
+        )}
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={() => { setScore({ found: 0, missed: 0, falseAlarms: 0, xp: 0, streak: 0 }); setPositions([]); setPhase('loading'); void loadPositions(); }}
+            className="ui-btn ui-btn-primary"
+          >
+            Ещё раз
+          </button>
+          <Link href="/" className="ui-btn ui-btn-outline">На главную</Link>
+        </div>
+      </div>
     );
   }
 
   const boardOrientation: 'white' | 'black' = pos?.myColor === 'w' ? 'white' : 'black';
 
   return (
-    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 32 }}>
+    <div className="page" style={{ maxWidth: 1100 }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Link href="/" style={{ fontSize: 13, color: 'var(--muted)' }}>← Сегодня</Link>
-          <h1 style={{ ...HEADING, margin: 0, fontSize: 48, fontWeight: 700, lineHeight: 0.92, letterSpacing: '-0.02em' }}>
-            Что хочет<br />соперник?
-          </h1>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <Link href="/" className="page-back">← Сегодня</Link>
+          <h1 className="page-title">Что хочет соперник?</h1>
         </div>
 
         {/* Score bar */}
@@ -495,7 +466,7 @@ export default function ThreatsPage() {
           {/* Phase: marking */}
           {phase === 'marking' && (
             <>
-              <div style={{ borderTop: '2px solid var(--ivory)', paddingTop: 16 }}>
+              <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
                 <span style={SECTION_LABEL}>ЗАДАНИЕ</span>
                 <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.5 }}>
                   Кликни на свои фигуры, которым угрожает опасность.<br />
@@ -537,7 +508,7 @@ export default function ThreatsPage() {
           {/* Phase: revealed */}
           {phase === 'revealed' && (
             <>
-              <div style={{ borderTop: '2px solid var(--ivory)', paddingTop: 16 }}>
+              <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
                 <span style={SECTION_LABEL}>УГРОЗЫ</span>
               </div>
 
@@ -611,7 +582,7 @@ export default function ThreatsPage() {
           {/* Phase: defensive */}
           {phase === 'defensive' && (
             <>
-              <div style={{ borderTop: '2px solid var(--ivory)', paddingTop: 16 }}>
+              <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
                 <span style={SECTION_LABEL}>ЗАЩИТНЫЙ ХОД</span>
                 <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.5 }}>
                   Сделай ход, который нейтрализует угрозу.
@@ -643,6 +614,6 @@ export default function ThreatsPage() {
 
         </div>
       </div>
-    </main>
+    </div>
   );
 }

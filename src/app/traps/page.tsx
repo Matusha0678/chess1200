@@ -255,117 +255,102 @@ export default function TrapsPage() {
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px 72px' }}>
-        <div style={{ height: 60, background: 'var(--surface)', marginBottom: 24 }} className="animate-pulse" />
+      <div className="page" style={{ maxWidth: 900 }}>
+        <div style={{ height: 60, background: 'var(--surface)', borderRadius: 'var(--radius-card)' }} className="animate-pulse" />
         {[0, 1, 2].map(i => (
-          <div key={i} style={{ height: 180, background: 'var(--surface)', marginBottom: 12, borderRadius: 2 }} className="animate-pulse" />
+          <div key={i} className="ui-card animate-pulse" style={{ height: 180 }} />
         ))}
-      </main>
+      </div>
     );
   }
 
   if (traps.length === 0) {
     return (
-      <main style={{ maxWidth: 760, margin: '0 auto', padding: '40px 24px 72px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <div>
-          <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>Ловушки</div>
-          <h1 style={{ ...HEADING, fontSize: 40, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 8px' }}>Ловушек пока нет</h1>
-          <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0, lineHeight: 1.6, maxWidth: 480 }}>
-            Добавьте в курс секции <code style={{ fontSize: 12, background: 'var(--surface)', padding: '2px 6px', borderRadius: 3 }}>## Ловушка: Название</code> или линии с «Ловушка» в заголовке — они появятся здесь автоматически.
-          </p>
+      <div className="page" style={{ maxWidth: 760 }}>
+        <div className="page-head">
+          <div className="page-head-text">
+            <h1 className="page-title">Ловушки</h1>
+            <p className="page-lead">Ловушек пока нет</p>
+          </div>
         </div>
-        <div style={{ padding: '20px 24px', border: '1px solid var(--hairline)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="ui-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ivory)' }}>Создать курс с ловушками</span>
           <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
-            Используйте инструкцию для ИИ на странице импорта. Формат ловушки: секция <code style={{ fontSize: 11, background: 'var(--bg)', padding: '1px 5px' }}>## Ловушка: Название</code> с PGN внутри.
+            Добавьте в курс секции <code style={{ fontSize: 12, background: 'var(--bg)', padding: '2px 6px', borderRadius: 3 }}>## Ловушка: Название</code> — они появятся здесь автоматически.
           </span>
-          <Link
-            href="/courses/import"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 40, padding: '0 20px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600, alignSelf: 'flex-start' }}
-          >
-            Импортировать курс →
+          <Link href="/courses/import" className="ui-btn ui-btn-primary" style={{ alignSelf: 'flex-start' }}>
+            Импортировать курс
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px 72px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+    <div className="page" style={{ maxWidth: 900 }}>
 
       {/* Header */}
-      <div>
-        <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>
-          Тренировка
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">Ловушки</h1>
+          <p className="page-lead">
+            {traps.length} {traps.length === 1 ? 'ловушка' : traps.length < 5 ? 'ловушки' : 'ловушек'} из курсов
+          </p>
         </div>
-        <h1 style={{ ...HEADING, fontSize: 40, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 4px' }}>
-          Ловушки
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-          {traps.length} {traps.length === 1 ? 'ловушка' : traps.length < 5 ? 'ловушки' : 'ловушек'} из курсов
-        </p>
       </div>
 
       {/* Eval progress */}
       {evalStatus && (
-        <div style={{ padding: '10px 16px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 13, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="ui-banner" style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: 'var(--muted)' }}>
           <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', border: '2px solid var(--muted)', borderTopColor: 'var(--ivory)', animation: 'spin 0.8s linear infinite' }} />
           Вычисляю оценку {evalStatus.done + 1} из {evalStatus.total}…
         </div>
       )}
 
       {/* Filters */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-        <input
-          type="text"
-          placeholder="Поиск…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{
-            height: 36, padding: '0 14px',
-            background: 'var(--surface)', border: '1px solid var(--hairline)',
-            color: 'var(--ivory)', fontSize: 13, outline: 'none',
-            minWidth: 160,
-          }}
-        />
-        {(['all', 'white', 'black'] as const).map(c => (
-          <button
-            key={c}
-            onClick={() => setColorFilter(c)}
-            style={{
-              height: 36, padding: '0 14px',
-              border: `1px solid ${colorFilter === c ? 'var(--ivory)' : 'var(--hairline)'}`,
-              background: colorFilter === c ? 'rgba(242,239,231,0.08)' : 'transparent',
-              color: colorFilter === c ? 'var(--ivory)' : 'var(--muted)',
-              fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
-            }}
-          >
-            {c === 'all' ? 'Все' : c === 'white' ? 'Белые' : 'Чёрные'}
-          </button>
-        ))}
-        {openings.length > 1 && (
-          <select
-            value={openingFilter}
-            onChange={e => setOpeningFilter(e.target.value)}
-            style={{
-              height: 36, padding: '0 10px',
-              background: 'var(--surface)', border: `1px solid ${openingFilter ? 'var(--ivory)' : 'var(--hairline)'}`,
-              color: openingFilter ? 'var(--ivory)' : 'var(--muted)',
-              fontSize: 13, fontFamily: 'inherit', cursor: 'pointer', outline: 'none',
-            }}
-          >
-            <option value="">Все дебюты</option>
-            {openings.map(op => <option key={op} value={op}>{op}</option>)}
-          </select>
-        )}
-        {(search || colorFilter !== 'all' || openingFilter) && (
-          <button
-            onClick={() => { setSearch(''); setColorFilter('all'); setOpeningFilter(''); }}
-            style={{ height: 36, padding: '0 12px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer' }}
-          >
-            Сбросить
-          </button>
-        )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <div className="ui-search-wrap" style={{ flex: '1 1 180px', maxWidth: 280 }}>
+          <svg className="ui-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Поиск…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="ui-search search-input"
+          />
+        </div>
+        <div className="chip-row">
+          {(['all', 'white', 'black'] as const).map(c => (
+            <button
+              key={c}
+              onClick={() => setColorFilter(c)}
+              className={`ui-chip ${colorFilter === c ? 'ui-chip-active' : ''}`}
+            >
+              {c === 'all' ? 'Все' : c === 'white' ? 'Белые' : 'Чёрные'}
+            </button>
+          ))}
+          {openings.length > 1 && (
+            <select
+              value={openingFilter}
+              onChange={e => setOpeningFilter(e.target.value)}
+              className="ui-chip"
+              style={{ cursor: 'pointer', outline: 'none' }}
+            >
+              <option value="">Все дебюты</option>
+              {openings.map(op => <option key={op} value={op}>{op}</option>)}
+            </select>
+          )}
+          {(search || colorFilter !== 'all' || openingFilter) && (
+            <button
+              onClick={() => { setSearch(''); setColorFilter('all'); setOpeningFilter(''); }}
+              className="ui-chip"
+            >
+              Сбросить ×
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Results count */}
@@ -495,6 +480,6 @@ export default function TrapsPage() {
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

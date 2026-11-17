@@ -13,13 +13,13 @@ const HEADING: React.CSSProperties = {
   fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
 };
 const SECTION_LABEL: React.CSSProperties = {
-  fontSize: 11, fontWeight: 600, letterSpacing: '0.16em',
+  fontSize: 11, fontWeight: 600, letterSpacing: '0.12em',
   color: 'var(--muted)', textTransform: 'uppercase',
 };
 const SECTION_HEAD: React.CSSProperties = {
-  borderTop: '2px solid var(--ivory)',
+  borderBottom: '1px solid var(--hairline)',
   display: 'flex', alignItems: 'center', gap: 12,
-  minHeight: 44,
+  minHeight: 40, paddingBottom: 8, marginBottom: 16,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -474,16 +474,14 @@ export default function GamesPage() {
   }
 
   return (
-    <main style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 36 }}>
+    <div className="page">
 
       {/* ── Header ── */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <h1 style={{ ...HEADING, margin: 0, fontSize: 56, fontWeight: 700, lineHeight: 0.92, letterSpacing: '-0.02em' }}>
-            Партии
-          </h1>
+      <div className="page-head">
+        <div className="page-head-text">
+          <h1 className="page-title">Партии</h1>
           {/* Username */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
             {editingUser ? (
               <>
                 <input
@@ -491,10 +489,11 @@ export default function GamesPage() {
                   value={userInput}
                   onChange={e => setUserInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') saveUsername(); if (e.key === 'Escape') setEditingUser(false); }}
-                  style={{ height: 32, padding: '0 10px', fontSize: 13, background: 'var(--surface)', color: 'var(--ivory)', border: '1px solid var(--hairline)', outline: 'none', width: 160 }}
+                  className="ui-input"
+                  style={{ width: 160 }}
                 />
-                <button onClick={saveUsername} style={{ fontSize: 13, color: 'var(--ivory)', background: 'none', border: 'none', cursor: 'pointer' }}>Сохранить</button>
-                <button onClick={() => setEditingUser(false)} style={{ fontSize: 13, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}>Отмена</button>
+                <button onClick={saveUsername} className="ui-btn ui-btn-primary ui-btn-sm">Сохранить</button>
+                <button onClick={() => setEditingUser(false)} className="ui-btn ui-btn-outline ui-btn-sm">Отмена</button>
               </>
             ) : (
               <>
@@ -512,8 +511,8 @@ export default function GamesPage() {
               <div>{syncProgress.phase}</div>
               {syncProgress.total > 0 && (
                 <div style={{ marginTop: 4 }}>
-                  <div style={{ height: 2, background: 'var(--track)', width: 180 }}>
-                    <div style={{ height: '100%', background: 'var(--ivory)', width: `${Math.round((syncProgress.archive / syncProgress.total) * 100)}%`, transition: 'width 0.3s' }} />
+                  <div className="progress-track" style={{ width: 180 }}>
+                    <div className="progress-fill" style={{ width: `${Math.round((syncProgress.archive / syncProgress.total) * 100)}%` }} />
                   </div>
                 </div>
               )}
@@ -532,12 +531,7 @@ export default function GamesPage() {
           <button
             onClick={() => syncState && startSync(syncState.username, syncState.synced_archives ?? [])}
             disabled={syncing}
-            style={{
-              height: 36, padding: '0 20px', fontSize: 13, fontWeight: 600,
-              background: syncing ? 'var(--track)' : 'var(--ivory)',
-              color: syncing ? 'var(--muted)' : 'var(--ink)',
-              border: 'none', cursor: syncing ? 'not-allowed' : 'pointer',
-            }}
+            className={`ui-btn ${syncing ? 'ui-btn-outline' : 'ui-btn-primary'}`}
           >
             {syncing ? 'Синхронизация…' : 'Синхронизировать'}
           </button>
@@ -548,19 +542,17 @@ export default function GamesPage() {
       {games.length > 0 && (
         <section>
           <div style={SECTION_HEAD}>
-            <span style={SECTION_LABEL}>СТАТИСТИКА</span>
+            <span style={SECTION_LABEL}>Статистика</span>
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>{games.length} партий</span>
           </div>
-          <div style={{ paddingTop: 20 }}>
-            <StatsPanel stats={stats} />
-          </div>
+          <StatsPanel stats={stats} />
         </section>
       )}
 
       {/* ── Games list ── */}
       <section>
-        <div style={{ ...SECTION_HEAD, marginBottom: 16 }}>
-          <span style={SECTION_LABEL}>ПАРТИИ</span>
+        <div style={SECTION_HEAD}>
+          <span style={SECTION_LABEL}>Партии</span>
           <span style={{ fontSize: 12, color: 'var(--muted)' }}>{filtered.length} из {games.length}</span>
         </div>
 
@@ -598,6 +590,6 @@ export default function GamesPage() {
           </>
         )}
       </section>
-    </main>
+    </div>
   );
 }
