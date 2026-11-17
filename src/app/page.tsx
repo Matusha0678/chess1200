@@ -295,39 +295,47 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Daily picks (T12) */}
-      {(dailyGame || dailyComb) && (
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div className="ui-eyebrow">
-            <span>На сегодня</span>
-            <span className="ui-eyebrow-line" />
+      {/* Daily picks (T12) + Warmup (T13) */}
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="ui-eyebrow">
+          <span>На сегодня</span>
+          <span className="ui-eyebrow-line" />
+        </div>
+        <Link href="/warmup" className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', color: 'inherit', padding: '14px 18px' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-btn)', background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, flexShrink: 0 }}>
+            {`5'`}
           </div>
-          {dailyGame && (
-            <Link href={`/masters/${dailyGame.id}`} className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', color: 'inherit', padding: '14px 18px', opacity: dailyGame.done ? 0.65 : 1 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-btn)', background: dailyGame.done ? 'var(--surface)' : 'color-mix(in srgb, var(--accent) 15%, transparent)', color: dailyGame.done ? 'var(--muted)' : 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
-                {dailyGame.done ? '✓' : '♛'}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', marginBottom: 2 }}>Партия дня</div>
-                <div style={{ fontSize: 13, color: 'var(--muted)' }}>{dailyGame.white} — {dailyGame.black}{dailyGame.year ? ` · ${dailyGame.year}` : ''}</div>
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--muted)', flexShrink: 0 }}>Смотреть →</div>
-            </Link>
-          )}
-          {dailyComb && (
-            <Link href="/sac" className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', color: 'inherit', padding: '14px 18px', opacity: dailyComb.done ? 0.65 : 1 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-btn)', background: dailyComb.done ? 'var(--surface)' : 'color-mix(in srgb, var(--accent) 15%, transparent)', color: dailyComb.done ? 'var(--muted)' : 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
-                {dailyComb.done ? '✓' : '⚔'}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', marginBottom: 2 }}>Комбинация дня</div>
-                <div style={{ fontSize: 13, color: 'var(--muted)' }}>Жертвовать или нет?</div>
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--muted)', flexShrink: 0 }}>Играть →</div>
-            </Link>
-          )}
-        </section>
-      )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', marginBottom: 2 }}>Разминка 5 минут</div>
+            <div style={{ fontSize: 13, color: 'var(--muted)' }}>Угрозы, линия, ловушка, ошибка</div>
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--muted)', flexShrink: 0 }}>Начать →</div>
+        </Link>
+        {dailyGame && (
+          <Link href={`/masters/${dailyGame.id}`} className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', color: 'inherit', padding: '14px 18px', opacity: dailyGame.done ? 0.65 : 1 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-btn)', background: dailyGame.done ? 'var(--surface)' : 'color-mix(in srgb, var(--accent) 15%, transparent)', color: dailyGame.done ? 'var(--muted)' : 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+              {dailyGame.done ? '✓' : '♛'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', marginBottom: 2 }}>Партия дня</div>
+              <div style={{ fontSize: 13, color: 'var(--muted)' }}>{dailyGame.white} — {dailyGame.black}{dailyGame.year ? ` · ${dailyGame.year}` : ''}</div>
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--muted)', flexShrink: 0 }}>Смотреть →</div>
+          </Link>
+        )}
+        {dailyComb && (
+          <Link href="/sac" className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', color: 'inherit', padding: '14px 18px', opacity: dailyComb.done ? 0.65 : 1 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-btn)', background: dailyComb.done ? 'var(--surface)' : 'color-mix(in srgb, var(--accent) 15%, transparent)', color: dailyComb.done ? 'var(--muted)' : 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+              {dailyComb.done ? '✓' : '⚔'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', marginBottom: 2 }}>Комбинация дня</div>
+              <div style={{ fontSize: 13, color: 'var(--muted)' }}>Жертвовать или нет?</div>
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--muted)', flexShrink: 0 }}>Играть →</div>
+          </Link>
+        )}
+      </section>
 
       {/* Stats */}
       <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
