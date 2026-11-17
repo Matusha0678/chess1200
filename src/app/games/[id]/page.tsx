@@ -101,12 +101,45 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+// ── Course comparison types ───────────────────────────────────────────────────
+
+interface CourseMatch {
+  courseId: string;
+  courseName: string;
+  lessonId: string;
+  lessonTitle: string;
+  deviationPly: number | null;    // null = matched all the way
+  gameMove: string | null;        // what I played
+  courseMove: string | null;      // what course said
+  whoDeviated: 'me' | 'opponent' | null;
+}
+
+function getFen4(fen: string): string {
+  // First 4 fields: position, color, castling, en-passant (ignore half/full move)
+  return fen.split(' ').slice(0, 4).join(' ');
+}
+
+function buildFenSequence(pgn: string): string[] {
+  const chess = new Chess();
+  const fens: string[] = [getFen4(chess.fen())];
+  const body = pgn.split('\n').filter(l => !l.trim().startsWith('[')).join(' ').trim();
+  const pattern = /(O-O-O[+#!?]*|O-O[+#!?]*|[NBRQK]?[a-h]?[1-8]?x?[a-h][1-8](?:=[NBRQ])?[+#!?]*)/g;
+  let m: RegExpExecArray | null;
+  while ((m = pattern.exec(body)) !== null) {
+    const san = m[1].replace(/[!?]+$/, '');
+    try { chess.move(san); } catch { continue; }
+    fens.push(getFen4(chess.fen()));
+  }
+  return fens;
+}
+
 export default function GameViewerPage({ params }: Props) {
   const { id } = use(params);
   const [game, setGame] = useState<GameRow | null>(null);
   const [moves, setMoves] = useState<ParsedMove[]>([]);
   const [mistakes, setMistakes] = useState<Map<string, MistakeInfo>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [courseMatch, setCourseMatch] = useState<CourseMatch | null>(null);
 
   async function loadGame() {
     setLoading(true);
@@ -141,6 +174,105 @@ export default function GameViewerPage({ params }: Props) {
       }
     }
     setMistakes(mistakeMap);
+
+    // ── Course comparison (T9) ────────────────────────────────────────────────
+    try {
+      const gameFens = buildFenSequence(g.pgn ?? '');
+
+      // Load courses with an opening field
+      const { data: coursesData } = await supabase.from('courses').select('id, name, opening').not('opening', 'is', null).neq('opening', '');
+      if (!coursesData || coursesData.length === 0) { setLoading(false); return; }
+
+      // Load lesson lines for all those courses
+      const { data: lessonsData } = await supabase
+        .from('course_lessons')
+        .select('id, title, course_id')
+        .in('course_id', (coursesData as Array<{ id: string }>).map(c => c.id));
+      if (!lessonsData || lessonsData.length === 0) { setLoading(false); return; }
+
+      const lessonIds = (lessonsData as Array<{ id: string }>).map(l => l.id);
+      const { data: linesData } = await supabase
+        .from('lesson_lines')
+        .select('lesson_id, moves, start_fen')
+        .in('lesson_id', lessonIds)
+        .order('line_order', { ascending: true });
+
+      interface CourseRow { id: string; name: string; }
+      interface LessonRow { id: string; title: string; course_id: string; }
+      interface LineRow { lesson_id: string; moves: Array<{ from: string; to: string; san: string; color: string }>; start_fen?: string; }
+
+      const courseMap: Record<string, CourseRow> = {};
+      for (const c of (coursesData as CourseRow[])) courseMap[c.id] = c;
+
+      const lessonMap: Record<string, LessonRow> = {};
+      for (const l of (lessonsData as LessonRow[])) lessonMap[l.id] = l;
+
+      let bestMatch: CourseMatch | null = null;
+      let bestMatchLen = 0;
+
+      for (const line of (linesData ?? []) as LineRow[]) {
+        const startFen = line.start_fen ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -';
+        if (!Array.isArray(line.moves) || line.moves.length === 0) continue;
+
+        // Build FEN sequence for this line
+        const lineChess = new Chess(startFen);
+        const lineFens: string[] = [getFen4(lineChess.fen())];
+        for (const m of line.moves) {
+          try { lineChess.move({ from: m.from, to: m.to }); } catch { break; }
+          lineFens.push(getFen4(lineChess.fen()));
+        }
+
+        // Find match length
+        let matchLen = 0;
+        for (let fi = 0; fi < Math.min(gameFens.length, lineFens.length); fi++) {
+          if (gameFens[fi] === lineFens[fi]) matchLen = fi + 1;
+          else break;
+        }
+
+        if (matchLen < 3) continue; // need at least 3 positions to count as a match
+
+        if (matchLen > bestMatchLen) {
+          bestMatchLen = matchLen;
+          const lesson = lessonMap[line.lesson_id];
+          if (!lesson) continue;
+          const course = courseMap[lesson.course_id];
+          if (!course) continue;
+
+          let deviationPly: number | null = null;
+          let gameMove: string | null = null;
+          let courseMove: string | null = null;
+          let whoDeviated: 'me' | 'opponent' | null = null;
+
+          if (matchLen < lineFens.length && matchLen < gameFens.length) {
+            deviationPly = matchLen;
+            const courseMoveObj = line.moves[matchLen - 1];
+            courseMove = courseMoveObj?.san ?? null;
+
+            // Reconstruct game move at that ply
+            const gameMoveParsed = parsedMoves[matchLen - 1];
+            gameMove = gameMoveParsed?.san ?? null;
+
+            const myColor = g.color === 'white' ? 'w' : 'b';
+            const moveColor = line.moves[matchLen - 1]?.color ?? 'w';
+            whoDeviated = moveColor === myColor ? 'me' : 'opponent';
+          }
+
+          bestMatch = {
+            courseId: lesson.course_id,
+            courseName: course.name,
+            lessonId: lesson.id,
+            lessonTitle: lesson.title,
+            deviationPly,
+            gameMove,
+            courseMove,
+            whoDeviated,
+          };
+        }
+      }
+
+      setCourseMatch(bestMatch);
+    } catch { /* ignore comparison errors */ }
+
     setLoading(false);
   }
 
@@ -325,6 +457,40 @@ export default function GameViewerPage({ params }: Props) {
             Тренировать ошибки →
           </Link>
         </div>
+      )}
+
+      {/* Course match block (T9) */}
+      {courseMatch && (
+        <section style={{ padding: '20px 24px', border: '1px solid var(--hairline)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>Курс</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)' }}>
+            {courseMatch.courseName} · {courseMatch.lessonTitle}
+          </div>
+          {courseMatch.deviationPly !== null ? (
+            <div style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>
+              {courseMatch.whoDeviated === 'me' ? 'Ты' : 'Соперник'} отошёл от курса на ходу {Math.ceil(courseMatch.deviationPly / 2)}.
+              {courseMatch.gameMove && courseMatch.courseMove && (
+                <> В партии <code style={{ color: 'rgba(220,80,60,0.9)' }}>{courseMatch.gameMove}</code>, в курсе <code style={{ color: 'rgba(100,220,100,0.9)' }}>{courseMatch.courseMove}</code>.</>
+              )}
+            </div>
+          ) : (
+            <div style={{ fontSize: 14, color: 'rgba(100,220,100,0.9)' }}>Линия сыграна по курсу!</div>
+          )}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <Link
+              href={`/courses/${courseMatch.courseId}/${courseMatch.lessonId}`}
+              style={{ height: 36, padding: '0 16px', display: 'inline-flex', alignItems: 'center', border: '1px solid var(--hairline)', color: 'var(--ivory)', fontSize: 13, textDecoration: 'none' }}
+            >
+              Открыть урок
+            </Link>
+            <Link
+              href={`/courses/${courseMatch.courseId}/${courseMatch.lessonId}/practice`}
+              style={{ height: 36, padding: '0 16px', display: 'inline-flex', alignItems: 'center', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+            >
+              Повторить линию
+            </Link>
+          </div>
+        </section>
       )}
     </main>
   );
