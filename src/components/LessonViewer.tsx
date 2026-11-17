@@ -542,17 +542,18 @@ export function LessonViewer({
 
       {/* Guess mode banner */}
       {isGuessMode && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '8px 14px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 13 }}>
-          <span style={{ color: 'var(--muted)', letterSpacing: '0.08em' }}>РЕЖИМ УГАДАЙ ХОД</span>
+        <div className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', fontSize: 13 }}>
+          <span style={{ color: 'var(--muted)' }}>Режим: угадай ход</span>
           <span style={{ color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{guessScore} / {guessTotal}</span>
           {isGuessPending && (
-            <span style={{ color: 'rgba(220,180,40,0.9)', animation: animEnabled ? 'fadeComment 0.3s ease-out' : undefined }}>
+            <span style={{ color: 'var(--accent)', animation: animEnabled ? 'fadeComment 0.3s ease-out' : undefined }}>
               ← угадай ход
             </span>
           )}
           <button
             onClick={() => { setIsGuessMode(false); setGuessScore(0); setGuessTotal(0); setGuessAtMove({ idx: -1, fails: 0, result: null }); }}
-            style={{ marginLeft: 'auto', height: 28, padding: '0 10px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
+            className="ui-btn ui-btn-outline ui-btn-sm"
+            style={{ marginLeft: 'auto' }}
           >
             Выйти
           </button>
@@ -664,7 +665,8 @@ export function LessonViewer({
           {/* Comment box */}
           <div
             key={`comment-${activeIdx}`}
-            style={{ minHeight: 44, maxWidth: 560, padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 14, lineHeight: 1.6, color: currentComment ? 'var(--ivory)' : 'var(--muted)', animation: animEnabled && currentComment ? 'fadeComment 0.22s ease-out' : undefined }}
+            className="ui-card"
+            style={{ minHeight: 44, maxWidth: 560, fontSize: 14, lineHeight: 1.6, color: currentComment ? 'var(--ivory)' : 'var(--muted)', animation: animEnabled && currentComment ? 'fadeComment 0.22s ease-out' : undefined }}
           >
             {currentComment
               ? <span style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
@@ -690,9 +692,10 @@ export function LessonViewer({
                   onChange={e => setNoteInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && noteInput.trim()) void saveNote('note'); }}
                   placeholder="Заметка к ходу…"
-                  style={{ flex: 1, height: 32, padding: '0 10px', fontSize: 13, background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ivory)', outline: 'none', fontFamily: 'inherit' }}
+                  className="ui-input"
+                  style={{ flex: 1, fontSize: 13, fontFamily: 'inherit' }}
                 />
-                <button onClick={() => void saveNote('note')} disabled={!noteInput.trim() || savingNote} style={{ height: 32, padding: '0 12px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                <button onClick={() => void saveNote('note')} disabled={!noteInput.trim() || savingNote} className="ui-btn ui-btn-outline ui-btn-sm">
                   Сохранить
                 </button>
                 <button onClick={() => void saveNote('confused')} disabled={savingNote} title="Не понял этот ход" style={{ height: 32, padding: '0 12px', background: 'rgba(220,80,60,0.08)', border: '1px solid rgba(220,80,60,0.3)', color: 'rgba(220,80,60,0.9)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
@@ -712,9 +715,9 @@ export function LessonViewer({
                 const preview = prefix + varMoves.slice(0, 3).map(m => m.san).join(' ');
                 return (
                   <div key={vi} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase', flexShrink: 0 }}>Вариант</span>
+                    <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>Вариант</span>
                     <code style={{ fontSize: 13, color: 'var(--muted)', flex: 1 }}>{preview}{varMoves.length > 3 ? '…' : ''}</code>
-                    <button onClick={() => enterVariant(varMoves)} style={{ height: 28, padding: '0 12px', flexShrink: 0, background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer' }}>
+                    <button onClick={() => enterVariant(varMoves)} className="ui-btn ui-btn-outline ui-btn-sm">
                       Смотреть
                     </button>
                   </div>
@@ -724,7 +727,7 @@ export function LessonViewer({
           )}
           {variantMoves && (
             <div style={{ maxWidth: 560 }}>
-              <button onClick={exitVariant} style={{ height: 32, padding: '0 14px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer' }}>
+              <button onClick={exitVariant} className="ui-btn ui-btn-outline ui-btn-sm">
                 ← Вернуться к основной линии
               </button>
             </div>
@@ -739,7 +742,7 @@ export function LessonViewer({
             <button onClick={() => goTo(activeIdx + 1)} disabled={activeIdx >= activeMoves.length} aria-label="Следующий ход" style={ctrlBtn(activeIdx >= activeMoves.length)}>→</button>
             <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums', marginLeft: 4 }}>{activeIdx} / {activeMoves.length}</span>
 
-            <div style={{ display: 'flex', border: '1px solid var(--hairline)', marginLeft: 'auto' }}>
+            <div style={{ display: 'flex', border: '1px solid var(--hairline)', marginLeft: 'auto', borderRadius: 'var(--radius-btn)', overflow: 'hidden' }}>
               {([0.5, 1, 2] as const).map(s => (
                 <button key={s} onClick={() => setPlaySpeed(s)} style={{ height: 32, padding: '0 10px', border: 'none', background: playSpeed === s ? 'var(--track)' : 'transparent', color: playSpeed === s ? 'var(--ivory)' : 'var(--muted)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer' }}>
                   {s}×
@@ -766,7 +769,7 @@ export function LessonViewer({
                 if (entering) { setGuessScore(0); setGuessTotal(0); setGuessAtMove({ idx: -1, fails: 0, result: null }); setShowEndPanel(false); goTo(0); }
               }}
               title="Режим угадай ход"
-              style={{ height: 32, padding: '0 10px', border: '1px solid var(--hairline)', background: isGuessMode ? 'rgba(220,180,40,0.1)' : 'transparent', color: isGuessMode ? 'rgba(220,180,40,0.9)' : 'var(--muted)', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '0.08em' }}
+              style={{ height: 32, padding: '0 10px', border: '1px solid var(--hairline)', background: isGuessMode ? 'rgba(220,180,40,0.1)' : 'transparent', color: isGuessMode ? 'rgba(220,180,40,0.9)' : 'var(--muted)', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '0.08em', borderRadius: 'var(--radius-btn)' }}
             >
               {isGuessMode ? 'УГАДАЙ ✓' : 'УГАДАЙ'}
             </button>
@@ -775,7 +778,7 @@ export function LessonViewer({
               onClick={() => setShowDeviation(true)}
               disabled={!deviationAvailable}
               title="Отклонение от линии"
-              style={{ height: 32, padding: '0 10px', border: '1px solid var(--hairline)', background: 'transparent', color: deviationAvailable ? 'rgba(220,80,60,0.9)' : 'var(--muted)', fontSize: 11, fontFamily: 'inherit', cursor: deviationAvailable ? 'pointer' : 'default', letterSpacing: '0.08em', opacity: deviationAvailable ? 1 : 0.45 }}
+              style={{ height: 32, padding: '0 10px', border: '1px solid var(--hairline)', background: 'transparent', color: deviationAvailable ? 'rgba(220,80,60,0.9)' : 'var(--muted)', fontSize: 11, fontFamily: 'inherit', cursor: deviationAvailable ? 'pointer' : 'default', letterSpacing: '0.08em', opacity: deviationAvailable ? 1 : 0.45, borderRadius: 'var(--radius-btn)' }}
             >
               ОТКЛ
             </button>
@@ -783,7 +786,7 @@ export function LessonViewer({
             <button
               onClick={() => setShowExplain(true)}
               title="Объясни сам — режим вопросов по комментариям"
-              style={{ height: 32, padding: '0 10px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '0.08em' }}
+              style={{ height: 32, padding: '0 10px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '0.08em', borderRadius: 'var(--radius-btn)' }}
             >
               ОБЪЯСНИ
             </button>
@@ -798,15 +801,15 @@ export function LessonViewer({
         </div>
 
         {/* ── RIGHT: lesson panel ── */}
-        <div style={{ border: '1px solid var(--hairline)', background: 'var(--surface)', display: 'flex', flexDirection: 'column' }}>
+        <div className="ui-card" style={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--hairline)' }}>
             <h2 style={{ fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)", margin: 0, fontSize: 18, fontWeight: 700, lineHeight: 1.2 }}>
               {lesson.title}
             </h2>
           </div>
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--hairline)', overflowX: 'auto' }}>
+          <div className="ui-tabs" style={{ overflowX: 'auto', flexShrink: 0 }}>
             {tabs.map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ padding: '10px 14px', background: 'transparent', border: 'none', borderBottom: activeTab === tab.id ? '2px solid var(--ivory)' : '2px solid transparent', color: activeTab === tab.id ? 'var(--ivory)' : 'var(--muted)', fontSize: 13, fontWeight: activeTab === tab.id ? 600 : 400, cursor: 'pointer', flexShrink: 0, marginBottom: -1 }}>
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`ui-tab ${activeTab === tab.id ? 'ui-tab-active' : ''}`}>
                 {tab.label}
               </button>
             ))}
@@ -843,18 +846,18 @@ export function LessonViewer({
         <div style={{ flex: 1, minWidth: 120 }}>
           {prevLesson && (
             <Link href={`/courses/${courseId}/${prevLesson.id}`} style={{ display: 'inline-flex', flexDirection: 'column', gap: 2, color: 'var(--muted)' }}>
-              <span style={{ fontSize: 11, letterSpacing: '0.08em' }}>← ПРЕДЫДУЩИЙ</span>
+              <span style={{ fontSize: 11, color: 'var(--muted)' }}>← Предыдущий</span>
               <span style={{ fontSize: 14, color: 'var(--ivory)' }}>{prevLesson.title}</span>
             </Link>
           )}
         </div>
         <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
-          <Link href={`/courses/${courseId}/${lessonId}/practice`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 48, padding: '0 28px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 600 }}>
+          <Link href={`/courses/${courseId}/${lessonId}/practice`} className="ui-btn ui-btn-primary">
             Тренировать
           </Link>
           <button
             onClick={() => setShowTest(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', height: 48, padding: '0 20px', background: 'transparent', color: 'var(--muted)', fontSize: 13, fontWeight: 500, border: '1px solid var(--hairline)', cursor: 'pointer', fontFamily: 'inherit' }}
+            className="ui-btn ui-btn-outline"
           >
             Тест
           </button>
@@ -862,7 +865,7 @@ export function LessonViewer({
         <div style={{ flex: 1, minWidth: 120, display: 'flex', justifyContent: 'flex-end' }}>
           {nextLesson && (
             <Link href={`/courses/${courseId}/${nextLesson.id}`} style={{ display: 'inline-flex', flexDirection: 'column', gap: 2, color: 'var(--muted)', textAlign: 'right' }}>
-              <span style={{ fontSize: 11, letterSpacing: '0.08em' }}>СЛЕДУЮЩИЙ →</span>
+              <span style={{ fontSize: 11, color: 'var(--muted)' }}>Следующий →</span>
               <span style={{ fontSize: 14, color: 'var(--ivory)' }}>{nextLesson.title}</span>
             </Link>
           )}
@@ -871,7 +874,7 @@ export function LessonViewer({
 
       {/* End of lesson panel */}
       {showEndPanel && !variantMoves && (
-        <div style={{ padding: '24px 28px', border: '1px solid var(--hairline)', background: 'var(--surface)', animation: animEnabled ? 'fadeIn 0.4s ease-out' : undefined }}>
+        <div className="ui-card" style={{ animation: animEnabled ? 'fadeIn 0.4s ease-out' : undefined }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16, gap: 16, flexWrap: 'wrap' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>
               Урок завершён{lessonPassed ? ' ✓' : ''}
@@ -888,21 +891,21 @@ export function LessonViewer({
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <Link
               href={`/play?fen=${encodeURIComponent(lastFen)}&color=${boardOrientation}`}
-              style={{ display: 'inline-flex', alignItems: 'center', height: 40, padding: '0 20px', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 13, flexShrink: 0 }}
+              className="ui-btn ui-btn-outline"
             >
               Играть отсюда →
             </Link>
             {nextLesson && (
               <Link
                 href={`/courses/${courseId}/${nextLesson.id}`}
-                style={{ display: 'inline-flex', alignItems: 'center', height: 40, padding: '0 20px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600, flexShrink: 0 }}
+                className="ui-btn ui-btn-primary"
               >
                 Следующий урок →
               </Link>
             )}
             <button
               onClick={() => setShowTest(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', height: 40, padding: '0 20px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600, flexShrink: 0, border: 'none', cursor: 'pointer' }}
+              className="ui-btn ui-btn-primary"
             >
               Тест →
             </button>
@@ -1042,6 +1045,7 @@ function ctrlBtn(disabled: boolean): React.CSSProperties {
     color: disabled ? 'var(--track)' : 'var(--ivory)',
     fontSize: 14, fontFamily: 'inherit', cursor: disabled ? 'default' : 'pointer',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
+    borderRadius: 'var(--radius-btn)',
   };
 }
 
@@ -1052,6 +1056,7 @@ function toggleBtn(active: boolean): React.CSSProperties {
     background: 'transparent',
     color: active ? 'var(--ivory)' : 'var(--muted)',
     fontSize: 11, fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '0.08em',
+    borderRadius: 'var(--radius-btn)',
   };
 }
 

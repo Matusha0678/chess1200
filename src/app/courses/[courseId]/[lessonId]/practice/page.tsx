@@ -197,8 +197,8 @@ export default function LessonPracticePage({ params }: Props) {
 
   if (!course || !lesson || !line || chessMoves.length === 0) {
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 48px', boxSizing: 'border-box' }}>
-        <Link href={`/courses/${courseId}/${lessonId}`} style={{ fontSize: 13, color: 'var(--muted)' }}>
+      <div className="page">
+        <Link href={`/courses/${courseId}/${lessonId}`} className="page-back">
           ← Урок
         </Link>
         <p style={{ color: 'var(--muted)', marginTop: 32 }}>
@@ -223,15 +223,15 @@ export default function LessonPracticePage({ params }: Props) {
             ? 'Ваш ход'
             : 'Соперник думает…';
   const feedbackBg = bf === 'correct'
-    ? '#141414'
+    ? 'rgba(80,200,80,0.08)'
     : bf === 'wrong'
-      ? '#1A1A1A'
-      : '#0D0D0D';
+      ? 'rgba(220,60,60,0.08)'
+      : 'var(--surface)';
   const feedbackBorder = bf === 'correct'
-    ? '#303030'
+    ? 'rgba(80,200,80,0.3)'
     : bf === 'wrong'
-      ? '#404040'
-      : '#262626';
+      ? 'rgba(220,60,60,0.3)'
+      : 'var(--hairline)';
 
   return (
     <>
@@ -247,7 +247,6 @@ export default function LessonPracticePage({ params }: Props) {
           <div style={{ fontSize: 72, lineHeight: 1 }}>✓</div>
           <div>
             <div style={{
-              fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
               fontSize: 40, fontWeight: 700, color: 'var(--ivory)', marginBottom: 8,
             }}>
               Урок пройден!
@@ -259,35 +258,21 @@ export default function LessonPracticePage({ params }: Props) {
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
             <Link
               href={`/courses/${courseId}/${lessonId}`}
-              style={{
-                display: 'inline-flex', alignItems: 'center',
-                height: 48, padding: '0 24px',
-                border: '1px solid var(--control)', background: 'transparent',
-                color: 'var(--ivory)', fontSize: 14, fontWeight: 500,
-              }}
+              className="ui-btn ui-btn-outline"
             >
               ← К уроку
             </Link>
             {nextLesson && (
               <Link
                 href={`/courses/${courseId}/${nextLesson.id}/practice`}
-                style={{
-                  display: 'inline-flex', alignItems: 'center',
-                  height: 48, padding: '0 24px',
-                  background: 'var(--ivory)', color: 'var(--ink)',
-                  fontSize: 14, fontWeight: 600,
-                }}
+                className="ui-btn ui-btn-primary"
               >
                 Следующий урок →
               </Link>
             )}
             <button
               onClick={handleRepeat}
-              style={{
-                height: 48, padding: '0 24px',
-                border: '1px solid var(--control)', background: 'transparent',
-                color: 'var(--muted)', fontSize: 14, cursor: 'pointer',
-              }}
+              className="ui-btn ui-btn-outline"
             >
               Повторить
             </button>
@@ -343,7 +328,7 @@ export default function LessonPracticePage({ params }: Props) {
                 border: `1px solid ${feedbackBorder}`,
                 borderRadius: 12,
                 fontSize: 15, fontWeight: 500,
-                color: bf === 'correct' ? '#D0D0D0' : '#A0A0A0',
+                color: bf === 'correct' ? 'var(--ivory)' : 'var(--muted)',
               }}>
                 {bf === 'correct' && <span style={{ fontWeight: 700 }}>✓</span>}
                 {bf === 'wrong' && <span style={{ fontWeight: 700 }}>✗</span>}
@@ -355,9 +340,9 @@ export default function LessonPracticePage({ params }: Props) {
             {/* Sidebar */}
             <div style={{
               flexShrink: 0, width: 260,
-              background: '#0A0A0A',
-              border: '1px solid #1E1E1E',
-              borderRadius: 20,
+              background: 'var(--surface)',
+              border: '1px solid var(--hairline)',
+              borderRadius: 'var(--radius-card)',
               padding: 20,
               display: 'flex', flexDirection: 'column', gap: 16,
               overflowY: 'auto',
@@ -367,44 +352,41 @@ export default function LessonPracticePage({ params }: Props) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <Link
                   href={`/courses/${courseId}/${lessonId}`}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-                    textTransform: 'uppercase', color: '#404040',
-                  }}
+                  className="page-back"
+                  style={{ marginBottom: 0 }}
                 >
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 12H5M12 5l-7 7 7 7" />
                   </svg>
                   Урок
                 </Link>
-                <span style={{ fontSize: 18, color: '#E0E0E0', fontWeight: 500, lineHeight: 1.2 }}>
+                <span style={{ fontSize: 18, color: 'var(--ivory)', fontWeight: 600, lineHeight: 1.2 }}>
                   {lesson.title}
                 </span>
               </div>
 
-              <div style={{ height: 1, background: '#1E1E1E' }} />
+              <div style={{ height: 1, background: 'var(--hairline)' }} />
 
               {/* Comment panel */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#505050' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>
                   Комментарий
                 </span>
                 <div style={{
                   minHeight: 60, padding: 10,
-                  background: '#141414', border: '1px solid #262626',
-                  borderRadius: 8, fontSize: 13, lineHeight: 1.5,
-                  color: currentComment ? '#D0D0D0' : '#404040',
+                  background: 'var(--bg)', border: '1px solid var(--hairline)',
+                  borderRadius: 'var(--radius-btn)', fontSize: 13, lineHeight: 1.5,
+                  color: currentComment ? 'var(--ivory)' : 'var(--muted)',
                 }}>
                   {currentComment ?? 'Сделайте ход, чтобы увидеть комментарий'}
                 </div>
               </div>
 
-              <div style={{ height: 1, background: '#1E1E1E' }} />
+              <div style={{ height: 1, background: 'var(--hairline)' }} />
 
               {/* Move list */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#505050' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>
                   Ходы
                 </span>
                 <MoveListPanel moves={playedMoves} currentIndex={currentMoveIdx} />
