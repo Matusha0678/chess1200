@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
 import { supabase } from '@/lib/supabase';
@@ -16,6 +16,23 @@ interface DayCounts {
   totalLines:   number;
   totalMastered: number;
   streak:       number;
+}
+
+interface DailyGame {
+  id: string;
+  white: string;
+  black: string;
+  year: number | null;
+  event: string;
+  result: string;
+  done: boolean;
+}
+
+interface DailyCombination {
+  id: string;
+  fen: string;
+  kind: string;
+  done: boolean;
 }
 
 function plural(n: number, one: string, few: string, many: string) {
@@ -110,7 +127,61 @@ function buildPlan(counts: DayCounts): Task[] {
 }
 
 export default function HomePage() {
-  const [counts, setCounts] = useState<DayCounts | null>(null);
+  const [counts, setCounts]       = useState<DayCounts | null>(null);
+  const [dailyGame, setDailyGame] = useState<DailyGame | null>(null);
+  const [dailyComb, setDailyComb] = useState<DailyCombination | null>(null);
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  // Load daily picks (T12)
+  useEffect(() => {
+    (async () => {
+      // Check daily_picks table
+      const { data: picks, error } = await supabase.from('daily_picks').select('*').eq('day', today);
+      if (error) return; // table may not exist yet
+
+      const pickMap: Record<string, { ref_id: string; done: boolean }> = {};
+      for (const p of (picks ?? []) as Array<{ kind: string; ref_id: string; done: boolean }>) {
+        pickMap[p.kind] = p;
+      }
+
+      // Game pick
+      let gamePick = pickMap['game'];
+      if (!gamePick) {
+        // Deterministic pick: use day seed to pick from master_games
+        const { data: gamesData } = await supabase.from('master_games').select('id').limit(200);
+        const games = (gamesData ?? []) as Array<{ id: string }>;
+        if (games.length > 0) {
+          const seed = new Date(today).getTime();
+          const idx = seed % games.length;
+          const ref_id = games[Math.abs(idx) % games.length].id;
+          await supabase.from('daily_picks').upsert({ day: today, kind: 'game', ref_id, done: false, score: 0 });
+          gamePick = { ref_id, done: false };
+        }
+      }
+      if (gamePick) {
+        const { data: g } = await supabase.from('master_games').select('id, white, black, year, event, result').eq('id', gamePick.ref_id).maybeSingle();
+        if (g) setDailyGame({ ...(g as DailyGame), done: gamePick.done });
+      }
+
+      // Combination pick
+      let combPick = pickMap['combination'];
+      if (!combPick) {
+        const { data: combs } = await supabase.from('sac_positions').select('id, fen, kind').eq('kind', 'real').limit(100);
+        const combArr = (combs ?? []) as Array<{ id: string; fen: string; kind: string }>;
+        if (combArr.length > 0) {
+          const seed = new Date(today).getTime() + 1;
+          const idx = Math.abs(seed) % combArr.length;
+          const c = combArr[idx];
+          await supabase.from('daily_picks').upsert({ day: today, kind: 'combination', ref_id: c.id, done: false, score: 0 });
+          combPick = { ref_id: c.id, done: false };
+          setDailyComb({ id: c.id, fen: c.fen, kind: c.kind, done: false });
+        }
+      } else {
+        const { data: c } = await supabase.from('sac_positions').select('id, fen, kind').eq('id', combPick.ref_id).maybeSingle();
+        if (c) setDailyComb({ ...(c as { id: string; fen: string; kind: string }), done: combPick.done });
+      }
+    })();
+  }, [today]);
 
   useEffect(() => {
     (async () => {
@@ -223,6 +294,40 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Daily picks (T12) */}
+      {(dailyGame || dailyComb) && (
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="ui-eyebrow">
+            <span>На сегодня</span>
+            <span className="ui-eyebrow-line" />
+          </div>
+          {dailyGame && (
+            <Link href={`/masters/${dailyGame.id}`} className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', color: 'inherit', padding: '14px 18px', opacity: dailyGame.done ? 0.65 : 1 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-btn)', background: dailyGame.done ? 'var(--surface)' : 'color-mix(in srgb, var(--accent) 15%, transparent)', color: dailyGame.done ? 'var(--muted)' : 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+                {dailyGame.done ? '✓' : '♛'}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', marginBottom: 2 }}>Партия дня</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>{dailyGame.white} — {dailyGame.black}{dailyGame.year ? ` · ${dailyGame.year}` : ''}</div>
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', flexShrink: 0 }}>Смотреть →</div>
+            </Link>
+          )}
+          {dailyComb && (
+            <Link href="/sac" className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', color: 'inherit', padding: '14px 18px', opacity: dailyComb.done ? 0.65 : 1 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-btn)', background: dailyComb.done ? 'var(--surface)' : 'color-mix(in srgb, var(--accent) 15%, transparent)', color: dailyComb.done ? 'var(--muted)' : 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+                {dailyComb.done ? '✓' : '⚔'}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', marginBottom: 2 }}>Комбинация дня</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>Жертвовать или нет?</div>
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', flexShrink: 0 }}>Играть →</div>
+            </Link>
+          )}
+        </section>
+      )}
 
       {/* Stats */}
       <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
