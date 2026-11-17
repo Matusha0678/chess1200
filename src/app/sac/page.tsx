@@ -29,6 +29,13 @@ interface SacStats {
   wrongFake: number;
 }
 
+interface PrepProgress {
+  done: number;         // games processed in this run
+  total: number;        // batch size for this run
+  saved: number;        // positions saved in this run
+  startedAt: number;
+}
+
 const PIECE_VALUES: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -78,6 +85,21 @@ function uciToSan(fen: string, uci: string): string {
 
 function cpToPawns(cp: number): string { return (cp / 100).toFixed(2); }
 
+function formatEta(seconds: number): string {
+  if (seconds < 60) return `${Math.max(1, Math.round(seconds))} сек`;
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  if (m < 60) return s > 0 ? `${m} мин ${s} сек` : `${m} мин`;
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return mm > 0 ? `${h} ч ${mm} мин` : `${h} ч`;
+}
+
+function sanitizePlayerFilter(s: string): string {
+  // Strip chars that would break Supabase's OR filter or SQL ILIKE pattern
+  return s.replace(/[,()*%_\\]/g, '').trim();
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function SacPage() {
@@ -93,13 +115,24 @@ export default function SacPage() {
   const [answered, setAnswered]       = useState<{ answer: 'sac' | 'calm'; ok: boolean; eval_before: number | null; eval_after: number | null } | null>(null);
   const [sacMoveApplied, setSacMoveApplied] = useState(false);
 
-  const [preparing, setPreparing]     = useState(false);
-  const [prepStop, setPrepStop]       = useState(false);
-  const [prepProgress, setPrepProgress] = useState({ done: 0, total: 0, saved: 0 });
+  // Prepare mode
+  const [prepBatchSize, setPrepBatchSize] = useState(200);
+  const [prepFilter, setPrepFilter]       = useState('Tal');
+  const [preparing, setPreparing]         = useState(false);
+  const [prepStop, setPrepStop]           = useState(false);
+  const [prepProgress, setPrepProgress]   = useState<PrepProgress | null>(null);
   const prepStopRef = useRef(false);
+
+  const [remaining, setRemaining]         = useState<number | null>(null);
+  const [scanned, setScanned]             = useState<number | null>(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    if (tab === 'prepare') refreshCounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, prepFilter]);
 
   async function loadData() {
     setLoading(true);
@@ -123,6 +156,28 @@ export default function SacPage() {
 
     if (pos.length > 0) pickRandom(pos);
     setLoading(false);
+  }
+
+  async function refreshCounts() {
+    const safe = sanitizePlayerFilter(prepFilter);
+    const orExpr = safe ? `white.ilike.%${safe}%,black.ilike.%${safe}%` : null;
+
+    // Count games remaining (unscanned, matching filter)
+    const q1 = supabase
+      .from('master_games')
+      .select('id', { count: 'exact', head: true })
+      .is('sac_scanned_at', null);
+    const { count: remCount } = await (orExpr ? q1.or(orExpr) : q1);
+
+    // Count games already scanned (matching filter)
+    const q2 = supabase
+      .from('master_games')
+      .select('id', { count: 'exact', head: true })
+      .not('sac_scanned_at', 'is', null);
+    const { count: scannedCount } = await (orExpr ? q2.or(orExpr) : q2);
+
+    setRemaining(remCount ?? 0);
+    setScanned(scannedCount ?? 0);
   }
 
   function pickRandom(pool: SacPosition[]) {
@@ -154,16 +209,32 @@ export default function SacPage() {
 
   async function handlePrepare() {
     if (!engineReady) return;
+    const safe = sanitizePlayerFilter(prepFilter);
+    const orExpr = safe ? `white.ilike.%${safe}%,black.ilike.%${safe}%` : null;
+
     setPreparing(true);
     setPrepStop(false);
     prepStopRef.current = false;
 
-    const { data: games } = await supabase.from('master_games').select('id,pgn').limit(500);
-    if (!games || games.length === 0) { setPreparing(false); return; }
+    // Fetch next batch of unscanned games matching filter
+    const q = supabase
+      .from('master_games')
+      .select('id,pgn')
+      .is('sac_scanned_at', null)
+      .limit(prepBatchSize);
+    const { data: games, error } = await (orExpr ? q.or(orExpr) : q);
+
+    if (error || !games || games.length === 0) {
+      setPreparing(false);
+      if (error) console.error(error);
+      refreshCounts();
+      return;
+    }
 
     const total = games.length;
-    setPrepProgress({ done: 0, total, saved: 0 });
-    let saved = 0;
+    const startedAt = Date.now();
+    let done = 0, saved = 0;
+    setPrepProgress({ done, total, saved, startedAt });
 
     for (let i = 0; i < games.length; i++) {
       if (prepStopRef.current) break;
@@ -172,12 +243,13 @@ export default function SacPage() {
 
       for (const cand of candidates) {
         if (prepStopRef.current) break;
+
         const evalBefore = await new Promise<EvalResult>(resolve => { getEval(cand.fen, 12, resolve); });
 
         const afterFen = (() => {
           try {
             const ch = new Chess(cand.fen);
-            ch.move({ from: cand.uci.slice(0,2), to: cand.uci.slice(2,4) });
+            ch.move({ from: cand.uci.slice(0, 2), to: cand.uci.slice(2, 4) });
             return ch.fen();
           } catch { return null; }
         })();
@@ -199,16 +271,24 @@ export default function SacPage() {
           eval_before: cpBefore, eval_after: cpAfter, source: 'master',
         }, { onConflict: 'fen,move' });
         saved++;
-        setPrepProgress(p => ({ ...p, saved }));
+        setPrepProgress({ done, total, saved, startedAt });
       }
-      setPrepProgress(p => ({ ...p, done: i + 1 }));
+
+      // Mark game scanned (even if no candidates found — don't re-scan)
+      await supabase.from('master_games').update({ sac_scanned_at: new Date().toISOString() }).eq('id', game.id);
+
+      done++;
+      setPrepProgress({ done, total, saved, startedAt });
     }
 
     setPreparing(false);
+    refreshCounts();
+
+    // Reload positions
     const { data: fresh } = await supabase.from('sac_positions').select('*').limit(500);
     if (fresh) {
       setPositions(fresh as SacPosition[]);
-      if (fresh.length > 0) pickRandom(fresh as SacPosition[]);
+      if (fresh.length > 0 && !current) pickRandom(fresh as SacPosition[]);
     }
   }
 
@@ -261,6 +341,14 @@ export default function SacPage() {
 
   const sideToMove = current?.fen.split(' ')[1] === 'w' ? 'white' : 'black';
   const correctPct = stats.total > 0 ? Math.round(100 * stats.correct / stats.total) : null;
+
+  // ETA
+  const prepEta: number | null = (() => {
+    if (!prepProgress || !preparing || prepProgress.done === 0) return null;
+    const elapsed = (Date.now() - prepProgress.startedAt) / 1000;
+    const perGame = elapsed / prepProgress.done;
+    return Math.max(0, perGame * (prepProgress.total - prepProgress.done));
+  })();
 
   return (
     <main className="page-wrap">
@@ -329,7 +417,6 @@ export default function SacPage() {
 
               {/* Controls */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {/* Stats */}
                 <div className="stat-grid">
                   <div className="stat-card">
                     <div className="stat-value">{correctPct != null ? `${correctPct}%` : '—'}</div>
@@ -349,7 +436,6 @@ export default function SacPage() {
                   </div>
                 </div>
 
-                {/* Prompt */}
                 {!answered && (
                   <div className="ui-card">
                     <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', marginBottom: 6 }}>
@@ -361,7 +447,6 @@ export default function SacPage() {
                   </div>
                 )}
 
-                {/* Buttons */}
                 {!answered && (
                   <div style={{ display: 'flex', gap: 10 }}>
                     <button
@@ -386,7 +471,6 @@ export default function SacPage() {
                   </div>
                 )}
 
-                {/* Result */}
                 {answered && (
                   <div className={`ui-banner ${answered.ok ? 'ui-banner-success' : 'ui-banner-danger'}`}>
                     <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--ivory)', marginBottom: 8 }}>
@@ -420,35 +504,104 @@ export default function SacPage() {
       {/* ── Prepare ── */}
       {tab === 'prepare' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 640 }}>
-          <div className="ui-card ui-card-lg">
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', marginBottom: 8 }}>
-              Подготовка позиций
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65, marginBottom: 18 }}>
-              Система сканирует партии мастеров, находит возможные жертвы материала и оценивает их движком (глубина 12).
-              Жертвы с потерей оценки ≤ 0.3 пешки — <strong style={{ color: 'var(--ivory)' }}>реальные</strong>,
-              ≥ 1.0 пешки — <strong style={{ color: 'var(--ivory)' }}>ложные</strong>.
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 18 }}>
-              Текущих позиций в базе: <strong style={{ color: 'var(--ivory)' }}>{positions.length}</strong>
+          <div className="ui-card ui-card-lg" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', marginBottom: 6 }}>
+                Подготовка позиций
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65 }}>
+                Сканирует партии мастеров, находит возможные жертвы и оценивает движком (глубина 12).
+                Потеря оценки ≤ 0.3 пешки — <strong style={{ color: 'var(--ivory)' }}>реальная</strong>,
+                ≥ 1.0 — <strong style={{ color: 'var(--ivory)' }}>ложная</strong>.
+                Уже обработанные партии повторно не считаются.
+              </div>
             </div>
 
+            {/* Settings */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Фильтр по игроку
+                </label>
+                <input
+                  type="text"
+                  value={prepFilter}
+                  onChange={e => setPrepFilter(e.target.value)}
+                  disabled={preparing}
+                  placeholder="например: Tal"
+                  style={{
+                    height: 40, padding: '0 14px', fontSize: 14,
+                    background: 'var(--surface)', color: 'var(--ivory)',
+                    border: '1px solid var(--hairline)',
+                    borderRadius: 'var(--radius-btn)', outline: 'none', fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Партий за раз
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={2000}
+                  value={prepBatchSize}
+                  onChange={e => setPrepBatchSize(Math.max(1, Math.min(2000, parseInt(e.target.value || '200', 10))))}
+                  disabled={preparing}
+                  style={{
+                    height: 40, padding: '0 14px', fontSize: 14,
+                    background: 'var(--surface)', color: 'var(--ivory)',
+                    border: '1px solid var(--hairline)',
+                    borderRadius: 'var(--radius-btn)', outline: 'none', fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Counts */}
+            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--muted)', flexWrap: 'wrap' }}>
+              <span>Обработано: <strong style={{ color: 'var(--ivory)' }}>{scanned ?? '—'}</strong></span>
+              <span>Осталось: <strong style={{ color: 'var(--ivory)' }}>{remaining ?? '—'}</strong></span>
+              <span>Позиций в базе: <strong style={{ color: 'var(--ivory)' }}>{positions.length}</strong></span>
+            </div>
+
+            {/* Action */}
             {!preparing ? (
-              <button className="ui-btn ui-btn-primary" onClick={handlePrepare} disabled={!engineReady}>
-                {engineReady ? 'Подготовить позиции' : 'Движок загружается…'}
+              <button
+                className="ui-btn ui-btn-primary"
+                onClick={handlePrepare}
+                disabled={!engineReady || remaining === 0}
+              >
+                {!engineReady
+                  ? 'Движок загружается…'
+                  : remaining === 0
+                  ? 'Нечего обрабатывать'
+                  : scanned && scanned > 0
+                  ? `Подготовить ещё ${Math.min(prepBatchSize, remaining ?? prepBatchSize)}`
+                  : `Подготовить ${Math.min(prepBatchSize, remaining ?? prepBatchSize)}`}
               </button>
-            ) : (
+            ) : prepProgress && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                  Партий: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.done}</strong> / {prepProgress.total}
-                  {' '}· Позиций найдено: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.saved}</strong>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                    Партий: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.done}</strong> / {prepProgress.total}
+                    {' '}· Позиций: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.saved}</strong>
+                  </div>
+                  {prepEta != null && (
+                    <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                      Осталось: <strong style={{ color: 'var(--ivory)' }}>~{formatEta(prepEta)}</strong>
+                    </div>
+                  )}
                 </div>
                 <div className="progress-track">
                   <div className="progress-fill" style={{
                     width: prepProgress.total > 0 ? `${100 * prepProgress.done / prepProgress.total}%` : '0%',
                   }} />
                 </div>
-                <button className="ui-btn ui-btn-outline" onClick={stopPrepare} disabled={prepStop}>
+                <div style={{ fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>
+                  Держи вкладку открытой — движок работает в этой вкладке
+                </div>
+                <button className="ui-btn ui-btn-outline" onClick={stopPrepare} disabled={prepStop} style={{ alignSelf: 'flex-start' }}>
                   {prepStop ? 'Остановка…' : 'Стоп'}
                 </button>
               </div>
