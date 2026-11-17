@@ -21,73 +21,59 @@ const PIECE_VALUE: Record<string, number> = {
 // ── Low-level helpers ─────────────────────────────────────────────────────────
 
 /**
- * Returns the squares of pieces with `attackerColor` that can capture on `square`
- * in the given position. Uses the FEN side-switching trick so chess.js generates
- * the opponent's pseudo-legal moves.
+ * Returns the squares of pieces with `attackerColor` that attack `square`.
+ * Uses chess.js native attackers() — no FEN tricks, handles pins correctly.
  */
 export function getSquareAttackers(fen: string, square: Square, attackerColor: 'w' | 'b'): Square[] {
-  const parts = fen.split(' ');
-  parts[1] = attackerColor;
-  parts[3] = '-'; // clear en passant to avoid spurious pawn captures
-  const switchedFen = parts.join(' ');
-
-  let chess: Chess;
   try {
-    chess = new Chess(switchedFen);
+    return new Chess(fen).attackers(square, attackerColor);
   } catch {
     return [];
   }
-
-  return chess
-    .moves({ verbose: true })
-    .filter(m => m.to === square)
-    .map(m => m.from as Square);
-}
-
-/**
- * Minimum-value attacker of `attackerColor` on `square`.
- * Returns the piece type char or null if none.
- */
-function minAttacker(fen: string, square: Square, attackerColor: 'w' | 'b'): string | null {
-  const attackers = getSquareAttackers(fen, square, attackerColor);
-  if (attackers.length === 0) return null;
-
-  const chess = new Chess(fen);
-  let minVal = Infinity;
-  let minType: string | null = null;
-
-  for (const sq of attackers) {
-    const p = chess.get(sq);
-    if (!p) continue;
-    const v = PIECE_VALUE[p.type] ?? 0;
-    if (v < minVal) { minVal = v; minType = p.type; }
-  }
-
-  return minType;
 }
 
 /**
  * Simplified SEE: how many centipawns the opponent wins by capturing on `square`.
+ *
+ * Logic:
+ *   – No attackers            → 0 (nobody is even threatening)
+ *   – Attackers, no defenders → full piece value (free capture)
+ *   – Attackers + defenders   → max(0, target − cheapest attacker)
+ *
  * Returns 0 if the capture is not profitable.
  */
 export function materialGain(fen: string, square: Square, attackerColor: 'w' | 'b'): number {
-  const chess = new Chess(fen);
-  const target = chess.get(square);
-  if (!target) return 0;
+  try {
+    const chess = new Chess(fen);
+    const target = chess.get(square);
+    if (!target) return 0;
 
-  const targetVal = PIECE_VALUE[target.type] ?? 0;
-  const myColor = attackerColor === 'w' ? 'b' : 'w';
+    const targetVal = PIECE_VALUE[target.type] ?? 0;
+    const myColor: 'w' | 'b' = attackerColor === 'w' ? 'b' : 'w';
 
-  // If the square is undefended, any capture wins the full piece
-  const defenders = getSquareAttackers(fen, square, myColor);
-  if (defenders.length === 0) return targetVal;
+    // 1. Any attackers at all?
+    const attackers = chess.attackers(square, attackerColor);
+    if (attackers.length === 0) return 0;
 
-  // Else: gain = captured – cheapest attacker (we might recapture, but opponent must commit)
-  const atkType = minAttacker(fen, square, attackerColor);
-  if (!atkType) return 0;
-  const atkVal = PIECE_VALUE[atkType] ?? 0;
+    // 2. Find cheapest attacker
+    let cheapestAtkVal = Infinity;
+    for (const sq of attackers) {
+      const p = chess.get(sq);
+      if (!p) continue;
+      const v = PIECE_VALUE[p.type] ?? 0;
+      if (v < cheapestAtkVal) cheapestAtkVal = v;
+    }
+    if (cheapestAtkVal === Infinity) return 0;
 
-  return Math.max(0, targetVal - atkVal);
+    // 3. Defenders?
+    const defenders = chess.attackers(square, myColor);
+    if (defenders.length === 0) return targetVal; // free capture
+
+    // 4. Contested: gain = target − cheapest attacker (if positive)
+    return Math.max(0, targetVal - cheapestAtkVal);
+  } catch {
+    return 0;
+  }
 }
 
 // ── Fork detection ────────────────────────────────────────────────────────────
@@ -95,13 +81,13 @@ export function materialGain(fen: string, square: Square, attackerColor: 'w' | '
 /**
  * Returns [attacker, [target1, target2, ...]] pairs where a single opponent
  * piece attacks two or more of my pieces simultaneously.
+ * King is included as a fork target (opponent attacking king + piece = check+fork).
  */
 export function findForkedSquares(fen: string, myColor: 'w' | 'b'): Array<{ attacker: Square; targets: Square[] }> {
   const chess = new Chess(fen);
   const board = chess.board();
   const oppColor: 'w' | 'b' = myColor === 'w' ? 'b' : 'w';
 
-  // Collect squares of my pieces (excluding king — we'll add it back for forks)
   const myPieceSquares: Square[] = [];
   const FILES = 'abcdefgh';
   for (let r = 0; r < 8; r++) {
@@ -113,12 +99,9 @@ export function findForkedSquares(fen: string, myColor: 'w' | 'b'): Array<{ atta
     }
   }
 
-  // Build attacker → targets map
   const attackerTargets = new Map<Square, Square[]>();
-
   for (const mySq of myPieceSquares) {
-    const attackers = getSquareAttackers(fen, mySq, oppColor);
-    for (const atk of attackers) {
+    for (const atk of chess.attackers(mySq, oppColor)) {
       const list = attackerTargets.get(atk) ?? [];
       list.push(mySq);
       attackerTargets.set(atk, list);
@@ -137,77 +120,72 @@ export function findForkedSquares(fen: string, myColor: 'w' | 'b'): Array<{ atta
 /**
  * Finds all significant threats the opponent has in `fen` against `myColor`.
  *
- * "Significant" means:
- *   - check (always)
- *   - hanging: opponent can win ≥ 100 cp of material
- *   - fork: a single opponent piece attacks 2+ of my pieces
+ * Returns:
+ *   - check    — my king is attacked (always reported)
+ *   - hanging  — opponent can win ≥ 100 cp; king excluded from hanging
+ *   - fork     — single opponent piece attacks 2+ of my pieces
  */
 export function findThreats(fen: string, myColor: 'w' | 'b'): Threat[] {
   const chess = new Chess(fen);
   const oppColor: 'w' | 'b' = myColor === 'w' ? 'b' : 'w';
   const threats: Threat[] = [];
   const FILES = 'abcdefgh';
-
-  // 1. Check — the king is in check (position is after opponent's move)
-  //    chess.js fen represents the side TO MOVE; we need to know if myColor king is attacked.
-  //    Trick: switch side to myColor so chess.inCheck() reflects opponent attacking my king.
-  {
-    const parts = fen.split(' ');
-    parts[1] = myColor;
-    try {
-      const c2 = new Chess(parts.join(' '));
-      if (c2.inCheck()) {
-        // Find my king square
-        const board = chess.board();
-        let kingSq: Square | null = null;
-        for (let r = 0; r < 8; r++) {
-          for (let c = 0; c < 8; c++) {
-            const p = board[r][c];
-            if (p && p.color === myColor && p.type === 'k') {
-              kingSq = (FILES[c] + (8 - r)) as Square;
-            }
-          }
-        }
-        if (kingSq) {
-          const attackers = getSquareAttackers(fen, kingSq, oppColor);
-          threats.push({ type: 'check', square: kingSq, attackers, gainCp: 0 });
-        }
-      }
-    } catch { /* invalid fen variant */ }
-  }
-
-  // 2. Hanging / material threats
   const board = chess.board();
+
+  // 1. Find my king square
+  let kingSq: Square | null = null;
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
       const p = board[r][c];
-      if (!p || p.color !== myColor) continue;
+      if (p && p.color === myColor && p.type === 'k') {
+        kingSq = (FILES[c] + (8 - r)) as Square;
+      }
+    }
+  }
+
+  // 2. Check
+  if (kingSq && chess.isAttacked(kingSq, oppColor)) {
+    threats.push({
+      type: 'check',
+      square: kingSq,
+      attackers: chess.attackers(kingSq, oppColor),
+      gainCp: 0,
+    });
+  }
+
+  // 3. Hanging pieces (king excluded — it can't "hang")
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      if (!p || p.color !== myColor || p.type === 'k') continue;
       const sq = (FILES[c] + (8 - r)) as Square;
       const gain = materialGain(fen, sq, oppColor);
       if (gain >= 100) {
-        const attackers = getSquareAttackers(fen, sq, oppColor);
-        // Avoid duplicating a check threat already added
-        if (!threats.some(t => t.square === sq && t.type === 'check')) {
-          threats.push({ type: 'hanging', square: sq, attackers, gainCp: gain });
+        // Don't duplicate a square already in check list
+        if (!threats.some(t => t.square === sq)) {
+          threats.push({
+            type: 'hanging',
+            square: sq,
+            attackers: chess.attackers(sq, oppColor),
+            gainCp: gain,
+          });
         }
       }
     }
   }
 
-  // 3. Forks
+  // 4. Forks
   const forks = findForkedSquares(fen, myColor);
   for (const { attacker, targets } of forks) {
-    // Only add fork if the total material at stake is significant (≥ 200 cp)
-    // and not already covered by hanging threats
     const totalGain = targets.reduce((sum, t) => {
       const p2 = chess.get(t);
       return sum + (p2 ? (PIECE_VALUE[p2.type] ?? 0) : 0);
     }, 0);
     if (totalGain >= 200) {
-      const forkTargets = targets.filter(t =>
+      const newTargets = targets.filter(t =>
         !threats.some(th => th.square === t && th.type === 'hanging'),
       );
-      if (forkTargets.length >= 2 || targets.length >= 2) {
+      if (newTargets.length >= 2 || targets.length >= 2) {
         threats.push({ type: 'fork', square: targets[0], attackers: [attacker], gainCp: totalGain });
       }
     }
@@ -217,6 +195,13 @@ export function findThreats(fen: string, myColor: 'w' | 'b'): Threat[] {
 }
 
 // ── Explanation helpers ───────────────────────────────────────────────────────
+
+function pluralPawns(cp: number): string {
+  const n = Math.round(cp / 100);
+  if (n === 1) return '1 пешку';
+  if (n >= 2 && n <= 4) return `${n} пешки`;
+  return `${n} пешек`;
+}
 
 export function threatExplanation(threat: Threat, fen: string): string {
   const chess = new Chess(fen);
@@ -228,17 +213,13 @@ export function threatExplanation(threat: Threat, fen: string): string {
   if (threat.type === 'hanging') {
     const piece = chess.get(threat.square);
     const name = piece ? PIECE_NAME[piece.type] : 'фигура';
-    const gain = Math.round(threat.gainCp / 100);
-    return `${name} на ${threat.square.toUpperCase()} висит — противник выигрывает ${gain} пешки материала.`;
+    return `${name} на ${threat.square.toUpperCase()} висит — противник выигрывает ${pluralPawns(threat.gainCp)}.`;
   }
 
   if (threat.type === 'fork') {
     const attacker = chess.get(threat.attackers[0]);
     const atkName = attacker ? PIECE_NAME[attacker.type] : 'фигура';
-    const targets = threat.attackers.length > 0
-      ? ` атакует несколько фигур одновременно`
-      : '';
-    return `Вилка! ${atkName} на ${threat.attackers[0].toUpperCase()}${targets}.`;
+    return `Вилка! ${atkName} на ${threat.attackers[0].toUpperCase()} атакует несколько фигур одновременно.`;
   }
 
   return 'Угроза обнаружена.';
