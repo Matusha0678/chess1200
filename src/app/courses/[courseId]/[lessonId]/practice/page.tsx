@@ -87,6 +87,11 @@ export default function LessonPracticePage({ params }: Props) {
     isComplete: boolean;
     reviewsRemaining: number;
   }>({ feedback: null, isPlayerTurn: false, isComplete: false, reviewsRemaining: 0 });
+  // Shown as an overlay after the opponent plays a move that has a comment
+  const [pausedComment, setPausedComment] = useState<string | null>(null);
+
+  // Derived early so it's available in callbacks (course may be null during load → default 'w')
+  const playerColor = course?.color === 'black' ? 'b' : 'w';
 
   const lessonMoves = (line?.moves as CourseLessonMove[]) ?? [];
 
@@ -140,13 +145,18 @@ export default function LessonPracticePage({ params }: Props) {
   const handleMovesChange = useCallback((moves: string[], moveIndex: number) => {
     setPlayedMoves(moves);
     setCurrentMoveIdx(moveIndex);
-    // Update comment from lesson line
+    setPausedComment(null); // clear previous pause on every new move
     if (moveIndex > 0 && lessonMoves[moveIndex - 1]?.comment) {
-      setCurrentComment(lessonMoves[moveIndex - 1].comment);
+      const lastMove = lessonMoves[moveIndex - 1];
+      setCurrentComment(lastMove.comment!);
+      // Pause after opponent's move so the user can read the idea
+      if (lastMove.color !== playerColor) {
+        setPausedComment(lastMove.comment!);
+      }
     } else {
       setCurrentComment(null);
     }
-  }, [lessonMoves]);
+  }, [lessonMoves, playerColor]);
 
   const handleComplete = useCallback(async (correct: boolean, hadMistakes: boolean) => {
     if (!correct) return;
@@ -179,6 +189,7 @@ export default function LessonPracticePage({ params }: Props) {
     setPlayedMoves([]);
     setCurrentMoveIdx(0);
     setCurrentComment(null);
+    setPausedComment(null);
     setBoardKey(k => k + 1);
   }
 
@@ -207,8 +218,6 @@ export default function LessonPracticePage({ params }: Props) {
       </div>
     );
   }
-
-  const playerColor = course.color === 'black' ? 'b' : 'w';
 
   const { feedback: bf, isPlayerTurn: bpt, isComplete: bic, reviewsRemaining: brev } = boardStatus;
   const feedbackText = bf === 'correct'
@@ -308,7 +317,7 @@ export default function LessonPracticePage({ params }: Props) {
               <div style={{ height: 10, flexShrink: 0 }} />
 
               {/* Board */}
-              <div style={{ width: boardSizeVar, height: boardSizeVar, flexShrink: 0 }}>
+              <div style={{ width: boardSizeVar, height: boardSizeVar, flexShrink: 0, position: 'relative' }}>
                 <ChessBoardWrapper
                   key={boardKey}
                   line={chessMoves}
@@ -317,6 +326,43 @@ export default function LessonPracticePage({ params }: Props) {
                   onMovesChange={handleMovesChange}
                   onStatusChange={setBoardStatus}
                 />
+
+                {/* Pause overlay: shown after opponent plays a move with a comment */}
+                {pausedComment && !completed && (
+                  <div
+                    style={{
+                      position: 'absolute', inset: 0, zIndex: 10,
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'flex-end',
+                      padding: '0 12px 12px',
+                      background: 'rgba(0,0,0,0.6)',
+                    }}
+                    onClick={() => setPausedComment(null)}
+                  >
+                    <div
+                      style={{
+                        background: 'var(--surface)',
+                        border: '1px solid var(--hairline)',
+                        borderRadius: 'var(--radius-card)',
+                        padding: '14px 16px',
+                        width: '100%',
+                        display: 'flex', flexDirection: 'column', gap: 10,
+                      }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--ivory)' }}>
+                        {pausedComment}
+                      </p>
+                      <button
+                        onClick={() => setPausedComment(null)}
+                        className="ui-btn ui-btn-primary ui-btn-sm"
+                        style={{ alignSelf: 'flex-end' }}
+                      >
+                        Мой ход →
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Feedback bar */}
