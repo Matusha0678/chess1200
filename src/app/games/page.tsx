@@ -463,13 +463,11 @@ export default function GamesPage() {
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} className='animate-pulse'>
-          <div style={{ height: 60, width: 220, background: 'var(--surface)' }} />
-          <div style={{ height: 120, background: 'var(--surface)' }} />
-          <div style={{ height: 400, background: 'var(--surface)' }} />
-        </div>
-      </main>
+      <div className="page animate-pulse">
+        <div style={{ height: 60, width: 220, background: 'var(--surface)', borderRadius: 'var(--radius-card)' }} />
+        <div style={{ height: 120, background: 'var(--surface)', borderRadius: 'var(--radius-card)' }} />
+        <div style={{ height: 400, background: 'var(--surface)', borderRadius: 'var(--radius-card)' }} />
+      </div>
     );
   }
 

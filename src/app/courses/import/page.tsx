@@ -7,9 +7,6 @@ import { parseCourse, type ParsedCourse } from '@/lib/course-parser';
 import { COURSE_FORMAT_SPEC } from '@/lib/course-format-spec';
 import { supabase } from '@/lib/supabase';
 
-const HEADING: React.CSSProperties = {
-  fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-};
 
 const MD_TEMPLATE = `---
 title: "Название курса"
@@ -247,29 +244,13 @@ export default function ImportCoursePage() {
   }
 
   return (
-    <main style={{
-      maxWidth: 860, margin: '0 auto',
-      padding: '40px 48px 72px',
-      display: 'flex', flexDirection: 'column', gap: 32,
-      boxSizing: 'border-box',
-    }}>
+    <div className="page">
       {/* Header */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <Link
-          href="/courses"
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            fontSize: 13, color: 'var(--muted)',
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
-          Курсы
-        </Link>
-        <h1 style={{ ...HEADING, margin: 0, fontSize: 40, fontWeight: 700, letterSpacing: '-0.02em' }}>
-          Импорт курса
-        </h1>
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link href="/courses" className="page-back">← Курсы</Link>
+          <h1 className="page-title">Импорт курса</h1>
+        </div>
       </div>
 
       {/* Format hint */}
@@ -388,7 +369,7 @@ export default function ImportCoursePage() {
       {parsed && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ borderTop: '2px solid var(--ivory)', paddingTop: 20 }}>
-            <h2 style={{ ...HEADING, margin: '0 0 16px', fontSize: 24, fontWeight: 700 }}>
+            <h2 style={{ margin: '0 0 16px', fontSize: 24, fontWeight: 700 }}>
               Предпросмотр
             </h2>
 
@@ -399,7 +380,7 @@ export default function ImportCoursePage() {
               marginBottom: 16,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <span style={{ ...HEADING, fontSize: 20, fontWeight: 700 }}>{parsed.meta.name}</span>
+                <span style={{ fontSize: 20, fontWeight: 700 }}>{parsed.meta.name}</span>
                 <ColorBadge color={parsed.meta.color} />
                 <DifficultyDots value={parsed.meta.difficulty} />
               </div>
@@ -469,6 +450,6 @@ export default function ImportCoursePage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

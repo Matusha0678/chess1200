@@ -161,16 +161,16 @@ export default function GuessOpeningPage() {
 
   if (phase === 'loading') {
     return (
-      <main className="page-wrap">
+      <div className="page-wrap">
         <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
-      </main>
+      </div>
     );
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <main className="page-wrap">
+    <div className="page-wrap">
       {/* Header */}
       <div className="page-header">
         <Link href="/" className="ui-back">← Сегодня</Link>
@@ -367,6 +367,6 @@ export default function GuessOpeningPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

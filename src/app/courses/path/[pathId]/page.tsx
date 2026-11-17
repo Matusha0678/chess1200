@@ -4,10 +4,6 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
-const HEADING: React.CSSProperties = {
-  fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-};
-
 interface PathMeta { id: string; title: string; }
 
 interface CourseBasic {
@@ -194,64 +190,41 @@ export default function PathDetailPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 860, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box' }}>
-        <div className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ height: 14, width: 80, background: 'var(--track)' }} />
-          <div style={{ height: 40, width: '50%', background: 'var(--track)' }} />
-          {[0, 1, 2].map(i => <div key={i} style={{ height: 80, background: 'var(--surface)', border: '1px solid var(--hairline)' }} />)}
-        </div>
-      </main>
+      <div className="page animate-pulse">
+        <div style={{ height: 14, width: 80, background: 'var(--track)', borderRadius: 4 }} />
+        <div style={{ height: 40, width: '50%', background: 'var(--track)', borderRadius: 'var(--radius-card)' }} />
+        {[0, 1, 2].map(i => <div key={i} style={{ height: 80, background: 'var(--surface)', borderRadius: 'var(--radius-card)' }} />)}
+      </div>
     );
   }
 
   if (!path) {
     return (
-      <main style={{ maxWidth: 860, margin: '0 auto', padding: '40px 48px 72px', boxSizing: 'border-box' }}>
-        <Link href="/courses/path" style={{ fontSize: 13, color: 'var(--muted)' }}>← Пути</Link>
-        <p style={{ color: 'var(--muted)', marginTop: 32 }}>Путь не найден.</p>
-      </main>
+      <div className="page">
+        <Link href="/courses/path" className="page-back">← Пути</Link>
+        <p style={{ color: 'var(--muted)' }}>Путь не найден.</p>
+      </div>
     );
   }
 
   return (
-    <main style={{ maxWidth: 860, margin: '0 auto', padding: '40px 48px 72px', display: 'flex', flexDirection: 'column', gap: 32, boxSizing: 'border-box' }}>
+    <div className="page">
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Link href="/courses/path" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--muted)' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
-            Пути обучения
-          </Link>
-          <h1 style={{ ...HEADING, margin: 0, fontSize: 36, fontWeight: 700, letterSpacing: '-0.02em' }}>
-            {path.title}
-          </h1>
+      <div className="page-head">
+        <div className="page-head-text">
+          <Link href="/courses/path" className="page-back">← Пути обучения</Link>
+          <h1 className="page-title">{path.title}</h1>
         </div>
 
         {!editing ? (
-          <button
-            onClick={startEdit}
-            style={{ height: 40, padding: '0 20px', background: 'transparent', border: '1px solid var(--control)', color: 'var(--muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0, marginTop: 24 }}
-          >
-            Изменить
-          </button>
+          <button onClick={startEdit} className="ui-btn ui-btn-outline">Изменить</button>
         ) : (
-          <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              style={{ height: 40, padding: '0 20px', background: 'var(--ivory)', color: 'var(--ink)', border: 'none', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}
-            >
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={handleSave} disabled={saving} className="ui-btn ui-btn-primary">
               {saving ? 'Сохранение…' : 'Сохранить'}
             </button>
-            <button
-              onClick={cancelEdit}
-              style={{ height: 40, padding: '0 16px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 13, cursor: 'pointer' }}
-            >
-              Отмена
-            </button>
+            <button onClick={cancelEdit} className="ui-btn ui-btn-outline">Отмена</button>
           </div>
         )}
       </div>
@@ -294,7 +267,7 @@ export default function PathDetailPage({ params }: Props) {
                       {/* Content */}
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-                          <span style={{ ...HEADING, fontSize: 17, fontWeight: 700, color: open ? 'var(--ivory)' : 'var(--muted)', lineHeight: 1.2 }}>
+                          <span style={{ fontSize: 17, fontWeight: 700, color: open ? 'var(--ivory)' : 'var(--muted)', lineHeight: 1.2 }}>
                             {item.course.name}
                           </span>
                           <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', color: done ? 'var(--ivory)' : open ? 'var(--ivory)' : 'var(--muted)', whiteSpace: 'nowrap' }}>
@@ -444,6 +417,6 @@ export default function PathDetailPage({ params }: Props) {
           )}
         </div>
       )}
-    </main>
+    </div>
   );
 }

@@ -135,18 +135,18 @@ export default function CheatsheetPage({ params }: Props) {
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px 72px', boxSizing: 'border-box' }}>
+      <div className="page">
         <div style={{ color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
-      </main>
+      </div>
     );
   }
 
   if (!course) {
     return (
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px 72px', boxSizing: 'border-box' }}>
-        <Link href="/courses" style={{ fontSize: 13, color: 'var(--muted)' }}>← Курсы</Link>
-        <p style={{ color: 'var(--muted)', marginTop: 24 }}>Курс не найден.</p>
-      </main>
+      <div className="page">
+        <Link href={`/courses/${courseId}`} className="page-back">← Курс</Link>
+        <p style={{ color: 'var(--muted)' }}>Курс не найден.</p>
+      </div>
     );
   }
 
@@ -162,21 +162,23 @@ export default function CheatsheetPage({ params }: Props) {
         }
       `}</style>
 
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px 72px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="page">
         {/* Header (no-print) */}
-        <div className="no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-          <Link href={`/courses/${courseId}`} style={{ fontSize: 13, color: 'var(--muted)' }}>← {course.name}</Link>
-          <button onClick={() => window.print()} style={{ height: 36, padding: '0 18px', border: '1px solid var(--hairline)', background: 'var(--surface)', color: 'var(--ivory)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+        <div className="no-print page-head">
+          <div className="page-head-text">
+            <Link href={`/courses/${courseId}`} className="page-back">← {course.name}</Link>
+            <h1 className="page-title">Шпаргалка</h1>
+          </div>
+          <button onClick={() => window.print()} className="ui-btn ui-btn-outline">
             Печать / PDF
           </button>
         </div>
 
         {/* Course title */}
-        <div className="sheet" style={{ padding: '20px 24px', border: '1px solid var(--hairline)', background: 'var(--surface)' }}>
-          <div style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 6 }}>Шпаргалка курса</div>
-          <h1 style={{ margin: '0 0 8px', fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
+        <div className="sheet ui-card">
+          <h2 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ivory)' }}>
             {course.name}
-          </h1>
+          </h2>
           {course.description && (
             <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>{course.description}</p>
           )}
@@ -251,7 +253,7 @@ export default function CheatsheetPage({ params }: Props) {
             </div>
           );
         })}
-      </main>
+      </div>
     </>
   );
 }

@@ -556,17 +556,17 @@ export default function MasterGamePage({ params }: { params: Promise<{ id: strin
 
   // ── Early returns ──
   if (loading) return (
-    <main className="page-wrap">
+    <div className="page-wrap">
       <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
-    </main>
+    </div>
   );
   if (!game) return (
-    <main className="page-wrap">
+    <div className="page-wrap">
       <div className="ui-card ui-card-lg" style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 15, color: 'var(--ivory)', marginBottom: 8 }}>Партия не найдена</div>
         <Link href="/masters" className="ui-btn ui-btn-outline" style={{ display: 'inline-flex', marginTop: 8 }}>К библиотеке</Link>
       </div>
-    </main>
+    </div>
   );
 
   const evalPct = cpToPercent(evalCp);
@@ -574,7 +574,7 @@ export default function MasterGamePage({ params }: { params: Promise<{ id: strin
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <main className="page-wrap">
+    <div className="page-wrap">
       {/* Header */}
       <div className="page-header">
         <Link href="/masters" className="ui-back">← Библиотека</Link>
@@ -953,7 +953,7 @@ export default function MasterGamePage({ params }: { params: Promise<{ id: strin
           )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 

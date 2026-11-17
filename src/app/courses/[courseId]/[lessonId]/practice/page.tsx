@@ -186,25 +186,25 @@ export default function LessonPracticePage({ params }: Props) {
 
   if (loading) {
     return (
-      <main style={{ height: 'calc(100vh - 66px)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ height: 'calc(100vh - 66px)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div
           className="animate-pulse"
           style={{ width: boardSizeVar, height: boardSizeVar, background: 'var(--surface)', border: '1px solid var(--hairline)' }}
         />
-      </main>
+      </div>
     );
   }
 
   if (!course || !lesson || !line || chessMoves.length === 0) {
     return (
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 48px', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 48px', boxSizing: 'border-box' }}>
         <Link href={`/courses/${courseId}/${lessonId}`} style={{ fontSize: 13, color: 'var(--muted)' }}>
           ← Урок
         </Link>
         <p style={{ color: 'var(--muted)', marginTop: 32 }}>
           Нет данных для тренировки. Добавьте линию к уроку.
         </p>
-      </main>
+      </div>
     );
   }
 
@@ -295,7 +295,7 @@ export default function LessonPracticePage({ params }: Props) {
         </div>
       )}
 
-      <main style={{
+      <div style={{
         height: 'calc(100vh - 66px)',
         overflow: 'hidden',
         display: 'flex', flexDirection: 'column',
@@ -413,7 +413,7 @@ export default function LessonPracticePage({ params }: Props) {
 
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }
