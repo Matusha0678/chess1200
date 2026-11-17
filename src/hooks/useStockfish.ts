@@ -7,14 +7,29 @@ export interface AnalysisInfo {
   bestMove?: string;
 }
 
+export interface EvalResult {
+  bestMove: string;
+  cp?: number;
+  mate?: number;
+}
+
+interface TopMovesRequest {
+  count: number;
+  collected: Map<number, string>;
+  callback: (moves: string[]) => void;
+}
+
 export function useStockfish() {
   const workerRef = useRef<Worker | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const onBestMoveRef = useRef<((move: string) => void) | null>(null);
-  const onAnalysisRef = useRef<((info: AnalysisInfo) => void) | null>(null);
-  const isAnalyzingRef = useRef(false);
-  const skipBestMoveRef = useRef(false);
-  const skillLevel = useRef(8);
+  const onBestMoveRef      = useRef<((move: string) => void) | null>(null);
+  const onAnalysisRef      = useRef<((info: AnalysisInfo) => void) | null>(null);
+  const evalCallbackRef    = useRef<((r: EvalResult) => void) | null>(null);
+  const topMovesRef        = useRef<TopMovesRequest | null>(null);
+  const lastInfoRef        = useRef<{ cp?: number; mate?: number }>({});
+  const isAnalyzingRef     = useRef(false);
+  const skipBestMoveRef    = useRef(false);
+  const skillLevel         = useRef(8);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -33,30 +48,63 @@ export function useStockfish() {
         setIsReady(true);
       }
 
-      if (line.startsWith('info') && isAnalyzingRef.current && onAnalysisRef.current) {
-        const cpMatch = line.match(/score cp (-?\d+)/);
+      if (line.startsWith('info')) {
+        // Always track latest score
+        const cpMatch   = line.match(/score cp (-?\d+)/);
         const mateMatch = line.match(/score mate (-?\d+)/);
-        const pvMatch = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
-        if (cpMatch || mateMatch) {
+        if (cpMatch)   lastInfoRef.current.cp   = parseInt(cpMatch[1], 10);
+        if (mateMatch) lastInfoRef.current.mate = parseInt(mateMatch[1], 10);
+
+        // Collect multipv moves
+        if (topMovesRef.current) {
+          const pvMatch = line.match(/ multipv (\d+) .* pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+          if (pvMatch) topMovesRef.current.collected.set(parseInt(pvMatch[1], 10), pvMatch[2]);
+        }
+
+        if (isAnalyzingRef.current && onAnalysisRef.current) {
           const info: AnalysisInfo = {};
-          if (cpMatch) info.cp = parseInt(cpMatch[1], 10);
-          if (mateMatch) info.mate = parseInt(mateMatch[1], 10);
-          if (pvMatch) info.bestMove = pvMatch[1];
-          onAnalysisRef.current(info);
+          if (cpMatch)   info.cp       = parseInt(cpMatch[1], 10);
+          if (mateMatch) info.mate     = parseInt(mateMatch[1], 10);
+          const pvMatch = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+          if (pvMatch)   info.bestMove = pvMatch[1];
+          if (cpMatch || mateMatch) onAnalysisRef.current(info);
         }
       }
 
       if (line.startsWith('bestmove')) {
         const parts = line.split(' ');
-        const move = parts[1];
+        const move  = parts[1];
 
-        // Skip bestmove that was produced by stopping a running search
         if (skipBestMoveRef.current) {
           skipBestMoveRef.current = false;
           return;
         }
 
-        // Analysis finished naturally — clear state, don't dispatch to game
+        // getTopMoves path
+        if (topMovesRef.current) {
+          const { count, collected, callback } = topMovesRef.current;
+          topMovesRef.current = null;
+          workerRef.current?.postMessage('setoption name MultiPV value 1');
+          const moves: string[] = [];
+          for (let i = 1; i <= count; i++) {
+            const m = collected.get(i);
+            if (m) moves.push(m);
+          }
+          callback(moves);
+          return;
+        }
+
+        // getEval path
+        if (evalCallbackRef.current) {
+          const cb = evalCallbackRef.current;
+          evalCallbackRef.current = null;
+          const snap = { ...lastInfoRef.current };
+          lastInfoRef.current = {};
+          cb({ bestMove: move ?? '', ...snap });
+          return;
+        }
+
+        // startAnalysis path — bestmove after stop, skip
         if (isAnalyzingRef.current) {
           isAnalyzingRef.current = false;
           return;
@@ -86,12 +134,46 @@ export function useStockfish() {
   const getBestMove = useCallback(
     (fen: string, depth: number, callback: (uciMove: string) => void) => {
       if (!workerRef.current || !isReady) return;
-      if (isAnalyzingRef.current) {
-        skipBestMoveRef.current = true;
-      }
-      isAnalyzingRef.current = false;
-      onAnalysisRef.current = null;
-      onBestMoveRef.current = callback;
+      if (isAnalyzingRef.current) skipBestMoveRef.current = true;
+      isAnalyzingRef.current  = false;
+      onAnalysisRef.current   = null;
+      evalCallbackRef.current = null;
+      topMovesRef.current     = null;
+      onBestMoveRef.current   = callback;
+      workerRef.current.postMessage('stop');
+      workerRef.current.postMessage(`position fen ${fen}`);
+      workerRef.current.postMessage(`go depth ${depth}`);
+    },
+    [isReady],
+  );
+
+  const getEval = useCallback(
+    (fen: string, depth: number, callback: (r: EvalResult) => void) => {
+      if (!workerRef.current || !isReady) return;
+      if (isAnalyzingRef.current) skipBestMoveRef.current = true;
+      isAnalyzingRef.current  = false;
+      onAnalysisRef.current   = null;
+      onBestMoveRef.current   = null;
+      topMovesRef.current     = null;
+      lastInfoRef.current     = {};
+      evalCallbackRef.current = callback;
+      workerRef.current.postMessage('stop');
+      workerRef.current.postMessage(`position fen ${fen}`);
+      workerRef.current.postMessage(`go depth ${depth}`);
+    },
+    [isReady],
+  );
+
+  const getTopMoves = useCallback(
+    (fen: string, depth: number, count: number, callback: (moves: string[]) => void) => {
+      if (!workerRef.current || !isReady) return;
+      if (isAnalyzingRef.current) skipBestMoveRef.current = true;
+      isAnalyzingRef.current  = false;
+      onAnalysisRef.current   = null;
+      onBestMoveRef.current   = null;
+      evalCallbackRef.current = null;
+      topMovesRef.current     = { count, collected: new Map(), callback };
+      workerRef.current.postMessage(`setoption name MultiPV value ${count}`);
       workerRef.current.postMessage('stop');
       workerRef.current.postMessage(`position fen ${fen}`);
       workerRef.current.postMessage(`go depth ${depth}`);
@@ -102,12 +184,12 @@ export function useStockfish() {
   const startAnalysis = useCallback(
     (fen: string, onInfo: (info: AnalysisInfo) => void) => {
       if (!workerRef.current || !isReady) return;
-      if (isAnalyzingRef.current) {
-        skipBestMoveRef.current = true;
-      }
-      onBestMoveRef.current = null;
-      onAnalysisRef.current = onInfo;
-      isAnalyzingRef.current = true;
+      if (isAnalyzingRef.current) skipBestMoveRef.current = true;
+      onBestMoveRef.current   = null;
+      evalCallbackRef.current = null;
+      topMovesRef.current     = null;
+      onAnalysisRef.current   = onInfo;
+      isAnalyzingRef.current  = true;
       workerRef.current.postMessage('stop');
       workerRef.current.postMessage(`position fen ${fen}`);
       workerRef.current.postMessage('go depth 18');
@@ -119,7 +201,7 @@ export function useStockfish() {
     if (!workerRef.current) return;
     if (isAnalyzingRef.current) {
       skipBestMoveRef.current = true;
-      isAnalyzingRef.current = false;
+      isAnalyzingRef.current  = false;
     }
     onAnalysisRef.current = null;
     workerRef.current.postMessage('stop');
@@ -132,5 +214,5 @@ export function useStockfish() {
     }
   }, [isReady]);
 
-  return { getBestMove, startAnalysis, stopAnalysis, setSkillLevel, isReady };
+  return { getBestMove, getEval, getTopMoves, startAnalysis, stopAnalysis, setSkillLevel, isReady };
 }

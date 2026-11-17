@@ -35,6 +35,14 @@ export const NAV: NavSection[] = [
       { label: 'Ловушки',        href: '/traps' },
     ],
   },
+  {
+    num: '06', label: 'Мастера', href: '/masters',
+    children: [
+      { label: 'Библиотека',         href: '/masters' },
+      { label: 'Угадай дебют',       href: '/guess-opening' },
+      { label: 'Жертва или нет?',    href: '/sac' },
+    ],
+  },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
