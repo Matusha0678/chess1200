@@ -7,7 +7,6 @@ import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { LessonViewer } from '@/components/LessonViewer';
 import type { Course, CourseLesson, LessonLine, LessonQuestion, CourseLessonMove } from '@/types/courses';
 
-const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 interface Props {
   params: Promise<{ courseId: string; lessonId: string }>;
@@ -89,11 +88,9 @@ export default function LessonViewerPage({ params }: Props) {
   const moves: CourseLessonMove[] = (line?.moves as CourseLessonMove[]) ?? [];
   const boardOrientation = course.color === 'black' ? 'black' : 'white';
 
-  // Warn if course has no arrow/square data (probably imported before v1 format)
   const hasRichData = moves.some(m =>
     (m.arrows?.length ?? 0) > 0 || (m.squares?.length ?? 0) > 0 || (m.nags?.length ?? 0) > 0
   );
-  void INITIAL_FEN; // suppress unused
 
   return (
     <main style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 48px 80px', boxSizing: 'border-box' }}>
@@ -114,6 +111,7 @@ export default function LessonViewerPage({ params }: Props) {
 
       <LessonViewer
         moves={moves}
+        startFen={line?.start_fen ?? undefined}
         boardOrientation={boardOrientation}
         boardTheme={boardTheme}
         customPieces={customPieces}

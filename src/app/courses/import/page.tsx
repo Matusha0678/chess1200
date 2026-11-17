@@ -221,6 +221,7 @@ export default function ImportCoursePage() {
             intro_md: l.intro_md,
             outro_md: l.outro_md,
             moves: l.moves,
+            start_fen: l.start_fen ?? null,
           }))
         );
         if (error) { await rollback(error.message); return; }
@@ -402,9 +403,12 @@ export default function ImportCoursePage() {
                 <ColorBadge color={parsed.meta.color} />
                 <DifficultyDots value={parsed.meta.difficulty} />
               </div>
-              {parsed.meta.opening && (
+              {(parsed.meta.opening || parsed.meta.topic) && (
                 <span style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  {parsed.meta.opening}
+                  {parsed.meta.topic ?? parsed.meta.opening}
+                  {parsed.meta.kind && parsed.meta.kind !== 'opening' && (
+                    <span style={{ marginLeft: 8, color: 'var(--control)' }}>{parsed.meta.kind}</span>
+                  )}
                 </span>
               )}
               {parsed.meta.description && (

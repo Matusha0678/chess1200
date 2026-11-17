@@ -30,6 +30,7 @@ interface ExplainQuestion {
 
 export interface ExplainModeProps {
   moves: CourseLessonMove[];
+  startFen?: string;
   lessonId: string;
   boardOrientation: 'white' | 'black';
   boardTheme: { dark: string; light: string };
@@ -50,7 +51,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function buildQuestions(moves: CourseLessonMove[]): ExplainQuestion[] {
+function buildQuestions(moves: CourseLessonMove[], startFen?: string): ExplainQuestion[] {
   const eligible = moves
     .map((m, i) => ({ m, i }))
     .filter(({ m }) => !!m.comment && m.comment.length >= MIN_COMMENT);
@@ -58,6 +59,7 @@ function buildQuestions(moves: CourseLessonMove[]): ExplainQuestion[] {
   if (eligible.length < 3) return [];
 
   const allComments = eligible.map(e => e.m.comment!);
+  const lineStart = startFen ?? INITIAL_FEN;
 
   const qs = eligible.map(({ m, i }) => {
     const correct = m.comment!;
@@ -65,7 +67,7 @@ function buildQuestions(moves: CourseLessonMove[]): ExplainQuestion[] {
     if (others.length < 2) return null;
     const options    = shuffle([correct, ...others]);
     const correctIdx = options.indexOf(correct);
-    const fenBefore  = i === 0 ? INITIAL_FEN : moves[i - 1].fen;
+    const fenBefore  = i === 0 ? lineStart : moves[i - 1].fen;
     return { plyIndex: i, move: m, fenBefore, options, correctIdx } satisfies ExplainQuestion;
   }).filter((q): q is ExplainQuestion => q !== null);
 
@@ -163,10 +165,10 @@ function Overlay({ title, onClose, children }: { title: string; onClose: () => v
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function ExplainMode({
-  moves, lessonId, boardOrientation, boardTheme, customPieces,
+  moves, startFen, lessonId, boardOrientation, boardTheme, customPieces,
   showNotation = true, onClose, onDone,
 }: ExplainModeProps) {
-  const [questions]  = useState<ExplainQuestion[]>(() => buildQuestions(moves));
+  const [questions]  = useState<ExplainQuestion[]>(() => buildQuestions(moves, startFen));
   const [qIdx,       setQIdx]       = useState(0);
   const [selected,   setSelected]   = useState<number | null>(null);
   const [score,      setScore]      = useState(0);

@@ -18,6 +18,7 @@ export interface ParsedLine {
   intro_md: string;
   outro_md: string;
   moves: CourseLessonMove[];
+  start_fen?: string;
 }
 
 export interface ParsedQuestion {
@@ -204,7 +205,7 @@ function tokenize(text: string): Tok[] {
 
 // ── PGN: tree ───────────────────────────────────────────────────────────────
 
-function buildTree(toks: Tok[], rep: Report, where: string): CourseLessonMove[] {
+function buildTree(toks: Tok[], rep: Report, where: string, startFen?: string): CourseLessonMove[] {
   let pos = 0;
   const raw = new Map<CourseLessonMove, string[]>();
 
@@ -302,7 +303,7 @@ function buildTree(toks: Tok[], rep: Report, where: string): CourseLessonMove[] 
     return moves;
   }
 
-  const main = seq(new Chess().fen(), 0);
+  const main = seq(startFen ?? new Chess().fen(), 0);
 
   // Turn the raw comments into text + arrows + marked squares
   const finish = (ms: CourseLessonMove[]) => {
@@ -334,19 +335,26 @@ function buildTree(toks: Tok[], rep: Report, where: string): CourseLessonMove[] 
 
 // ── PGN: checks ─────────────────────────────────────────────────────────────
 
-function checkPgn(text: string, where: string, learner: 'w' | 'b', rep: Report): CourseLessonMove[] | null {
+function checkPgn(text: string, where: string, learner: 'w' | 'b', rep: Report, startFen?: string): CourseLessonMove[] | null {
   const rows = text.split('\n');
+  const keptRows: string[] = [];
   for (let k = 0; k < rows.length; k++) {
     if (rows[k].trimStart().startsWith('[')) {
-      rep.err(where, `строка ${k + 1} начинается с «[» — заголовки PGN не пишем, а [%cal] ставим внутрь {…}`);
-      return null;
+      if (!startFen) {
+        rep.err(where, `строка ${k + 1} начинается с «[» — заголовки PGN не пишем, а [%cal] ставим внутрь {…}`);
+        return null;
+      }
+      // strip PGN header lines when a custom start FEN is provided
+    } else {
+      keptRows.push(rows[k]);
     }
   }
-  if (!text.trimEnd().endsWith('*')) rep.warn(where, 'блок pgn лучше заканчивать знаком *');
+  const cleanText = startFen ? keptRows.join('\n') : text;
+  if (!cleanText.trimEnd().endsWith('*')) rep.warn(where, 'блок pgn лучше заканчивать знаком *');
 
   let moves: CourseLessonMove[];
   try {
-    moves = buildTree(tokenize(text), rep, where);
+    moves = buildTree(tokenize(cleanText), rep, where, startFen);
   } catch (e) {
     rep.err(where, errText(e));
     return null;
@@ -512,6 +520,17 @@ export function parseCourse(mdText: string): ParseResult {
   const slug = String(meta.slug ?? '');
   if (slug && !/^[a-z0-9][a-z0-9-]*$/.test(slug)) rep.err('шапка', 'slug: только латиница, цифры и дефис');
 
+  const VALID_KINDS = ['opening', 'theme', 'endgame', 'tactics', 'structure', 'games'] as const;
+  type ValidKind = typeof VALID_KINDS[number];
+  const rawKind = String(meta.kind ?? 'opening').toLowerCase();
+  if (meta.kind && !(VALID_KINDS as readonly string[]).includes(rawKind)) {
+    rep.err('шапка', `kind должен быть одним из: ${VALID_KINDS.join(', ')}`);
+  }
+  const kind: ValidKind = (VALID_KINDS as readonly string[]).includes(rawKind)
+    ? rawKind as ValidKind
+    : 'opening';
+  const topic = meta.topic ? String(meta.topic) : undefined;
+
   // Split into lessons
   type RawLesson = { index: number; title: string; lines: string[] };
   const rawLessons: RawLesson[] = [];
@@ -564,14 +583,35 @@ export function parseCourse(mdText: string): ParseResult {
           continue;
         }
         const idx = pgnIdx[0];
-        const intro = parts.slice(0, idx).filter(p => p.kind === 'text').map(p => p.body).join('\n\n');
+
+        // Extract optional FEN: "..." line from the intro text parts
+        const FEN_LINE_RE = /^FEN:\s*"([^"]+)"\s*$/m;
+        let startFen: string | undefined;
+        const rawIntroParts = parts.slice(0, idx).filter(p => p.kind === 'text');
+        const introParts = rawIntroParts.map(p => {
+          if (startFen) return p;
+          const m = FEN_LINE_RE.exec(p.body);
+          if (m) {
+            const fen = m[1];
+            try {
+              new Chess(fen);
+              startFen = fen;
+            } catch (e) {
+              rep.err(sw, `неверный FEN: ${errText(e)}`);
+            }
+            return { kind: p.kind, body: p.body.replace(m[0], '').trim() };
+          }
+          return p;
+        }).filter(p => p.body);
+
+        const intro = introParts.map(p => p.body).join('\n\n');
         const outro = parts.slice(idx + 1).filter(p => p.kind === 'text').map(p => p.body).join('\n\n');
-        const moves = checkPgn(parts[idx].body, sw, learner, rep);
+        const moves = checkPgn(parts[idx].body, sw, learner, rep, startFen);
         if (!outro) rep.warn(sw, 'нет «Итога линии» после блока pgn');
         if (moves) {
           const title = s.title.replace(/^(?:Линия|Line)\s*:\s*/i, '');
-          blocks.push({ type: 'line', title, intro_md: intro, moves, outro_md: outro });
-          lines.push({ title, intro_md: intro, outro_md: outro, moves });
+          blocks.push({ type: 'line', title, intro_md: intro, moves, outro_md: outro, start_fen: startFen });
+          lines.push({ title, intro_md: intro, outro_md: outro, moves, start_fen: startFen });
           nLines++;
         }
       } else if (s.kind === 'quiz') {
@@ -653,6 +693,8 @@ export function parseCourse(mdText: string): ParseResult {
           name: String(meta.title),
           color: color as 'white' | 'black',
           opening: String(meta.opening ?? ''),
+          kind,
+          topic,
           description: String(meta.description ?? ''),
           difficulty: difficultyFrom(meta),
           level: String(meta.level ?? ''),

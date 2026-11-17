@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import type { Course, LessonProgress } from '@/types/courses';
+import type { Course, CourseKind, LessonProgress } from '@/types/courses';
 
 const HEADING: React.CSSProperties = {
   fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
@@ -203,9 +203,22 @@ function SkeletonCard() {
   );
 }
 
+type TabId = CourseKind | 'all';
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'all',       label: 'Все' },
+  { id: 'opening',   label: 'Дебюты' },
+  { id: 'theme',     label: 'Темы' },
+  { id: 'endgame',   label: 'Эндшпили' },
+  { id: 'tactics',   label: 'Тактика' },
+  { id: 'structure', label: 'Структура' },
+  { id: 'games',     label: 'Партии' },
+];
+
 export default function CoursesPage() {
   const [courses, setCourses] = useState<CourseWithStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabId>('all');
 
   useEffect(() => {
     async function load() {
@@ -256,6 +269,15 @@ export default function CoursesPage() {
     load();
   }, []);
 
+  const visibleCourses = activeTab === 'all'
+    ? courses
+    : courses.filter(c => (c.kind ?? 'opening') === activeTab);
+
+  const tabsWithCounts = TABS.map(t => ({
+    ...t,
+    count: t.id === 'all' ? courses.length : courses.filter(c => (c.kind ?? 'opening') === t.id).length,
+  }));
+
   return (
     <main style={{
       maxWidth: 1600, margin: '0 auto',
@@ -301,6 +323,36 @@ export default function CoursesPage() {
         </Link>
       </div>
 
+      {/* Kind tabs */}
+      {!loading && courses.length > 0 && (
+        <div style={{
+          display: 'flex', gap: 0, borderBottom: '1px solid var(--hairline)',
+          overflowX: 'auto',
+        }}>
+          {tabsWithCounts.filter(t => t.count > 0 || t.id === 'all').map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '10px 20px',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: activeTab === tab.id ? '2px solid var(--ivory)' : '2px solid transparent',
+                color: activeTab === tab.id ? 'var(--ivory)' : 'var(--muted)',
+                fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', whiteSpace: 'nowrap',
+                marginBottom: -1,
+              }}
+            >
+              {tab.label}
+              {tab.id !== 'all' && tab.count > 0 && (
+                <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--control)' }}>{tab.count}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Content */}
       {loading ? (
         <div style={{
@@ -339,7 +391,14 @@ export default function CoursesPage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(440px, 100%), 1fr))',
           gap: 16,
         }}>
-          {courses.map(course => <CourseCard key={course.id} course={course} />)}
+          {visibleCourses.length > 0
+            ? visibleCourses.map(course => <CourseCard key={course.id} course={course} />)
+            : (
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', gridColumn: '1/-1' }}>
+                Нет курсов в этой категории
+              </p>
+            )
+          }
         </div>
       )}
     </main>

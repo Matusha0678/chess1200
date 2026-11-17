@@ -154,6 +154,7 @@ type ActiveTab = 'moves' | 'summary' | 'plan' | 'mistakes' | 'trap' | 'questions
 
 export interface LessonViewerProps {
   moves: CourseLessonMove[];
+  startFen?: string;
   boardOrientation: 'white' | 'black';
   boardTheme: { dark: string; light: string };
   customPieces?: Record<string, (props?: { fill?: string; square?: string; svgStyle?: React.CSSProperties }) => React.JSX.Element>;
@@ -172,10 +173,11 @@ export interface LessonViewerProps {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function LessonViewer({
-  moves, boardOrientation, boardTheme, customPieces,
+  moves, startFen, boardOrientation, boardTheme, customPieces,
   animationMs, showNotation, boardThemeId, pieceStyleId,
   lesson, questions, courseId, lessonId, prevLesson, nextLesson,
 }: LessonViewerProps) {
+  const lineStartFen = startFen ?? INITIAL_FEN;
 
   // ── Core state ─────────────────────────────────────────────────────────────
 
@@ -227,10 +229,10 @@ export function LessonViewer({
     ? (boardOrientation === 'white' ? 'black' : 'white')
     : boardOrientation;
 
-  const variantStartFen = variantMoves ? (moves[moveIndex - 2]?.fen ?? INITIAL_FEN) : INITIAL_FEN;
+  const variantStartFen = variantMoves ? (moves[moveIndex - 2]?.fen ?? lineStartFen) : lineStartFen;
   const currentFen = variantMoves
     ? (variantIdx === 0 ? variantStartFen : variantMoves[variantIdx - 1].fen)
-    : (moveIndex === 0 ? INITIAL_FEN : moves[moveIndex - 1].fen);
+    : (moveIndex === 0 ? lineStartFen : moves[moveIndex - 1].fen);
 
   const currentMove     = activeIdx > 0 ? activeMoves[activeIdx - 1] : null;
   const currentComment  = currentMove?.comment ?? null;
@@ -287,7 +289,7 @@ export function LessonViewer({
     (lesson.blocks ?? []).filter((b): b is { type: 'quiz'; title: string; items: QuizItem[] } => b.type === 'quiz'),
   [lesson.blocks]);
 
-  const lastFen = moves.length > 0 ? moves[moves.length - 1].fen : INITIAL_FEN;
+  const lastFen = moves.length > 0 ? moves[moves.length - 1].fen : lineStartFen;
 
   const playerColorCode: 'w' | 'b' = boardOrientation === 'white' ? 'w' : 'b';
   const nextOpponentMove = !variantMoves && moveIndex < moves.length ? moves[moveIndex] : null;
@@ -838,6 +840,7 @@ export function LessonViewer({
       {showExplain && (
         <ExplainMode
           moves={moves}
+          startFen={startFen}
           lessonId={lessonId}
           boardOrientation={orientation}
           boardTheme={boardTheme}

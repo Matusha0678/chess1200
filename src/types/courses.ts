@@ -1,9 +1,13 @@
+export type CourseKind = 'opening' | 'theme' | 'endgame' | 'tactics' | 'structure' | 'games';
+
 export interface Course {
   id: string;
   slug: string;
   name: string;
   color: 'white' | 'black' | 'both';
   opening: string;
+  kind?: CourseKind;
+  topic?: string;
   description: string;
   difficulty: number;
   level?: string;
@@ -53,7 +57,7 @@ export interface IdeaItem {
 
 export type LessonBlock =
   | { type: 'text'; title?: string; md: string }
-  | { type: 'line'; title: string; intro_md: string; moves: CourseLessonMove[]; outro_md: string }
+  | { type: 'line'; title: string; intro_md: string; moves: CourseLessonMove[]; outro_md: string; start_fen?: string }
   | { type: 'plan' | 'mistakes' | 'trap' | 'summary'; title: string; md: string }
   | { type: 'quiz'; title: string; items: QuizItem[] }
   | { type: 'idea'; title: string; items: IdeaItem[] };
@@ -80,6 +84,7 @@ export interface LessonLine {
   title?: string;
   intro_md?: string;
   outro_md?: string;
+  start_fen?: string;
 }
 
 export interface LessonQuestion {
