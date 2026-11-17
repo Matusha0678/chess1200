@@ -155,6 +155,66 @@ export default function HomePage() {
   const [dailyTrap, setDailyTrap] = useState<DailyTrap | null>(null);
   const [trapRevealed, setTrapRevealed] = useState(false);
 
+  const [pathCard, setPathCard] = useState<{
+    pathId: string; pathTitle: string;
+    stepOrd: number; courseId: string; courseName: string; pct: number;
+  } | null>(null);
+
+  useEffect(() => {
+    async function loadPathCard() {
+      const { data: pathRow } = await supabase
+        .from('course_paths').select('id, title').order('created_at').limit(1).maybeSingle();
+      if (!pathRow) return;
+
+      const { data: rawItems } = await supabase
+        .from('course_path_items').select('id, course_id, ord').eq('path_id', pathRow.id).order('ord');
+      if (!rawItems || rawItems.length === 0) return;
+
+      const courseIds = rawItems.map(i => i.course_id as string);
+
+      const { data: unlockRows } = await supabase
+        .from('course_path_unlocks').select('course_id').eq('path_id', pathRow.id);
+      const unlockedSet = new Set((unlockRows ?? []).map(u => u.course_id as string));
+
+      const { data: lessonRows } = await supabase
+        .from('course_lessons').select('id, course_id').in('course_id', courseIds);
+      const lessonIds = (lessonRows ?? []).map(l => l.id as string);
+      const testRows = lessonIds.length > 0
+        ? (await supabase.from('lesson_tests').select('lesson_id, score, max').in('lesson_id', lessonIds)).data ?? []
+        : [];
+      const bestPct = new Map<string, number>();
+      for (const t of testRows) {
+        const pct = Math.round((t.score / t.max) * 100);
+        if (pct > (bestPct.get(t.lesson_id) ?? 0)) bestPct.set(t.lesson_id, pct);
+      }
+      const prog = new Map<string, { passed: number; total: number }>();
+      for (const cid of courseIds) {
+        const lessons = (lessonRows ?? []).filter(l => l.course_id === cid);
+        const passed = lessons.filter(l => (bestPct.get(l.id) ?? 0) >= 80).length;
+        prog.set(cid, { passed, total: lessons.length });
+      }
+      const isDone = (cid: string) => { const p = prog.get(cid); return !!p && p.total > 0 && p.passed === p.total; };
+
+      for (let i = 0; i < rawItems.length; i++) {
+        const cid = rawItems[i].course_id as string;
+        const open = i === 0 || unlockedSet.has(cid) || isDone(rawItems[i - 1].course_id as string);
+        if (!open || isDone(cid)) continue;
+        const { data: courseRow } = await supabase.from('courses').select('name').eq('id', cid).single();
+        const p = prog.get(cid);
+        setPathCard({
+          pathId: pathRow.id,
+          pathTitle: pathRow.title,
+          stepOrd: rawItems[i].ord as number,
+          courseId: cid,
+          courseName: (courseRow?.name as string) ?? '',
+          pct: p && p.total > 0 ? Math.round(p.passed / p.total * 100) : 0,
+        });
+        return;
+      }
+    }
+    loadPathCard();
+  }, []);
+
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -557,6 +617,49 @@ export default function HomePage() {
             </div>
           </section>
         )}
+
+        {/* 5e. My path */}
+        <section>
+          <div style={SECTION_HEADER}>
+            <h2 style={LABEL}>МОЙ ПУТЬ</h2>
+            <Link href="/courses/path" style={{ fontSize: 12, color: 'var(--muted)' }}>Все →</Link>
+          </div>
+          {pathCard ? (
+            <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+                {pathCard.pathTitle}
+              </span>
+              <span style={{ ...HEADING, fontSize: 15, fontWeight: 700, color: 'var(--ivory)', lineHeight: 1.3 }}>
+                {String(pathCard.stepOrd).padStart(2, '0')}. {pathCard.courseName}
+              </span>
+              {pathCard.pct > 0 && (
+                <div style={{ height: 3, background: 'var(--track)', borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', background: 'var(--ivory)', width: `${pathCard.pct}%` }} />
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                {pathCard.pct > 0 && (
+                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>Пройдено {pathCard.pct}%</span>
+                )}
+                <Link
+                  href={`/courses/${pathCard.courseId}`}
+                  style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 16px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600 }}
+                >
+                  Продолжить →
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div style={{ paddingTop: 12 }}>
+              <Link
+                href="/courses/path"
+                style={{ fontSize: 13, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                Создать путь обучения →
+              </Link>
+            </div>
+          )}
+        </section>
 
         {/* 6. Repertoire progress */}
         {totalLines > 0 && (

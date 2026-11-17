@@ -139,3 +139,16 @@ export interface LessonTestRecord {
   wrong: WrongRecord[];
   taken_at: string;
 }
+
+export interface CoursePath {
+  id: string;
+  title: string;
+  created_at: string;
+}
+
+export interface CoursePathItem {
+  id: string;
+  path_id: string;
+  course_id: string;
+  ord: number;
+}

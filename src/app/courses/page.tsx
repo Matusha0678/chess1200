@@ -305,22 +305,37 @@ export default function CoursesPage() {
           </h1>
         </div>
 
-        <Link
-          href="/courses/import"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            height: 48, padding: '0 24px',
-            border: '1px solid var(--ivory)',
-            background: 'var(--ivory)', color: 'var(--ink)',
-            fontSize: 14, fontWeight: 600,
-            boxSizing: 'border-box',
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Импортировать
-        </Link>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link
+            href="/courses/path"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              height: 48, padding: '0 20px',
+              border: '1px solid var(--control)',
+              background: 'transparent', color: 'var(--muted)',
+              fontSize: 14, fontWeight: 600,
+              boxSizing: 'border-box',
+            }}
+          >
+            Пути
+          </Link>
+          <Link
+            href="/courses/import"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              height: 48, padding: '0 24px',
+              border: '1px solid var(--ivory)',
+              background: 'var(--ivory)', color: 'var(--ink)',
+              fontSize: 14, fontWeight: 600,
+              boxSizing: 'border-box',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Импортировать
+          </Link>
+        </div>
       </div>
 
       {/* Kind tabs */}
