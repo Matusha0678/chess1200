@@ -264,14 +264,21 @@ const RESULT_COLOR: Record<string, string> = {
   win: 'var(--ivory)', draw: 'var(--muted)', loss: 'var(--control)',
 };
 
+function AccLabel({ g }: { g: Game }) {
+  const myAcc = g.color === 'white' ? g.accuracy_white : g.accuracy_black;
+  if (myAcc === null || myAcc === undefined) return <span style={{ fontSize: 12, color: 'var(--muted)' }}>—</span>;
+  const color = myAcc >= 85 ? 'var(--accent)' : myAcc >= 70 ? 'var(--ivory)' : 'var(--control)';
+  return <span style={{ fontSize: 12, color, fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{Math.round(myAcc)}%</span>;
+}
+
 function GameRow({ g }: { g: Game }) {
   return (
     <a
-      href={g.url} target='_blank' rel='noopener noreferrer'
+      href={`/games/${g.id}`}
       style={{
         display: 'grid',
-        gridTemplateColumns: '72px 24px minmax(120px,1fr) 60px minmax(80px,1fr) 44px',
-        columnGap: 16, alignItems: 'center',
+        gridTemplateColumns: '72px 24px minmax(100px,1fr) 60px minmax(60px,1fr) 44px 44px',
+        columnGap: 12, alignItems: 'center',
         padding: '10px 0', borderBottom: '1px solid var(--hairline)',
         color: 'var(--ivory)', textDecoration: 'none',
       }}
@@ -295,6 +302,7 @@ function GameRow({ g }: { g: Game }) {
       <span style={{ fontSize: 12, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {g.eco_name || '—'}
       </span>
+      <AccLabel g={g} />
       <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>
         {g.moves_count}
       </span>
@@ -563,8 +571,8 @@ export default function GamesPage() {
             <FilterBar filters={filters} onChange={f => { setFilters(f); setPage(1); }} timeClasses={timeClasses} ecoOptions={ecoOptions} />
 
             {/* Table header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '72px 24px minmax(120px,1fr) 60px minmax(80px,1fr) 44px', columnGap: 16, padding: '10px 0', borderBottom: '1px solid var(--hairline)' }}>
-              {['ДАТА', '', 'СОПЕРНИК', 'РЕЗУЛЬТАТ', 'ДЕБЮТ', 'ХОДОВ'].map(h => (
+            <div style={{ display: 'grid', gridTemplateColumns: '72px 24px minmax(100px,1fr) 60px minmax(60px,1fr) 44px 44px', columnGap: 12, padding: '10px 0', borderBottom: '1px solid var(--hairline)' }}>
+              {['ДАТА', '', 'СОПЕРНИК', 'РЕЗУЛЬТАТ', 'ДЕБЮТ', 'ТОЧН.', 'ХОДОВ'].map(h => (
                 <span key={h} style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>{h}</span>
               ))}
             </div>

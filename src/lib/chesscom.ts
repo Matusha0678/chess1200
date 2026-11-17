@@ -37,6 +37,9 @@ export interface Game {
   eco_name: string;
   played_at: string;
   moves_count: number;
+  accuracy_white: number | null;
+  accuracy_black: number | null;
+  analysis_version: number | null;
 }
 
 // ── API helpers ───────────────────────────────────────────────────────────────
