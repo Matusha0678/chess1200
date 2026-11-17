@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useStockfish } from '@/hooks/useStockfish';
-import { parsePgnMoves, classifyMistake, detectPhase } from '@/lib/mistakes';
+import { parsePgnMoves, classifyMistake, detectPhase, type ParsedMove } from '@/lib/mistakes';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -17,51 +17,44 @@ const SECTION_LABEL: React.CSSProperties = {
   color: 'var(--muted)', textTransform: 'uppercase',
 };
 
-// ── Game row type ─────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface GameRow {
   id: string;
   pgn: string;
   color: string;
+  result: string;
+  played_at: string;
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function useBestMoveAsync() {
-  const { getBestMove, isReady } = useStockfish();
-
-  function getBestMoveAsync(fen: string, depth: number): Promise<string> {
-    return new Promise<string>((resolve) => {
-      getBestMove(fen, depth, resolve);
-    });
-  }
-
-  return { getBestMoveAsync, isReady };
-}
-
-// ── Main page ─────────────────────────────────────────────────────────────────
 
 interface ProgressState {
   gameIndex: number;
   gameTotal: number;
   positionIndex: number;
-  cardsAdded: number;
+  positionTotal: number;
   errorsFound: number;
 }
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const BATCH       = 15;
+const SKIP_PLIES  = 6;
+const MIN_LOSS    = 150;
+const LOSING_BAD  = -800;
+const WINNING_OK  = 500;
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function AnalyzePage() {
   const [unanalyzedCount, setUnanalyzedCount] = useState<number | null>(null);
-  const [running, setRunning] = useState(false);
+  const [running, setRunning]   = useState(false);
   const [progress, setProgress] = useState<ProgressState | null>(null);
-  const [done, setDone] = useState<{ cardsAdded: number } | null>(null);
+  const [done, setDone]         = useState<{ cardsAdded: number } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const { getBestMoveAsync, isReady } = useBestMoveAsync();
+  const { evalPosition, isReady } = useStockfish();
   const runningRef = useRef(false);
 
-  // Load unanalyzed count
-  useEffect(() => {
-    void loadCount();
-  }, []);
+  useEffect(() => { void loadCount(); }, []);
 
   async function loadCount() {
     const { count } = await supabase
@@ -69,6 +62,10 @@ export default function AnalyzePage() {
       .select('id', { count: 'exact', head: true })
       .is('analyzed_at', null);
     setUnanalyzedCount(count ?? 0);
+  }
+
+  function stopAnalysis() {
+    runningRef.current = false;
   }
 
   async function analyzeGames() {
@@ -79,126 +76,152 @@ export default function AnalyzePage() {
     setLoadError(null);
 
     try {
-      // 1. Load up to 30 unanalyzed games
+      // Load up to BATCH unanalyzed games, most recent first
       const { data: games, error: gamesError } = await supabase
         .from('games')
-        .select('id,pgn,color')
+        .select('id,pgn,color,result,played_at')
         .is('analyzed_at', null)
-        .limit(30);
+        .order('played_at', { ascending: false })
+        .limit(BATCH);
 
       if (gamesError) {
-        setLoadError('Ошибка загрузки партий: ' + gamesError.message);
+        setLoadError('Ошибка загрузки: ' + gamesError.message);
         return;
       }
 
-      const gameList = (games ?? []) as GameRow[];
-      let totalCardsAdded = 0;
+      // Sort locally: losses first, then draws, then wins
+      const gameList = [...(games ?? []) as GameRow[]].sort((a, b) => {
+        const o: Record<string, number> = { loss: 0, draw: 1, win: 2 };
+        return (o[a.result] ?? 2) - (o[b.result] ?? 2);
+      });
+
+      let totalErrors = 0;
 
       for (let gi = 0; gi < gameList.length; gi++) {
+        if (!runningRef.current) break;
+
         const game = gameList[gi];
         const userColor = game.color === 'white' ? 'w' : 'b';
 
-        let moves;
+        let moves: ParsedMove[];
         try {
           moves = parsePgnMoves(game.pgn ?? '');
         } catch {
-          // Skip unparseable games
           await supabase.from('games').update({ analyzed_at: new Date().toISOString() }).eq('id', game.id);
           continue;
         }
 
-        for (let i = 0; i < moves.length; i++) {
-          const move = moves[i];
-          if (move.color !== userColor) continue;
-          if (move.eval_after_cp === null) continue;
+        if (!moves.length) {
+          await supabase.from('games').update({ analyzed_at: new Date().toISOString() }).eq('id', game.id);
+          continue;
+        }
 
-          // Find eval_before: last non-null eval_after from moves before this one
-          let evalBefore = 0;
-          for (let j = i - 1; j >= 0; j--) {
-            if (moves[j].eval_after_cp !== null) {
-              evalBefore = moves[j].eval_after_cp!;
-              break;
-            }
+        // Collect unique FENs to evaluate starting from SKIP_PLIES
+        // fen_after[i] === fen_before[i+1], so we only add the final fen_after
+        const fensToEval: string[] = [];
+        const fenSet = new Set<string>();
+        for (let i = SKIP_PLIES; i < moves.length; i++) {
+          const fb = moves[i].fen_before;
+          if (!fenSet.has(fb)) { fensToEval.push(fb); fenSet.add(fb); }
+          if (i === moves.length - 1) {
+            const fa = moves[i].fen_after;
+            if (!fenSet.has(fa)) { fensToEval.push(fa); fenSet.add(fa); }
           }
+        }
 
-          const evalAfter = move.eval_after_cp;
-          const evalLoss = userColor === 'w'
-            ? evalBefore - evalAfter
-            : evalAfter - evalBefore;
+        // Evaluate all FENs sequentially with Stockfish
+        const evalCache = new Map<string, { cp: number; bestMove: string }>();
+        let aborted = false;
 
-          if (evalLoss < 100) continue;
+        for (let fi = 0; fi < fensToEval.length; fi++) {
+          if (!runningRef.current) { aborted = true; break; }
 
           setProgress({
             gameIndex: gi + 1,
             gameTotal: gameList.length,
-            positionIndex: i + 1,
-            cardsAdded: totalCardsAdded,
-            errorsFound: evalLoss,
+            positionIndex: fi + 1,
+            positionTotal: fensToEval.length,
+            errorsFound: totalErrors,
           });
 
-          // Get best move from Stockfish
-          let bestMove = '';
           try {
-            bestMove = await getBestMoveAsync(move.fen_before, 12);
+            const result = await evalPosition(fensToEval[fi]);
+            evalCache.set(fensToEval[fi], result);
           } catch {
-            bestMove = '';
-          }
-
-          // Classify and detect phase
-          const tag = classifyMistake(move.fen_before, move.san, bestMove);
-          const phase = detectPhase(move.fen_before, move.move_number);
-
-          // Upsert game_analysis
-          const { data: gaRow } = await supabase
-            .from('game_analysis')
-            .upsert(
-              {
-                game_id: game.id,
-                move_number: move.move_number,
-                color: move.color,
-                san: move.san,
-                fen_before: move.fen_before,
-                eval_before: evalBefore,
-                eval_after: evalAfter,
-                best_move: bestMove,
-              },
-              { onConflict: 'game_id,move_number,color' },
-            )
-            .select('id')
-            .single();
-
-          // Insert mistake_card (upsert by game_id, fen_before, my_move)
-          const { error: mcError } = await supabase
-            .from('mistake_cards')
-            .upsert(
-              {
-                game_id: game.id,
-                game_analysis_id: gaRow?.id ?? null,
-                fen_before: move.fen_before,
-                my_move: move.san,
-                best_move: bestMove,
-                eval_before: evalBefore,
-                eval_loss: evalLoss,
-                phase,
-                tag,
-              },
-              { onConflict: 'game_id,fen_before,my_move', ignoreDuplicates: true },
-            );
-
-          if (!mcError) {
-            totalCardsAdded++;
+            aborted = true;
+            break;
           }
         }
 
-        // Mark game as analyzed
-        await supabase
-          .from('games')
-          .update({ analyzed_at: new Date().toISOString() })
-          .eq('id', game.id);
+        if (aborted) break;
+
+        // Detect mistakes and write to DB
+        for (let i = SKIP_PLIES; i < moves.length; i++) {
+          if (!runningRef.current) { aborted = true; break; }
+
+          const move = moves[i];
+          if (move.color !== userColor) continue;
+
+          const eb = evalCache.get(move.fen_before);
+          const ea = evalCache.get(move.fen_after);
+          if (!eb || !ea) continue;
+
+          // Convert to user's perspective (positive = good for user)
+          const evalBeforeUser = userColor === 'w' ? eb.cp : -eb.cp;
+          const evalAfterUser  = userColor === 'w' ? ea.cp : -ea.cp;
+          const evalLoss = evalBeforeUser - evalAfterUser;
+
+          if (evalLoss < MIN_LOSS) continue;
+          if (evalBeforeUser < LOSING_BAD) continue;  // already losing badly
+          if (evalAfterUser > WINNING_OK) continue;   // still comfortably winning
+
+          const tag   = classifyMistake(move.fen_before, move.san, eb.bestMove);
+          const phase = detectPhase(move.fen_before, move.move_number);
+
+          const { data: gaRow } = await supabase
+            .from('game_analysis')
+            .upsert({
+              game_id: game.id,
+              move_number: move.move_number,
+              color: move.color,
+              san: move.san,
+              fen_before: move.fen_before,
+              eval_before: eb.cp,
+              eval_after: ea.cp,
+              best_move: eb.bestMove,
+            }, { onConflict: 'game_id,move_number,color' })
+            .select('id')
+            .single();
+
+          const { error: mcError } = await supabase
+            .from('mistake_cards')
+            .upsert({
+              game_id: game.id,
+              game_analysis_id: gaRow?.id ?? null,
+              fen_before: move.fen_before,
+              my_move: move.san,
+              best_move: eb.bestMove,
+              eval_before: eb.cp,
+              eval_loss: evalLoss,
+              phase,
+              tag,
+            }, { onConflict: 'game_id,fen_before,my_move', ignoreDuplicates: true });
+
+          if (!mcError) totalErrors++;
+        }
+
+        // Mark analyzed only after full completion of this game
+        if (!aborted) {
+          await supabase.from('games').update({ analyzed_at: new Date().toISOString() }).eq('id', game.id);
+        }
+
+        if (aborted) break;
       }
 
-      setDone({ cardsAdded: totalCardsAdded });
-      await loadCount();
+      if (runningRef.current) {
+        setDone({ cardsAdded: totalErrors });
+        await loadCount();
+      }
     } catch (err) {
       console.error('Analysis failed:', err);
       setLoadError('Ошибка анализа');
@@ -214,17 +237,15 @@ export default function AnalyzePage() {
 
       {/* Header */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Link href="/games" style={{ fontSize: 13, color: 'var(--muted)' }}>
-            ← Партии
-          </Link>
-        </div>
+        <Link href="/games" style={{ fontSize: 13, color: 'var(--muted)' }}>
+          ← Партии
+        </Link>
         <h1 style={{ ...HEADING, margin: 0, fontSize: 48, fontWeight: 700, lineHeight: 0.92, letterSpacing: '-0.02em' }}>
           Анализ партий
         </h1>
       </div>
 
-      {/* Status bar */}
+      {/* Status */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ borderTop: '2px solid var(--ivory)', paddingTop: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
@@ -258,12 +279,25 @@ export default function AnalyzePage() {
         {/* Running progress */}
         {running && progress && (
           <div style={{ padding: '20px 24px', background: 'var(--surface)', border: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 8, height: 8, background: 'var(--ivory)', borderRadius: '50%', animation: 'pulse 1.5s infinite' }} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ivory)' }}>Анализируем…</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 8, height: 8, background: 'var(--ivory)', borderRadius: '50%', animation: 'pulse 1.5s infinite' }} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ivory)' }}>Анализируем…</span>
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>Не закрывай вкладку</span>
+              </div>
+              <button
+                onClick={stopAnalysis}
+                style={{
+                  height: 32, padding: '0 16px', fontSize: 13, fontWeight: 600,
+                  background: 'transparent', color: 'var(--muted)',
+                  border: '1px solid var(--hairline)', cursor: 'pointer',
+                }}
+              >
+                Стоп
+              </button>
             </div>
             <span style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
-              Партия {progress.gameIndex}/{progress.gameTotal} · Позиция {progress.positionIndex} · +{progress.cardsAdded} карточек
+              Партия {progress.gameIndex}/{progress.gameTotal} · ход {progress.positionIndex}/{progress.positionTotal} · найдено {progress.errorsFound} ошибок
             </span>
             <div style={{ height: 2, background: 'var(--track)' }}>
               <div style={{
@@ -307,17 +341,18 @@ export default function AnalyzePage() {
           </div>
         )}
 
-        {/* Info */}
+        {/* How it works */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 8 }}>
           <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 16 }}>
             <span style={SECTION_LABEL}>КАК РАБОТАЕТ</span>
           </div>
           <ul style={{ margin: 0, padding: '0 0 0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              'Загружаются партии с оценками %eval из chess.com',
-              'Ходы с потерей > 100 сентипешек помечаются как ошибки',
-              'Stockfish ищет лучший ход для каждой позиции',
-              'Создаются карточки для повторения по методу интервальных повторений',
+              `Загружаются до ${BATCH} непроанализированных партий — сначала проигранные, свежие первыми`,
+              `Первые ${SKIP_PLIES} полуходов пропускаются (дебютная теория)`,
+              'Stockfish оценивает каждую позицию (~120 мс) прямо в браузере',
+              `Ошибка: потеря ≥ ${MIN_LOSS} сентипешек с позиции, которая не была уже проигранной`,
+              'Карточки добавляются в банк ошибок для интервальных повторений',
             ].map((text, i) => (
               <li key={i} style={{ fontSize: 13, color: 'var(--muted)' }}>{text}</li>
             ))}

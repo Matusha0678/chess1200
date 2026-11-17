@@ -276,5 +276,35 @@ export function useStockfish() {
     }
   }, [isReady]);
 
-  return { getBestMove, getEval, getTopMoves, getMultiPV, startAnalysis, stopAnalysis, setSkillLevel, isReady };
+  // Promise-based: evaluate a position, return { cp (white's POV), bestMove }.
+  // Mate is encoded as ±9000. Limit: movetime 120 ms.
+  const evalPosition = useCallback(
+    (fen: string): Promise<{ cp: number; bestMove: string }> => {
+      return new Promise((resolve, reject) => {
+        if (!workerRef.current || !isReady) {
+          reject(new Error('Stockfish not ready'));
+          return;
+        }
+        if (isAnalyzingRef.current) skipBestMoveRef.current = true;
+        isAnalyzingRef.current  = false;
+        onAnalysisRef.current   = null;
+        onBestMoveRef.current   = null;
+        topMovesRef.current     = null;
+        multiPVRef.current      = null;
+        lastInfoRef.current     = {};
+        evalCallbackRef.current = (r: EvalResult) => {
+          const cp = r.mate !== undefined
+            ? (r.mate > 0 ? 9000 : -9000)
+            : (r.cp ?? 0);
+          resolve({ cp, bestMove: r.bestMove ?? '' });
+        };
+        workerRef.current.postMessage('stop');
+        workerRef.current.postMessage(`position fen ${fen}`);
+        workerRef.current.postMessage('go movetime 120');
+      });
+    },
+    [isReady],
+  );
+
+  return { getBestMove, getEval, getTopMoves, getMultiPV, startAnalysis, stopAnalysis, setSkillLevel, isReady, evalPosition };
 }
