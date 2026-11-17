@@ -6,6 +6,8 @@ import type { SquareRenderer } from 'react-chessboard';
 import Link from 'next/link';
 import { playMove, playCapture, playCorrect, playWrong, playComplete } from '@/lib/sounds';
 import { LessonTest } from '@/components/LessonTest';
+import { DeviationMode } from '@/components/DeviationMode';
+import { supabase } from '@/lib/supabase';
 import type {
   CourseLessonMove,
   CourseLesson,
@@ -198,11 +200,20 @@ export function LessonViewer({
   const [isCinema,    setIsCinema]    = useState(false);
   const [soundOn,     setSoundOn]     = useState(false);
   const [showEndPanel,setShowEndPanel]= useState(false);
-  const [showTest,    setShowTest]    = useState(false);
-  const [lessonPassed,setLessonPassed]= useState(false);
+  const [showTest,      setShowTest]      = useState(false);
+  const [lessonPassed,  setLessonPassed]  = useState(false);
+  const [showDeviation, setShowDeviation] = useState(false);
+  const [devStats,      setDevStats]      = useState<{ ok: number; total: number } | null>(null);
 
   const soundOnRef = useRef(false);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
+
+  // Load deviation stats for this lesson
+  useEffect(() => {
+    supabase.from('deviation_log').select('ok').eq('line_id', lessonId).then(({ data }) => {
+      if (data) setDevStats({ ok: data.filter(r => r.ok).length, total: data.length });
+    });
+  }, [lessonId]);
 
   // ── Derived values ─────────────────────────────────────────────────────────
 
@@ -273,6 +284,10 @@ export function LessonViewer({
   [lesson.blocks]);
 
   const lastFen = moves.length > 0 ? moves[moves.length - 1].fen : INITIAL_FEN;
+
+  const playerColorCode: 'w' | 'b' = boardOrientation === 'white' ? 'w' : 'b';
+  const nextOpponentMove = !variantMoves && moveIndex < moves.length ? moves[moveIndex] : null;
+  const deviationAvailable = !!nextOpponentMove && nextOpponentMove.color !== playerColorCode;
 
   // ── Navigation ─────────────────────────────────────────────────────────────
 
@@ -661,7 +676,23 @@ export function LessonViewer({
             >
               {isGuessMode ? 'УГАДАЙ ✓' : 'УГАДАЙ'}
             </button>
+
+            <button
+              onClick={() => setShowDeviation(true)}
+              disabled={!deviationAvailable}
+              title="Отклонение от линии"
+              style={{ height: 32, padding: '0 10px', border: '1px solid var(--hairline)', background: 'transparent', color: deviationAvailable ? 'rgba(220,80,60,0.9)' : 'var(--muted)', fontSize: 11, fontFamily: 'inherit', cursor: deviationAvailable ? 'pointer' : 'default', letterSpacing: '0.08em', opacity: deviationAvailable ? 1 : 0.45 }}
+            >
+              ОТКЛ
+            </button>
           </div>
+
+          {/* Deviation stats */}
+          {devStats && devStats.total > 0 && (
+            <div style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.08em', maxWidth: 560 }}>
+              Отклонения: {devStats.ok} / {devStats.total}
+            </div>
+          )}
         </div>
 
         {/* ── RIGHT: lesson panel ── */}
@@ -787,6 +818,21 @@ export function LessonViewer({
           nextLesson={nextLesson}
           onClose={() => setShowTest(false)}
           onPassed={() => setLessonPassed(true)}
+        />
+      )}
+
+      {/* Deviation overlay */}
+      {showDeviation && nextOpponentMove && (
+        <DeviationMode
+          startFen={currentFen}
+          opponentLineUci={nextOpponentMove.from + nextOpponentMove.to}
+          playerColor={playerColorCode}
+          boardOrientation={orientation}
+          lineId={lessonId}
+          boardTheme={boardTheme}
+          customPieces={customPieces}
+          showNotation={showNotation}
+          onClose={() => setShowDeviation(false)}
         />
       )}
 

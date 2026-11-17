@@ -5,12 +5,12 @@ import type { Square } from 'chess.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type MistakeTag = 'hanging' | 'missed_check' | 'missed_tactic' | 'positional';
+export type MistakeTag = 'hanging' | 'missed_check' | 'missed_tactic' | 'positional' | 'deviation';
 export type GamePhase = 'opening' | 'middlegame' | 'endgame';
 
 export interface MistakeCard {
   id: string;
-  game_id: string;
+  game_id: string | null;
   game_analysis_id: string | null;
   fen_before: string;
   my_move: string;        // SAN
@@ -55,6 +55,7 @@ export const TAG_LABEL: Record<MistakeTag, string> = {
   missed_check:   'Пропущенный шах/взятие',
   missed_tactic:  'Пропущенная тактика',
   positional:     'Позиционная',
+  deviation:      'Отклонение',
 };
 
 export const PHASE_LABEL: Record<GamePhase, string> = {

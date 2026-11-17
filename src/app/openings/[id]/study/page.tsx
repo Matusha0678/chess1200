@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
+import { DeviationMode } from '@/components/DeviationMode';
+import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import type { Opening, OpeningLine } from '@/types/openings';
 
 interface Props {
@@ -25,6 +27,7 @@ function pluralLines(n: number) {
 export default function StudyPage({ params }: Props) {
   const { id } = use(params);
   const router = useRouter();
+  const { boardTheme, customPieces, showNotation } = useBoardTheme();
 
   const [opening, setOpening] = useState<Opening | null>(null);
   const [allLines, setAllLines] = useState<OpeningLine[]>([]);
@@ -41,6 +44,10 @@ export default function StudyPage({ params }: Props) {
   const [chess] = useState(() => new Chess());
   const [autoPlay, setAutoPlay] = useState(false);
   const [highlightSquares, setHighlightSquares] = useState<Record<string, React.CSSProperties>>({});
+
+  // Deviation state
+  const [showDeviation, setShowDeviation] = useState(false);
+  const [devStats, setDevStats] = useState<{ ok: number; total: number } | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -77,14 +84,23 @@ export default function StudyPage({ params }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const currentLine = allLines[currentLineIndex] ?? null;
+
+  // Load deviation stats for current line
+  const currentLineId = currentLine?.id ?? null;
+  useEffect(() => {
+    if (!currentLineId) return;
+    supabase.from('deviation_log').select('ok').eq('line_id', currentLineId).then(({ data }) => {
+      if (data) setDevStats({ ok: data.filter((r: { ok: boolean }) => r.ok).length, total: data.length });
+    });
+  }, [currentLineId]);
+
   async function markLineStudied(lineId: string) {
     await supabase.from('line_study').upsert(
       { line_id: lineId, last_studied: new Date().toISOString() },
       { onConflict: 'line_id' }
     );
   }
-
-  const currentLine = allLines[currentLineIndex] ?? null;
 
   function resetBoard(lineIdx: number) {
     chess.reset();
@@ -146,7 +162,6 @@ export default function StudyPage({ params }: Props) {
     } else {
       setHighlightSquares({});
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMoveIndex, currentLine, chess]);
 
   // ── Keyboard navigation ────────────────────────────────────────────────────
@@ -254,6 +269,11 @@ export default function StudyPage({ params }: Props) {
 
   const lineDone = currentMoveIndex >= (currentLine?.moves.length ?? 0);
   const boardOrientation = opening.color === 'black' ? 'black' : 'white';
+  const playerColorCode: 'w' | 'b' = opening.color === 'black' ? 'b' : 'w';
+  const nextOpponentMove = currentLine && currentMoveIndex < currentLine.moves.length
+    ? currentLine.moves[currentMoveIndex]
+    : null;
+  const deviationAvailable = !!nextOpponentMove && nextOpponentMove.color !== playerColorCode;
 
   return (
     <main className="max-w-[1600px] mx-auto px-6 pt-6 pb-10">
@@ -371,7 +391,22 @@ export default function StudyPage({ params }: Props) {
                 {currentLineIndex < allLines.length - 1 ? 'Следующая линия →' : 'Завершить →'}
               </button>
             )}
+
+            <button
+              onClick={() => setShowDeviation(true)}
+              disabled={!deviationAvailable}
+              style={{ height: 36, padding: '0 12px', border: '1px solid #303030', background: 'transparent', color: deviationAvailable ? 'rgba(220,80,60,0.9)' : '#505050', fontSize: 11, fontFamily: 'inherit', cursor: deviationAvailable ? 'pointer' : 'default', letterSpacing: '0.08em', opacity: deviationAvailable ? 1 : 0.4, borderRadius: 8 }}
+            >
+              ОТКЛ
+            </button>
           </div>
+
+          {/* Deviation stats */}
+          {devStats && devStats.total > 0 && (
+            <div style={{ fontSize: 11, color: '#707070', letterSpacing: '0.08em' }}>
+              Отклонения: {devStats.ok} / {devStats.total}
+            </div>
+          )}
 
           {lineDone && (
             <button onClick={() => resetBoard(currentLineIndex)}
@@ -441,6 +476,21 @@ export default function StudyPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Deviation overlay */}
+      {showDeviation && nextOpponentMove && currentLine && (
+        <DeviationMode
+          startFen={fen}
+          opponentLineUci={nextOpponentMove.from + nextOpponentMove.to}
+          playerColor={playerColorCode}
+          boardOrientation={boardOrientation}
+          lineId={currentLine.id}
+          boardTheme={boardTheme}
+          customPieces={customPieces}
+          showNotation={showNotation}
+          onClose={() => setShowDeviation(false)}
+        />
+      )}
     </main>
   );
 }
