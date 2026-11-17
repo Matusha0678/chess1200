@@ -233,6 +233,11 @@ export default function CourseOverviewPage({ params }: Props) {
             {course.description}
           </p>
         )}
+        <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+          <Link href={`/courses/${courseId}/cheatsheet`} style={{ display: 'inline-flex', alignItems: 'center', height: 36, padding: '0 16px', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 13, textDecoration: 'none' }}>
+            Шпаргалка
+          </Link>
+        </div>
       </div>
 
       {/* Lessons list */}

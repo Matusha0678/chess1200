@@ -216,6 +216,46 @@ export function LessonViewer({
   const [showExplain,   setShowExplain]   = useState(false);
   const [explainFailed, setExplainFailed] = useState<TestQuestion[]>([]);
 
+  // ── Notes (T6) ─────────────────────────────────────────────────────────────
+  const [notesByPly,   setNotesByPly]   = useState<Record<number, { id: string; body: string; kind: string }[]>>({});
+  const [noteInput,    setNoteInput]    = useState('');
+  const [savingNote,   setSavingNote]   = useState(false);
+  const [notesLoaded,  setNotesLoaded]  = useState(false);
+
+  // Load all notes for lesson once
+  useEffect(() => {
+    supabase.from('lesson_notes').select('id, ply, body, kind').eq('lesson_id', lessonId).eq('resolved', false)
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<number, { id: string; body: string; kind: string }[]> = {};
+        for (const n of data as Array<{ id: string; ply: number; body: string; kind: string }>) {
+          if (!map[n.ply]) map[n.ply] = [];
+          map[n.ply].push({ id: n.id, body: n.body, kind: n.kind });
+        }
+        setNotesByPly(map);
+        setNotesLoaded(true);
+      });
+  }, [lessonId]);
+
+  async function saveNote(kind: 'note' | 'confused') {
+    if (savingNote) return;
+    const body = kind === 'confused' ? '(не понял)' : noteInput.trim();
+    if (!body) return;
+    setSavingNote(true);
+    const ply = activeIdx;
+    const { data } = await supabase.from('lesson_notes').insert({ lesson_id: lessonId, ply, body, kind }).select('id').single();
+    if (data) {
+      setNotesByPly(prev => {
+        const next = { ...prev };
+        if (!next[ply]) next[ply] = [];
+        next[ply] = [...next[ply], { id: (data as { id: string }).id, body, kind }];
+        return next;
+      });
+    }
+    setNoteInput('');
+    setSavingNote(false);
+  }
+
   const soundOnRef = useRef(false);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
 
@@ -635,6 +675,33 @@ export function LessonViewer({
             }
           </div>
 
+          {/* Notes (T6) */}
+          {notesLoaded && (
+            <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {(notesByPly[activeIdx] ?? []).map(n => (
+                <div key={n.id} style={{ fontSize: 12, color: 'var(--muted)', padding: '4px 10px', border: '1px solid var(--hairline)', background: n.kind === 'confused' ? 'rgba(220,80,60,0.07)' : 'rgba(100,180,255,0.07)', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                  <span style={{ color: n.kind === 'confused' ? 'rgba(220,80,60,0.9)' : 'rgba(100,180,255,0.9)', flexShrink: 0 }}>{n.kind === 'confused' ? '?' : '✎'}</span>
+                  <span>{n.body}</span>
+                </div>
+              ))}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input
+                  value={noteInput}
+                  onChange={e => setNoteInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && noteInput.trim()) void saveNote('note'); }}
+                  placeholder="Заметка к ходу…"
+                  style={{ flex: 1, height: 32, padding: '0 10px', fontSize: 13, background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ivory)', outline: 'none', fontFamily: 'inherit' }}
+                />
+                <button onClick={() => void saveNote('note')} disabled={!noteInput.trim() || savingNote} style={{ height: 32, padding: '0 12px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                  Сохранить
+                </button>
+                <button onClick={() => void saveNote('confused')} disabled={savingNote} title="Не понял этот ход" style={{ height: 32, padding: '0 12px', background: 'rgba(220,80,60,0.08)', border: '1px solid rgba(220,80,60,0.3)', color: 'rgba(220,80,60,0.9)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                  Не понял
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Variants */}
           {currentVariants && !variantMoves && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 560 }}>
@@ -745,7 +812,7 @@ export function LessonViewer({
             ))}
           </div>
           <div style={{ padding: 20, overflowY: 'auto', maxHeight: 480 }}>
-            {activeTab === 'moves'    && <><MoveListPanel moves={moves} currentIndex={variantMoves ? -1 : moveIndex} onMoveClick={idx => { exitVariant(); goTo(idx); }} animEnabled={animEnabled} /><BadgeLegend /></>}
+            {activeTab === 'moves'    && <><MoveListPanel moves={moves} currentIndex={variantMoves ? -1 : moveIndex} onMoveClick={idx => { exitVariant(); goTo(idx); }} animEnabled={animEnabled} notesByPly={notesByPly} /><BadgeLegend /></>}
             {activeTab === 'summary'  && <LessonText text={lesson.summary} />}
             {activeTab === 'plan'     && <LessonText text={lesson.plan} />}
             {activeTab === 'mistakes' && <LessonText text={lesson.mistakes} />}
@@ -1083,12 +1150,13 @@ function QuizChoiceBlock({ item, idx }: { item: QuizItem; idx: number }) {
 // ── MoveListPanel ─────────────────────────────────────────────────────────────
 
 function MoveListPanel({
-  moves, currentIndex, onMoveClick, animEnabled,
+  moves, currentIndex, onMoveClick, animEnabled, notesByPly,
 }: {
   moves: CourseLessonMove[];
   currentIndex: number;
   onMoveClick: (idx: number) => void;
   animEnabled: boolean;
+  notesByPly?: Record<number, { id: string; body: string; kind: string }[]>;
 }) {
   const activeRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
@@ -1108,18 +1176,19 @@ function MoveListPanel({
           <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
             {Math.floor(wi / 2) + 1}.
           </span>
-          <MoveBtn m={w} idx={wi + 1} current={currentIndex} onClick={onMoveClick} refProp={wi + 1 === currentIndex ? activeRef : undefined} />
-          {b && <MoveBtn m={b} idx={bi + 1} current={currentIndex} onClick={onMoveClick} refProp={bi + 1 === currentIndex ? activeRef : undefined} />}
+          <MoveBtn m={w} idx={wi + 1} current={currentIndex} onClick={onMoveClick} refProp={wi + 1 === currentIndex ? activeRef : undefined} hasNote={!!(notesByPly?.[wi + 1]?.length)} />
+          {b && <MoveBtn m={b} idx={bi + 1} current={currentIndex} onClick={onMoveClick} refProp={bi + 1 === currentIndex ? activeRef : undefined} hasNote={!!(notesByPly?.[bi + 1]?.length)} />}
         </div>
       ))}
     </div>
   );
 }
 
-function MoveBtn({ m, idx, current, onClick, refProp }: {
+function MoveBtn({ m, idx, current, onClick, refProp, hasNote }: {
   m: CourseLessonMove; idx: number; current: number;
   onClick: (idx: number) => void;
   refProp?: React.RefObject<HTMLButtonElement | null>;
+  hasNote?: boolean;
 }) {
   const isActive  = idx === current;
   const label     = getEffectiveLabel(m);
@@ -1133,6 +1202,7 @@ function MoveBtn({ m, idx, current, onClick, refProp }: {
       {m.san}
       {label     && <MoveBadge label={label} variant="inline" />}
       {hasArrows && !label && <span style={{ fontSize: 9, color: 'var(--control)', lineHeight: 1 }}>▸</span>}
+      {hasNote   && <span style={{ fontSize: 9, color: 'rgba(100,180,255,0.9)', lineHeight: 1 }} title="Есть заметка">✎</span>}
     </button>
   );
 }
