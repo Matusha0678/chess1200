@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import { Chess } from 'chess.js';
 import type { Square } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
-import type { PieceDropHandlerArgs } from 'react-chessboard';
+import type { PieceDropHandlerArgs, SquareRenderer } from 'react-chessboard';
+import { ClassIcon } from '@/components/ClassIcon';
+import type { MoveClass } from '@/lib/classify';
 import { supabase } from '@/lib/supabase';
 import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { useStockfish } from '@/hooks/useStockfish';
@@ -427,6 +429,56 @@ export default function MistakesPage() {
     }
   }
 
+  // Compute destination squares and classification badge for answered state
+  let userMoveToSq: string | null = null;
+  let bestMoveToSq: string | null = null;
+  let userMoveCls: MoveClass | null = null;
+
+  if (answered && card) {
+    try {
+      const chess = new Chess(card.fen_before);
+      const mv = chess.move(answered.userSan);
+      if (mv) userMoveToSq = mv.to;
+    } catch { /* ignore */ }
+
+    if (card.best_move && card.best_move.length >= 4) {
+      bestMoveToSq = card.best_move.slice(2, 4);
+    }
+
+    if (!answered.correct) {
+      // Determine severity by eval loss
+      const loss = answered.evalBestCp !== undefined && answered.evalMyMoveCp !== undefined
+        ? answered.evalBestCp - answered.evalMyMoveCp
+        : card.eval_loss;
+      userMoveCls = loss > 150 ? 'blunder' : loss > 70 ? 'mistake' : 'inaccuracy';
+    } else {
+      userMoveCls = answered.alternate ? 'good' : 'best';
+    }
+  }
+
+  const squareRenderer: SquareRenderer = ({ square, children }) => {
+    const isUserTo = square === userMoveToSq;
+    const isBestTo = square === bestMoveToSq && answered && !answered.correct;
+    if (!isUserTo && !isBestTo) return <>{children}</>;
+    const cls: MoveClass = isBestTo ? 'best' : (userMoveCls ?? 'blunder');
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        {children}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute', top: 2, left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10, pointerEvents: 'none',
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
+          }}
+        >
+          <ClassIcon cls={cls} size={30} />
+        </div>
+      </div>
+    );
+  };
+
   const boardKey = `${boardThemeId}-${pieceStyleId}-${boardOrientation}-${card?.id ?? 'none'}`;
 
   return (
@@ -560,6 +612,7 @@ export default function MistakesPage() {
                   boardOrientation,
                   onPieceDrop: answered ? undefined : handlePieceDrop,
                   squareStyles,
+                  squareRenderer,
                   allowDragging: !answered && !checking,
                   boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
                   darkSquareStyle: { backgroundColor: boardTheme.dark },
