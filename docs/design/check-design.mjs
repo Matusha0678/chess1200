@@ -35,6 +35,7 @@ const EXPLICIT = args.length > 0;   // страницы указаны — от�
 const PAGES = args.length ? args : [
   '/mistakes', '/threats', '/sac', '/play', '/repertoire', '/endgames', '/guess-opening', '/traps',
   '/plans', '/evaluate', '/warmup', '/openings/random',
+  '/stats', '/convert', '/tactics', '/blind',
 ];
 const SIZES = [
   { w: 1920, h: 950, minBoard: 760, needSession: true },
@@ -42,7 +43,7 @@ const SIZES = [
 ];
 
 // Страницы, у которых проверяется структура (метки data-ui). Остальные — только техника.
-const STRUCTURE = ['/mistakes', '/threats', '/sac', '/play', '/repertoire'];
+const STRUCTURE = ['/mistakes', '/threats', '/sac', '/play', '/repertoire', '/stats', '/tactics', '/blind'];
 const COMMON_UI = ['player-top', 'player-bottom', 'panel', 'panel-header', 'panel-title', 'panel-actions'];
 const SESSION_UI = ['session', 'session-stats', 'session-list'];
 // «a|b» — достаточно любой из меток (разные состояния страницы)
@@ -55,6 +56,9 @@ const PAGE_UI = {
     'sac-weigh|sac-gave-got|sac-empty|sac-prep-progress',
     'sac-choice|sac-feedback|sac-empty|sac-prep-progress',
   ],
+  '/stats': ['stats-row|stats-empty', 'stats-insight|stats-empty'],
+  '/tactics': ['tactics-feedback|tactics-sets|tactics-empty'],
+  '/blind': ['blind-line', 'blind-feedback|blind-task'],
 };
 // Старые элементы, которых быть не должно
 const FORBIDDEN = {
@@ -70,6 +74,12 @@ const LIST_PAGES = {
     minCols: { 1920: 5, 1440: 3 }, minBoard: 230,
     forbidden: ['Любая сложность', 'Отыгрывай типовые позиции'],
     titleNotIn: ['Король и пешка', 'Ладейные', 'Лёгкие фигуры', 'Ферзь против пешки'],
+  },
+  '/convert': {
+    ui: ['eg-left', 'eg-next', 'eg-grid', 'eg-card', 'eg-board', 'eg-card-title'],
+    minCols: { 1920: 5, 1440: 3 }, minBoard: 230,
+    forbidden: [],
+    titleNotIn: [],
   },
 };
 const listKeyOf = pp => Object.keys(LIST_PAGES).find(k => pp === k || pp.startsWith(k + '.'));
