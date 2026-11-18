@@ -5,56 +5,33 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Chess } from 'chess.js';
 import type { Square } from 'chess.js';
-import { Chessboard } from 'react-chessboard';
 import type { PieceDropHandlerArgs, SquareRenderer } from 'react-chessboard';
 import { ClassIcon } from '@/components/ClassIcon';
 import type { MoveClass } from '@/lib/classify';
 import { supabase } from '@/lib/supabase';
-import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { useStockfish } from '@/hooks/useStockfish';
 import { PlayButton } from '@/components/PlayButton';
+import { Board } from '@/components/board/Board';
+import { TrainerLayout } from '@/components/trainer/TrainerLayout';
 import {
   type MistakeCard, type MistakeTag, type GamePhase,
   TAG_LABEL, PHASE_LABEL, nextReviewDate,
 } from '@/lib/mistakes';
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
-
-const HEADING: React.CSSProperties = {
-  fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-};
-
-const SECTION_LABEL: React.CSSProperties = {
-  fontSize: 11, fontWeight: 600, letterSpacing: '0.16em',
-  color: 'var(--muted)', textTransform: 'uppercase',
-};
-
-const SEL: React.CSSProperties = {
-  height: 36, padding: '0 10px', fontSize: 13,
-  background: 'var(--surface)', color: 'var(--ivory)',
-  border: '1px solid var(--hairline)', cursor: 'pointer', outline: 'none',
-};
-
-// ── XP helper ─────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function addXp(amount: number) {
   if (amount <= 0) return;
   const { data } = await supabase
-    .from('user_xp')
-    .select('total_xp')
-    .eq('id', 1)
-    .maybeSingle();
+    .from('user_xp').select('total_xp').eq('id', 1).maybeSingle();
   const current = (data as { total_xp: number } | null)?.total_xp ?? 0;
-  await supabase
-    .from('user_xp')
-    .upsert({ id: 1, total_xp: current + amount });
+  await supabase.from('user_xp').upsert({ id: 1, total_xp: current + amount });
 }
 
-// ── SR update ─────────────────────────────────────────────────────────────────
-
 async function updateCard(card: MistakeCard, correct: boolean) {
-  const oldMastery = card.mastery;
-  const newMastery = correct ? Math.min(oldMastery + 1, 5) : Math.max(oldMastery - 1, 0);
+  const newMastery = correct
+    ? Math.min(card.mastery + 1, 5)
+    : Math.max(card.mastery - 1, 0);
   const now = new Date().toISOString();
   await supabase.from('mistake_cards').update({
     mastery: newMastery,
@@ -65,49 +42,38 @@ async function updateCard(card: MistakeCard, correct: boolean) {
   }).eq('id', card.id);
 }
 
-// ── UCI to SAN helper ─────────────────────────────────────────────────────────
-
 function uciToSan(fen: string, uci: string): string {
   if (!uci || uci.length < 4) return uci;
   try {
     const chess = new Chess(fen);
-    const from = uci.slice(0, 2) as Square;
-    const to = uci.slice(2, 4) as Square;
-    const promotion = uci.length === 5 ? uci[4] as 'q' | 'r' | 'b' | 'n' : undefined;
-    const result = chess.move({ from, to, promotion });
+    const result = chess.move({
+      from: uci.slice(0, 2) as Square,
+      to: uci.slice(2, 4) as Square,
+      promotion: uci.length === 5 ? uci[4] as 'q' | 'r' | 'b' | 'n' : undefined,
+    });
     return result?.san ?? uci;
-  } catch {
-    return uci;
-  }
+  } catch { return uci; }
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
-
-interface ComputedLine {
-  uci: string;
-  evalWhite: number; // centipawns, always white's perspective
+function fmtEval(cp: number): string {
+  return `${cp >= 0 ? '+' : ''}${(cp / 100).toFixed(2)}`;
 }
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface ComputedLine { uci: string; evalWhite: number; }
 
 interface AnswerState {
   correct: boolean;
   alternate: boolean;
   userSan: string;
   xpEarned: number;
-  evalMyMoveCp?: number;  // centipawns, user's perspective
-  evalBestCp?: number;    // centipawns, user's perspective
+  evalMyMoveCp?: number;
+  evalBestCp?: number;
 }
 
-function fmtEval(cp: number): string {
-  const s = cp >= 0 ? '+' : '';
-  return `${s}${(cp / 100).toFixed(2)}`;
-}
-
-interface Filters {
-  tag: MistakeTag | '';
-  phase: GamePhase | '';
-}
-
-// ── Tag rules (шаблоны для мини-курса) ──────────────────────────────────────
+interface SessionScore { correct: number; incorrect: number; streak: number; xp: number; }
+interface Filters { tag: MistakeTag | ''; phase: GamePhase | ''; }
 
 const TAG_RULE: Record<string, string> = {
   hanging:        'Перед ходом спроси: что хочет сделать соперник? Проверь, не осталась ли фигура без защиты.',
@@ -116,6 +82,8 @@ const TAG_RULE: Record<string, string> = {
   positional:     'Оцени пешечную структуру и активность фигур перед ходом.',
   deviation:      'Выучи линию точно: каждое отклонение даёт сопернику преимущество.',
 };
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function MistakesPage() {
   const router = useRouter();
@@ -128,8 +96,8 @@ export default function MistakesPage() {
   const [currentFen, setCurrentFen] = useState<string>('');
   const [buildingCourse, setBuildingCourse] = useState(false);
   const [buildError, setBuildError] = useState<string | null>(null);
+  const [session, setSession] = useState<SessionScore>({ correct: 0, incorrect: 0, streak: 0, xp: 0 });
 
-  const { boardTheme, customPieces, showNotation: notationEnabled, animationMs, boardThemeId, pieceStyleId } = useBoardTheme();
   const { getMultiPV, evalPosition, setSkillLevel, isReady } = useStockfish();
   const cardLinesRef = useRef<ComputedLine[] | null>(null);
 
@@ -138,7 +106,6 @@ export default function MistakesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  // Precompute top-3 lines for the current card (Skill Level 20, depth 14)
   useEffect(() => {
     const currentCard = cards[index] ?? null;
     if (!currentCard || !isReady) return;
@@ -164,10 +131,8 @@ export default function MistakesPage() {
     setLoading(true);
     const now = new Date().toISOString();
     let query = supabase
-      .from('mistake_cards')
-      .select('*')
-      .lte('next_review', now)
-      .order('next_review');
+      .from('mistake_cards').select('*')
+      .lte('next_review', now).order('next_review');
     if (filters.tag) query = query.eq('tag', filters.tag);
     if (filters.phase) query = query.eq('phase', filters.phase);
     const { data } = await query.limit(50);
@@ -175,9 +140,7 @@ export default function MistakesPage() {
     setCards(loaded);
     setIndex(0);
     setAnswered(null);
-    if (loaded.length > 0) {
-      setCurrentFen(loaded[0].fen_before);
-    }
+    if (loaded.length > 0) setCurrentFen(loaded[0].fen_before);
     setLoading(false);
   }
 
@@ -185,94 +148,63 @@ export default function MistakesPage() {
     setBuildingCourse(true);
     setBuildError(null);
     try {
-      // Get top-10 cards by eval_loss for selected tag (or all)
       let q = supabase.from('mistake_cards').select('*').order('eval_loss', { ascending: false }).limit(10);
       if (filters.tag) q = q.eq('tag', filters.tag);
       const { data: topCards } = await q;
       const selectedCards = (topCards ?? []) as MistakeCard[];
-      if (selectedCards.length === 0) {
-        setBuildError('Нет карточек для курса.');
-        setBuildingCourse(false);
-        return;
-      }
+      if (selectedCards.length === 0) { setBuildError('Нет карточек для курса.'); setBuildingCourse(false); return; }
 
       const tagKey = filters.tag || 'hanging';
       const tagLabel = TAG_LABEL[tagKey as keyof typeof TAG_LABEL] ?? 'Ошибки';
       const rule = TAG_RULE[tagKey] ?? TAG_RULE.hanging;
       const slug = `personal-mistakes-${Date.now()}`;
 
-      // Create course
       const { data: courseRow, error: courseErr } = await supabase.from('courses').insert({
-        slug,
-        name: `Мини-курс: ${tagLabel}`,
-        color: 'both',
-        opening: '',
-        kind: 'personal',
-        description: `Курс из ${selectedCards.length} твоих ошибок по теме «${tagLabel}».`,
+        slug, name: `Мини-курс: ${tagLabel}`, color: 'both', opening: '',
+        kind: 'personal', description: `Курс из ${selectedCards.length} твоих ошибок по теме «${tagLabel}».`,
         difficulty: 3,
       }).select('id').single();
 
       if (courseErr || !courseRow) {
-        // If kind constraint fails
-        if (courseErr?.message?.includes('kind')) {
-          setBuildError('Выполни supabase/19-courses-personal.sql, затем повтори.');
-        } else {
-          setBuildError(courseErr?.message ?? 'Не удалось создать курс.');
-        }
+        setBuildError(courseErr?.message?.includes('kind')
+          ? 'Выполни supabase/19-courses-personal.sql, затем повтори.'
+          : (courseErr?.message ?? 'Не удалось создать курс.'));
         setBuildingCourse(false);
         return;
       }
 
       const courseId: string = (courseRow as { id: string }).id;
 
-      // Create one lesson per card
       for (let i = 0; i < selectedCards.length; i++) {
         const c = selectedCards[i];
         const chess = new Chess(c.fen_before);
         const bestSan = (() => {
           if (!c.best_move || c.best_move.length < 4) return '';
           try {
-            const from = c.best_move.slice(0, 2) as Square;
-            const to   = c.best_move.slice(2, 4) as Square;
-            const prom = c.best_move.length === 5 ? c.best_move[4] as 'q'|'r'|'b'|'n' : undefined;
-            const mv   = chess.move({ from, to, promotion: prom });
+            const mv = chess.move({
+              from: c.best_move.slice(0, 2) as Square,
+              to: c.best_move.slice(2, 4) as Square,
+              promotion: c.best_move.length === 5 ? c.best_move[4] as 'q'|'r'|'b'|'n' : undefined,
+            });
             return mv?.san ?? '';
           } catch { return ''; }
         })();
 
-        const lessonTitle = `Зевок ${i + 1}: ${tagLabel.toLowerCase()}${bestSan ? ` (${bestSan})` : ''}`;
-        const summary = `Позиция после моего хода ${c.my_move}. Лучший ход: ${bestSan || c.best_move}.`;
-        const plan    = rule;
-        const mistakes = `Мой ход: ${c.my_move}. Потеря: ${c.eval_loss} сотых пешки.`;
-
-        const { data: lessonRow, error: lessonErr } = await supabase.from('course_lessons').insert({
-          course_id: courseId,
-          lesson_order: i,
-          title: lessonTitle,
-          summary,
-          plan,
-          mistakes,
-          trap: '',
+        const { data: lessonRow } = await supabase.from('course_lessons').insert({
+          course_id: courseId, lesson_order: i,
+          title: `Зевок ${i + 1}: ${tagLabel.toLowerCase()}${bestSan ? ` (${bestSan})` : ''}`,
+          summary: `Позиция после моего хода ${c.my_move}. Лучший ход: ${bestSan || c.best_move}.`,
+          plan: rule, mistakes: `Мой ход: ${c.my_move}. Потеря: ${c.eval_loss} сотых пешки.`, trap: '',
           blocks: [
             { type: 'text', md: `**Запомни:** ${rule}` },
-            {
-              type: 'puzzle',
-              fen: c.fen_before,
-              question: 'Найди лучший ход',
+            { type: 'puzzle', fen: c.fen_before, question: 'Найди лучший ход',
               answer: bestSan || c.best_move,
-              why: `Лучший ход: ${bestSan || c.best_move}. Потеря составила ${c.eval_loss} сотых пешки.`,
-            },
+              why: `Лучший ход: ${bestSan || c.best_move}. Потеря составила ${c.eval_loss} сотых пешки.` },
           ],
         }).select('id').single();
-
-        if (lessonErr || !lessonRow) continue;
-
-        // Add empty line (position before my move)
+        if (!lessonRow) continue;
         await supabase.from('lesson_lines').insert({
-          lesson_id: (lessonRow as { id: string }).id,
-          line_order: 0,
-          moves: [],
-          start_fen: c.fen_before,
+          lesson_id: (lessonRow as { id: string }).id, line_order: 0, moves: [], start_fen: c.fen_before,
         });
       }
 
@@ -289,12 +221,10 @@ export default function MistakesPage() {
   function handlePieceDrop({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean {
     if (!card || answered || checking) return false;
     if (!targetSquare) return false;
-
     const chess = new Chess(card.fen_before);
     let moveResult;
-    try {
-      moveResult = chess.move({ from: sourceSquare as Square, to: targetSquare as Square });
-    } catch { return false; }
+    try { moveResult = chess.move({ from: sourceSquare as Square, to: targetSquare as Square }); }
+    catch { return false; }
     if (!moveResult) return false;
 
     const userSan = moveResult.san;
@@ -303,37 +233,27 @@ export default function MistakesPage() {
     setCurrentFen(newFen);
 
     const userColor = card.fen_before.split(' ')[1] as 'w' | 'b';
+    if (userUci === card.best_move) { void handleCorrect(userSan, false); return true; }
 
-    // Exact best move — instant correct
-    if (userUci === card.best_move) {
-      void handleCorrect(userSan, false);
-      return true;
-    }
-
-    // Fast path: check against precomputed top-3 lines
     const lines = cardLinesRef.current;
     if (lines && lines.length > 0) {
       const bestEvalUser = userColor === 'w' ? lines[0].evalWhite : -lines[0].evalWhite;
       const match = lines.find(l => l.uci === userUci);
       if (match) {
         const lineEvalUser = userColor === 'w' ? match.evalWhite : -match.evalWhite;
-        const loss = bestEvalUser - lineEvalUser;
-        if (loss <= 80 || (bestEvalUser > 500 && lineEvalUser > 400)) {
+        if (bestEvalUser - lineEvalUser <= 80 || (bestEvalUser > 500 && lineEvalUser > 400)) {
           void handleCorrect(userSan, true, lineEvalUser, bestEvalUser);
           return true;
         }
       }
     }
 
-    // Async fallback: evalPosition on resulting position (~1 s, Skill 20)
-    if (!isReady) {
-      void handleWrong(userSan, undefined, undefined);
-      return true;
-    }
+    if (!isReady) { void handleWrong(userSan, undefined, undefined); return true; }
     setChecking(true);
-
-    const evalBeforeWhite = card.eval_before ?? 0;
-    const evalBeforeUser = userColor === 'w' ? evalBeforeWhite : -evalBeforeWhite;
+    const evalBeforeUser = (() => {
+      const ew = card.eval_before ?? 0;
+      return userColor === 'w' ? ew : -ew;
+    })();
     const bestEvalUser = lines && lines.length > 0
       ? (userColor === 'w' ? lines[0].evalWhite : -lines[0].evalWhite)
       : evalBeforeUser;
@@ -342,9 +262,8 @@ export default function MistakesPage() {
       try {
         const { cp: evalAfterWhite } = await evalPosition(newFen, 1000);
         const evalAfterUser = userColor === 'w' ? evalAfterWhite : -evalAfterWhite;
-        const evalLoss = evalBeforeUser - evalAfterUser;
         setChecking(false);
-        if (evalLoss <= 80 || evalAfterUser > 500) {
+        if (evalAfterUser > 500 || evalBeforeUser - evalAfterUser <= 80) {
           void handleCorrect(userSan, true, evalAfterUser, bestEvalUser);
         } else {
           void handleWrong(userSan, evalAfterUser, bestEvalUser);
@@ -354,7 +273,6 @@ export default function MistakesPage() {
         void handleWrong(userSan, undefined, undefined);
       }
     })();
-
     return true;
   }
 
@@ -362,6 +280,7 @@ export default function MistakesPage() {
     if (!card) return;
     const xp = alternate ? 5 : 10;
     setAnswered({ correct: true, alternate, userSan, xpEarned: xp, evalMyMoveCp, evalBestCp });
+    setSession(s => ({ ...s, correct: s.correct + 1, streak: s.streak + 1, xp: s.xp + xp }));
     await updateCard(card, true);
     await addXp(xp);
   }
@@ -369,87 +288,58 @@ export default function MistakesPage() {
   async function handleWrong(userSan: string, evalMyMoveCp?: number, evalBestCp?: number) {
     if (!card) return;
     setAnswered({ correct: false, alternate: false, userSan, xpEarned: 0, evalMyMoveCp, evalBestCp });
+    setSession(s => ({ ...s, incorrect: s.incorrect + 1, streak: 0 }));
     await updateCard(card, false);
   }
 
   async function handleCorrectManual() {
     if (!card || !answered || answered.correct) return;
     setAnswered(prev => prev ? { ...prev, correct: true, alternate: true, xpEarned: 5 } : prev);
+    setSession(s => ({ ...s, correct: s.correct + 1, streak: s.streak + 1, xp: s.xp + 5 }));
     await updateCard(card, true);
     await addXp(5);
   }
 
   function goNext() {
-    const nextIndex = index + 1;
     setAnswered(null);
-    setIndex(nextIndex);
-    if (cards[nextIndex]) {
-      setCurrentFen(cards[nextIndex].fen_before);
-    }
+    const next = index + 1;
+    setIndex(next);
+    if (cards[next]) setCurrentFen(cards[next].fen_before);
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Board config ──────────────────────────────────────────────────────────
 
-  if (loading) {
-    return (
-      <div className="page" style={{ maxWidth: 900 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} className="animate-pulse">
-          <div style={{ height: 40, width: 180, background: 'var(--surface)', borderRadius: 'var(--radius-btn)' }} />
-          <div className="ui-card" style={{ height: 480 }} />
-        </div>
-      </div>
-    );
-  }
-
-  const remaining = cards.length - index;
-  const boardOrientation = card
+  const boardOrientation: 'white' | 'black' = card
     ? (card.fen_before.split(' ')[1] === 'w' ? 'white' : 'black')
     : 'white';
 
-  // Square styles for answered state
   const squareStyles: Record<string, React.CSSProperties> = {};
   if (answered && card) {
-    // Highlight user's move in orange
-    // We need to get from/to squares from the user's move in fen_before
     try {
       const chess = new Chess(card.fen_before);
-      const userMoveResult = chess.move(answered.userSan);
-      if (userMoveResult) {
-        squareStyles[userMoveResult.from] = { background: 'rgba(230, 160, 60, 0.6)' };
-        squareStyles[userMoveResult.to] = { background: 'rgba(230, 160, 60, 0.6)' };
+      const mv = chess.move(answered.userSan);
+      if (mv) {
+        squareStyles[mv.from] = { background: 'rgba(230,160,60,0.6)' };
+        squareStyles[mv.to] = { background: 'rgba(230,160,60,0.6)' };
       }
     } catch { /* ignore */ }
-
-    // Highlight best_move in green
-    if (card.best_move && card.best_move.length >= 4) {
-      const fromSq = card.best_move.slice(0, 2);
-      const toSq = card.best_move.slice(2, 4);
-      squareStyles[fromSq] = { background: 'rgba(100, 200, 120, 0.55)' };
-      squareStyles[toSq] = { background: 'rgba(60, 180, 90, 0.75)' };
+    if (card.best_move?.length >= 4) {
+      squareStyles[card.best_move.slice(0, 2)] = { background: 'rgba(100,200,120,0.55)' };
+      squareStyles[card.best_move.slice(2, 4)] = { background: 'rgba(60,180,90,0.75)' };
     }
   }
 
-  // Compute destination squares and classification badge for answered state
   let userMoveToSq: string | null = null;
   let bestMoveToSq: string | null = null;
   let userMoveCls: MoveClass | null = null;
 
   if (answered && card) {
-    try {
-      const chess = new Chess(card.fen_before);
-      const mv = chess.move(answered.userSan);
-      if (mv) userMoveToSq = mv.to;
-    } catch { /* ignore */ }
-
-    if (card.best_move && card.best_move.length >= 4) {
-      bestMoveToSq = card.best_move.slice(2, 4);
-    }
-
+    try { const mv = new Chess(card.fen_before).move(answered.userSan); if (mv) userMoveToSq = mv.to; }
+    catch { /* ignore */ }
+    if (card.best_move?.length >= 4) bestMoveToSq = card.best_move.slice(2, 4);
     if (!answered.correct) {
-      // Determine severity by eval loss
       const loss = answered.evalBestCp !== undefined && answered.evalMyMoveCp !== undefined
-        ? answered.evalBestCp - answered.evalMyMoveCp
-        : card.eval_loss;
+        ? answered.evalBestCp - answered.evalMyMoveCp : card.eval_loss;
       userMoveCls = loss > 150 ? 'blunder' : loss > 70 ? 'mistake' : 'inaccuracy';
     } else {
       userMoveCls = answered.alternate ? 'good' : 'best';
@@ -464,129 +354,194 @@ export default function MistakesPage() {
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         {children}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute', top: 2, left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10, pointerEvents: 'none',
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
-          }}
-        >
+        <div aria-hidden="true" style={{
+          position: 'absolute', top: 2, left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10, pointerEvents: 'none',
+          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
+        }}>
           <ClassIcon cls={cls} size={30} />
         </div>
       </div>
     );
   };
 
-  const boardKey = `${boardThemeId}-${pieceStyleId}-${boardOrientation}-${card?.id ?? 'none'}`;
+  // ── Layout slots ─────────────────────────────────────────────────────────
 
-  return (
-    <div className="page" style={{ maxWidth: 900 }}>
+  const total = cards.length;
 
-      {/* Header */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
-          <h1 className="page-title">Ошибки</h1>
-          {!loading && (
-            <span style={{ fontSize: 14, color: 'var(--muted)' }}>
-              Осталось: <span style={{ color: 'var(--ivory)', fontWeight: 600 }}>{remaining > 0 ? remaining : 0}</span>
-            </span>
-          )}
+  const SEL: React.CSSProperties = {
+    height: 30, padding: '0 7px', fontSize: 11,
+    background: 'var(--surface)', color: 'var(--ivory)',
+    border: '1px solid var(--hairline)', cursor: 'pointer', outline: 'none',
+    flex: '1 1 90px', minWidth: 0,
+  };
+
+  const sessionPanel = (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ padding: '44px 14px 10px', borderBottom: '1px solid var(--hairline)' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 10 }}>
+          Сессия
         </div>
-
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', paddingTop: 4 }}>
-          <select
-            style={SEL}
-            value={filters.tag}
-            onChange={e => setFilters(f => ({ ...f, tag: e.target.value as MistakeTag | '' }))}
-          >
+        <div style={{ display: 'flex', gap: 14, marginBottom: 12 }}>
+          {[
+            { label: 'верно', value: session.correct, color: '#6DC77A' },
+            { label: 'ошибок', value: session.incorrect, color: 'var(--control)' },
+            { label: 'серия', value: session.streak, color: 'var(--ivory)' },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              <span style={{ fontSize: 20, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+              <span style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '0.08em' }}>{label}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+          <select style={SEL} value={filters.tag} onChange={e => setFilters(f => ({ ...f, tag: e.target.value as MistakeTag | '' }))}>
             <option value="">Все типы</option>
             {(Object.entries(TAG_LABEL) as [MistakeTag, string][]).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
             ))}
           </select>
-          <select
-            style={SEL}
-            value={filters.phase}
-            onChange={e => setFilters(f => ({ ...f, phase: e.target.value as GamePhase | '' }))}
-          >
+          <select style={SEL} value={filters.phase} onChange={e => setFilters(f => ({ ...f, phase: e.target.value as GamePhase | '' }))}>
             <option value="">Все фазы</option>
             {(Object.entries(PHASE_LABEL) as [GamePhase, string][]).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
             ))}
           </select>
-          {(filters.tag || filters.phase) && (
-            <button
-              onClick={() => setFilters({ tag: '', phase: '' })}
-              style={{ fontSize: 12, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              × Сбросить
-            </button>
-          )}
-          <button
-            onClick={() => void buildMiniCourse()}
-            disabled={buildingCourse}
-            style={{ height: 36, padding: '0 14px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }}
-            title="Собрать мини-курс из ошибок выбранного типа"
-          >
-            {buildingCourse ? 'Собираем…' : 'Собрать мини-курс'}
-          </button>
-          {buildError && (
-            <span style={{ fontSize: 12, color: 'rgba(220,80,60,0.9)' }}>{buildError}</span>
-          )}
         </div>
       </div>
 
-      {/* No cards */}
-      {cards.length === 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '40px 0' }}>
-          <span style={{ ...HEADING, fontSize: 24, fontWeight: 600, color: 'var(--ivory)' }}>
-            Всё готово на сегодня!
+      <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
+        {!loading && cards.map((c, i) => (
+          <div key={c.id} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '6px 14px', gap: 8,
+            background: i === index ? 'var(--surface)' : 'transparent',
+            borderLeft: `2px solid ${i === index ? 'var(--ivory)' : 'transparent'}`,
+            opacity: i < index ? 0.4 : 1,
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+              <span style={{ fontSize: 11, color: 'var(--ivory)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {TAG_LABEL[c.tag]}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>{PHASE_LABEL[c.phase]}</span>
+            </div>
+            {c.eval_loss > 0 && (
+              <span style={{ fontSize: 10, color: 'var(--control)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                -{c.eval_loss}
+              </span>
+            )}
+          </div>
+        ))}
+        {!loading && cards.length === 0 && (
+          <div style={{ padding: 14, fontSize: 12, color: 'var(--muted)' }}>Нет карточек</div>
+        )}
+      </div>
+
+      <div style={{ padding: '10px 14px', borderTop: '1px solid var(--hairline)' }}>
+        <button
+          onClick={() => void buildMiniCourse()} disabled={buildingCourse}
+          style={{ width: '100%', height: 30, fontSize: 11, background: 'transparent', color: 'var(--muted)', border: '1px solid var(--hairline)', cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          {buildingCourse ? 'Собираем…' : 'Собрать мини-курс'}
+        </button>
+        {buildError && (
+          <span style={{ display: 'block', marginTop: 5, fontSize: 10, color: 'rgba(220,80,60,0.9)' }}>{buildError}</span>
+        )}
+      </div>
+    </div>
+  );
+
+  const boardContent = (
+    <Board
+      position={loading ? 'start' : (currentFen || 'start')}
+      orientation={boardOrientation}
+      allowDragging={!answered && !checking && !loading && !!card}
+      onPieceDrop={card && !answered && !checking ? handlePieceDrop : undefined}
+      squareStyles={squareStyles}
+      squareRenderer={squareRenderer}
+      cacheKey={`${boardOrientation}-${card?.id ?? 'none'}`}
+    />
+  );
+
+  const taskPanel = (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Header */}
+      <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--muted)', textTransform: 'uppercase' }}>
+            Тренировка · Ошибки
           </span>
-          <span style={{ fontSize: 14, color: 'var(--muted)' }}>
-            {filters.tag || filters.phase
-              ? 'Нет карточек по выбранным фильтрам.'
-              : 'Нет карточек для повторения. Проанализируй партии, чтобы добавить ошибки.'}
-          </span>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', paddingTop: 8 }}>
-            <Link
-              href="/games/analyze"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, height: 44, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 14, fontWeight: 600 }}
-            >
+          {!loading && total > 0 && (
+            <span style={{ fontSize: 13, fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>
+              {Math.min(index + 1, total)}/{total}
+              {session.xp > 0 && <span style={{ color: '#6DC77A', marginLeft: 8 }}>+{session.xp} XP</span>}
+            </span>
+          )}
+        </div>
+        {!loading && total > 0 && (
+          <div style={{ marginTop: 10, height: 3, background: 'var(--track)', overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', background: 'var(--accent)',
+              width: `${Math.min(100, (index / total) * 100)}%`,
+              transition: 'width 0.3s ease',
+            }} />
+          </div>
+        )}
+      </div>
+
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {loading && (
+          <span style={{ fontSize: 14, color: 'var(--muted)', paddingTop: 20 }}>Загрузка…</span>
+        )}
+
+        {!loading && cards.length === 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 20 }}>
+            <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--ivory)' }}>Всё готово на сегодня!</span>
+            <span style={{ fontSize: 14, color: 'var(--muted)' }}>
+              {filters.tag || filters.phase
+                ? 'Нет карточек по выбранным фильтрам.'
+                : 'Нет карточек для повторения. Проанализируй партии, чтобы добавить ошибки.'}
+            </span>
+            <Link href="/games/analyze" style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', height: 40, padding: '0 20px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600 }}>
               Анализировать партии
             </Link>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Completion screen when all cards done */}
-      {cards.length > 0 && index >= cards.length && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '40px 0' }}>
-          <span style={{ ...HEADING, fontSize: 24, fontWeight: 600, color: 'var(--ivory)' }}>
-            Всё готово на сегодня!
-          </span>
-          <span style={{ fontSize: 14, color: 'var(--muted)' }}>
-            Повторено {cards.length} карточек
-          </span>
-          <button
-            onClick={() => void loadCards()}
-            style={{ alignSelf: 'flex-start', height: 44, padding: '0 24px', background: 'transparent', color: 'var(--muted)', border: '1px solid var(--hairline)', fontSize: 13, cursor: 'pointer' }}
-          >
-            Обновить
-          </button>
-        </div>
-      )}
+        {!loading && cards.length > 0 && index >= cards.length && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 20 }}>
+            <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--ivory)' }}>Всё готово на сегодня!</span>
+            <span style={{ fontSize: 14, color: 'var(--muted)' }}>Повторено {cards.length} карточек</span>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {[{ label: 'верно', value: session.correct, color: '#6DC77A' },
+                { label: 'ошибок', value: session.incorrect, color: 'var(--control)' },
+                { label: 'XP', value: `+${session.xp}`, color: 'var(--ivory)' }].map(s => (
+                  <div key={s.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '12px 20px', border: '1px solid var(--hairline)' }}>
+                    <span style={{ fontSize: 24, fontWeight: 700, color: s.color as string, fontVariantNumeric: 'tabular-nums' }}>{s.value}</span>
+                    <span style={{ fontSize: 11, color: 'var(--muted)' }}>{s.label}</span>
+                  </div>
+              ))}
+            </div>
+            <button onClick={() => void loadCards()} style={{ alignSelf: 'flex-start', height: 40, padding: '0 20px', background: 'transparent', color: 'var(--muted)', border: '1px solid var(--hairline)', fontSize: 13, cursor: 'pointer' }}>
+              Обновить
+            </button>
+          </div>
+        )}
 
-      {/* Card practice */}
-      {card && index < cards.length && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, alignItems: 'flex-start' }}>
+        {card && index < cards.length && (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--ivory)' }}>
+                Найди лучший ход
+              </span>
+              <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+                {boardOrientation === 'white' ? '♙ Вы играете белыми' : '♟ Вы играете чёрными'}
+              </span>
+            </div>
 
-          {/* Board area */}
-          <div style={{ flex: '1 1 480px', maxWidth: 520 }}>
-            {/* Card meta */}
-            <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <span style={{ padding: '3px 8px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 12, color: 'var(--muted)' }}>
                 {TAG_LABEL[card.tag]}
               </span>
@@ -595,177 +550,107 @@ export default function MistakesPage() {
               </span>
               {card.eval_loss > 0 && (
                 <span style={{ padding: '3px 8px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 12, color: 'var(--control)' }}>
-                  -{card.eval_loss}cp
+                  -{(card.eval_loss / 100).toFixed(2)}
                 </span>
               )}
-              <span style={{ padding: '3px 8px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 12, color: 'var(--muted)' }}>
-                {index + 1}/{cards.length}
+            </div>
+
+            {!answered && !checking && TAG_RULE[card.tag] && (
+              <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
+                {TAG_RULE[card.tag]}
               </span>
-            </div>
-
-            {/* Chess board */}
-            <div style={{ width: '100%', aspectRatio: '1', borderRadius: 4, overflow: 'hidden', border: '1px solid #262626' }}>
-              <Chessboard
-                key={boardKey}
-                options={{
-                  position: currentFen,
-                  boardOrientation,
-                  onPieceDrop: answered ? undefined : handlePieceDrop,
-                  squareStyles,
-                  squareRenderer,
-                  allowDragging: !answered && !checking,
-                  boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
-                  darkSquareStyle: { backgroundColor: boardTheme.dark },
-                  lightSquareStyle: { backgroundColor: boardTheme.light },
-                  pieces: customPieces,
-                  showNotation: notationEnabled,
-                  animationDurationInMs: animationMs,
-                  darkSquareNotationStyle: { color: '#C8C8C8' },
-                  lightSquareNotationStyle: { color: '#505050' },
-                  alphaNotationStyle: { fontSize: '11px', fontWeight: '700' },
-                  numericNotationStyle: { fontSize: '11px', fontWeight: '700' },
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Feedback panel */}
-          <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 20, paddingTop: 44 }}>
-
-            {/* Mastery */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={SECTION_LABEL}>УРОВЕНЬ</span>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {[0,1,2,3,4,5].map(level => (
-                  <span
-                    key={level}
-                    style={{
-                      width: 24, height: 4,
-                      background: level <= card.mastery ? 'var(--ivory)' : 'var(--track)',
-                    }}
-                  />
-                ))}
-              </div>
-              <span style={{ fontSize: 12, color: 'var(--muted)' }}>{card.mastery}/5</span>
-            </div>
-
-            {/* Prompt / feedback */}
-            {!answered && !checking && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)' }}>
-                  Найди лучший ход
-                </span>
-                <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                  {boardOrientation === 'white' ? '♙ Вы играете белыми' : '♟ Вы играете чёрными'}
-                </span>
-              </div>
             )}
 
-            {checking && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--muted)' }}>
-                  Проверяем…
-                </span>
-              </div>
-            )}
+            {checking && <span style={{ fontSize: 14, color: 'var(--muted)' }}>Проверяем…</span>}
 
             {answered && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {answered.correct ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <span style={{ fontSize: 18, fontWeight: 700, color: '#6DC77A' }}>
+                  <div style={{ padding: '14px 16px', background: 'rgba(109,199,122,0.08)', border: '1px solid rgba(109,199,122,0.3)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: '#6DC77A' }}>
                       Верно!
-                      {answered.xpEarned > 0 && (
-                        <span style={{ fontSize: 14, fontWeight: 400, marginLeft: 8, color: 'var(--muted)' }}>
-                          +{answered.xpEarned} XP
-                        </span>
-                      )}
+                      {answered.xpEarned > 0 && <span style={{ fontWeight: 400, fontSize: 13, marginLeft: 8, color: 'var(--muted)' }}>+{answered.xpEarned} XP</span>}
                     </span>
-                    {answered.alternate && (
-                      <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                        Не лучший, но приемлемый ход
+                    {answered.alternate && <span style={{ fontSize: 13, color: 'var(--muted)' }}>Не лучший, но приемлемый ход</span>}
+                    {card.best_move && (
+                      <span style={{ fontSize: 14, fontFamily: 'monospace', color: '#6DC77A', fontWeight: 600 }}>
+                        {uciToSan(card.fen_before, card.best_move)}
                       </span>
                     )}
-                    {card.best_move && (
-                      <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <span style={SECTION_LABEL}>ЛУЧШИЙ ХОД</span>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: '#6DC77A', fontFamily: 'monospace' }}>
-                          {uciToSan(card.fen_before, card.best_move)}
-                        </span>
-                      </div>
+                    {answered.evalBestCp !== undefined && (
+                      <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+                        Оценка: {fmtEval(answered.evalBestCp)}
+                      </span>
                     )}
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--control)' }}>
-                      Неверно
-                    </span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={SECTION_LABEL}>ВАШ ХОД</span>
-                      <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--control)', fontFamily: 'monospace' }}>
-                        {answered.userSan}
-                      </span>
-                    </div>
-                    {card.best_move && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <span style={SECTION_LABEL}>ЛУЧШИЙ ХОД</span>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: '#6DC77A', fontFamily: 'monospace' }}>
-                          {uciToSan(card.fen_before, card.best_move)}
-                        </span>
+                  <div style={{ padding: '14px 16px', background: 'rgba(110,106,97,0.1)', border: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--control)' }}>Неверно</span>
+                    <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>Ваш ход</span>
+                        <span style={{ fontSize: 14, fontFamily: 'monospace', color: 'var(--control)' }}>{answered.userSan}</span>
                       </div>
-                    )}
+                      {card.best_move && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>Лучший ход</span>
+                          <span style={{ fontSize: 14, fontFamily: 'monospace', color: '#6DC77A' }}>{uciToSan(card.fen_before, card.best_move)}</span>
+                        </div>
+                      )}
+                    </div>
                     {answered.evalMyMoveCp !== undefined && answered.evalBestCp !== undefined && (
-                      <span style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
-                        Твой ход: {fmtEval(answered.evalMyMoveCp)} · лучший: {fmtEval(answered.evalBestCp)}
+                      <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+                        Ваш: {fmtEval(answered.evalMyMoveCp)} · лучший: {fmtEval(answered.evalBestCp)}
                       </span>
                     )}
-                    <button
-                      onClick={() => void handleCorrectManual()}
-                      style={{
-                        alignSelf: 'flex-start', height: 32, padding: '0 14px',
-                        fontSize: 12, fontWeight: 500,
-                        background: 'transparent', color: 'var(--muted)',
-                        border: '1px solid var(--hairline)', cursor: 'pointer',
-                      }}
-                    >
-                      Мой ход тоже хороший
-                    </button>
                   </div>
                 )}
 
-                {/* Explanation */}
-                <div style={{ padding: '12px 16px', background: 'var(--surface)', border: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                    {TAG_LABEL[card.tag]}
-                  </span>
-                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>
-                    {PHASE_LABEL[card.phase]} · потеря {card.eval_loss}cp
-                  </span>
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, color: 'var(--muted)', marginRight: 4 }}>Уровень</span>
+                  {[0, 1, 2, 3, 4, 5].map(lvl => (
+                    <span key={lvl} style={{ width: 20, height: 3, background: lvl <= card.mastery ? 'var(--ivory)' : 'var(--track)' }} />
+                  ))}
+                  <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 4 }}>{card.mastery}/5</span>
                 </div>
 
-                {/* Play from this position */}
-                <PlayButton
-                  fen={card.fen_before}
-                  color={card.fen_before.split(' ')[1] as 'w' | 'b'}
-                  label="Играть отсюда"
-                />
+                {!answered.correct && (
+                  <button onClick={() => void handleCorrectManual()} style={{ alignSelf: 'flex-start', height: 30, padding: '0 12px', fontSize: 11, background: 'transparent', color: 'var(--muted)', border: '1px solid var(--hairline)', cursor: 'pointer' }}>
+                    Мой ход тоже хороший
+                  </button>
+                )}
 
-                {/* Next button */}
-                <button
-                  onClick={goNext}
-                  style={{
-                    height: 48, padding: '0 28px', fontSize: 14, fontWeight: 600,
-                    background: 'var(--ivory)', color: 'var(--ink)',
-                    border: 'none', cursor: 'pointer', alignSelf: 'flex-start',
-                  }}
-                >
-                  Следующая →
-                </button>
+                <PlayButton fen={card.fen_before} color={card.fen_before.split(' ')[1] as 'w' | 'b'} label="Играть отсюда" />
               </div>
             )}
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{ padding: '12px 20px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {card && index < cards.length && answered && (
+          <button
+            onClick={goNext}
+            style={{ width: '100%', height: 44, fontSize: 14, fontWeight: 600, background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer' }}
+          >
+            Дальше →
+          </button>
+        )}
+        {!loading && cards.length === 0 && (
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 40, fontSize: 14, fontWeight: 600, background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--hairline)' }}>
+            На главную
+          </Link>
+        )}
+      </div>
     </div>
+  );
+
+  return (
+    <TrainerLayout
+      sessionPanel={sessionPanel}
+      boardContent={boardContent}
+      taskPanel={taskPanel}
+    />
   );
 }
