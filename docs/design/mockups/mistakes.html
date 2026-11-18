@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Ошибки — макет</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@700&display=swap">
+<style>
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --miss:#E5703A;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:14px 12px;display:flex;flex-direction:column}
+.item{height:40px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:15px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:16px 12px 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.grp .ico{width:14px;height:14px}
+.side .bottom{margin-top:auto;color:var(--faint)}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.left{width:280px;height:854px;display:flex;flex-direction:column}
+.left .hd{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:baseline}
+.h2{font-size:19px;font-weight:700}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 20px 6px}
+.select{height:38px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 12px;font-size:14px;color:#DDD9D4}
+.select .ico{width:14px;height:14px;color:var(--faint)}
+.qlabel{margin:14px 20px 6px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.queue{padding:0 10px;display:flex;flex-direction:column;gap:2px}
+.row{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:8px;height:50px;padding:0 10px;border-radius:10px;position:relative}
+.row .t{font-size:14px;color:#E4E1DC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .p{font-size:13px;color:var(--faint);margin-top:-1px}
+.row .loss{font-size:14px;color:#D88A80;font-weight:600}
+.row .idx{font-size:13px;color:var(--faint);text-align:center}
+.row.cur{background:var(--row)}
+.row.cur::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--accent)}
+.row.cur .idx{color:var(--accent);font-weight:700}
+.row.done .t,.row.done .loss{color:var(--faint)}
+.ok{color:var(--accent)} .bad{color:var(--danger)}
+.left .ft{margin-top:auto;padding:16px 20px 20px;border-top:1px solid var(--hair)}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#E8E5E0}
+.btn2 .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.bcol{width:806px;height:854px;display:flex;flex-direction:column;gap:8px}
+.pbar{height:32px;display:flex;align-items:center;justify-content:space-between;padding-left:32px}
+.who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.ava{width:28px;height:28px;border-radius:6px;background:#4A4744;display:grid;place-items:center}
+.ava img{width:22px;height:22px}
+.tag{font-size:13px;font-weight:500;color:var(--muted)}
+.clock{height:32px;min-width:84px;border-radius:8px;padding:0 12px;display:flex;align-items:center;justify-content:flex-end;font-size:18px;font-weight:600;background:#262522;color:#BDB9B3}
+.clock.on{background:#E9E7E3;color:#262522}
+.brow{display:flex;gap:8px;height:774px}
+.gutter{width:24px}
+.evalbar{width:24px;height:774px;border-radius:5px;overflow:hidden;background:#403D3A;position:relative}
+.evalbar .w{position:absolute;left:0;right:0;bottom:0;background:#EDEBE7}
+.evalbar .lbl{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:10px;font-weight:700;color:#3A3835}
+.board{width:774px;height:774px;position:relative}
+.sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden}
+.sq{position:relative}
+.sq .hl{position:absolute;inset:0}
+.sq img{position:absolute;inset:0;width:100%;height:100%}
+.co{position:absolute;font-size:13px;font-weight:600;line-height:1}
+.co.r{left:5px;top:5px}.co.f{right:6px;bottom:4px}
+.over{position:absolute;inset:0;pointer-events:none}
+.badge{position:absolute;width:36px;height:36px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+.right{flex:1;height:854px;display:flex;flex-direction:column}
+.rp-h{padding:20px 24px 18px}
+.crumbs{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.prog{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--text);font-weight:600}
+.xp{font-size:13px;font-weight:600;color:var(--accent);background:rgba(129,182,76,.14);border-radius:6px;padding:2px 7px}
+.pbarline{height:4px;border-radius:4px;background:#3A3835;margin-top:12px;overflow:hidden}
+.pbarline i{display:block;height:100%;width:13.3%;background:var(--accent);border-radius:4px}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:14px;line-height:1.15}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:500;color:#DCD8D3}
+.sec{padding:16px 24px;border-top:1px solid var(--hair)}
+.lab{font-size:13px;color:var(--muted);margin-bottom:6px}
+.task{font-size:19px;font-weight:700}
+.fb{margin:16px 24px 0;border-radius:12px;background:rgba(129,182,76,.09);border:1px solid rgba(129,182,76,.32);padding:16px 18px}
+.fb .top{display:flex;align-items:center;gap:10px}
+.fb .top b{font-size:19px;color:var(--accent)}
+.fb p{margin-top:8px;font-size:15px;color:#E6E3DE}
+.evals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.ev{background:rgba(0,0,0,.18);border-radius:8px;padding:8px 12px}
+.ev span{display:block;font-size:13px;color:var(--muted)}
+.ev b{font-size:18px}
+.line{display:flex;gap:6px;align-items:center;margin-top:12px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.mv{background:rgba(255,255,255,.06);border-radius:6px;padding:2px 7px;color:#E6E3DE;font-weight:500}
+.seg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.seg i{height:6px;border-radius:3px;background:#3A3835}.seg i.on{background:var(--accent)}
+.act{margin-top:auto;padding:20px 24px 20px;border-top:1px solid var(--hair)}
+.btn1{height:52px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:12px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+.doit{display:flex;align-items:center;justify-content:center;gap:10px;height:52px;border-radius:var(--r-btn);border:1px dashed rgba(255,255,255,.18);color:var(--muted);font-size:16px;font-weight:600}
+.hints{margin-top:14px;font-size:13px;color:var(--faint);text-align:center}
+.qa{display:none} body.a .qa{display:block} body.a .qq{display:none}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+
+<aside class="side" id="side"></aside>
+
+<main class="main">
+  <section class="card left">
+    <div class="hd"><div class="h2">Сессия</div><div class="muted num" style="font-size:14px">осталось 26</div></div>
+    <div class="stats">
+      <div class="stat"><b class="num ok">3</b><span>верно</span></div>
+      <div class="stat"><b class="num bad">1</b><span>ошибка</span></div>
+      <div class="stat"><b class="num">2</b><span>серия</span></div>
+    </div>
+    <div class="filters">
+      <div class="select">Все типы<i class="ico" data-i="chevron-down"></i></div>
+      <div class="select">Все фазы<i class="ico" data-i="chevron-down"></i></div>
+    </div>
+    <div class="qlabel"><span>Очередь</span><span class="num">4 / 30</span></div>
+    <div class="queue" id="queue"></div>
+    <div class="ft"><div class="btn2"><i class="ico" data-i="book-open"></i>Собрать мини-курс</div></div>
+  </section>
+
+  <section class="bcol">
+    <div class="pbar">
+      <div class="who"><div class="ava"><img src="pieces/bP.svg"></div>Ivan_88 <span class="tag">чёрные</span></div>
+      <div class="clock num">4:12</div>
+    </div>
+    <div class="brow">
+      <div class="gutter qq"></div>
+      <div class="evalbar qa"><div class="w" style="height:92%"></div><div class="lbl">6.8</div></div>
+      <div class="board"><div class="sqs" id="sqs"></div><div class="over" id="over"></div></div>
+    </div>
+    <div class="pbar">
+      <div class="who"><div class="ava"><img src="pieces/wP.svg"></div>rozt1shka <span class="tag">ты · белые</span></div>
+      <div class="clock on num">5:03</div>
+    </div>
+  </section>
+
+  <section class="card right">
+    <div class="rp-h">
+      <div class="crumbs"><span>Тренировка · Ошибки</span><span class="prog"><span class="num">4 / 30</span><span class="xp num" id="xp">+30 XP</span></span></div>
+      <div class="pbarline"><i></i></div>
+      <div class="title tight">Найди лучший ход</div>
+      <div class="chips">
+        <div class="chip"><span id="missIcon"></span>Упущенный шанс</div>
+        <div class="chip">Миттельшпиль</div>
+        <div class="chip num" style="color:#E59A8F">−6.6</div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="lab">Из твоей партии · против Ivan_88 · 12 ноября · рапид 10+0</div>
+      <div>Соперник ошибся ходом <span class="mv">14…Qc8</span> и снял защиту с e7. Ты сыграл <span class="mv">15. Kb1</span> и упустил выигрыш.</div>
+    </div>
+
+    <!-- QUESTION -->
+    <div class="sec qq">
+      <div class="task">Ход белых. Найди ход сильнее, чем в партии.</div>
+      <div class="muted" style="font-size:14px;margin-top:6px">Перетащи фигуру или кликни по ней, потом по клетке.</div>
+    </div>
+
+    <!-- ANSWER -->
+    <div class="fb qa">
+      <div class="top"><span id="bestIcon"></span><b>Верно! Лучший ход</b></div>
+      <p><span class="mv">15. Nxe7+</span> — вилка: шах королю на g8 и удар по ферзю на c8.</p>
+      <div class="evals">
+        <div class="ev"><span>в партии (Kb1)</span><b class="num">+0.2</b></div>
+        <div class="ev"><span>твой ход (Nxe7+)</span><b class="num ok">+6.8</b></div>
+      </div>
+      <div class="line">Дальше: <span class="mv">15…Kh8</span><span class="mv">16. Nxc8</span><span class="mv">16…Raxc8</span> — ты выигрываешь ферзя.</div>
+    </div>
+
+    <div class="sec" style="border-top:none;padding-top:20px">
+      <div style="display:flex;justify-content:space-between"><span class="lab" style="margin:0">Карточка выучена</span><span class="num" style="font-size:14px;font-weight:600" id="mast">2 / 5</span></div>
+      <div class="seg" id="seg"></div>
+    </div>
+
+    <div class="act">
+      <div class="qq">
+        <div class="doit"><i class="ico" data-i="mouse-pointer-click"></i>Сделай ход на доске</div>
+        <div class="three">
+          <div class="btn2"><i class="ico" data-i="lightbulb"></i>Подсказка <span class="k">H</span></div>
+          <div class="btn2">Ответ <span class="k">A</span></div>
+          <div class="btn2">Пропустить <span class="k">S</span></div>
+        </div>
+        <div class="hints">Подсказка −5 XP · ответ засчитается как ошибка</div>
+      </div>
+      <div class="qa">
+        <div class="btn1">Дальше <span class="k">Пробел</span></div>
+        <div class="two">
+          <div class="btn2"><i class="ico" data-i="circle-play"></i>Сыграть отсюда</div>
+          <div class="btn2"><i class="ico" data-i="message-square"></i>Открыть партию</div>
+        </div>
+        <div class="hints">← → смотреть ходы · Пробел — дальше</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script>
+const A = location.hash === '#a';
+if (A) document.body.classList.add('a');
+document.getElementById('xp').textContent = A ? '+40 XP' : '+30 XP';
+document.getElementById('mast').textContent = A ? '3 / 5' : '2 / 5';
+document.getElementById('seg').innerHTML = [0,1,2,3,4].map(k => `<i class="${k < (A ? 3 : 2) ? 'on' : ''}"></i>`).join('');
+const ico = (n, s='') => `<i class="ico" data-i="${n}" style="${s}"></i>`;
+
+const nav = [
+  ['calendar','Сегодня'],
+  ['#','Учиться'],['layers','Дебюты'],['book-open','Курсы'],['flag','Ловушки'],['lightbulb','Идеи позиций'],
+  ['#','Тренироваться'],['circle-alert','Ошибки',1],['triangle-alert','Проверка угроз'],['grid-3x3','Эндшпили'],['shield','Жертвы'],['search','Угадай дебют'],['circle-play','Играть'],
+  ['#','Партии'],['message-square','Мои партии'],['star','Мастера'],
+];
+document.getElementById('side').innerHTML = nav.map(([i,t,a]) => i==='#'
+  ? `<div class="grp">${t}${ico('chevron-down')}</div>`
+  : `<div class="item${a?' active':''}">${ico(i)}${t}</div>`).join('')
+  + `<div class="item bottom">${ico('panel-left-close')}Свернуть меню</div>`;
+
+const Q = [
+  ['ok','Зевок фигуры','Миттельшпиль','−3.4'],
+  ['bad','Пропущенная тактика','Дебют','−1.8'],
+  ['ok','Позиционная','Эндшпиль','−1.6'],
+  ['cur','Упущенный шанс','Миттельшпиль','−6.6'],
+  ['','Зевок фигуры','Миттельшпиль','−4.9'],
+  ['','Пропущенный шах','Миттельшпиль','−2.2'],
+  ['','Позиционная','Дебют','−1.5'],
+  ['','Пропущенная тактика','Эндшпиль','−3.1'],
+  ['','Зевок фигуры','Дебют','−5.2'],
+  ['','Позиционная','Миттельшпиль','−1.7'],
+];
+document.getElementById('queue').innerHTML = Q.map(([s,t,p,l],k) => {
+  const st = s==='ok' ? `<span class="ok">${ico('check')}</span>`
+           : s==='bad' ? `<span class="bad">${ico('x')}</span>`
+           : `<span class="idx num">${k+1}</span>`;
+  const cls = s==='cur' ? 'row cur' : (s==='ok'||s==='bad') ? 'row done' : 'row';
+  return `<div class="${cls}"><div style="display:grid;place-items:center">${st}</div><div><div class="t">${t}</div><div class="p">${p}</div></div><div class="loss num">${l}</div></div>`;
+}).join('');
+
+function star(cx,cy,R,r){let p=[];for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,rr=k%2?r:R;p.push((cx+rr*Math.cos(a)).toFixed(2)+','+(cy+rr*Math.sin(a)).toFixed(2));}return p.join(' ');}
+function classIcon(kind,size){
+  const c = {best:'#81B64C',miss:'#E5703A'}[kind];
+  let inner = '';
+  if(kind==='best') inner = `<polygon points="${star(12,12.4,7.2,3.1)}" fill="#fff"/>`;
+  if(kind==='miss') inner = `<path d="M8.2 8.2l7.6 7.6M15.8 8.2l-7.6 7.6" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11.5" fill="${c}"/>${inner}</svg>`;
+}
+document.getElementById('missIcon').innerHTML = classIcon('miss',16);
+document.getElementById('bestIcon').innerHTML = classIcon('best',28);
+
+const fenQ = 'r1q2rk1/1p2ppbp/p2pbnp1/3N4/4P2P/5N2/PPPQ1PP1/2KR1B1R';
+const fenA = 'r1q2rk1/1p2Npbp/p2pbnp1/8/4P2P/5N2/PPPQ1PP1/2KR1B1R';
+const rows = (A ? fenA : fenQ).split('/');
+const files = 'abcdefgh';
+const hl = A ? {d5:'rgba(129,182,76,.55)', e7:'rgba(129,182,76,.62)'} : {d8:'rgba(247,214,74,.42)', c8:'rgba(247,214,74,.55)'};
+let html = '';
+for (let r=0;r<8;r++){
+  const cells=[];
+  for (const ch of rows[r]){ if(/\d/.test(ch)){for(let k=0;k<+ch;k++)cells.push(null);} else cells.push(ch); }
+  for (let f=0; f<8; f++){
+    const sq = files[f] + (8-r);
+    const isLight = (f + r) % 2 === 0;
+    const bg = isLight ? 'var(--light)' : 'var(--dark)';
+    const coColor = isLight ? 'var(--dark)' : 'var(--light)';
+    let inner = '';
+    if (hl[sq]) inner += `<div class="hl" style="background:${hl[sq]}"></div>`;
+    if (A && sq==='g8') inner += `<div class="hl" style="background:radial-gradient(circle, rgba(232,64,52,.95) 0%, rgba(232,64,52,.6) 38%, rgba(232,64,52,0) 72%)"></div>`;
+    const p = cells[f];
+    if (p){ const col = p===p.toUpperCase() ? 'w' : 'b'; inner += `<img src="pieces/${col}${p.toUpperCase()}.svg">`; }
+    if (f===0) inner += `<span class="co r" style="color:${coColor}">${8-r}</span>`;
+    if (r===7) inner += `<span class="co f" style="color:${coColor}">${files[f]}</span>`;
+    html += `<div class="sq" style="background:${bg}">${inner}</div>`;
+  }
+}
+document.getElementById('sqs').innerHTML = html;
+
+const S = 774/8;
+const ctr = sq => [ (files.indexOf(sq[0])+.5)*S, (8-(+sq[1])+.5)*S ];
+function arrow(a,b,color){
+  const [x1,y1]=ctr(a),[x2,y2]=ctr(b);
+  const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy), ux=dx/L, uy=dy/L, px=-uy, py=ux;
+  const start=18, end=L-14, head=34, sw=9, hw=22;
+  const P=(t,o)=>[(x1+ux*t+px*o).toFixed(1),(y1+uy*t+py*o).toFixed(1)].join(',');
+  const pts=[P(start,-sw),P(end-head,-sw),P(end-head,-hw),P(end,0),P(end-head,hw),P(end-head,sw),P(start,sw)].join(' ');
+  return `<polygon points="${pts}" fill="${color}" opacity=".85"/>`;
+}
+if (A) {
+  const [bx,by] = ctr('e7');
+  document.getElementById('over').innerHTML =
+    `<svg width="774" height="774" style="position:absolute;inset:0">${arrow('e7','c8','#F0A43A')}</svg>`
+    + `<div class="badge" style="left:${(bx+S/2-24).toFixed(1)}px;top:${(by-S/2-12).toFixed(1)}px">${classIcon('best',36)}</div>`;
+}
+
+document.querySelectorAll('[data-i]').forEach(el => {
+  const u = window.ICONS && ICONS[el.dataset.i];
+  if (u) el.style.setProperty('--i', `url("${u}")`);
+});
+</script>
+</body>
+</html>
