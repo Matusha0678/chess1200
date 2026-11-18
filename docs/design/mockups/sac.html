@@ -117,6 +117,10 @@ html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:v
 .lines{margin-top:12px;display:flex;flex-direction:column;gap:8px}
 .ln{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 .ln .if{color:var(--faint);min-width:52px}
+.ln.hover{background:rgba(74,144,226,.12);box-shadow:0 0 0 1px rgba(74,144,226,.5);border-radius:8px;margin:-4px -6px;padding:4px 6px;color:#D9E6F6}
+.hint2{margin-top:10px;font-size:13px;color:var(--faint);display:flex;align-items:center;gap:6px}
+.fb.bad{background:rgba(224,87,74,.09);border-color:rgba(224,87,74,.32)} .fb.bad .top b{color:#F08277}
+.chip.bad{color:#F08277} .gg b.bad{color:#F08277} .ev b.bad{color:#F08277}
 .dot{width:24px;height:24px;border-radius:12px;display:grid;place-items:center;color:#fff}
 .dot .ico{width:15px;height:15px}
 .gg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -149,6 +153,17 @@ html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:v
 .st span{font-size:15px;color:#E2DFDA;padding-top:3px}
 .dim{position:absolute;inset:0;border-radius:6px;background:rgba(38,37,34,.55)}
 .qempty{margin:8px 20px;padding:18px;border:1px dashed rgba(255,255,255,.14);border-radius:10px;color:var(--muted);font-size:14px;text-align:center}
+.qp{display:none} body.p .qp{display:block} body.p .qq, body.p .qa, body.p .qe{display:none !important}
+.prog2{padding:28px 24px;border-top:1px solid var(--hair)}
+.prog2 .ic{width:52px;height:52px;border-radius:14px;background:rgba(129,182,76,.14);color:var(--accent);display:grid;place-items:center;margin-bottom:16px}
+.prog2 .ic .ico{width:26px;height:26px}
+.prog2 h3{font-size:22px;font-weight:700;margin-bottom:8px}
+.big{height:8px;border-radius:4px;background:#3A3835;overflow:hidden;margin:18px 0 10px}
+.big i{display:block;height:100%;width:23%;background:var(--accent);border-radius:4px}
+.kv{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:16px}
+.kv div{background:var(--surface2);border:1px solid var(--hair);border-radius:10px;padding:10px 12px}
+.kv span{display:block;font-size:13px;color:var(--muted)}
+.kv b{font-size:18px}
 </style>
 </head>
 <body>
@@ -192,12 +207,12 @@ html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:v
     </div>
     <div class="brow">
       <div class="gutter qq"></div>
-      <div class="evalbar qa"><div class="w" style="height:92%"></div><div class="lbl">6.6</div></div>
+      <div class="evalbar qa"><div class="w" id="evW" style="height:92%"></div><div class="lbl" id="evL">6.6</div></div>
       <div class="board"><div class="sqs" id="sqs"></div><div class="over" id="over"></div></div>
     </div>
     <div class="pbar">
       <div class="who"><div class="ava"><img src="pieces/wP.svg"></div>Белые <span class="tag">ты решаешь за них</span></div>
-      <div class="pnote">Французская защита</div>
+      <div class="pnote" id="openName">Французская защита</div>
     </div>
   </section>
 
@@ -213,9 +228,9 @@ html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:v
         <div class="chip">Атака на короля</div>
       </div>
       <div class="chips qa" id="chipsA">
-        <div class="chip ok">Верно</div>
-        <div class="chip brill"><span id="brillChip"></span>Блестящая жертва</div>
-        <div class="chip ok num">+20 XP</div>
+        <div class="chip ok" id="okChip">Верно</div>
+        <div class="chip brill" id="typeChip"><span id="brillChip"></span><span id="typeTxt">Комбинация</span></div>
+        <div class="chip ok num" id="xpChip">+20 XP</div>
       </div>
     </div>
 
@@ -232,22 +247,23 @@ html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:v
     </div>
 
     <!-- ANSWER -->
-    <div class="fb qa">
-      <div class="top"><span class="dot" style="background:var(--accent)"><i class="ico" data-i="check"></i></span><b>Верно! Жертва работает</b></div>
-      <p><span class="mv">Bxh7+</span> — «греческая жертва»: слон отдаётся, чтобы раскрыть короля.</p>
+    <div class="fb qa" id="fb">
+      <div class="top"><span class="dot" id="fbDot" style="background:var(--accent)"><i class="ico" data-i="check" id="fbIco"></i></span><b id="fbTitle">Верно! Жертва работает</b></div>
+      <p id="fbText"><span class="mv">Bxh7+</span> — греческая жертва: слон отдаётся, чтобы раскрыть короля.</p>
       <div class="evals">
-        <div class="ev"><span>без жертвы (лучший ход)</span><b class="num">+2.5</b></div>
-        <div class="ev"><span>после Bxh7+</span><b class="num ok">+6.6</b></div>
+        <div class="ev" id="evNo"><span>без жертвы (Rh3)</span><b class="num">+2.2</b></div>
+        <div class="ev" id="evAfter"><span>после Bxh7+</span><b class="num ok">+6.6</b></div>
       </div>
       <div class="lines">
-        <div class="ln"><span class="if">если</span><span class="mv">Kxh7</span><span class="mv">Ng5+</span><span class="mv">Kg8</span><span class="mv">Qh5</span>— мат в 5 ходов</div>
-        <div class="ln"><span class="if">если</span><span class="mv">Kxh7</span><span class="mv">Ng5+</span><span class="mv">Kh6</span><span class="mv">Nxf7+</span>— вилка на ферзя</div>
+        <div class="ln" id="ln1"><span class="if">если</span><span class="mv">Kxh7</span><span class="mv">Ng5+</span><span class="mv">Kg6</span><span class="mv">h5+</span>— вилка на ферзя, +7.1</div>
+        <div class="ln" id="ln2"><span class="if">если</span><span class="mv">Kh8</span><span class="mv">Ng5</span><span class="mv">g6</span><span class="mv">h5</span>— перевес +9.8</div>
       </div>
+      <div class="hint2"><i class="ico" data-i="mouse-pointer-click"></i>Наведи на вариант или оценку — покажу на доске</div>
     </div>
     <div class="sec qa" style="border-top:none;padding-top:16px">
       <div class="gg">
-        <div><span>Отдал</span><b>слона (3 пешки)</b></div>
-        <div><span>Получил</span><b>атаку на короля</b></div>
+        <div><span>Отдал</span><b>слона за пешку (2 пешки)</b></div>
+        <div><span>Получил</span><b id="gotTxt">ферзя</b></div>
       </div>
     </div>
 
@@ -263,7 +279,26 @@ html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:v
       </div>
     </div>
 
+    <!-- PREPARING -->
+    <div class="prog2 qp">
+      <div class="ic"><i class="ico" data-i="database"></i></div>
+      <h3>Готовлю позиции</h3>
+      <p style="color:#D6D2CC">Движок проверяет жертвы в партиях Таля. Можно уже решать найденные — подготовка продолжится.</p>
+      <div class="big"><i></i></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--muted)"><span class="num">Проверено 46 из 200 партий</span><span class="num">осталось ~7 мин</span></div>
+      <div class="kv">
+        <div><span>найдено</span><b class="num">9</b></div>
+        <div><span>работают</span><b class="num ok">6</b></div>
+        <div><span>не работают</span><b class="num bad">3</b></div>
+      </div>
+    </div>
+
     <div class="act">
+      <div class="qp">
+        <div class="btn1">Решать найденные <span class="k">9</span></div>
+        <div class="two" style="grid-template-columns:1fr"><div class="btn2">Стоп</div></div>
+        <div class="hints">Вкладку не закрывай, пока идёт подготовка</div>
+      </div>
       <div class="qe">
         <div class="btn1">Подготовить позиции</div>
         <div class="two" style="grid-template-columns:1fr"><div class="btn2"><i class="ico" data-i="database"></i>Загрузить партии мастеров</div></div>
@@ -290,10 +325,14 @@ html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:v
 
 <script src="icons.js"></script>
 <script>
-const A = location.hash === '#a';
-const E = location.hash === '#empty';
+const H2 = location.hash === '#a2';
+const F = location.hash === '#af';
+const A = location.hash === '#a' || H2 || F;
+const PR = location.hash === '#prep';
+const E = location.hash === '#empty' || PR;
 if (A) document.body.classList.add('a');
-if (E) document.body.classList.add('e');
+if (E && !PR) document.body.classList.add('e');
+if (PR) document.body.classList.add('p');
 document.getElementById('chipsA').style.display = A ? 'flex' : 'none';
 document.getElementById('chipsQ').style.display = (A || E) ? 'none' : 'flex';
 if (E) {
@@ -308,6 +347,15 @@ if (E) {
   document.querySelectorAll('.pnote').forEach(n => n.textContent = '');
   document.querySelector('.gutter').style.setProperty('display', 'block', 'important');
   document.querySelector('.crumbs .xp').style.display = 'none';
+}
+if (PR) {
+  document.querySelector('.left .hd .muted').textContent = 'найдено 9';
+  document.querySelector('.qlabel .num').textContent = '0 / 9';
+  document.querySelector('.prep').style.display = '';
+  document.querySelector('.prep .t').textContent = 'Проверено 46 из 200 партий · найдено 9';
+  document.querySelector('.prep .bar i').style.width = '23%';
+  document.querySelector('.prep .btn2').textContent = 'Стоп';
+  document.querySelector('.crumbs .num').textContent = '0 / 9';
 }
 const ico = (n, s='') => `<i class="ico" data-i="${n}" style="${s}"></i>`;
 
@@ -332,7 +380,10 @@ const Q = [
   ['','Позиция 14','партия мастера'],
   ['','Позиция 15','партия мастера'],
 ];
-document.getElementById('queue').innerHTML = E ? '<div class="qempty">Здесь появятся позиции после подготовки</div>' : Q.map(([s,t,p],k) => {
+const QP = [1,2,3,4,5,6].map(k => ['', 'Позиция ' + k, 'партия мастера']);
+document.getElementById('queue').innerHTML = PR
+  ? QP.map(([s,t,p],k) => `<div class="row"><div style="display:grid;place-items:center"><span class="idx num">${k+1}</span></div><div><div class="t">${t}</div><div class="p">${p}</div></div><div></div></div>`).join('')
+  : E ? '<div class="qempty">Здесь появятся позиции после подготовки</div>' : Q.map(([s,t,p],k) => {
   const st = s==='ok' ? `<span class="ok">${ico('check')}</span>`
            : s==='bad' ? `<span class="bad">${ico('x')}</span>`
            : s==='warn' ? `<span class="warn" style="font-weight:800">!</span>`
@@ -345,7 +396,8 @@ document.getElementById('queue').innerHTML = E ? '<div class="qempty">Здесь
 const fenQ = 'r1bq1rk1/pppnbppp/2n1p3/3pP3/3P3P/2NB1N2/PPP2PP1/R1BQK2R';
 const fenA = 'r1bq1rk1/pppnbppB/2n1p3/3pP3/3P3P/2N2N2/PPP2PP1/R1BQK2R';
 const fenStart = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
-const fen = E ? fenStart : (A ? fenA : fenQ);
+const fenAf = 'r1bq1rk1/ppp1bppB/2n1pn2/3p4/3P4/2N1PN2/PPP2PPP/R1BQK2R';
+const fen = E ? fenStart : (F ? fenAf : (A ? fenA : fenQ));
 const files = 'abcdefgh';
 const grid = {};
 fen.split('/').forEach((row, ri) => { let f = 0; for (const ch of row) { if (/\d/.test(ch)) f += +ch; else { grid[files[f] + (8 - ri)] = ch; f++; } } });
@@ -362,7 +414,7 @@ for (let row = 0; row < 8; row++) {
     let inner = '';
     if (!A && !E && sq === 'h7') inner += `<div class="hl" style="box-shadow:inset 0 0 0 4px rgba(240,164,58,.95);background:rgba(240,164,58,.18)"></div>`;
     if (!A && !E && sq === 'd3') inner += `<div class="hl" style="background:rgba(240,164,58,.22)"></div>`;
-    if (A && (sq === 'd3' || sq === 'h7')) inner += `<div class="hl" style="background:rgba(38,194,163,${sq==='h7'?'.55':'.45'})"></div>`;
+    if (A && (sq === 'd3' || sq === 'h7')) inner += F ? `<div class="hl" style="background:rgba(224,87,74,${sq==='h7'?'.50':'.40'})"></div>` : `<div class="hl" style="background:rgba(38,194,163,${sq==='h7'?'.55':'.45'})"></div>`;
     if (A && sq === 'g8') inner += `<div class="hl" style="background:radial-gradient(circle, rgba(232,64,52,.95) 0%, rgba(232,64,52,.6) 38%, rgba(232,64,52,0) 72%)"></div>`;
     const p = grid[sq];
     if (p) { const c = p === p.toUpperCase() ? 'w' : 'b'; inner += `<img src="pieces/${c}${p.toUpperCase()}.svg">`; }
@@ -397,7 +449,28 @@ function numTag(a, b, n, color, t = .5) {
 function brill(size) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11.5" fill="#26C2A3"/><text x="12" y="16.6" text-anchor="middle" font-family="Inter" font-weight="800" font-size="12.5" fill="#fff" letter-spacing="-.5">!!</text></svg>`;
 }
-document.getElementById('brillChip').innerHTML = brill(16);
+function blund(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11.5" fill="#E0574A"/><text x="12" y="16.6" text-anchor="middle" font-family="Inter" font-weight="800" font-size="12.5" fill="#fff" letter-spacing="-.5">??</text></svg>`;
+}
+document.getElementById('brillChip').innerHTML = F ? blund(16) : brill(16);
+if (H2) document.getElementById('ln1').classList.add('hover');
+if (F) {
+  const $ = id => document.getElementById(id);
+  $('okChip').textContent = 'Неверно'; $('okChip').className = 'chip bad';
+  $('typeChip').className = 'chip bad'; $('typeTxt').textContent = 'Жертва не работает';
+  $('xpChip').style.display = 'none';
+  $('fb').classList.add('bad');
+  $('fbDot').style.background = '#E0574A'; $('fbIco').dataset.i = 'x';
+  $('fbTitle').textContent = 'Неверно — жертва не работает';
+  $('fbText').innerHTML = '<span class="mv">Bxh7+</span> — соперник берёт слона и спокойно защищается: <span class="mv">Nxh7</span>.';
+  $('evNo').innerHTML = '<span>без жертвы (O-O)</span><b class="num ok">−0.1</b>';
+  $('evAfter').innerHTML = '<span>после Bxh7+</span><b class="num bad">−4.5</b>';
+  $('ln1').innerHTML = '<span class="if">если</span><span class="mv">Nxh7</span><span class="mv">h4</span><span class="mv">Bb4</span><span class="mv">Ng5</span>— чёрные отбиваются';
+  $('ln2').innerHTML = '<span class="if">если</span><span class="mv">Kxh7</span><span class="mv">Ng5+</span><span class="mv">Kg8</span><span class="mv">f4</span>— чёрные отбиваются';
+  $('gotTxt').textContent = 'ничего — соперник отбивается'; $('gotTxt').className = 'bad';
+  $('evW').style.height = '14%'; $('evL').textContent = '−4.5';
+  $('openName').textContent = 'Система Колле';
+}
 
 let over = '';
 if (E) {
@@ -405,12 +478,20 @@ if (E) {
 } else if (!A) {
   over = `<svg width="774" height="774" style="position:absolute;inset:0">${dashed('d3', 'h7', '#F0A43A')}</svg>`;
 } else {
-  over = `<svg width="774" height="774" style="position:absolute;inset:0">`
-    + arrow('f3', 'g5', '#4A90E2', .7) + arrow('d1', 'h5', '#4A90E2', .55)
-    + numTag('f3', 'g5', 2, '#3A78C2', .45) + numTag('d1', 'h5', 3, '#3A78C2', .27)
-    + `</svg>`;
+  const R = '#E0574A', Rt = '#C2453A', B = '#4A90E2', Bt = '#3A78C2';
+  over = `<svg width="774" height="774" style="position:absolute;inset:0">`;
+  if (F) {
+    over += arrow('f6', 'h7', R, .85);                                   // ответ соперника — опровержение
+  } else if (H2) {
+    over += arrow('g8', 'h7', R, .85) + arrow('f3', 'g5', B, .85) + arrow('h7', 'g6', R, .85) + arrow('h4', 'h5', B, .85)
+      + numTag('g8', 'h7', 1, Rt, .5) + numTag('f3', 'g5', 2, Bt, .45) + numTag('h7', 'g6', 3, Rt, .5) + numTag('h4', 'h5', 4, Bt, .5);
+  } else {
+    over += arrow('f3', 'g5', B, .7) + arrow('g5', 'f7', B, .55)         // мой план из линии «если взять»
+      + numTag('f3', 'g5', 2, Bt, .45) + numTag('g5', 'f7', 3, Bt, .5);
+  }
+  over += `</svg>`;
   const [x, y] = ctr('h7');
-  over += `<div class="badge" style="left:${(x + S / 2 - 24).toFixed(1)}px;top:${(y - S / 2 - 12).toFixed(1)}px">${brill(36)}</div>`;
+  over += `<div class="badge" style="left:${(x + S / 2 - 24).toFixed(1)}px;top:${(y - S / 2 - 12).toFixed(1)}px">${F ? blund(36) : brill(36)}</div>`;
 }
 document.getElementById('over').innerHTML = over;
 

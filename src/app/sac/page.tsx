@@ -930,7 +930,7 @@ export default function SacPage() {
         {!answered && current && !preparing && (
           <>
             <div data-ui="sac-offer" style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Предложение</div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8, fontWeight: 600 }}>Предложение</div>
               <div style={{
                 display: 'inline-flex', alignItems: 'center',
                 fontSize: 26, fontWeight: 700, letterSpacing: '-0.01em',

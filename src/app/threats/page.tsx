@@ -1100,7 +1100,7 @@ export default function ThreatsPage() {
         {phase === 'marking' && (
           <>
             <div data-ui="threat-task" style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Задание</div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 6, fontWeight: 600 }}>Задание</div>
               <div style={{ fontSize: 15, color: 'var(--ivory)', lineHeight: 1.5 }}>
                 {pos?.last_move_san
                   ? <>Соперник сыграл <MoveChip>{pos.last_move_san}</MoveChip>. Отметь свои фигуры, которые он может выиграть следующим ходом. Если угроз нет — нажми «Угроз нет».</>
@@ -1168,15 +1168,18 @@ export default function ThreatsPage() {
                 <>
                   <FeedbackCard
                     variant={missedCount === 0 && foundCount === pos.targets.length ? 'success' : missedCount > 0 ? 'danger' : 'warning'}
-                    title={
-                      missedCount === 0 && foundCount === pos.targets.length
-                        ? `Нашёл ${foundCount} из ${pos.targets.length}`
-                        : missedCount > 0
-                        ? `Пропустил ${missedCount}`
-                        : `Лишних: ${marked.size - foundCount}`
-                    }
+                    title={`Угроза: ${pos.threat_san ?? '?'}`}
                   >
                     {buildThreatCardText(pos)}
+                    {(missedCount > 0 || foundCount < pos.targets.length || (marked.size - foundCount > 0)) && (
+                      <span style={{ display: 'block', marginTop: 4, fontSize: 13, color: 'var(--muted)' }}>
+                        {missedCount === 0 && foundCount === pos.targets.length
+                          ? `Нашёл ${foundCount} из ${pos.targets.length}`
+                          : missedCount > 0
+                          ? `Пропустил ${missedCount} из ${pos.targets.length}`
+                          : `Нашёл ${foundCount}, лишних: ${marked.size - foundCount}`}
+                      </span>
+                    )}
                   </FeedbackCard>
                   {pos.threat_pv && (
                     <div
