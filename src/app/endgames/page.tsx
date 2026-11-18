@@ -153,9 +153,10 @@ function MiniBoard({ fen, size, lightColor, darkColor, pieceBaseUrl }: {
 
   const containerStyle: React.CSSProperties = {
     width: size ? size : '100%',
-    height: size ? size : '100%',
+    aspectRatio: '1/1',
     display: 'grid',
     gridTemplateColumns: 'repeat(8, 1fr)',
+    gridTemplateRows: 'repeat(8, 1fr)',
     borderRadius: 8,
     overflow: 'hidden',
     flexShrink: 0,
@@ -176,7 +177,6 @@ function MiniBoard({ fen, size, lightColor, darkColor, pieceBaseUrl }: {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              aspectRatio: '1/1',
             }}
           >
             {sq && (
@@ -832,6 +832,7 @@ function CatalogUI({
               overflowY: 'auto',
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+              gridAutoRows: 'max-content',
               gap: 16,
               alignContent: 'start',
             }}

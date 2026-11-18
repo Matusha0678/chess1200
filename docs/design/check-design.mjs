@@ -9,6 +9,7 @@
 //             значок на фигуре жертвующей стороны, 4 заголовка, ходы только в SAN, просмотр варианта по ходам.
 // Версия 3.4: + проигрывание варианта по кнопке ▶ (ходы идут по очереди, а не прыжком в конец).
 // Версия 3.5: + /repertoire «Дебюты в партиях» (pages/repertoire/REPERTOIRE.md): структура и демо ?demo=1.
+// Версия 3.6: /endgames — карточка не должна обрезать доску и название (сплющенные ряды сетки).
 //
 // Запуск (dev-сервер должен работать):
 //   node docs/design/check-design.mjs                                  # http://localhost:3001, все тренажёры + ответы
@@ -317,7 +318,13 @@ try {
           const r = c.getBoundingClientRect();
           const b = c.querySelector('[data-ui="eg-board"]');
           const br = b ? b.getBoundingClientRect() : null;
-          return { top: r.top, w: r.width, bw: br ? br.width : 0, bh: br ? br.height : 0, title: (c.querySelector('[data-ui="eg-card-title"]')?.textContent || '').trim() };
+          const t = c.querySelector('[data-ui="eg-card-title"]');
+          const tr = t ? t.getBoundingClientRect() : null;
+          return {
+            top: r.top, w: r.width, h: r.height, bw: br ? br.width : 0, bh: br ? br.height : 0,
+            title: (t?.textContent || '').trim(),
+            titleVisible: !!tr && tr.height > 0 && tr.bottom <= r.bottom + 1 && tr.top >= r.top - 1,
+          };
         });
         res.egGridRight = document.querySelector('[data-ui="eg-grid"]')?.getBoundingClientRect().right || 0;
         const bad = [];
@@ -355,6 +362,10 @@ try {
           if (notSquare) errors.push(`доски в карточках не квадратные: ${notSquare} шт.`);
           const small = m.eg.filter(c => c.bw < L.minBoard).length;
           if (small) errors.push(`доски в карточках меньше ${L.minBoard}px: ${small} шт.`);
+          const clipped = m.eg.filter(c => c.h < c.bh + 30);
+          if (clipped.length) errors.push(`карточки обрезают доску: ${clipped.length} шт., видно ${Math.round(Math.min(...clipped.map(c => c.h)))}px из ${Math.round(clipped[0].bh)}px — ряды сетки сплющены, нужен grid-auto-rows: max-content (ENDGAMES.md, раздел 2)`);
+          const hiddenTitles = m.eg.filter(c => !c.titleVisible).length;
+          if (hiddenTitles) errors.push(`у ${hiddenTitles} карточек не видно названия под доской`);
           const badTitles = m.eg.filter(c => L.titleNotIn.includes(c.title)).length;
           if (badTitles) errors.push(`у ${badTitles} карточек заголовок — название раздела, нужны свои названия (ENDGAMES.md, раздел 4)`);
         }
@@ -522,7 +533,7 @@ for (const [w, map] of Object.entries(colorsBySize)) {
 }
 
 let fails = 0;
-console.log('\nПроверка дизайна тренажёров (v3.5)\n');
+console.log('\nПроверка дизайна тренажёров (v3.6)\n');
 for (const r of report) {
   if (r.errors.length) {
     fails++;
