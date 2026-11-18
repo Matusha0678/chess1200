@@ -789,7 +789,7 @@ export default function ThreatsPage() {
                     { n: '03', text: 'Позиции появятся в тренажёре' },
                   ].map(({ n, text }) => (
                     <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                      <span style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, color: 'var(--muted)', flexShrink: 0 }}>{n}</span>
+                      <span style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700, color: 'var(--muted)', flexShrink: 0 }}>{n}</span>
                       <span style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.5, paddingTop: 5 }}>{text}</span>
                     </div>
                   ))}
@@ -999,7 +999,7 @@ export default function ThreatsPage() {
                 {posIdx + 1} / {positions.length}
               </span>
               {score.xp > 0 && (
-                <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 20, background: 'rgba(129,182,76,.12)', border: '1px solid rgba(129,182,76,.3)', color: '#81B64C' }}>
+                <span style={{ fontSize: 13, padding: '2px 8px', borderRadius: 20, background: 'rgba(129,182,76,.12)', border: '1px solid rgba(129,182,76,.3)', color: '#81B64C' }}>
                   +{score.xp} XP
                 </span>
               )}
@@ -1014,16 +1014,16 @@ export default function ThreatsPage() {
         {/* Chips */}
         {pos && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-            <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+            <span style={{ fontSize: 13, padding: '3px 10px', borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
               {isWhite ? 'Ты играешь белыми' : 'Ты играешь чёрными'}
             </span>
             {oppName !== 'Соперник' && (
-              <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+              <span style={{ fontSize: 13, padding: '3px 10px', borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
                 Партия против {oppName}
               </span>
             )}
             {isRevealed && pos.has_threat && pos.motif && (
-              <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'rgba(224,87,74,.12)', border: '1px solid rgba(224,87,74,.3)', color: '#F08277' }}>
+              <span style={{ fontSize: 13, padding: '3px 10px', borderRadius: 20, background: 'rgba(224,87,74,.12)', border: '1px solid rgba(224,87,74,.3)', color: '#F08277' }}>
                 {motifTitle(pos.motif, pos)}
               </span>
             )}
@@ -1038,7 +1038,7 @@ export default function ThreatsPage() {
         {phase === 'marking' && (
           <>
             <div data-ui="threat-task" style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Задание</div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Задание</div>
               <div style={{ fontSize: 15, color: 'var(--ivory)', lineHeight: 1.5 }}>
                 {pos?.last_move_san
                   ? <>Соперник сыграл <MoveChip>{pos.last_move_san}</MoveChip>. Отметь свои фигуры, которые он может выиграть следующим ходом. Если угроз нет — нажми «Угроз нет».</>

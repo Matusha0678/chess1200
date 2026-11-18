@@ -689,13 +689,13 @@ export default function SacPage() {
         {/* Chips under title */}
         {current && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-            <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+            <span style={{ fontSize: 13, padding: '3px 10px', borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
               {sideToMove === 'white' ? 'Ход белых' : 'Ход чёрных'}
             </span>
             {answered && current && (
               <>
                 <span style={{
-                  fontSize: 12, padding: '3px 10px', borderRadius: 20,
+                  fontSize: 13, padding: '3px 10px', borderRadius: 20,
                   background: answered.ok ? 'rgba(129,182,76,.12)' : 'rgba(224,87,74,.12)',
                   border: `1px solid ${answered.ok ? 'rgba(129,182,76,.4)' : 'rgba(224,87,74,.4)'}`,
                   color: answered.ok ? '#81B64C' : '#F08277',
@@ -703,7 +703,7 @@ export default function SacPage() {
                   {answered.ok ? 'Верно' : 'Неверно'}
                 </span>
                 <span style={{
-                  fontSize: 12, padding: '3px 10px', borderRadius: 20,
+                  fontSize: 13, padding: '3px 10px', borderRadius: 20,
                   background: current.kind === 'real' ? 'rgba(38,194,163,.12)' : 'rgba(224,87,74,.12)',
                   border: `1px solid ${current.kind === 'real' ? 'rgba(38,194,163,.4)' : 'rgba(224,87,74,.4)'}`,
                   color: current.kind === 'real' ? '#26C2A3' : '#F08277',
@@ -711,7 +711,7 @@ export default function SacPage() {
                   {buildChipText(current)}
                 </span>
                 {answered.ok && (
-                  <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'rgba(129,182,76,.12)', border: '1px solid rgba(129,182,76,.4)', color: '#81B64C' }}>
+                  <span style={{ fontSize: 13, padding: '3px 10px', borderRadius: 20, background: 'rgba(129,182,76,.12)', border: '1px solid rgba(129,182,76,.4)', color: '#81B64C' }}>
                     +20 XP
                   </span>
                 )}
@@ -745,7 +745,7 @@ export default function SacPage() {
                 { n: '03', text: 'Позиции появляются в списке слева' },
               ].map(({ n, text }) => (
                 <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <span style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, color: 'var(--muted)', flexShrink: 0 }}>{n}</span>
+                  <span style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700, color: 'var(--muted)', flexShrink: 0 }}>{n}</span>
                   <span style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.5, paddingTop: 5 }}>{text}</span>
                 </div>
               ))}
@@ -785,7 +785,7 @@ export default function SacPage() {
               ].map(({ label, value, color }) => (
                 <div key={label} style={{ padding: '10px 12px', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card)', textAlign: 'center' }}>
                   <b style={{ display: 'block', fontSize: 20, color, fontVariantNumeric: 'tabular-nums' }}>{value}</b>
-                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>{label}</span>
+                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>{label}</span>
                 </div>
               ))}
             </div>
@@ -799,7 +799,7 @@ export default function SacPage() {
         {!answered && current && !preparing && (
           <>
             <div data-ui="sac-offer" style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Предложение</div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Предложение</div>
               <div style={{
                 display: 'inline-flex', alignItems: 'center',
                 fontSize: 26, fontWeight: 700, letterSpacing: '-0.01em',
@@ -850,7 +850,7 @@ export default function SacPage() {
             {(current.eval_after != null || current.eval_no_sac != null) && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
                 <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
-                  <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
+                  <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
                     без жертвы {current.best_no_sac ? `(${current.best_no_sac})` : ''}
                   </span>
                   <b style={{ fontSize: 20, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
@@ -858,7 +858,7 @@ export default function SacPage() {
                   </b>
                 </div>
                 <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
-                  <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
+                  <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
                     после {sacSan}
                   </span>
                   <b style={{ fontSize: 20, color: answered.ok ? '#81B64C' : '#E0574A', fontVariantNumeric: 'tabular-nums' }}>
@@ -876,7 +876,7 @@ export default function SacPage() {
                     <span style={{ color: 'var(--muted)', flexShrink: 0, marginTop: 1 }}>если</span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                       {(def.outcome || def.pv?.join(' ')).split(' ').filter(Boolean).slice(0, 4).map((s, j) => (
-                        <span key={j} style={{ padding: '2px 8px', borderRadius: 6, background: 'var(--surface-2)', border: '1px solid var(--hairline)', fontSize: 12, color: 'var(--ivory)' }}>
+                        <span key={j} style={{ padding: '2px 8px', borderRadius: 6, background: 'var(--surface-2)', border: '1px solid var(--hairline)', fontSize: 13, color: 'var(--ivory)' }}>
                           {s}
                         </span>
                       ))}
@@ -892,11 +892,11 @@ export default function SacPage() {
               return (
                 <div data-ui="sac-gave-got" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
                   <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
-                    <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginBottom: 4, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Отдал</span>
+                    <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Отдал</span>
                     <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>{gave}</span>
                   </div>
                   <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
-                    <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginBottom: 4, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Получил</span>
+                    <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Получил</span>
                     <span style={{ fontSize: 15, fontWeight: 600, color: gotBad ? '#E0574A' : 'var(--ivory)' }}>{got}</span>
                   </div>
                 </div>
