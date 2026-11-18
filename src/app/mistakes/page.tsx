@@ -409,13 +409,13 @@ export default function MistakesPage() {
       const chess = new Chess(card.fen_before);
       const mv = chess.move(answered.userSan);
       if (mv) {
-        tints[mv.from as Square] = 'rgba(230,160,60,0.6)';
-        tints[mv.to as Square] = 'rgba(230,160,60,0.6)';
+        tints[mv.from as Square] = 'rgba(230,160,60,0.22)';
+        tints[mv.to as Square] = 'rgba(230,160,60,0.22)';
       }
     } catch { /* ignore */ }
     if (card.best_move?.length >= 4) {
-      tints[card.best_move.slice(0, 2) as Square] = 'rgba(100,200,120,0.55)';
-      tints[card.best_move.slice(2, 4) as Square] = 'rgba(60,180,90,0.75)';
+      tints[card.best_move.slice(0, 2) as Square] = 'rgba(100,200,120,0.2)';
+      tints[card.best_move.slice(2, 4) as Square] = 'rgba(60,180,90,0.25)';
     }
   }
 
@@ -423,10 +423,10 @@ export default function MistakesPage() {
   if (!answered && card && card.best_move?.length >= 4) {
     const fromSq = card.best_move.slice(0, 2) as Square;
     const toSq = card.best_move.slice(2, 4) as Square;
-    if (showHint) tints[fromSq] = 'rgba(129,182,76,0.38)';
+    if (showHint) tints[fromSq] = 'rgba(129,182,76,0.2)';
     if (showAnswer) {
-      tints[fromSq] = 'rgba(129,182,76,0.45)';
-      tints[toSq] = 'rgba(129,182,76,0.6)';
+      tints[fromSq] = 'rgba(129,182,76,0.22)';
+      tints[toSq] = 'rgba(129,182,76,0.25)';
     }
   }
 
@@ -453,6 +453,7 @@ export default function MistakesPage() {
         from: card.best_move.slice(0, 2) as Square,
         to: card.best_move.slice(2, 4) as Square,
         color: '#81B64C',
+        style: 'dashed',
       });
     }
   }
