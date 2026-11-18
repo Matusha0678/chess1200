@@ -483,10 +483,17 @@ export function LessonViewer({
     const moveLabel    = currentMove?.to === square ? currentLabel : null;
     const isGuessTo    = isGuessPending && nextMoveForGuess?.to === square;
 
-    if (!isCheck && !isCapture && !mark && !moveLabel && !isGuessTo) return <>{children}</>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!isCheck && !isCapture && !mark && !moveLabel && !isGuessTo) return null as any;
+
+    const squareBg: React.CSSProperties | undefined = currentMove?.to === square
+      ? { background: 'rgba(255,255,255,0.20)' }
+      : currentMove?.from === square
+        ? { background: 'rgba(255,255,255,0.09)' }
+        : undefined;
 
     return (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <div style={{ position: 'relative', width: '100%', height: '100%', ...squareBg }}>
         {children}
         {isCheck && animEnabled && <div className="sq-check" aria-hidden="true" />}
         {isCheck && !animEnabled && (

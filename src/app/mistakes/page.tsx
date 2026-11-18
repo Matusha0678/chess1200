@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Chess } from 'chess.js';
 import type { Square } from 'chess.js';
-import type { PieceDropHandlerArgs, SquareRenderer, Arrow } from 'react-chessboard';
+import type { PieceDropHandlerArgs, Arrow } from 'react-chessboard';
 import { ClassIcon } from '@/components/ClassIcon';
 import type { MoveClass } from '@/lib/classify';
 import { supabase } from '@/lib/supabase';
@@ -479,25 +479,19 @@ export default function MistakesPage() {
     }
   }
 
-  const squareRenderer: SquareRenderer = ({ square, children }) => {
-    const isUserTo = square === userMoveToSq;
-    const isBestTo = square === bestMoveToSq && answered && !answered.correct;
-    if (!isUserTo && !isBestTo) return <>{children}</>;
-    const cls: MoveClass = isBestTo ? 'best' : (userMoveCls ?? 'blunder');
-    return (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        {children}
-        <div aria-hidden="true" style={{
-          position: 'absolute', top: 2, left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10, pointerEvents: 'none',
-          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
-        }}>
-          <ClassIcon cls={cls} size={30} />
-        </div>
-      </div>
-    );
-  };
+  const overlays: Record<string, React.ReactNode> = {};
+  const ICON_OVERLAY = (cls: MoveClass) => (
+    <div aria-hidden="true" style={{
+      position: 'absolute', top: 2, left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 10, pointerEvents: 'none',
+      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
+    }}>
+      <ClassIcon cls={cls} size={30} />
+    </div>
+  );
+  if (answered && userMoveToSq) overlays[userMoveToSq] = ICON_OVERLAY(userMoveCls ?? 'blunder');
+  if (answered && !answered.correct && bestMoveToSq) overlays[bestMoveToSq] = ICON_OVERLAY('best');
 
   // ── Eval bar ──────────────────────────────────────────────────────────────
 
@@ -731,7 +725,7 @@ export default function MistakesPage() {
       allowDragging={!answered && !checking && !loading && !!card}
       onPieceDrop={card && !answered && !checking ? handlePieceDrop : undefined}
       squareStyles={squareStyles}
-      squareRenderer={squareRenderer}
+      overlays={overlays}
       arrows={arrows}
       cacheKey={`${boardOrientation}-${card?.id ?? 'none'}`}
     />
@@ -927,21 +921,19 @@ export default function MistakesPage() {
             )}
 
             {/* Mastery bar */}
-            {answered && (
-              <div style={{ padding: '20px 24px 0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>Карточка выучена</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: 'var(--ivory)' }}>
-                    {card.mastery} / 5
-                  </span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
-                  {[1, 2, 3, 4, 5].map(lvl => (
-                    <div key={lvl} style={{ height: 6, borderRadius: 3, background: lvl <= card.mastery ? '#81B64C' : '#3A3835' }} />
-                  ))}
-                </div>
+            <div style={{ padding: '20px 24px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontSize: 13, color: 'var(--muted)' }}>Карточка выучена</span>
+                <span style={{ fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: 'var(--ivory)' }}>
+                  {card.mastery} / 5
+                </span>
               </div>
-            )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
+                {[1, 2, 3, 4, 5].map(lvl => (
+                  <div key={lvl} style={{ height: 6, borderRadius: 3, background: lvl <= card.mastery ? '#81B64C' : '#3A3835' }} />
+                ))}
+              </div>
+            </div>
 
             {/* Mark correct manually */}
             {answered && !answered.correct && (
@@ -976,7 +968,7 @@ export default function MistakesPage() {
               }}
             >
               Дальше
-              <span style={{ fontSize: 13, fontWeight: 600, background: 'rgba(0,0,0,.18)', borderRadius: 6, padding: '2px 7px' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(0,0,0,.22)', borderRadius: 4, padding: '1px 7px', lineHeight: '16px' }}>
                 Пробел
               </span>
             </button>
@@ -1012,25 +1004,25 @@ export default function MistakesPage() {
               <button
                 onClick={() => setShowHint(true)}
                 disabled={showHint}
-                style={{ height: 44, fontSize: 15, fontWeight: 600, background: showHint ? 'var(--track)' : 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: showHint ? 'var(--control)' : 'var(--ivory)', cursor: showHint ? 'default' : 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}
+                style={{ height: 44, fontSize: 15, fontWeight: 600, background: showHint ? 'var(--track)' : 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: showHint ? 'var(--control)' : 'var(--ivory)', cursor: showHint ? 'default' : 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
-                <span>Подсказка</span>
-                <span style={{ fontSize: 13, color: 'var(--control)' }}>H</span>
+                Подсказка
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--control)', background: 'rgba(255,255,255,.08)', borderRadius: 4, padding: '1px 5px', lineHeight: '16px' }}>H</span>
               </button>
               <button
                 onClick={() => { setShowHint(true); setShowAnswer(true); }}
                 disabled={showAnswer}
-                style={{ height: 44, fontSize: 15, fontWeight: 600, background: showAnswer ? 'var(--track)' : 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: showAnswer ? 'var(--control)' : 'var(--ivory)', cursor: showAnswer ? 'default' : 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}
+                style={{ height: 44, fontSize: 15, fontWeight: 600, background: showAnswer ? 'var(--track)' : 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: showAnswer ? 'var(--control)' : 'var(--ivory)', cursor: showAnswer ? 'default' : 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
-                <span>Показать ответ</span>
-                <span style={{ fontSize: 13, color: 'var(--control)' }}>A</span>
+                Показать ответ
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--control)', background: 'rgba(255,255,255,.08)', borderRadius: 4, padding: '1px 5px', lineHeight: '16px' }}>A</span>
               </button>
               <button
                 onClick={skipCard}
-                style={{ height: 44, fontSize: 15, fontWeight: 600, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}
+                style={{ height: 44, fontSize: 15, fontWeight: 600, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
-                <span>Пропустить</span>
-                <span style={{ fontSize: 13, color: 'var(--control)' }}>S</span>
+                Пропустить
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--control)', background: 'rgba(255,255,255,.08)', borderRadius: 4, padding: '1px 5px', lineHeight: '16px' }}>S</span>
               </button>
             </div>
             <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--control)' }}>
