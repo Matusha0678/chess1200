@@ -501,7 +501,8 @@ export default function GameViewerPage({ params }: Props) {
     const cls    = isTo ? selectedAnalysis?.classification ?? null : null;
     const color  = cls ? CLASS_COLOR[cls] : null;
 
-    if (!isFrom && !isTo) return <>{children}</>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!isFrom && !isTo) return null as any;
 
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
