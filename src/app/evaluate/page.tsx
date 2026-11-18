@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import Link from 'next/link';
 import { Chess } from 'chess.js';
-import { Chessboard } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
-import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { useStockfish } from '@/hooks/useStockfish';
+import { Board } from '@/components/board/Board';
+import { EvalBar } from '@/components/trainer/EvalBar';
+import { TrainerLayout } from '@/components/trainer/TrainerLayout';
+import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -46,7 +47,6 @@ function computeFactors(fen: string): Record<Factor, number> {
   const board = chess.board();
   const turn = chess.turn();
 
-  // Material
   let matW = 0, matB = 0;
   for (const row of board) {
     for (const sq of row) {
@@ -56,9 +56,8 @@ function computeFactors(fen: string): Record<Factor, number> {
       else matB += v;
     }
   }
-  const materialAdv = matW - matB; // positive = white better
+  const materialAdv = matW - matB;
 
-  // King safety: count attacking pieces near king
   function kingFile(color: 'w' | 'b'): number {
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
       const sq = board[r][c];
@@ -80,13 +79,9 @@ function computeFactors(fen: string): Record<Factor, number> {
   }
   const kingSafetyAdv = countPawnsNearKing('w') - countPawnsNearKing('b');
 
-  // Activity: legal moves count (approximate)
   const myMoves = chess.moves({ verbose: false }).length;
-  const oppChess = new Chess(fen);
-  // Flip turn for opponent move count estimation — not perfect but quick
   const activityAdv = turn === 'w' ? myMoves / 10 : -myMoves / 10;
 
-  // Pawn structure: doubled + isolated
   function pawnFiles(color: 'w' | 'b'): number[] {
     const files: number[] = [];
     for (const row of board) for (let c = 0; c < 8; c++) {
@@ -100,14 +95,13 @@ function computeFactors(fen: string): Record<Factor, number> {
     const counts: number[] = new Array(8).fill(0);
     for (const f of files) counts[f]++;
     for (let f = 0; f < 8; f++) {
-      if (counts[f] > 1) penalty += counts[f] - 1; // doubled
-      if (counts[f] > 0 && counts[f - 1] === 0 && counts[f + 1] === 0) penalty++; // isolated
+      if (counts[f] > 1) penalty += counts[f] - 1;
+      if (counts[f] > 0 && counts[f - 1] === 0 && counts[f + 1] === 0) penalty++;
     }
     return penalty;
   }
   const pawnAdv = structurePenalty(pawnFiles('b')) - structurePenalty(pawnFiles('w'));
 
-  // Center control: count pieces controlling d4,d5,e4,e5
   const CENTER_SQ = ['d4','d5','e4','e5'];
   let centerW = 0, centerB = 0;
   for (const sq of CENTER_SQ) {
@@ -140,7 +134,7 @@ function factorToChoice(val: number): EvalChoice {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function EvaluatePage() {
-  const { boardTheme, customPieces, boardThemeId, pieceStyleId } = useBoardTheme();
+  const { S } = useTrainerGeometry();
   const { getEval, isReady } = useStockfish();
 
   const [mode,     setMode]     = useState<Mode>('all');
@@ -150,17 +144,14 @@ export default function EvaluatePage() {
   const [myEval,   setMyEval]   = useState<EvalChoice | null>(null);
   const [myFactors,setMyFactors]= useState<Factor[]>([]);
   const [engineCp, setEngineCp] = useState<number | null>(null);
-  const [bestMove, setBestMove] = useState<string | null>(null);
   const [analyzing,setAnalyzing]= useState(false);
   const [stats,    setStats]    = useState<Stats>({ total: 0, correct: 0, byFactor: Object.fromEntries(FACTORS.map(f => [f, { total: 0, correct: 0 }])) as Stats['byFactor'] });
   const [sqlMissing, setSqlMissing] = useState(false);
   const [factors,  setFactors]  = useState<Record<Factor, number> | null>(null);
 
-  // Queue of positions fetched
   const posQueueRef = useRef<PositionRow[]>([]);
 
   const fetchPositions = useCallback(async () => {
-    // Fetch positions from games (move 12-30) or master_games
     const positions: PositionRow[] = [];
 
     if (mode === 'my_games' || mode === 'all') {
@@ -170,7 +161,6 @@ export default function EvaluatePage() {
           const chess = new Chess();
           chess.loadPgn(game.pgn ?? '');
           const history = chess.history({ verbose: true });
-          // Pick a random move between 12 and 30
           const eligible = history.filter((_, i) => i >= 11 && i <= 29);
           if (eligible.length === 0) continue;
           const pick = eligible[Math.floor(Math.random() * eligible.length)];
@@ -178,9 +168,7 @@ export default function EvaluatePage() {
           for (const h of history.slice(0, history.indexOf(pick) + 1)) {
             replay.move({ from: h.from, to: h.to, promotion: h.promotion });
           }
-          const f = replay.fen();
-          // Skip extreme positions
-          positions.push({ fen: f, source: 'my_games' });
+          positions.push({ fen: replay.fen(), source: 'my_games' });
         } catch { /* skip */ }
       }
     }
@@ -199,13 +187,11 @@ export default function EvaluatePage() {
           for (const h of history.slice(0, history.indexOf(pick) + 1)) {
             replay.move({ from: h.from, to: h.to, promotion: h.promotion });
           }
-          const f = replay.fen();
-          positions.push({ fen: f, source: 'masters' });
+          positions.push({ fen: replay.fen(), source: 'masters' });
         } catch { /* skip */ }
       }
     }
 
-    // Shuffle and filter extreme (|cp| > 300)
     posQueueRef.current = positions.sort(() => Math.random() - 0.5).slice(0, 20);
   }, [mode]);
 
@@ -222,7 +208,6 @@ export default function EvaluatePage() {
     setMyEval(null);
     setMyFactors([]);
     setEngineCp(null);
-    setBestMove(null);
     setFactors(computeFactors(pos.fen));
     setPhase('question');
     setLoading(false);
@@ -236,27 +221,20 @@ export default function EvaluatePage() {
   async function handleSubmit() {
     if (!myEval || !fen) return;
     setAnalyzing(true);
-    // Run Stockfish while we process
     if (isReady) {
       getEval(fen, 12, (result) => {
         const cp = result.cp ?? (result.mate ? (result.mate > 0 ? 9000 : -9000) : 0);
-        // Check if position is too extreme
         const turn = fen.split(' ')[1];
         const cpFromWhite = turn === 'w' ? cp : -cp;
         setEngineCp(cpFromWhite);
-        setBestMove(result.bestMove ?? null);
         setAnalyzing(false);
       });
     } else {
       setAnalyzing(false);
     }
-
-    // Compute result against known engine eval (use factor estimate if no engine)
-    // For now show phase='result', engine eval fills in async
     setPhase('result');
 
-    // Log to DB
-    const engineChoice = engineCp !== null ? cpToChoice(engineCp) : myEval; // provisional
+    const engineChoice = engineCp !== null ? cpToChoice(engineCp) : myEval;
     const ok = myEval === engineChoice;
     setStats(prev => {
       const byFactor = { ...prev.byFactor };
@@ -267,13 +245,7 @@ export default function EvaluatePage() {
     });
 
     try {
-      await supabase.from('eval_log').insert({
-        fen,
-        my_eval: myEval,
-        my_factors: myFactors,
-        engine_cp: engineCp,
-        ok,
-      });
+      await supabase.from('eval_log').insert({ fen, my_eval: myEval, my_factors: myFactors, engine_cp: engineCp, ok });
     } catch (e) {
       const err = e as { message?: string; code?: string };
       if (err?.message?.includes('does not exist') || err?.code === '42P01') setSqlMissing(true);
@@ -284,68 +256,38 @@ export default function EvaluatePage() {
     setMyFactors(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f].slice(0, 2));
   }
 
-  const boardKey = `${boardThemeId}-${pieceStyleId}`;
   const engineChoice = engineCp !== null ? cpToChoice(engineCp) : null;
+  const turn = fen ? fen.split(' ')[1] as 'w' | 'b' : 'w';
 
-  if (sqlMissing) {
-    return (
-      <div className="page">
-        <div style={{ padding: '20px 24px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 14, color: 'var(--muted)' }}>
-          Таблица <code>eval_log</code> не создана. Выполни <strong>supabase/20-eval-log.sql</strong>.
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="page">
-      {/* Header */}
-      <div className="page-head">
-        <div className="page-head-text">
-          <Link href="/" className="page-back">← Сегодня</Link>
-          <h1 className="page-title">Оцени позицию</h1>
-          <p className="page-lead">Факторы — приблизительные правила, а не мнение движка.</p>
-        </div>
-      </div>
-
-      {/* Mode selector */}
-      <div className="ui-segmented" style={{ alignSelf: 'flex-start' }}>
-        {(['all', 'my_games', 'masters'] as Mode[]).map(m => (
-          <button key={m} onClick={() => setMode(m)} className={`ui-segment ${mode === m ? 'ui-segment-active' : ''}`}>
-            {m === 'all' ? 'Все' : m === 'my_games' ? 'Мои партии' : 'Мастера'}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
-      ) : !fen ? (
-        <div style={{ color: 'var(--muted)', fontSize: 14 }}>Нет позиций для анализа.</div>
-      ) : (
-        <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          {/* Board */}
-          <div style={{ flex: '1 1 480px', maxWidth: 640 }}>
-            <div style={{ width: '100%', aspectRatio: '1' }}>
-              <Chessboard
-                key={boardKey}
-                options={{
-                  position: fen,
-                  allowDragging: false,
-                  boardOrientation: 'white',
-                  boardStyle: { borderRadius: 0, width: '100%', height: '100%' },
-                  darkSquareStyle:  { backgroundColor: boardTheme.dark },
-                  lightSquareStyle: { backgroundColor: boardTheme.light },
-                  pieces: customPieces,
-                  showNotation: true,
-                  animationDurationInMs: 0,
-                }}
-              />
-            </div>
+  const panel = (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* Panel header */}
+      <div data-ui="panel-header" style={{ padding: '14px 20px', borderBottom: '1px solid var(--hairline)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+        <div data-ui="panel-title" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>Оцени позицию</div>
+        <div data-ui="panel-actions">
+          <div className="ui-segmented">
+            {(['all', 'my_games', 'masters'] as Mode[]).map(m => (
+              <button key={m} onClick={() => setMode(m)} className={`ui-segment ${mode === m ? 'ui-segment-active' : ''}`}>
+                {m === 'all' ? 'Все' : m === 'my_games' ? 'Мои партии' : 'Мастера'}
+              </button>
+            ))}
           </div>
+        </div>
+      </div>
 
-          {/* Panel */}
-          <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Q1: Who's better */}
+      {/* Panel body */}
+      <div style={{ flex: 1, overflow: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {sqlMissing ? (
+          <div style={{ fontSize: 14, color: 'var(--muted)' }}>
+            Таблица <code>eval_log</code> не создана. Выполни <strong>supabase/20-eval-log.sql</strong>.
+          </div>
+        ) : loading ? (
+          <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
+        ) : !fen ? (
+          <div style={{ color: 'var(--muted)', fontSize: 14 }}>Нет позиций для анализа.</div>
+        ) : (
+          <>
+            {/* Q1 */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>1. Кто лучше?</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -369,7 +311,7 @@ export default function EvaluatePage() {
               </div>
             </div>
 
-            {/* Q2: Main factor */}
+            {/* Q2 */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>2. Главный фактор (до 2)</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -388,7 +330,7 @@ export default function EvaluatePage() {
                     >
                       <span>{FACTOR_LABEL[f]}</span>
                       {showResult && factors && (
-                        <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{fVal > 0 ? '+' : ''}{fVal.toFixed(1)}</span>
+                        <span style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{fVal > 0 ? '+' : ''}{fVal.toFixed(1)}</span>
                       )}
                     </button>
                   );
@@ -413,7 +355,7 @@ export default function EvaluatePage() {
                 {analyzing && <div style={{ fontSize: 13, color: 'var(--muted)' }}>Анализируем…</div>}
                 {engineCp !== null && (
                   <div style={{ padding: '12px 16px', border: '1px solid var(--hairline)', background: 'var(--surface)' }}>
-                    <div style={{ fontSize: 12, letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 6 }}>Движок (глубина 12)</div>
+                    <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 6 }}>Движок (глубина 12)</div>
                     <div style={{ fontSize: 20, fontWeight: 700, color: engineChoice === myEval ? 'rgba(100,220,100,0.95)' : 'rgba(220,80,60,0.9)' }}>
                       {engineCp >= 70 ? 'Белые лучше' : engineCp <= -70 ? 'Чёрные лучше' : 'Примерно равно'}
                       <span style={{ fontSize: 14, fontWeight: 400, marginLeft: 8, color: 'var(--muted)' }}>
@@ -433,16 +375,26 @@ export default function EvaluatePage() {
 
             {/* Stats */}
             {stats.total > 0 && (
-              <div style={{ marginTop: 8, padding: '12px 16px', border: '1px solid var(--hairline)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 12, letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase' }}>Статистика сессии</div>
+              <div style={{ padding: '12px 16px', border: '1px solid var(--hairline)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>Статистика сессии</div>
                 <div style={{ fontSize: 14, color: 'var(--ivory)' }}>
                   Верных оценок: <strong>{stats.correct}</strong> / {stats.total} ({stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0}%)
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </div>
+  );
+
+  return (
+    <TrainerLayout
+      topBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>{turn === 'b' ? 'Соперник' : 'Соперник'}</span>}
+      board={<Board fen={fen || 'start'} size={S} orientation="white" interactive={false} />}
+      evalBar={engineCp !== null ? <EvalBar cp={engineCp} orientation="white" /> : undefined}
+      bottomBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>{turn === 'w' ? 'Позиция · белые ходят' : 'Позиция · чёрные ходят'}</span>}
+      panel={panel}
+    />
   );
 }

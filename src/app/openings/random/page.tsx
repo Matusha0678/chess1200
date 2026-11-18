@@ -130,7 +130,7 @@ function LineNotationStrip({
       {tokens.map((t, idx) => {
         if (t.moveIdx === null) {
           return (
-            <span key={idx} className="text-[11px] text-[#404040] flex-shrink-0 select-none">
+            <span key={idx} className="text-[13px] text-[#404040] flex-shrink-0 select-none">
               {t.text}
             </span>
           );
@@ -142,7 +142,7 @@ function LineNotationStrip({
           <span
             key={idx}
             ref={isActive ? activeRef : undefined}
-            className={`text-[12px] flex-shrink-0 font-mono px-[5px] py-[1px] rounded-full transition-all ${
+            className={`text-[13px] flex-shrink-0 font-mono px-[5px] py-[1px] rounded-full transition-all ${
               isActive
                 ? 'bg-[#F5F5F5] text-[#050505] font-semibold'
                 : isDone
@@ -193,6 +193,7 @@ export default function RandomOpeningPage() {
   const [evalInfo, setEvalInfo] = useState<{ cp?: number; mate?: number; turn: 'w' | 'b' } | null>(null);
   const [bestMoveArrow, setBestMoveArrow] = useState<string | null>(null);
   const showAnalysisRef = useRef(false);
+  const [openingPickerOpen, setOpeningPickerOpen] = useState(false);
 
   // ── Load all openings + lines ─────────────────────────────────────────────
 
@@ -788,7 +789,7 @@ export default function RandomOpeningPage() {
                       <span className="w-2 h-2 rounded-full bg-[#64B5F6] inline-block" />
                       Стокфиш Ур.{DIFFICULTY_PRESETS[difficultyIdx].level}
                       {showAnalysis && evalText && (
-                        <span className="ml-auto font-mono text-[12px] text-[#A0A0A0]">{evalText}</span>
+                        <span className="ml-auto font-mono text-[13px] text-[#A0A0A0]">{evalText}</span>
                       )}
                     </>
                   : <><span className="w-2 h-2 rounded-full bg-[#808080] animate-pulse inline-block" /> Загрузка Стокфиша…</>
@@ -810,7 +811,7 @@ export default function RandomOpeningPage() {
                 <span className="font-cormorant text-[19px] leading-tight text-[#F5F5F5] font-[500] truncate">
                   {currentOpening?.name ?? 'Дебют Рандом'}
                 </span>
-                <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-[#404040]">
+                <span className="text-[13px] text-[#404040]">
                   {phase === 'free_play'
                     ? 'Свободная игра'
                     : phase === 'game_over'
@@ -839,8 +840,8 @@ export default function RandomOpeningPage() {
             {phase === 'playing' && (
               <div className="px-4 pt-2 pb-1 flex-shrink-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] text-[#404040] font-semibold tracking-[0.1em] uppercase">Прогресс</span>
-                  <span className="text-[10px] text-[#505050] font-mono">
+                  <span className="text-[13px] text-[#404040] font-semibold">Прогресс</span>
+                  <span className="text-[13px] text-[#505050] font-mono">
                     Ход {moveIndex} / {currentLine.length}
                   </span>
                 </div>
@@ -866,7 +867,7 @@ export default function RandomOpeningPage() {
             {/* 4. Chat (flex-1, scrollable) */}
             <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 min-h-0">
               {messages.length === 0 && (
-                <div className="text-[12px] text-[#404040] text-center py-4">
+                <div className="text-[13px] text-[#404040] text-center py-4">
                   Начни игру, чтобы увидеть подсказки тренера
                 </div>
               )}
@@ -876,7 +877,7 @@ export default function RandomOpeningPage() {
                   return (
                     <div key={msg.id} className="flex flex-col gap-2 mt-1">
                       {msg.text && (
-                        <span className="text-[12px] text-[#808080]">{msg.text}</span>
+                        <span className="text-[13px] text-[#808080]">{msg.text}</span>
                       )}
                       <div className="flex flex-col gap-1.5">
                         {msg.choiceA && (
@@ -885,7 +886,7 @@ export default function RandomOpeningPage() {
                               if (msg.choiceA === 'Продолжить партию') continueWithStockfish();
                               else if (msg.choiceA === 'Новая линия') startGame();
                             }}
-                            className="h-9 w-full border border-[#404040] text-[#E5E5E5] hover:border-[#FFFFFF] hover:bg-[#161616] rounded-full text-[12px] font-medium transition-colors bg-transparent cursor-pointer"
+                            className="h-9 w-full border border-[#404040] text-[#E5E5E5] hover:border-[#FFFFFF] hover:bg-[#161616] rounded-full text-[13px] font-medium transition-colors bg-transparent cursor-pointer"
                           >
                             {msg.choiceA}
                           </button>
@@ -896,7 +897,7 @@ export default function RandomOpeningPage() {
                               if (msg.choiceB === 'Та же линия') replayLine();
                               else if (msg.choiceB === 'Новая линия') startGame();
                             }}
-                            className="h-9 w-full border border-[#303030] text-[#A0A0A0] hover:border-[#505050] hover:text-[#D0D0D0] rounded-full text-[12px] transition-colors bg-transparent cursor-pointer"
+                            className="h-9 w-full border border-[#303030] text-[#A0A0A0] hover:border-[#505050] hover:text-[#D0D0D0] rounded-full text-[13px] transition-colors bg-transparent cursor-pointer"
                           >
                             {msg.choiceB}
                           </button>
@@ -906,7 +907,7 @@ export default function RandomOpeningPage() {
                             onClick={() => {
                               if (msg.choiceC === 'Новая линия') startGame();
                             }}
-                            className="h-9 w-full border border-[#242424] text-[#606060] hover:border-[#404040] hover:text-[#A0A0A0] rounded-full text-[12px] transition-colors bg-transparent cursor-pointer"
+                            className="h-9 w-full border border-[#242424] text-[#606060] hover:border-[#404040] hover:text-[#A0A0A0] rounded-full text-[13px] transition-colors bg-transparent cursor-pointer"
                           >
                             {msg.choiceC}
                           </button>
@@ -918,10 +919,10 @@ export default function RandomOpeningPage() {
 
                 const styles: Record<MsgType, string> = {
                   system: 'text-[#F5F5F5] font-semibold text-[13px]',
-                  success: 'text-[#81C784] text-[12px]',
-                  error: 'text-[#EF9A9A] text-[12px]',
-                  info: 'text-[#808080] text-[12px]',
-                  trainer: 'text-[#A0A0A0] text-[12px]',
+                  success: 'text-[#81C784] text-[13px]',
+                  error: 'text-[#EF9A9A] text-[13px]',
+                  info: 'text-[#808080] text-[13px]',
+                  trainer: 'text-[#A0A0A0] text-[13px]',
                   choice: '',
                 };
 
@@ -948,7 +949,7 @@ export default function RandomOpeningPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleHint}
-                    className="flex-1 h-9 border border-[#303030] text-[#D0D0D0] hover:border-[#FFFFFF] rounded-full text-[12px] transition-colors bg-transparent cursor-pointer flex items-center justify-center gap-1.5"
+                    className="flex-1 h-9 border border-[#303030] text-[#D0D0D0] hover:border-[#FFFFFF] rounded-full text-[13px] transition-colors bg-transparent cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
@@ -957,7 +958,7 @@ export default function RandomOpeningPage() {
                   </button>
                   <button
                     onClick={handleUndo}
-                    className="flex-1 h-9 border border-[#303030] text-[#808080] hover:border-[#505050] hover:text-[#D0D0D0] rounded-full text-[12px] transition-colors bg-transparent cursor-pointer flex items-center justify-center gap-1.5"
+                    className="flex-1 h-9 border border-[#303030] text-[#808080] hover:border-[#505050] hover:text-[#D0D0D0] rounded-full text-[13px] transition-colors bg-transparent cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
@@ -971,7 +972,7 @@ export default function RandomOpeningPage() {
               {phase !== 'ready' && (
                 <button
                   onClick={startGame}
-                  className="h-9 w-full border border-[#303030] text-[#808080] hover:border-[#505050] hover:text-[#D0D0D0] rounded-full text-[12px] transition-colors bg-transparent cursor-pointer"
+                  className="h-9 w-full border border-[#303030] text-[#808080] hover:border-[#505050] hover:text-[#D0D0D0] rounded-full text-[13px] transition-colors bg-transparent cursor-pointer"
                 >
                   Новая линия
                 </button>
@@ -988,19 +989,40 @@ export default function RandomOpeningPage() {
               )}
 
               {/* Opening selector */}
-              <select
-                value={selectedOpeningId}
-                onChange={(e) => setSelectedOpeningId(e.target.value)}
-                className="h-8 w-full bg-transparent border border-[#242424] text-[#505050] hover:border-[#404040] hover:text-[#808080] rounded-full text-[11px] px-3 transition-colors cursor-pointer appearance-none text-center"
-                style={{ WebkitAppearance: 'none' }}
-              >
-                <option value="">Случайный дебют</option>
-                {allOpenings.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.eco_code ? `${o.eco_code} · ` : ''}{o.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <button
+                  onClick={() => setOpeningPickerOpen(prev => !prev)}
+                  className="h-8 w-full bg-transparent border border-[#242424] text-[#505050] hover:border-[#404040] hover:text-[#808080] rounded-full text-[13px] px-3 transition-colors cursor-pointer flex items-center justify-between gap-2"
+                >
+                  <span className="truncate text-left">
+                    {selectedOpeningId
+                      ? (allOpenings.find(o => o.id === selectedOpeningId)?.name ?? 'Случайный дебют')
+                      : 'Случайный дебют'}
+                  </span>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+                {openingPickerOpen && (
+                  <div className="absolute bottom-full left-0 right-0 mb-1 bg-[#111] border border-[#2A2A2A] rounded-[12px] overflow-hidden z-50 max-h-[200px] overflow-y-auto">
+                    <button
+                      onClick={() => { setSelectedOpeningId(''); setOpeningPickerOpen(false); }}
+                      className={`w-full px-3 py-2 text-left text-[13px] hover:bg-[#1A1A1A] transition-colors ${!selectedOpeningId ? 'text-[#F5F5F5]' : 'text-[#808080]'}`}
+                    >
+                      Случайный дебют
+                    </button>
+                    {allOpenings.map((o) => (
+                      <button
+                        key={o.id}
+                        onClick={() => { setSelectedOpeningId(o.id); setOpeningPickerOpen(false); }}
+                        className={`w-full px-3 py-2 text-left text-[13px] transition-colors ${selectedOpeningId === o.id ? 'text-[#F5F5F5] bg-[#1E1E1E]' : 'text-[#808080] hover:bg-[#1A1A1A]'}`}
+                      >
+                        {o.eco_code ? `${o.eco_code} · ` : ''}{o.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Difficulty presets */}
               <div className="flex gap-1.5">
@@ -1011,7 +1033,7 @@ export default function RandomOpeningPage() {
                       setDifficultyIdx(idx);
                       setSkillLevel(preset.level);
                     }}
-                    className={`flex-1 h-7 rounded-full text-[10px] font-medium transition-colors cursor-pointer border ${
+                    className={`flex-1 h-7 rounded-full text-[13px] font-medium transition-colors cursor-pointer border ${
                       difficultyIdx === idx
                         ? 'bg-[#1E1E1E] border-[#404040] text-[#D0D0D0]'
                         : 'bg-transparent border-[#1E1E1E] text-[#404040] hover:border-[#303030] hover:text-[#808080]'
@@ -1025,7 +1047,7 @@ export default function RandomOpeningPage() {
               {/* Analysis toggle */}
               <button
                 onClick={handleToggleAnalysis}
-                className={`h-7 w-full rounded-full text-[10px] font-medium transition-colors cursor-pointer border flex items-center justify-center gap-1.5 ${
+                className={`h-7 w-full rounded-full text-[13px] font-medium transition-colors cursor-pointer border flex items-center justify-center gap-1.5 ${
                   showAnalysis
                     ? 'bg-[#1A2A3A] border-[#64B5F6] text-[#64B5F6]'
                     : 'bg-transparent border-[#1E1E1E] text-[#404040] hover:border-[#303030] hover:text-[#808080]'

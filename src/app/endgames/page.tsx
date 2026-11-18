@@ -7,6 +7,10 @@ import { ENDGAMES, CATEGORY_LABELS, type Endgame, type EndgameCategory } from '@
 import { PlayButton } from '@/components/PlayButton';
 import { useStockfish } from '@/hooks/useStockfish';
 import { useBoardTheme } from '@/contexts/BoardThemeContext';
+import { Board } from '@/components/board/Board';
+import { TrainerLayout } from '@/components/trainer/TrainerLayout';
+import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
+import type { Square } from 'chess.js';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -152,6 +156,16 @@ export default function EndgamesPage() {
     setAchieved(false);
     setPhase('playing');
     startTimeRef.current = Date.now();
+  }, []);
+
+  // Auto-start random endgame on mount
+  useEffect(() => {
+    if (ENDGAMES.length > 0) {
+      const idx = Math.floor(Math.random() * ENDGAMES.length);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      startEndgame(ENDGAMES[idx]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const finishEndgame = useCallback(async (ok: boolean, c: Chess, moves: number) => {
@@ -388,7 +402,7 @@ function ListOrPlay(props: {
   return <PlayView {...props} />;
 }
 
-// ── Playing view (kept largely as before) ─────────────────────────────────────
+// ── Playing view ──────────────────────────────────────────────────────────────
 
 function PlayView(props: {
   current: Endgame | null;
@@ -406,162 +420,105 @@ function PlayView(props: {
   setPhase: (p: Phase) => void;
   startEndgame: (eg: Endgame) => void;
 }) {
+  const { S } = useTrainerGeometry();
   const { current, chess, fen, hintMove, handleDrop, moveCount, phase, status, hintIdea, setHintIdea, requestHintMove, achieved, setPhase, startEndgame } = props;
-  const { boardTheme } = useBoardTheme();
+
+  const boardOnMove = useCallback((m: { from: Square; to: Square; promotion?: 'q' | 'r' | 'b' | 'n' }) => {
+    const sq = (s: Square) => s as `${'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'}${'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'}`;
+    return handleDrop({ sourceSquare: sq(m.from), targetSquare: sq(m.to) } as PieceDropHandlerArgs);
+  }, [handleDrop]);
+
   if (!current) return null;
 
   const pColor = playerColor(current);
   const orientation = pColor === 'w' ? 'white' : 'black';
   const goalLabel = current.goal === 'win' ? 'Выиграть' : 'Сделать ничью';
-
-  // Highlight hint squares
-  const squareStyles: Record<string, React.CSSProperties> = {};
-  if (hintMove) {
-    squareStyles[hintMove.slice(0, 2)] = { backgroundColor: 'rgba(242,239,231,0.25)' };
-    squareStyles[hintMove.slice(2, 4)] = { backgroundColor: 'rgba(242,239,231,0.45)' };
-  }
-
   const isPlayerTurn = chess.turn() === pColor && phase === 'playing';
 
-  return (
-    <div className="page">
-      <div style={{ display: 'flex', gap: 40, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        {/* Board */}
-        <div style={{ flex: '1 1 480px', maxWidth: 640 }}>
-          <div style={{ width: '100%', aspectRatio: '1' }}>
-            <Chessboard options={{
-              position: fen,
-              boardOrientation: orientation,
-              allowDragging: isPlayerTurn,
-              onPieceDrop: handleDrop,
-              squareStyles,
-              boardStyle: { width: '100%', height: '100%' },
-              darkSquareStyle:  { backgroundColor: boardTheme.dark },
-              lightSquareStyle: { backgroundColor: boardTheme.light },
-            }} />
-          </div>
-        </div>
+  const hintLastMove = hintMove
+    ? { from: hintMove.slice(0, 2) as Square, to: hintMove.slice(2, 4) as Square }
+    : undefined;
 
-        {/* Sidebar */}
-        <div style={{ flex: '1 1 280px' }}>
-          {/* Header */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 4, textTransform: 'uppercase' }}>
-              {CATEGORY_LABELS[current.category]}
+  const panel = (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <div data-ui="panel-header" style={{ padding: '14px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+        <div data-ui="panel-title" style={{ fontSize: 15, fontWeight: 600, color: 'var(--muted)' }}>{CATEGORY_LABELS[current.category]}</div>
+        <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ivory)', marginTop: 2 }}>{goalLabel}</div>
+        <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>Ход {moveCount + 1} · {isPlayerTurn ? 'Твой ход' : 'Ход Stockfish'}</div>
+      </div>
+
+      <div style={{ flex: 1, overflow: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Status */}
+        {status && (
+          <div style={{ padding: '10px 12px', background: achieved ? 'rgba(129,182,76,0.1)' : 'rgba(100,80,80,0.15)', border: `1px solid ${achieved ? 'var(--accent)' : '#6B4040'}`, fontSize: 13, color: 'var(--ivory)' }}>
+            {status}
+          </div>
+        )}
+
+        {/* Move counter */}
+        {phase === 'playing' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
+              <span>Ходы</span>
+              <span>{moveCount}/{MAX_MOVES}</span>
             </div>
-            <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ivory)', marginBottom: 2 }}>
-              {goalLabel}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-              {orientation === 'white' ? 'Играете белыми' : 'Играете чёрными'} · ход {moveCount + 1}
+            <div style={{ height: 3, background: 'var(--hairline)' }}>
+              <div style={{ height: '100%', width: `${(moveCount / MAX_MOVES) * 100}%`, background: moveCount > 40 ? '#8B5A5A' : 'var(--accent)', transition: 'width 0.2s' }} />
             </div>
           </div>
+        )}
 
-          {/* Status */}
-          {status && (
-            <div style={{
-              padding: '10px 12px', borderRadius: 4, marginBottom: 16,
-              background: achieved ? 'rgba(242,239,231,0.08)' : 'rgba(100,80,80,0.15)',
-              border: `1px solid ${achieved ? 'var(--control)' : '#6B4040'}`,
-              fontSize: 13, color: 'var(--ivory)',
-            }}>
-              {status}
-            </div>
-          )}
-
-          {/* Move counter */}
-          {phase === 'playing' && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
-                <span>Ходы</span>
-                <span>{moveCount}/{MAX_MOVES}</span>
-              </div>
-              <div style={{ height: 3, background: 'var(--track)', borderRadius: 2 }}>
-                <div style={{
-                  height: '100%', borderRadius: 2,
-                  width: `${(moveCount / MAX_MOVES) * 100}%`,
-                  background: moveCount > 40 ? '#8B5A5A' : 'var(--control)',
-                  transition: 'width 0.2s',
-                }} />
-              </div>
-            </div>
-          )}
-
-          {/* Hint buttons */}
-          {phase === 'playing' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-              <button
-                onClick={() => setHintIdea(true)}
-                disabled={hintIdea}
-                style={{
-                  padding: '8px 12px', background: 'transparent',
-                  border: '1px solid var(--control)', borderRadius: 4,
-                  color: hintIdea ? 'var(--muted)' : 'var(--ivory)', cursor: hintIdea ? 'default' : 'pointer',
-                  fontSize: 13, textAlign: 'left',
-                }}
-              >
-                💡 Подсказка идеи
-              </button>
-              <button
-                onClick={requestHintMove}
-                disabled={!!hintMove}
-                style={{
-                  padding: '8px 12px', background: 'transparent',
-                  border: '1px solid var(--control)', borderRadius: 4,
-                  color: hintMove ? 'var(--muted)' : 'var(--ivory)', cursor: hintMove ? 'default' : 'pointer',
-                  fontSize: 13, textAlign: 'left',
-                }}
-              >
-                ♟ Подсказка хода
-              </button>
-            </div>
-          )}
-
-          {/* Idea hint */}
-          {hintIdea && (
-            <div style={{
-              padding: '10px 12px', background: 'var(--surface)',
-              border: '1px solid var(--hairline)', borderRadius: 4,
-              fontSize: 13, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 16,
-            }}>
-              {current.idea}
-            </div>
-          )}
-
-          {/* Back / Next */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button
-              onClick={() => setPhase('list')}
-              style={{
-                flex: 1, padding: '8px 12px', background: 'transparent',
-                border: '1px solid var(--hairline)', borderRadius: 4,
-                color: 'var(--muted)', cursor: 'pointer', fontSize: 13,
-              }}
-            >
-              ← Список
+        {/* Hints */}
+        {phase === 'playing' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button onClick={() => setHintIdea(true)} disabled={hintIdea} style={{ padding: '8px 12px', background: 'transparent', border: '1px solid var(--hairline)', color: hintIdea ? 'var(--muted)' : 'var(--ivory)', cursor: hintIdea ? 'default' : 'pointer', fontSize: 13, textAlign: 'left', fontFamily: 'inherit' }}>
+              Подсказка идеи
             </button>
-            {phase === 'done' && (
-              <>
-                <button
-                  onClick={() => startEndgame(current)}
-                  style={{
-                    flex: 1, padding: '8px 12px', background: 'var(--surface)',
-                    border: '1px solid var(--control)', borderRadius: 4,
-                    color: 'var(--ivory)', cursor: 'pointer', fontSize: 13,
-                  }}
-                >
-                  Повторить
-                </button>
-                <PlayButton
-                  fen={current.fen}
-                  color={new Chess(current.fen).turn()}
-                  label="Играть отсюда"
-                />
-              </>
-            )}
+            <button onClick={requestHintMove} disabled={!!hintMove} style={{ padding: '8px 12px', background: 'transparent', border: '1px solid var(--hairline)', color: hintMove ? 'var(--muted)' : 'var(--ivory)', cursor: hintMove ? 'default' : 'pointer', fontSize: 13, textAlign: 'left', fontFamily: 'inherit' }}>
+              Подсказка хода
+            </button>
           </div>
+        )}
+
+        {hintIdea && (
+          <div style={{ padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
+            {current.idea}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 'auto' }}>
+          <button onClick={() => setPhase('list')} style={{ flex: 1, padding: '8px 12px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>
+            ← Список
+          </button>
+          {phase === 'done' && (
+            <>
+              <button onClick={() => startEndgame(current)} style={{ flex: 1, padding: '8px 12px', background: 'var(--surface)', border: '1px solid var(--hairline)', color: 'var(--ivory)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>
+                Повторить
+              </button>
+              <PlayButton fen={current.fen} color={new Chess(current.fen).turn()} label="Играть отсюда" />
+            </>
+          )}
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <TrainerLayout
+      topBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Stockfish</span>}
+      board={
+        <Board
+          fen={fen}
+          size={S}
+          orientation={orientation}
+          interactive={isPlayerTurn}
+          onMove={boardOnMove}
+          lastMove={hintLastMove}
+        />
+      }
+      bottomBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>{orientation === 'white' ? 'Ты играешь белыми' : 'Ты играешь чёрными'}</span>}
+      panel={panel}
+    />
   );
 }

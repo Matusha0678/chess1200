@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Chessboard } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
+import { Board } from '@/components/board/Board';
+import { TrainerLayout } from '@/components/trainer/TrainerLayout';
+import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
 import { COURSE_FORMAT_SPEC } from '@/lib/course-format-spec';
 import { nextReviewDate } from '@/lib/mistakes';
 import type { LessonBlock, IdeaItem } from '@/types/courses';
@@ -22,7 +24,10 @@ interface IdeaCard {
 type Phase = 'loading' | 'list' | 'practice' | 'done' | 'empty';
 
 
+const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
 export default function PlansPage() {
+  const { S } = useTrainerGeometry();
   const [phase, setPhase] = useState<Phase>('loading');
   const [allCards, setAllCards] = useState<IdeaCard[]>([]);
   const [dueCards, setDueCards] = useState<IdeaCard[]>([]);
@@ -30,15 +35,7 @@ export default function PlansPage() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [openingFilter, setOpeningFilter] = useState('all');
-  const [boardWidth, setBoardWidth] = useState(400);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    const update = () => setBoardWidth(Math.min(400, window.innerWidth - 48));
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
 
   useEffect(() => {
     async function load() {
@@ -161,10 +158,12 @@ export default function PlansPage() {
 
   if (phase === 'loading') {
     return (
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={{ height: 32, width: 100, background: 'var(--surface)', marginBottom: 32 }} className="animate-pulse" />
-        <div style={{ height: 400, background: 'var(--surface)' }} className="animate-pulse" />
-      </div>
+      <TrainerLayout
+        topBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Идеи позиций</span>}
+        board={<Board fen={START_FEN} size={S} orientation="white" interactive={false} />}
+        bottomBar={<span />}
+        panel={<div style={{ padding: 24 }}><div style={{ height: 32, width: 120, background: 'var(--surface)' }} className="animate-pulse" /></div>}
+      />
     );
   }
 
@@ -172,34 +171,31 @@ export default function PlansPage() {
 
   if (phase === 'empty') {
     return (
-      <div className="page" style={{ maxWidth: 760 }}>
-        <div className="page-head">
-          <div className="page-head-text">
-            <h1 className="page-title">Идеи позиций</h1>
-            <p className="page-lead">Идеи из курсов на повторение</p>
+      <TrainerLayout
+        topBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Идеи позиций</span>}
+        board={<Board fen={START_FEN} size={S} orientation="white" interactive={false} />}
+        bottomBar={<span />}
+        panel={
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div data-ui="panel-header" className="panel-header" style={{ padding: '14px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+              <span data-ui="panel-title" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>Идеи позиций</span>
+            </div>
+            <div style={{ padding: '20px 24px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <p style={{ fontSize: 15, color: 'var(--ivory)', margin: 0, fontWeight: 600 }}>Нет идей в курсах</p>
+              <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0, lineHeight: 1.6 }}>
+                Добавь раздел <code style={{ fontSize: 13, color: 'var(--ivory)' }}>## Идея позиции</code> в любой курс.
+                Скопируй инструкцию и попроси ИИ добавить раздел с блоками <code style={{ fontSize: 13, color: 'var(--ivory)' }}>idea</code>.
+              </p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <button onClick={() => void copySpec()} className="ui-btn ui-btn-primary">
+                  {copied ? 'Скопировано!' : 'Копировать инструкцию для ИИ'}
+                </button>
+                <Link href="/courses" className="ui-btn ui-btn-outline">Курсы →</Link>
+              </div>
+            </div>
           </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <p style={{ fontSize: 15, color: 'var(--ivory)', margin: 0, fontWeight: 600 }}>
-            Нет идей в курсах
-          </p>
-          <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0, lineHeight: 1.6 }}>
-            Добавь раздел <code style={{ fontSize: 13, color: 'var(--ivory)' }}>## Идея позиции</code> в любой курс.
-            Скопируй инструкцию и попроси ИИ добавить раздел с блоками <code style={{ fontSize: 13, color: 'var(--ivory)' }}>idea</code>.
-          </p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <button
-              onClick={() => void copySpec()}
-              className="ui-btn ui-btn-primary"
-            >
-              {copied ? 'Скопировано!' : 'Копировать инструкцию для ИИ'}
-            </button>
-            <Link href="/courses" className="ui-btn ui-btn-outline">
-              Курсы →
-            </Link>
-          </div>
-        </div>
-      </div>
+        }
+      />
     );
   }
 
@@ -207,92 +203,77 @@ export default function PlansPage() {
 
   if (phase === 'done') {
     return (
-      <div className="page" style={{ maxWidth: 640 }}>
-        <div className="page-head">
-          <div className="page-head-text">
-            <h1 className="page-title">Готово!</h1>
-            <p className="page-lead">
-              {practiceCards.length === 1 ? '1 идея проработана сегодня.' : `${practiceCards.length} идей проработано сегодня.`}
-            </p>
+      <TrainerLayout
+        topBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Идеи позиций</span>}
+        board={<Board fen={START_FEN} size={S} orientation="white" interactive={false} />}
+        bottomBar={<span />}
+        panel={
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div data-ui="panel-header" className="panel-header" style={{ padding: '14px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+              <span data-ui="panel-title" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>Готово!</span>
+            </div>
+            <div style={{ padding: '20px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
+                {practiceCards.length === 1 ? '1 идея проработана сегодня.' : `${practiceCards.length} идей проработано сегодня.`}
+              </p>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <Link href="/" className="ui-btn ui-btn-primary">На главную</Link>
+                <button onClick={() => setPhase('list')} className="ui-btn ui-btn-outline">Ещё раз</button>
+              </div>
+            </div>
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <Link href="/" className="ui-btn ui-btn-primary">На главную</Link>
-          <button onClick={() => setPhase('list')} className="ui-btn ui-btn-outline">Ещё раз</button>
-        </div>
-      </div>
+        }
+      />
     );
   }
 
   // ── List ─────────────────────────────────────────────────────────────────────
 
   if (phase === 'list') {
+    const listBoardFen = dueCards[0]?.item?.fen ?? START_FEN;
     return (
-      <div className="page" style={{ maxWidth: 640 }}>
-        <div className="page-head">
-          <div className="page-head-text">
-            <h1 className="page-title">Идеи позиций</h1>
-            <p className="page-lead">Концептуальные идеи из курсов</p>
+      <TrainerLayout
+        topBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Идеи позиций</span>}
+        board={<Board fen={listBoardFen} size={S} orientation="white" interactive={false} />}
+        bottomBar={<span />}
+        panel={
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div data-ui="panel-header" className="panel-header" style={{ padding: '14px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+              <span data-ui="panel-title" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>Идеи позиций</span>
+            </div>
+            <div style={{ padding: '20px 24px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {openings.length > 1 && (
+                <div className="chip-row">
+                  {['all', ...openings].map(op => (
+                    <button key={op} onClick={() => setOpeningFilter(op)} className={`ui-chip ${openingFilter === op ? 'ui-chip-active' : ''}`}>
+                      {op === 'all' ? 'Все' : op}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)", fontWeight: 700, fontSize: 44, lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'var(--ivory)' }}>
+                    {filteredDue.length}
+                  </span>
+                  <span style={{ fontSize: 14, color: 'var(--muted)' }}>
+                    {filteredDue.length === 0 ? 'нет идей для повторения сегодня' : filteredDue.length === 1 ? 'идея на сегодня' : filteredDue.length < 5 ? 'идеи на сегодня' : 'идей на сегодня'}
+                  </span>
+                </div>
+                {filteredDue.length > 0 && (
+                  <button onClick={startPractice} style={{ display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', border: 'none', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+                    Начать
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+                  </button>
+                )}
+              </div>
+              {filteredDue.length === 0 && allCards.length > 0 && (
+                <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>Все идеи изучены — загляни завтра.</p>
+              )}
+            </div>
           </div>
-        </div>
-
-        {/* Opening filter */}
-        {openings.length > 1 && (
-          <div className="chip-row">
-            {['all', ...openings].map(op => (
-              <button
-                key={op}
-                onClick={() => setOpeningFilter(op)}
-                className={`ui-chip ${openingFilter === op ? 'ui-chip-active' : ''}`}
-              >
-                {op === 'all' ? 'Все' : op}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div style={{ paddingTop: 32, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={{
-              fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-              fontWeight: 700, fontSize: 44, lineHeight: 1, fontVariantNumeric: 'tabular-nums',
-              color: 'var(--ivory)',
-            }}>
-              {filteredDue.length}
-            </span>
-            <span style={{ fontSize: 14, color: 'var(--muted)' }}>
-              {filteredDue.length === 0
-                ? 'нет идей для повторения сегодня'
-                : filteredDue.length === 1
-                  ? 'идея на сегодня'
-                  : filteredDue.length < 5
-                    ? 'идеи на сегодня'
-                    : 'идей на сегодня'}
-            </span>
-          </div>
-
-          {filteredDue.length > 0 && (
-            <button
-              onClick={startPractice}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                height: 48, padding: '0 24px',
-                background: 'var(--ivory)', color: 'var(--ink)',
-                border: 'none', fontSize: 15, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              Начать
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
-            </button>
-          )}
-        </div>
-
-        {filteredDue.length === 0 && allCards.length > 0 && (
-          <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 24 }}>
-            Все идеи изучены — загляни завтра.
-          </p>
-        )}
-      </div>
+        }
+      />
     );
   }
 
@@ -305,119 +286,70 @@ export default function PlansPage() {
     const orientation: 'white' | 'black' = currentCard.item.fen.split(' ')[1] === 'b' ? 'black' : 'white';
 
     return (
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '40px 24px' }}>
-        {/* Header row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <button
-            onClick={() => setPhase('list')}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 12px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 13, cursor: 'pointer' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>
-            Выход
-          </button>
+      <TrainerLayout
+        topBar={
           <span style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
             {currentIdx + 1} / {practiceCards.length}
           </span>
-        </div>
-
-        {/* Meta */}
-        <div style={{ marginBottom: 12 }}>
-          <span style={{ fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase' }}>
-            {currentCard.courseName}
-            {currentCard.opening ? ` · ${currentCard.opening}` : ''}
-          </span>
-        </div>
-
-        {/* Board */}
-        <div style={{ marginBottom: 20 }}>
-          <Chessboard options={{
-            position: currentCard.item.fen,
-            boardOrientation: orientation,
-            allowDragging: false,
-            boardStyle: { width: boardWidth, height: boardWidth },
-          }} />
-        </div>
-
-        {/* Question */}
-        <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', margin: '0 0 16px 0', lineHeight: 1.4 }}>
-          {currentCard.item.question}
-        </p>
-
-        {/* Options */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-          {optionKeys.map(k => {
-            let bg = 'transparent';
-            let border = '1px solid var(--control)';
-            let color = 'var(--ivory)';
-
-            if (answered) {
-              if (k === currentCard.item.answer) {
-                bg = 'rgba(242,239,231,0.08)';
-                border = '1px solid var(--ivory)';
-                color = 'var(--ivory)';
-              } else if (k === selectedAnswer) {
-                bg = 'rgba(100,50,50,0.12)';
-                border = '1px solid #6B4040';
-                color = 'var(--muted)';
-              } else {
-                color = 'var(--muted)';
-                border = '1px solid var(--hairline)';
-              }
-            }
-
-            return (
+        }
+        board={<Board fen={currentCard.item.fen} size={S} orientation={orientation} interactive={false} />}
+        bottomBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Идеи позиций</span>}
+        panel={
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div data-ui="panel-header" className="panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+              <span data-ui="panel-title" style={{ fontSize: 13, color: 'var(--muted)' }}>
+                {currentCard.courseName}{currentCard.opening ? ` · ${currentCard.opening}` : ''}
+              </span>
               <button
-                key={k}
-                onClick={() => void handleAnswer(k)}
-                disabled={answered}
-                style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 12,
-                  padding: '12px 16px', background: bg, border, color,
-                  textAlign: 'left', fontSize: 14, lineHeight: 1.4, cursor: answered ? 'default' : 'pointer',
-                  transition: 'border-color 0.1s',
-                }}
+                onClick={() => setPhase('list')}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 28, padding: '0 12px', background: 'transparent', border: '1px solid var(--hairline)', color: 'var(--muted)', fontSize: 13, cursor: 'pointer' }}
               >
-                <span style={{ fontWeight: 700, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{k}</span>
-                <span>{currentCard.item.options[k]}</span>
+                Выход
               </button>
-            );
-          })}
-        </div>
-
-        {/* Result + Why */}
-        {answered && (
-          <div style={{
-            padding: '14px 16px', marginBottom: 20,
-            background: isCorrect ? 'rgba(242,239,231,0.06)' : 'rgba(100,50,50,0.1)',
-            border: `1px solid ${isCorrect ? 'var(--control)' : '#6B4040'}`,
-          }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ivory)', margin: '0 0 8px 0' }}>
-              {isCorrect ? '✓ Верно!' : `✗ Неверно — правильный ответ: ${currentCard.item.answer}`}
-            </p>
-            <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
-              {currentCard.item.why}
-            </p>
+            </div>
+            <div style={{ padding: '16px 20px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', margin: 0, lineHeight: 1.4 }}>
+                {currentCard.item.question}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {optionKeys.map(k => {
+                  let bg = 'transparent';
+                  let border = '1px solid var(--control)';
+                  let color = 'var(--ivory)';
+                  if (answered) {
+                    if (k === currentCard.item.answer) { bg = 'rgba(242,239,231,0.08)'; border = '1px solid var(--ivory)'; }
+                    else if (k === selectedAnswer) { bg = 'rgba(100,50,50,0.12)'; border = '1px solid #6B4040'; color = 'var(--muted)'; }
+                    else { color = 'var(--muted)'; border = '1px solid var(--hairline)'; }
+                  }
+                  return (
+                    <button key={k} onClick={() => void handleAnswer(k)} disabled={answered}
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: bg, border, color, textAlign: 'left', fontSize: 14, lineHeight: 1.4, cursor: answered ? 'default' : 'pointer', transition: 'border-color 0.1s' }}>
+                      <span style={{ fontWeight: 700, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{k}</span>
+                      <span>{currentCard.item.options[k]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {answered && (
+                <div style={{ padding: '14px 16px', background: isCorrect ? 'rgba(242,239,231,0.06)' : 'rgba(100,50,50,0.1)', border: `1px solid ${isCorrect ? 'var(--control)' : '#6B4040'}` }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ivory)', margin: '0 0 8px 0' }}>
+                    {isCorrect ? '✓ Верно!' : `✗ Неверно — правильный ответ: ${currentCard.item.answer}`}
+                  </p>
+                  <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>{currentCard.item.why}</p>
+                </div>
+              )}
+              {answered && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button onClick={handleNext} style={{ display: 'flex', alignItems: 'center', gap: 8, height: 44, padding: '0 24px', background: 'var(--ivory)', color: 'var(--ink)', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                    {currentIdx + 1 >= practiceCards.length ? 'Завершить' : 'Следующая'}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-
-        {/* Next button */}
-        {answered && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              onClick={handleNext}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                height: 44, padding: '0 24px',
-                background: 'var(--ivory)', color: 'var(--ink)',
-                border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              {currentIdx + 1 >= practiceCards.length ? 'Завершить' : 'Следующая'}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
-            </button>
-          </div>
-        )}
-      </div>
+        }
+      />
     );
   }
 
