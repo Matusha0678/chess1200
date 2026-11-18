@@ -3,13 +3,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Chess } from 'chess.js';
-import { Chessboard } from 'react-chessboard';
 import type { Square } from 'chess.js';
-import type { SquareHandlerArgs, PieceDropHandlerArgs } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
 import { useStockfish } from '@/hooks/useStockfish';
 import { findThreats, threatExplanation } from '@/lib/threats';
 import type { Threat } from '@/lib/threats';
+import { Board } from '@/components/board/Board';
+import type { BoardArrow } from '@/components/board/Board';
+import { TrainerLayout } from '@/components/trainer/TrainerLayout';
+import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -18,8 +20,8 @@ const HEADING: React.CSSProperties = {
 };
 
 const SECTION_LABEL: React.CSSProperties = {
-  fontSize: 11, fontWeight: 600, letterSpacing: '0.16em',
-  color: 'var(--muted)', textTransform: 'uppercase',
+  fontSize: 13, fontWeight: 500,
+  color: 'var(--muted)',
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -60,6 +62,8 @@ export default function ThreatsPage() {
   const [blitzMode, setBlitzMode] = useState(false);
   const [timeLeft, setTimeLeft] = useState(BLITZ_SECONDS);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  const { S } = useTrainerGeometry();
 
   const { getBestMove, startAnalysis, stopAnalysis, isReady } = useStockfish();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -157,9 +161,8 @@ export default function ThreatsPage() {
 
   // ── Mark / unmark squares ────────────────────────────────────────────────────
 
-  function handleSquareClick({ square }: SquareHandlerArgs) {
+  function handleSquareClick(sq: Square) {
     if (phase !== 'marking') return;
-    const sq = square as Square;
     setMarked(prev => {
       const next = new Set(prev);
       if (next.has(sq)) next.delete(sq);
@@ -229,15 +232,14 @@ export default function ThreatsPage() {
     }
   }
 
-  const handleDefensiveDrop = useCallback(({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean => {
+  const handleDefensiveMove = useCallback(({ from, to }: { from: Square; to: Square; promotion?: 'q' | 'r' | 'b' | 'n' }): boolean => {
     if (phase !== 'defensive' || !pos) return false;
-    if (!targetSquare) return false;
 
     // Let user make a move on the board — just check Stockfish eval
     const chess = new Chess(pos.fen);
     let moveResult;
     try {
-      moveResult = chess.move({ from: sourceSquare as Square, to: targetSquare as Square, promotion: 'q' });
+      moveResult = chess.move({ from, to, promotion: 'q' });
     } catch {
       return false;
     }
@@ -287,14 +289,14 @@ export default function ThreatsPage() {
     setPhase('marking');
   }
 
-  // ── Board square styles ──────────────────────────────────────────────────────
+  // ── Board tints ──────────────────────────────────────────────────────────────
 
-  function buildSquareStyles(): Record<string, React.CSSProperties> {
-    const styles: Record<string, React.CSSProperties> = {};
+  function buildTints(): Partial<Record<Square, string>> {
+    const tints: Partial<Record<Square, string>> = {};
 
     if (phase === 'marking') {
       for (const sq of marked) {
-        styles[sq] = { backgroundColor: 'rgba(255,200,0,0.45)', borderRadius: 0 };
+        tints[sq] = 'rgba(255,200,0,0.45)';
       }
     }
 
@@ -303,26 +305,45 @@ export default function ThreatsPage() {
       // Correctly marked = green; missed = red; false alarms = orange
       for (const sq of marked) {
         if (threatenedSquares.has(sq)) {
-          styles[sq] = { backgroundColor: 'rgba(80,200,80,0.5)', borderRadius: 0 };
+          tints[sq] = 'rgba(80,200,80,0.5)';
         } else {
-          styles[sq] = { backgroundColor: 'rgba(255,100,100,0.4)', borderRadius: 0 };
+          tints[sq] = 'rgba(255,100,100,0.4)';
         }
       }
       for (const threat of threats) {
         if (!marked.has(threat.square)) {
           // Missed threat
-          styles[threat.square] = { backgroundColor: 'rgba(255,80,80,0.55)', borderRadius: 0 };
+          tints[threat.square] = 'rgba(255,80,80,0.55)';
         }
         // Show attacker squares
         for (const atk of threat.attackers) {
-          if (!styles[atk]) {
-            styles[atk] = { backgroundColor: 'rgba(255,160,0,0.35)', borderRadius: 0 };
+          if (!tints[atk]) {
+            tints[atk] = 'rgba(255,160,0,0.35)';
           }
         }
       }
     }
 
-    return styles;
+    return tints;
+  }
+
+  // ── Build threat arrows ───────────────────────────────────────────────────────
+
+  function buildArrows(): BoardArrow[] {
+    if (phase !== 'revealed' && phase !== 'defensive') return [];
+    const arrows: BoardArrow[] = [];
+    for (const threat of threats) {
+      for (const atk of threat.attackers) {
+        arrows.push({
+          from: atk as Square,
+          to: threat.square,
+          color: 'rgba(220,50,50,0.75)',
+          style: 'solid',
+          opacity: 0.75,
+        });
+      }
+    }
+    return arrows;
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -390,232 +411,238 @@ export default function ThreatsPage() {
 
   const boardOrientation: 'white' | 'black' = pos?.myColor === 'w' ? 'white' : 'black';
 
-  return (
-    <div className="page">
+  const boardNode = (
+    <Board
+      fen={pos?.fen ?? 'start'}
+      orientation={boardOrientation}
+      size={S}
+      interactive={phase === 'defensive'}
+      onMove={phase === 'defensive' ? handleDefensiveMove : undefined}
+      onSquareClick={phase === 'marking' ? handleSquareClick : undefined}
+      tints={buildTints()}
+      arrows={buildArrows()}
+    />
+  );
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <Link href="/" className="page-back">← Сегодня</Link>
-          <h1 className="page-title">Что хочет соперник?</h1>
+  // Top bar: opponent label
+  const topBarNode = (
+    <span style={{ fontSize: 13, color: 'var(--muted)' }}>Соперник</span>
+  );
+
+  // Bottom bar: score strip + blitz timer
+  const bottomBarNode = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 24, width: '100%' }}>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+        <div style={{ textAlign: 'right' }}>
+          <div style={SECTION_LABEL}>Позиция</div>
+          <div style={{ ...HEADING, fontSize: 20, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+            {posIdx + 1}<span style={{ color: 'var(--muted)', fontSize: 13 }}>/{positions.length}</span>
+          </div>
         </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={SECTION_LABEL}>XP заработано</div>
+          <div style={{ ...HEADING, fontSize: 20, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: 'var(--ivory)' }}>
+            +{score.xp}
+          </div>
+        </div>
+        {score.streak > 1 && (
+          <div style={{ textAlign: 'right' }}>
+            <div style={SECTION_LABEL}>Серия</div>
+            <div style={{ ...HEADING, fontSize: 20, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: 'var(--ivory)' }}>
+              {score.streak}
+            </div>
+          </div>
+        )}
+      </div>
 
-        {/* Score bar */}
-        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-end' }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={SECTION_LABEL}>ПОЗИЦИЯ</div>
-            <div style={{ ...HEADING, fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-              {posIdx + 1}<span style={{ color: 'var(--muted)', fontSize: 16 }}>/{positions.length}</span>
-            </div>
+      {/* Blitz timer bar */}
+      {blitzMode && phase === 'marking' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+          <div style={{ flex: 1, height: 3, background: 'var(--track)' }}>
+            <div style={{
+              height: '100%',
+              background: timeLeft < 10 ? 'var(--control)' : 'var(--ivory)',
+              width: `${(timeLeft / BLITZ_SECONDS) * 100}%`,
+              transition: 'width 1s linear',
+            }} />
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={SECTION_LABEL}>XP</div>
-            <div style={{ ...HEADING, fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: 'var(--ivory)' }}>
-              +{score.xp}
-            </div>
-          </div>
-          {score.streak > 1 && (
-            <div style={{ textAlign: 'right' }}>
-              <div style={SECTION_LABEL}>СЕРИЯ</div>
-              <div style={{ ...HEADING, fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: 'var(--ivory)' }}>
-                {score.streak}
-              </div>
-            </div>
-          )}
+          <span data-allow-small style={{ fontSize: 13, color: timeLeft < 10 ? 'var(--control)' : 'var(--muted)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+            {timeLeft}с
+          </span>
+        </div>
+      )}
+    </div>
+  );
+
+  // Right panel content
+  const panelNode = (
+    <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 20, overflowY: 'auto', flex: 1 }}>
+
+      {/* Page title */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div>
+          <Link href="/" className="page-back">← Сегодня</Link>
+          <h1 className="page-title" style={{ marginTop: 4 }}>Что хочет соперник?</h1>
         </div>
       </div>
 
-      {/* Main content */}
-      <div style={{ display: 'flex', gap: 36, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      {/* Phase: marking */}
+      {phase === 'marking' && (
+        <>
+          <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
+            <span style={SECTION_LABEL}>Задание</span>
+            <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.5 }}>
+              Кликни на свои фигуры, которым угрожает опасность.<br />
+              <span style={{ color: 'var(--muted)', fontSize: 13 }}>Шах, зевок фигуры, вилка</span>
+            </p>
+          </div>
 
-        {/* Board */}
-        <div style={{ flex: '1 1 480px', maxWidth: 640, position: 'relative' }}>
-          {/* Blitz timer bar */}
-          {blitzMode && phase === 'marking' && (
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ height: 3, background: 'var(--track)', marginBottom: 4 }}>
-                <div style={{
-                  height: '100%',
-                  background: timeLeft < 10 ? 'var(--control)' : 'var(--ivory)',
-                  width: `${(timeLeft / BLITZ_SECONDS) * 100}%`,
-                  transition: 'width 1s linear',
-                }} />
-              </div>
-              <span style={{ fontSize: 12, color: timeLeft < 10 ? 'var(--control)' : 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
-                {timeLeft}с
-              </span>
+          {marked.size > 0 && (
+            <div style={{ padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 13 }}>
+              Отмечено: {[...marked].join(', ')}
             </div>
           )}
 
-          <div style={{ width: '100%', aspectRatio: '1' }}>
-            <Chessboard
-              options={{
-                position: pos?.fen ?? 'start',
-                boardOrientation,
-                allowDragging: phase === 'defensive',
-                onSquareClick: phase === 'marking' ? handleSquareClick : undefined,
-                onPieceDrop: phase === 'defensive' ? handleDefensiveDrop : undefined,
-                squareStyles: buildSquareStyles(),
-                boardStyle: { width: '100%', height: '100%' },
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button
+              onClick={() => void reveal()}
+              style={{
+                height: 44, padding: '0 24px', fontSize: 14, fontWeight: 600,
+                background: 'var(--ivory)', color: 'var(--ink)', border: 'none', cursor: 'pointer',
               }}
-            />
+            >
+              {marked.size === 0 ? 'Угроз нет' : 'Проверить'}
+            </button>
+            <button
+              onClick={() => setBlitzMode(b => !b)}
+              style={{
+                height: 36, padding: '0 16px', fontSize: 13, fontWeight: 500,
+                background: 'transparent', color: blitzMode ? 'var(--ivory)' : 'var(--muted)',
+                border: `1px solid ${blitzMode ? 'var(--ivory)' : 'var(--hairline)'}`,
+                cursor: 'pointer',
+              }}
+            >
+              {blitzMode ? '⚡ Блиц вкл' : 'Блиц'}
+            </button>
           </div>
-        </div>
+        </>
+      )}
 
-        {/* Right panel */}
-        <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Phase: revealed */}
+      {phase === 'revealed' && (
+        <>
+          <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
+            <span style={SECTION_LABEL}>УГРОЗЫ</span>
+          </div>
 
-          {/* Phase: marking */}
-          {phase === 'marking' && (
-            <>
-              <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
-                <span style={SECTION_LABEL}>ЗАДАНИЕ</span>
-                <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.5 }}>
-                  Кликни на свои фигуры, которым угрожает опасность.<br />
-                  <span style={{ color: 'var(--muted)', fontSize: 13 }}>Шах, зевок фигуры, вилка</span>
-                </p>
-              </div>
-
-              {marked.size > 0 && (
-                <div style={{ padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 13 }}>
-                  Отмечено: {[...marked].join(', ')}
+          {threats.length === 0 ? (
+            <div style={{ fontSize: 14, color: 'var(--muted)' }}>
+              Прямых угроз нет. {marked.size === 0 ? 'Верно!' : 'Ложная тревога.'}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {threats.map((t, i) => (
+                <div key={i} style={{ padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>
+                    {t.type === 'check' ? 'Шах' : t.type === 'hanging' ? 'Зевок' : 'Вилка'}
+                  </span>
+                  <span style={{ fontSize: 14 }}>
+                    {pos ? threatExplanation(t, pos.fen) : ''}
+                  </span>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+                      Клетка: <strong style={{ color: 'var(--ivory)' }}>{t.square.toUpperCase()}</strong>
+                    </span>
+                    {t.attackers.length > 0 && (
+                      <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+                        Атакует: <strong style={{ color: 'var(--ivory)' }}>{t.attackers.map(a => a.toUpperCase()).join(', ')}</strong>
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 13, marginTop: 2 }}>
+                    {marked.has(t.square)
+                      ? <span style={{ color: '#6ed67e' }}>Нашёл</span>
+                      : <span style={{ color: 'var(--control)' }}>Пропустил</span>
+                    }
+                  </span>
                 </div>
-              )}
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <button
-                  onClick={() => void reveal()}
-                  style={{
-                    height: 44, padding: '0 24px', fontSize: 14, fontWeight: 600,
-                    background: 'var(--ivory)', color: 'var(--ink)', border: 'none', cursor: 'pointer',
-                  }}
-                >
-                  {marked.size === 0 ? 'Угроз нет' : 'Проверить'}
-                </button>
-                <button
-                  onClick={() => setBlitzMode(b => !b)}
-                  style={{
-                    height: 36, padding: '0 16px', fontSize: 12, fontWeight: 500,
-                    background: 'transparent', color: blitzMode ? 'var(--ivory)' : 'var(--muted)',
-                    border: `1px solid ${blitzMode ? 'var(--ivory)' : 'var(--hairline)'}`,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {blitzMode ? '⚡ Блиц вкл' : 'Блиц'}
-                </button>
-              </div>
-            </>
+              ))}
+            </div>
           )}
 
-          {/* Phase: revealed */}
-          {phase === 'revealed' && (
-            <>
-              <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
-                <span style={SECTION_LABEL}>УГРОЗЫ</span>
-              </div>
+          {/* Per-round score */}
+          <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--muted)' }}>
+            <span>Найдено: <strong style={{ color: 'var(--ivory)' }}>{[...marked].filter(sq => threats.some(t => t.square === sq)).length}</strong></span>
+            <span>Пропущено: <strong style={{ color: threats.filter(t => !marked.has(t.square)).length > 0 ? 'var(--control)' : 'var(--ivory)' }}>{threats.filter(t => !marked.has(t.square)).length}</strong></span>
+          </div>
 
-              {threats.length === 0 ? (
-                <div style={{ fontSize: 14, color: 'var(--muted)' }}>
-                  Прямых угроз нет. {marked.size === 0 ? 'Верно!' : 'Ложная тревога.'}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {threats.map((t, i) => (
-                    <div key={i} style={{ padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--muted)', textTransform: 'uppercase' }}>
-                        {t.type === 'check' ? 'ШАХ' : t.type === 'hanging' ? 'ЗЕВОК' : 'ВИЛКА'}
-                      </span>
-                      <span style={{ fontSize: 13 }}>
-                        {pos ? threatExplanation(t, pos.fen) : ''}
-                      </span>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-                        <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-                          Клетка: <strong style={{ color: 'var(--ivory)' }}>{t.square.toUpperCase()}</strong>
-                        </span>
-                        {t.attackers.length > 0 && (
-                          <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-                            Атакует: <strong style={{ color: 'var(--ivory)' }}>{t.attackers.map(a => a.toUpperCase()).join(', ')}</strong>
-                          </span>
-                        )}
-                      </div>
-                      <span style={{ fontSize: 12, marginTop: 2 }}>
-                        {marked.has(t.square)
-                          ? <span style={{ color: '#6ed67e' }}>Нашёл</span>
-                          : <span style={{ color: 'var(--control)' }}>Пропустил</span>
-                        }
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Per-round score */}
-              <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--muted)' }}>
-                <span>Найдено: <strong style={{ color: 'var(--ivory)' }}>{[...marked].filter(sq => threats.some(t => t.square === sq)).length}</strong></span>
-                <span>Пропущено: <strong style={{ color: threats.filter(t => !marked.has(t.square)).length > 0 ? 'var(--control)' : 'var(--ivory)' }}>{threats.filter(t => !marked.has(t.square)).length}</strong></span>
-              </div>
-
-              <div style={{ display: 'flex', gap: 8 }}>
-                {threats.length > 0 && isReady && (
-                  <button
-                    onClick={startDefensivePhase}
-                    style={{
-                      height: 44, padding: '0 20px', fontSize: 14, fontWeight: 600,
-                      background: 'transparent', color: 'var(--ivory)',
-                      border: '1px solid var(--ivory)', cursor: 'pointer',
-                    }}
-                  >
-                    Защититься
-                  </button>
-                )}
-                <button
-                  onClick={nextPosition}
-                  style={{
-                    height: 44, padding: '0 20px', fontSize: 14, fontWeight: 600,
-                    background: 'var(--ivory)', color: 'var(--ink)', border: 'none', cursor: 'pointer',
-                  }}
-                >
-                  Дальше →
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* Phase: defensive */}
-          {phase === 'defensive' && (
-            <>
-              <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
-                <span style={SECTION_LABEL}>ЗАЩИТНЫЙ ХОД</span>
-                <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.5 }}>
-                  Сделай ход, который нейтрализует угрозу.
-                </p>
-              </div>
-
-              {defensiveMoveResult === 'correct' && (
-                <div style={{ padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 14, color: '#6ed67e' }}>
-                  Хороший ход! Угроза нейтрализована.
-                </div>
-              )}
-              {defensiveMoveResult === 'wrong' && (
-                <div style={{ padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 14, color: 'var(--control)' }}>
-                  Угроза не нейтрализована. Попробуй ещё.
-                </div>
-              )}
-
+          <div style={{ display: 'flex', gap: 8 }}>
+            {threats.length > 0 && isReady && (
               <button
-                onClick={nextPosition}
+                onClick={startDefensivePhase}
                 style={{
                   height: 44, padding: '0 20px', fontSize: 14, fontWeight: 600,
-                  background: 'var(--ivory)', color: 'var(--ink)', border: 'none', cursor: 'pointer',
+                  background: 'transparent', color: 'var(--ivory)',
+                  border: '1px solid var(--ivory)', cursor: 'pointer',
                 }}
               >
-                Дальше →
+                Защититься
               </button>
-            </>
+            )}
+            <button
+              onClick={nextPosition}
+              style={{
+                height: 44, padding: '0 20px', fontSize: 14, fontWeight: 600,
+                background: 'var(--ivory)', color: 'var(--ink)', border: 'none', cursor: 'pointer',
+              }}
+            >
+              Дальше →
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Phase: defensive */}
+      {phase === 'defensive' && (
+        <>
+          <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
+            <span style={SECTION_LABEL}>ЗАЩИТНЫЙ ХОД</span>
+            <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.5 }}>
+              Сделай ход, который нейтрализует угрозу.
+            </p>
+          </div>
+
+          {defensiveMoveResult === 'correct' && (
+            <div style={{ padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 14, color: '#6ed67e' }}>
+              Хороший ход! Угроза нейтрализована.
+            </div>
+          )}
+          {defensiveMoveResult === 'wrong' && (
+            <div style={{ padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 14, color: 'var(--control)' }}>
+              Угроза не нейтрализована. Попробуй ещё.
+            </div>
           )}
 
-        </div>
-      </div>
+          <button
+            onClick={nextPosition}
+            style={{
+              height: 44, padding: '0 20px', fontSize: 14, fontWeight: 600,
+              background: 'var(--ivory)', color: 'var(--ink)', border: 'none', cursor: 'pointer',
+            }}
+          >
+            Дальше →
+          </button>
+        </>
+      )}
     </div>
+  );
+
+  return (
+    <TrainerLayout
+      topBar={topBarNode}
+      bottomBar={bottomBarNode}
+      board={boardNode}
+      panel={panelNode}
+    />
   );
 }
