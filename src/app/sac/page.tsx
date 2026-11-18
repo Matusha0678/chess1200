@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Chess, type Square } from 'chess.js';
-import { Chessboard } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
-import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { useStockfish } from '@/hooks/useStockfish';
 import type { EvalResult } from '@/hooks/useStockfish';
+import { Board } from '@/components/board/Board';
+import { TrainerLayout } from '@/components/trainer/TrainerLayout';
+import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -103,7 +104,7 @@ function sanitizePlayerFilter(s: string): string {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function SacPage() {
-  const { boardTheme, customPieces, animationMs, boardThemeId, pieceStyleId } = useBoardTheme();
+  const { S } = useTrainerGeometry();
   const { getEval, isReady: engineReady } = useStockfish();
 
   const [tab, setTab]                 = useState<'train' | 'prepare'>('train');
@@ -311,8 +312,6 @@ export default function SacPage() {
     return current.fen;
   })();
 
-  const boardKey = `${boardThemeId}-${pieceStyleId}-${current?.id ?? 'empty'}-${sacMoveApplied ? 'applied' : 'base'}`;
-
   function explainResult(): string {
     if (!answered || !current) return '';
     const { eval_before, eval_after, ok } = answered;
@@ -350,72 +349,74 @@ export default function SacPage() {
     return Math.max(0, perGame * (prepProgress.total - prepProgress.done));
   })();
 
-  return (
-    <div className="page-wrap">
+  // ── Shared: board node ─────────────────────────────────────────────────────
+
+  const boardNode = (
+    <Board
+      fen={displayFen}
+      orientation={sideToMove}
+      size={S}
+      interactive={false}
+      dimmed={!current}
+    />
+  );
+
+  const topBarNode = (
+    <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+      {sideToMove === 'white' ? 'Белые' : 'Чёрные'}
+    </span>
+  );
+
+  const bottomBarNode = (
+    <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+      {!answered && current
+        ? <>Ход: <strong style={{ color: 'var(--ivory)', fontFamily: 'ui-monospace, monospace' }}>{uciToSan(current.fen, current.move)}</strong></>
+        : null}
+    </span>
+  );
+
+  // ── Panel content ──────────────────────────────────────────────────────────
+
+  const panelNode = (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <div className="page-header">
-        <Link href="/masters" className="ui-back">← Мастера</Link>
-        <div className="ui-eyebrow">
-          <span>Тренажёр</span>
-          <span className="ui-eyebrow-line" />
-          <span>В стиле Таля</span>
+      <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+        <Link href="/masters" className="ui-back" style={{ marginBottom: 8, display: 'inline-block' }}>← Мастера</Link>
+        <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
+          Тренажёр · В стиле Таля
         </div>
-        <h1 className="ui-h1">Жертвовать или нет?</h1>
-        <p className="ui-sub">Позиции, где у стороны есть возможная жертва материала. Твоя задача — почувствовать, работает ли она.</p>
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ivory)' }}>Жертвовать или нет?</div>
       </div>
 
       {/* Tabs */}
-      <div className="ui-tabs">
+      <div className="ui-tabs" style={{ padding: '0 20px', flexShrink: 0 }}>
         <button className={`ui-tab ${tab === 'train' ? 'ui-tab-active' : ''}`} onClick={() => setTab('train')}>
           Тренажёр
         </button>
         <button className={`ui-tab ${tab === 'prepare' ? 'ui-tab-active' : ''}`} onClick={() => setTab('prepare')}>
-          Подготовить позиции
+          Подготовить
         </button>
       </div>
 
-      {/* ── Train ── */}
-      {tab === 'train' && (
-        <>
-          {positions.length === 0 ? (
-            <div className="ui-card ui-card-lg" style={{ textAlign: 'center', maxWidth: 560 }}>
-              <div style={{ fontSize: 28, marginBottom: 10 }}>♟</div>
-              <div style={{ fontSize: 15, color: 'var(--ivory)', marginBottom: 6 }}>Позиций пока нет</div>
-              <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 18, lineHeight: 1.6 }}>
-                Сначала загрузи партии мастеров, затем запусти подготовку позиций.
-              </div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-                <Link href="/masters" className="ui-btn ui-btn-primary">Загрузить партии</Link>
-                <button className="ui-btn ui-btn-outline" onClick={() => setTab('prepare')}>Подготовить позиции</button>
-              </div>
-            </div>
-          ) : current && (
-            <div className="board-layout">
-              {/* Board */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div className="board-wrap">
-                  <Chessboard
-                    key={boardKey}
-                    options={{
-                      position: displayFen,
-                      boardOrientation: sideToMove,
-                      allowDragging: false,
-                      boardStyle: { borderRadius: 0, width: '100%', height: '100%' },
-                      darkSquareStyle:  { backgroundColor: boardTheme.dark },
-                      lightSquareStyle: { backgroundColor: boardTheme.light },
-                      pieces: customPieces,
-                      showNotation: true,
-                      animationDurationInMs: animationMs,
-                    }}
-                  />
-                </div>
-                <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--muted)' }}>
-                  {sideToMove === 'white' ? 'Ход белых' : 'Ход чёрных'}
-                  {!answered && current && <> · предложение: <strong style={{ color: 'var(--ivory)', fontFamily: 'ui-monospace, monospace' }}>{uciToSan(current.fen, current.move)}</strong></>}
-                </div>
-              </div>
+      {/* Scrollable body */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px 20px' }}>
 
-              {/* Controls */}
+        {/* ── Train ── */}
+        {tab === 'train' && (
+          <>
+            {positions.length === 0 ? (
+              <div style={{ textAlign: 'center', paddingTop: 20 }}>
+                <div style={{ fontSize: 28, marginBottom: 10 }}>♟</div>
+                <div style={{ fontSize: 15, color: 'var(--ivory)', marginBottom: 6 }}>Позиций пока нет</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 18, lineHeight: 1.6 }}>
+                  Сначала загрузи партии мастеров, затем запусти подготовку позиций.
+                </div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <Link href="/masters" className="ui-btn ui-btn-primary">Загрузить партии</Link>
+                  <button className="ui-btn ui-btn-outline" onClick={() => setTab('prepare')}>Подготовить позиции</button>
+                </div>
+              </div>
+            ) : current && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div className="stat-grid">
                   <div className="stat-card">
@@ -480,7 +481,7 @@ export default function SacPage() {
                       {explainResult()}
                     </div>
                     {answered.eval_before != null && answered.eval_after != null && (
-                      <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
+                      <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>
                         Оценка до: <strong style={{ color: 'var(--ivory)' }}>{cpToPawns(answered.eval_before)}</strong>
                         {' '}· после: <strong style={{ color: 'var(--ivory)' }}>{cpToPawns(answered.eval_after)}</strong>
                       </div>
@@ -491,129 +492,138 @@ export default function SacPage() {
                   </div>
                 )}
 
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>
                   Позиция {positions.indexOf(current) + 1} из {positions.length}
                   {answered && <> · {current.kind === 'real' ? 'реальная' : 'ложная'} жертва</>}
                 </div>
               </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ── Prepare ── */}
-      {tab === 'prepare' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 640 }}>
-          <div className="ui-card ui-card-lg" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', marginBottom: 6 }}>
-                Подготовка позиций
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65 }}>
-                Сканирует партии мастеров, находит возможные жертвы и оценивает движком (глубина 12).
-                Потеря оценки ≤ 0.3 пешки — <strong style={{ color: 'var(--ivory)' }}>реальная</strong>,
-                ≥ 1.0 — <strong style={{ color: 'var(--ivory)' }}>ложная</strong>.
-                Уже обработанные партии повторно не считаются.
-              </div>
-            </div>
-
-            {/* Settings */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 12 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  Фильтр по игроку
-                </label>
-                <input
-                  type="text"
-                  value={prepFilter}
-                  onChange={e => setPrepFilter(e.target.value)}
-                  disabled={preparing}
-                  placeholder="например: Tal"
-                  style={{
-                    height: 40, padding: '0 14px', fontSize: 14,
-                    background: 'var(--surface)', color: 'var(--ivory)',
-                    border: '1px solid var(--hairline)',
-                    borderRadius: 'var(--radius-btn)', outline: 'none', fontFamily: 'inherit',
-                  }}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  Партий за раз
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={2000}
-                  value={prepBatchSize}
-                  onChange={e => setPrepBatchSize(Math.max(1, Math.min(2000, parseInt(e.target.value || '200', 10))))}
-                  disabled={preparing}
-                  style={{
-                    height: 40, padding: '0 14px', fontSize: 14,
-                    background: 'var(--surface)', color: 'var(--ivory)',
-                    border: '1px solid var(--hairline)',
-                    borderRadius: 'var(--radius-btn)', outline: 'none', fontFamily: 'inherit',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Counts */}
-            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--muted)', flexWrap: 'wrap' }}>
-              <span>Обработано: <strong style={{ color: 'var(--ivory)' }}>{scanned ?? '—'}</strong></span>
-              <span>Осталось: <strong style={{ color: 'var(--ivory)' }}>{remaining ?? '—'}</strong></span>
-              <span>Позиций в базе: <strong style={{ color: 'var(--ivory)' }}>{positions.length}</strong></span>
-            </div>
-
-            {/* Action */}
-            {!preparing ? (
-              <button
-                className="ui-btn ui-btn-primary"
-                onClick={handlePrepare}
-                disabled={!engineReady || remaining === 0}
-              >
-                {!engineReady
-                  ? 'Движок загружается…'
-                  : remaining === 0
-                  ? 'Нечего обрабатывать'
-                  : scanned && scanned > 0
-                  ? `Подготовить ещё ${Math.min(prepBatchSize, remaining ?? prepBatchSize)}`
-                  : `Подготовить ${Math.min(prepBatchSize, remaining ?? prepBatchSize)}`}
-              </button>
-            ) : prepProgress && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                  <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                    Партий: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.done}</strong> / {prepProgress.total}
-                    {' '}· Позиций: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.saved}</strong>
-                  </div>
-                  {prepEta != null && (
-                    <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                      Осталось: <strong style={{ color: 'var(--ivory)' }}>~{formatEta(prepEta)}</strong>
-                    </div>
-                  )}
-                </div>
-                <div className="progress-track">
-                  <div className="progress-fill" style={{
-                    width: prepProgress.total > 0 ? `${100 * prepProgress.done / prepProgress.total}%` : '0%',
-                  }} />
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>
-                  Держи вкладку открытой — движок работает в этой вкладке
-                </div>
-                <button className="ui-btn ui-btn-outline" onClick={stopPrepare} disabled={prepStop} style={{ alignSelf: 'flex-start' }}>
-                  {prepStop ? 'Остановка…' : 'Стоп'}
-                </button>
-              </div>
             )}
-          </div>
+          </>
+        )}
 
-          <div className="ui-card ui-card-sm" style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>
-            <strong style={{ color: 'var(--ivory)' }}>Нет партий?</strong>{' '}
-            Сначала <Link href="/masters" style={{ color: 'var(--accent)' }}>загрузи партии мастеров</Link> через импорт PGN.
+        {/* ── Prepare ── */}
+        {tab === 'prepare' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="ui-card ui-card-lg" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', marginBottom: 6 }}>
+                  Подготовка позиций
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65 }}>
+                  Сканирует партии мастеров, находит возможные жертвы и оценивает движком (глубина 12).
+                  Потеря оценки ≤ 0.3 пешки — <strong style={{ color: 'var(--ivory)' }}>реальная</strong>,
+                  ≥ 1.0 — <strong style={{ color: 'var(--ivory)' }}>ложная</strong>.
+                  Уже обработанные партии повторно не считаются.
+                </div>
+              </div>
+
+              {/* Settings */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 500 }}>
+                    Фильтр по игроку
+                  </label>
+                  <input
+                    type="text"
+                    value={prepFilter}
+                    onChange={e => setPrepFilter(e.target.value)}
+                    disabled={preparing}
+                    placeholder="например: Tal"
+                    style={{
+                      height: 40, padding: '0 14px', fontSize: 14,
+                      background: 'var(--surface)', color: 'var(--ivory)',
+                      border: '1px solid var(--hairline)',
+                      borderRadius: 'var(--radius-btn)', outline: 'none', fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 500 }}>
+                    Партий за раз
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={2000}
+                    value={prepBatchSize}
+                    onChange={e => setPrepBatchSize(Math.max(1, Math.min(2000, parseInt(e.target.value || '200', 10))))}
+                    disabled={preparing}
+                    style={{
+                      height: 40, padding: '0 14px', fontSize: 14,
+                      background: 'var(--surface)', color: 'var(--ivory)',
+                      border: '1px solid var(--hairline)',
+                      borderRadius: 'var(--radius-btn)', outline: 'none', fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Counts */}
+              <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--muted)', flexWrap: 'wrap' }}>
+                <span>Обработано: <strong style={{ color: 'var(--ivory)' }}>{scanned ?? '—'}</strong></span>
+                <span>Осталось: <strong style={{ color: 'var(--ivory)' }}>{remaining ?? '—'}</strong></span>
+                <span>Позиций в базе: <strong style={{ color: 'var(--ivory)' }}>{positions.length}</strong></span>
+              </div>
+
+              {/* Action */}
+              {!preparing ? (
+                <button
+                  className="ui-btn ui-btn-primary"
+                  onClick={handlePrepare}
+                  disabled={!engineReady || remaining === 0}
+                >
+                  {!engineReady
+                    ? 'Движок загружается…'
+                    : remaining === 0
+                    ? 'Нечего обрабатывать'
+                    : scanned && scanned > 0
+                    ? `Подготовить ещё ${Math.min(prepBatchSize, remaining ?? prepBatchSize)}`
+                    : `Подготовить ${Math.min(prepBatchSize, remaining ?? prepBatchSize)}`}
+                </button>
+              ) : prepProgress && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                      Партий: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.done}</strong> / {prepProgress.total}
+                      {' '}· Позиций: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.saved}</strong>
+                    </div>
+                    {prepEta != null && (
+                      <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                        Осталось: <strong style={{ color: 'var(--ivory)' }}>~{formatEta(prepEta)}</strong>
+                      </div>
+                    )}
+                  </div>
+                  <div className="progress-track">
+                    <div className="progress-fill" style={{
+                      width: prepProgress.total > 0 ? `${100 * prepProgress.done / prepProgress.total}%` : '0%',
+                    }} />
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic' }}>
+                    Держи вкладку открытой — движок работает в этой вкладке
+                  </div>
+                  <button className="ui-btn ui-btn-outline" onClick={stopPrepare} disabled={prepStop} style={{ alignSelf: 'flex-start' }}>
+                    {prepStop ? 'Остановка…' : 'Стоп'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="ui-card ui-card-sm" style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>
+              <strong style={{ color: 'var(--ivory)' }}>Нет партий?</strong>{' '}
+              Сначала <Link href="/masters" style={{ color: 'var(--accent)' }}>загрузи партии мастеров</Link> через импорт PGN.
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
+  );
+
+  return (
+    <TrainerLayout
+      topBar={topBarNode}
+      board={boardNode}
+      bottomBar={bottomBarNode}
+      panel={panelNode}
+    />
   );
 }

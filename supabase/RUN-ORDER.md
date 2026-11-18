@@ -30,3 +30,6 @@
 | 22-daily-picks.sql | daily_picks (T12) |
 | 23-warmup-log.sql | warmup_log (T13) |
 | 24-week-focus.sql | week_focus (T14) |
+| 25-move-classes.sql | classification columns in game_analysis/games |
+| 26-course-cascade.sql | cascade deletes on course-related tables |
+| 27-sac-context.sql | game_id/ply/san/eval_no_sac/pv/defenses в sac_positions |
