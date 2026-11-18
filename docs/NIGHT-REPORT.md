@@ -9,11 +9,11 @@
 | 3. Большой аудит сайта | ✅ Готово | chore/audit → main | ✅ | tsc 0 ошибок, eslint 0 ошибок, test:logic |
 | 4. Библиотеки insights-lib | ✅ Готово (в chore/audit) | chore/audit → main | ✅ | test:logic все тесты ✓ |
 | 5. Тесты test/logic | ✅ Готово (в chore/audit) | chore/audit → main | ✅ | npm run test:logic ✓ |
-| 6. /stats | 🔄 В работе | feat/stats | ⬜ | В работе агент |
-| 7. /convert | 🔄 В работе | feat/stats | ⬜ | В работе агент |
-| 8. /tactics | 🔄 В работе | feat/stats | ⬜ | В работе агент |
-| 9. /blind | 🔄 В работе | feat/stats | ⬜ | В работе агент |
-| 10. Отчёт | ✅ Этот файл | feat/stats | ⬜ | — |
+| 6. /stats | ✅ Готово | feat/stats → main | ✅ | tsc 0, eslint 0 errors |
+| 7. /convert | ✅ Готово | feat/stats → main | ✅ | tsc 0, eslint 0 errors |
+| 8. /tactics | ✅ Готово | feat/stats → main | ✅ | tsc 0, eslint 0 errors |
+| 9. /blind | ✅ Готово | feat/stats → main | ✅ | tsc 0, eslint 0 errors |
+| 10. Отчёт | ✅ Готово | feat/stats → main | ✅ | — |
 
 ## Задача 3: Аудит — найденное и исправленное
 
@@ -69,6 +69,10 @@
 3. `test-smart-logic.ts` исключён из `npm run test:logic` — требует Supabase + Stockfish.
 4. `--surface-2` используется в нескольких местах, хотя не входит в список токенов CLAUDE.md — переменная есть в `globals.css`, оставлена как есть.
 
+## Дополнительные исправления (ночная сессия 2)
+
+- `openings/random/page.tsx`: добавлен `customPieces` в Chessboard — фигуры теперь применяют пользовательский стиль
+- `openings/[id]/page.tsx`: кнопка ActionCard, полоса прогресса — accent вместо bg-white
+
 ## Непонятное / требует внимания
 - Классификация ходов (пожелание пользователя «пофикси проблемы движка») — не исследована подробно. Тесты classify.ts проходят.
-- `/openings/[id]/page.tsx` (главная страница дебюта) — не проверена на стили.
