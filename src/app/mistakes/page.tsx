@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Chess } from 'chess.js';
 import type { Square } from 'chess.js';
-import type { PieceDropHandlerArgs, SquareRenderer } from 'react-chessboard';
+import type { PieceDropHandlerArgs, SquareRenderer, Arrow } from 'react-chessboard';
 import { ClassIcon } from '@/components/ClassIcon';
 import type { MoveClass } from '@/lib/classify';
 import { supabase } from '@/lib/supabase';
 import { useStockfish } from '@/hooks/useStockfish';
-import { PlayButton } from '@/components/PlayButton';
 import { Board } from '@/components/board/Board';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
 import {
@@ -59,6 +58,20 @@ function fmtEval(cp: number): string {
   return `${cp >= 0 ? '+' : ''}${(cp / 100).toFixed(2)}`;
 }
 
+function fmtDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  } catch { return ''; }
+}
+
+const TIME_CLASS_RU: Record<string, string> = {
+  rapid: 'рапид', blitz: 'блиц', bullet: 'пуля', daily: 'дейли',
+};
+
+function evalToPercent(cp: number): number {
+  return Math.max(5, Math.min(95, 50 + 50 * Math.tanh(cp / 500)));
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ComputedLine { uci: string; evalWhite: number; }
@@ -75,6 +88,14 @@ interface AnswerState {
 interface SessionScore { correct: number; incorrect: number; streak: number; xp: number; }
 interface Filters { tag: MistakeTag | ''; phase: GamePhase | ''; }
 
+interface GameInfo {
+  opp_name: string;
+  time_class: string;
+  played_at: string;
+  url: string;
+  color: string;
+}
+
 const TAG_RULE: Record<string, string> = {
   hanging:        'Перед ходом спроси: что хочет сделать соперник? Проверь, не осталась ли фигура без защиты.',
   missed_check:   'Всегда проверяй, есть ли шах или взятие, прежде чем делать другой ход.',
@@ -82,6 +103,40 @@ const TAG_RULE: Record<string, string> = {
   positional:     'Оцени пешечную структуру и активность фигур перед ходом.',
   deviation:      'Выучи линию точно: каждое отклонение даёт сопернику преимущество.',
 };
+
+// ── Styled select ─────────────────────────────────────────────────────────────
+
+function StyledSelect({ value, onChange, children }: {
+  value: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ position: 'relative', flex: 1 }}>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        style={{
+          width: '100%', height: 38, borderRadius: 'var(--radius-btn)',
+          background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)',
+          color: 'var(--ivory)', fontSize: 14, padding: '0 32px 0 12px',
+          appearance: 'none', WebkitAppearance: 'none', cursor: 'pointer',
+          fontFamily: 'inherit', outline: 'none',
+        }}
+      >
+        {children}
+      </select>
+      {/* chevron */}
+      <svg
+        viewBox="0 0 24 24" width={14} height={14}
+        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted)' }}
+        fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+      >
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </div>
+  );
+}
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -97,9 +152,21 @@ export default function MistakesPage() {
   const [buildingCourse, setBuildingCourse] = useState(false);
   const [buildError, setBuildError] = useState<string | null>(null);
   const [session, setSession] = useState<SessionScore>({ correct: 0, incorrect: 0, streak: 0, xp: 0 });
+  const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
+  const [playerName, setPlayerName] = useState('');
+  const [showHint, setShowHint] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
 
   const { getMultiPV, evalPosition, setSkillLevel, isReady } = useStockfish();
   const cardLinesRef = useRef<ComputedLine[] | null>(null);
+
+  // load player username once
+  useEffect(() => {
+    supabase.from('games_sync_state').select('username').eq('id', 1).maybeSingle()
+      .then(({ data }) => {
+        if (data) setPlayerName((data as { username: string }).username);
+      });
+  }, []);
 
   useEffect(() => {
     void loadCards();
@@ -126,6 +193,42 @@ export default function MistakesPage() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards[index]?.id, isReady]);
+
+  // load game info when card changes
+  useEffect(() => {
+    const currentCard = cards[index] ?? null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!currentCard?.game_id) { setGameInfo(null); return; }
+    supabase
+      .from('games')
+      .select('opp_name, time_class, played_at, url, color')
+      .eq('id', currentCard.game_id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setGameInfo(data as GameInfo);
+        else setGameInfo(null);
+      });
+    // reset hint/answer
+    setShowHint(false);
+    setShowAnswer(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards[index]?.id]);
+
+  // keyboard shortcuts
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      const currentCard = cards[index] ?? null;
+      if (e.key === 'h' || e.key === 'H') { if (!answered && currentCard) setShowHint(true); }
+      if (e.key === 'a' || e.key === 'A') { if (!answered && currentCard) { setShowHint(true); setShowAnswer(true); } }
+      if (e.key === 's' || e.key === 'S') { if (!answered && currentCard) skipCard(); }
+      if (e.key === ' ') { e.preventDefault(); if (answered) goNext(); }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answered, cards, index]);
 
   async function loadCards() {
     setLoading(true);
@@ -174,7 +277,6 @@ export default function MistakesPage() {
       }
 
       const courseId: string = (courseRow as { id: string }).id;
-
       for (let i = 0; i < selectedCards.length; i++) {
         const c = selectedCards[i];
         const chess = new Chess(c.fen_before);
@@ -189,7 +291,6 @@ export default function MistakesPage() {
             return mv?.san ?? '';
           } catch { return ''; }
         })();
-
         const { data: lessonRow } = await supabase.from('course_lessons').insert({
           course_id: courseId, lesson_order: i,
           title: `Зевок ${i + 1}: ${tagLabel.toLowerCase()}${bestSan ? ` (${bestSan})` : ''}`,
@@ -207,7 +308,6 @@ export default function MistakesPage() {
           lesson_id: (lessonRow as { id: string }).id, line_order: 0, moves: [], start_fen: c.fen_before,
         });
       }
-
       setBuildingCourse(false);
       router.push(`/courses/${courseId}`);
     } catch (e) {
@@ -217,6 +317,15 @@ export default function MistakesPage() {
   }
 
   const card = cards[index] ?? null;
+
+  function skipCard() {
+    setAnswered(null);
+    setShowHint(false);
+    setShowAnswer(false);
+    const next = index + 1;
+    setIndex(next);
+    if (cards[next]) setCurrentFen(cards[next].fen_before);
+  }
 
   function handlePieceDrop({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean {
     if (!card || answered || checking) return false;
@@ -302,6 +411,8 @@ export default function MistakesPage() {
 
   function goNext() {
     setAnswered(null);
+    setShowHint(false);
+    setShowAnswer(false);
     const next = index + 1;
     setIndex(next);
     if (cards[next]) setCurrentFen(cards[next].fen_before);
@@ -314,6 +425,7 @@ export default function MistakesPage() {
     : 'white';
 
   const squareStyles: Record<string, React.CSSProperties> = {};
+
   if (answered && card) {
     try {
       const chess = new Chess(card.fen_before);
@@ -327,6 +439,27 @@ export default function MistakesPage() {
       squareStyles[card.best_move.slice(0, 2)] = { background: 'rgba(100,200,120,0.55)' };
       squareStyles[card.best_move.slice(2, 4)] = { background: 'rgba(60,180,90,0.75)' };
     }
+  }
+
+  // hint / show answer highlights
+  if (!answered && card && card.best_move?.length >= 4) {
+    const fromSq = card.best_move.slice(0, 2);
+    const toSq = card.best_move.slice(2, 4);
+    if (showHint) squareStyles[fromSq] = { background: 'rgba(129,182,76,0.38)' };
+    if (showAnswer) {
+      squareStyles[fromSq] = { background: 'rgba(129,182,76,0.45)' };
+      squareStyles[toSq] = { background: 'rgba(129,182,76,0.6)' };
+    }
+  }
+
+  // arrows: show answer arrow
+  const arrows: Arrow[] = [];
+  if (!answered && showAnswer && card && card.best_move?.length >= 4) {
+    arrows.push({
+      startSquare: card.best_move.slice(0, 2),
+      endSquare: card.best_move.slice(2, 4),
+      color: '#81B64C',
+    });
   }
 
   let userMoveToSq: string | null = null;
@@ -366,91 +499,230 @@ export default function MistakesPage() {
     );
   };
 
-  // ── Layout slots ─────────────────────────────────────────────────────────
+  // ── Eval bar ──────────────────────────────────────────────────────────────
+
+  const evalCp = answered && card ? (card.eval_before ?? 0) : 0;
+  const evalPct = evalToPercent(evalCp);
+  const evalLabel = answered && card
+    ? (Math.abs(evalCp) >= 900 ? '♟' : fmtEval(evalCp))
+    : '';
+
+  const evalBar = (
+    <div style={{
+      width: 24,
+      height: '100%',
+      borderRadius: 5,
+      overflow: 'hidden',
+      background: '#403D3A',
+      position: 'relative',
+      opacity: answered ? 1 : 0,
+      transition: 'opacity 0.3s',
+    }}>
+      <div style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0,
+        background: '#EDEBE7',
+        height: `${evalPct}%`,
+        transition: 'height 0.5s ease',
+      }} />
+      {evalLabel && (
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: 5,
+          textAlign: 'center', fontSize: 9, fontWeight: 700,
+          color: evalCp >= 0 ? '#3A3835' : '#EDEBE7',
+          lineHeight: 1,
+        }}>
+          {evalLabel}
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Player strips ─────────────────────────────────────────────────────────
+
+  const isWhite = boardOrientation === 'white';
+
+  const topPlayer = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 6, background: 'var(--track)',
+          display: 'grid', placeItems: 'center', flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 16 }}>{isWhite ? '♟' : '♙'}</span>
+        </div>
+        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>
+          {gameInfo?.opp_name || '—'}
+        </span>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+          {isWhite ? 'чёрные' : 'белые'}
+        </span>
+      </div>
+    </div>
+  );
+
+  const bottomPlayer = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 6, background: 'var(--track)',
+          display: 'grid', placeItems: 'center', flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 16 }}>{isWhite ? '♙' : '♟'}</span>
+        </div>
+        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>
+          {playerName || 'ты'}
+        </span>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+          {isWhite ? 'ты · белые' : 'ты · чёрные'}
+        </span>
+      </div>
+    </div>
+  );
+
+  // ── Layout slots ──────────────────────────────────────────────────────────
 
   const total = cards.length;
 
-  const SEL: React.CSSProperties = {
-    height: 30, padding: '0 7px', fontSize: 11,
-    background: 'var(--surface)', color: 'var(--ivory)',
-    border: '1px solid var(--hairline)', cursor: 'pointer', outline: 'none',
-    flex: '1 1 90px', minWidth: 0,
-  };
+  // ── Session panel ─────────────────────────────────────────────────────────
 
   const sessionPanel = (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ padding: '44px 14px 10px', borderBottom: '1px solid var(--hairline)' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 10 }}>
-          Сессия
-        </div>
-        <div style={{ display: 'flex', gap: 14, marginBottom: 12 }}>
-          {[
-            { label: 'верно', value: session.correct, color: '#6DC77A' },
-            { label: 'ошибок', value: session.incorrect, color: 'var(--control)' },
-            { label: 'серия', value: session.streak, color: 'var(--ivory)' },
-          ].map(({ label, value, color }) => (
-            <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              <span style={{ fontSize: 20, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>{value}</span>
-              <span style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '0.08em' }}>{label}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-          <select style={SEL} value={filters.tag} onChange={e => setFilters(f => ({ ...f, tag: e.target.value as MistakeTag | '' }))}>
-            <option value="">Все типы</option>
-            {(Object.entries(TAG_LABEL) as [MistakeTag, string][]).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
-          <select style={SEL} value={filters.phase} onChange={e => setFilters(f => ({ ...f, phase: e.target.value as GamePhase | '' }))}>
-            <option value="">Все фазы</option>
-            {(Object.entries(PHASE_LABEL) as [GamePhase, string][]).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
-        {!loading && cards.map((c, i) => (
-          <div key={c.id} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '6px 14px', gap: 8,
-            background: i === index ? 'var(--surface)' : 'transparent',
-            borderLeft: `2px solid ${i === index ? 'var(--ivory)' : 'transparent'}`,
-            opacity: i < index ? 0.4 : 1,
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-              <span style={{ fontSize: 11, color: 'var(--ivory)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {TAG_LABEL[c.tag]}
-              </span>
-              <span style={{ fontSize: 10, color: 'var(--muted)' }}>{PHASE_LABEL[c.phase]}</span>
-            </div>
-            {c.eval_loss > 0 && (
-              <span style={{ fontSize: 10, color: 'var(--control)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                -{c.eval_loss}
-              </span>
-            )}
-          </div>
-        ))}
-        {!loading && cards.length === 0 && (
-          <div style={{ padding: 14, fontSize: 12, color: 'var(--muted)' }}>Нет карточек</div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      {/* Header */}
+      <div style={{ padding: '20px 20px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexShrink: 0 }}>
+        <span style={{ fontSize: 19, fontWeight: 700, color: 'var(--ivory)' }}>Сессия</span>
+        {!loading && total > 0 && (
+          <span style={{ fontSize: 14, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+            осталось {Math.max(0, total - index)}
+          </span>
         )}
       </div>
 
-      <div style={{ padding: '10px 14px', borderTop: '1px solid var(--hairline)' }}>
+      {/* Stats grid */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3,1fr)',
+        margin: '0 20px',
+        border: '1px solid var(--hairline)',
+        borderRadius: 10, overflow: 'hidden',
+        flexShrink: 0,
+      }}>
+        {[
+          { label: 'верно', value: session.correct, color: '#81B64C' },
+          { label: 'ошибок', value: session.incorrect, color: '#E0574A' },
+          { label: 'серия', value: session.streak, color: 'var(--ivory)' },
+        ].map(({ label, value, color }, i) => (
+          <div key={label} style={{
+            padding: '10px 0', textAlign: 'center',
+            borderRight: i < 2 ? '1px solid var(--hairline)' : 'none',
+          }}>
+            <b style={{ display: 'block', fontSize: 20, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>
+              {value}
+            </b>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '14px 20px 6px', flexShrink: 0 }}>
+        <StyledSelect value={filters.tag} onChange={v => setFilters(f => ({ ...f, tag: v as MistakeTag | '' }))}>
+          <option value="">Все типы</option>
+          {(Object.entries(TAG_LABEL) as [MistakeTag, string][]).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </StyledSelect>
+        <StyledSelect value={filters.phase} onChange={v => setFilters(f => ({ ...f, phase: v as GamePhase | '' }))}>
+          <option value="">Все фазы</option>
+          {(Object.entries(PHASE_LABEL) as [GamePhase, string][]).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </StyledSelect>
+      </div>
+
+      {/* Queue header */}
+      <div style={{ margin: '14px 20px 6px', display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>Очередь</span>
+        {!loading && total > 0 && (
+          <span style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+            {Math.min(index + 1, total)} / {total}
+          </span>
+        )}
+      </div>
+
+      {/* Queue list */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 10px', display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0 }}>
+        {!loading && cards.map((c, i) => {
+          const isCur = i === index;
+          const isDone = i < index;
+
+          return (
+            <div key={c.id} style={{
+              display: 'grid',
+              gridTemplateColumns: '26px 1fr auto',
+              alignItems: 'center',
+              gap: 8,
+              height: 50,
+              padding: '0 10px',
+              borderRadius: 10,
+              position: 'relative',
+              background: isCur ? 'var(--track)' : 'transparent',
+              opacity: isDone ? 0.5 : 1,
+            }}>
+              {/* left indicator */}
+              {isCur && (
+                <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: '#81B64C' }} />
+              )}
+              {/* index / check / x */}
+              <div style={{ display: 'grid', placeItems: 'center', fontSize: 13, color: isCur ? '#81B64C' : 'var(--control)', fontWeight: isCur ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+                {isDone ? (
+                  <span style={{ color: '#81B64C', fontSize: 15 }}>✓</span>
+                ) : (
+                  <span>{i + 1}</span>
+                )}
+              </div>
+              {/* title + phase */}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 14, color: isDone ? 'var(--control)' : 'var(--ivory)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {TAG_LABEL[c.tag]}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--control)', marginTop: 1 }}>{PHASE_LABEL[c.phase]}</div>
+              </div>
+              {/* loss */}
+              {c.eval_loss > 0 && (
+                <span style={{ fontSize: 14, color: '#D88A80', fontWeight: 600, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                  −{(c.eval_loss / 100).toFixed(1)}
+                </span>
+              )}
+            </div>
+          );
+        })}
+        {!loading && cards.length === 0 && (
+          <div style={{ padding: '14px 10px', fontSize: 14, color: 'var(--muted)' }}>Нет карточек</div>
+        )}
+      </div>
+
+      {/* Footer: build mini-course */}
+      <div style={{ padding: '16px 20px 20px', borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
         <button
-          onClick={() => void buildMiniCourse()} disabled={buildingCourse}
-          style={{ width: '100%', height: 30, fontSize: 11, background: 'transparent', color: 'var(--muted)', border: '1px solid var(--hairline)', cursor: 'pointer', fontFamily: 'inherit' }}
+          onClick={() => void buildMiniCourse()}
+          disabled={buildingCourse}
+          style={{
+            width: '100%', height: 44, fontSize: 15, fontWeight: 600,
+            background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)',
+            color: 'var(--ivory)', cursor: 'pointer', fontFamily: 'inherit',
+            borderRadius: 'var(--radius-btn)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
         >
           {buildingCourse ? 'Собираем…' : 'Собрать мини-курс'}
         </button>
         {buildError && (
-          <span style={{ display: 'block', marginTop: 5, fontSize: 10, color: 'rgba(220,80,60,0.9)' }}>{buildError}</span>
+          <span style={{ display: 'block', marginTop: 6, fontSize: 13, color: '#E0574A' }}>{buildError}</span>
         )}
       </div>
     </div>
   );
+
+  // ── Board content ─────────────────────────────────────────────────────────
 
   const boardContent = (
     <Board
@@ -460,188 +732,316 @@ export default function MistakesPage() {
       onPieceDrop={card && !answered && !checking ? handlePieceDrop : undefined}
       squareStyles={squareStyles}
       squareRenderer={squareRenderer}
+      arrows={arrows}
       cacheKey={`${boardOrientation}-${card?.id ?? 'none'}`}
     />
   );
 
+  // ── Task panel ────────────────────────────────────────────────────────────
+
+  const bestMoveSan = card ? uciToSan(card.fen_before, card.best_move) : '';
+
   const taskPanel = (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* Header */}
-      <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--muted)', textTransform: 'uppercase' }}>
-            Тренировка · Ошибки
-          </span>
+      <div style={{ padding: '20px 24px 18px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--muted)' }}>
+          <span>Тренировка · Ошибки</span>
           {!loading && total > 0 && (
-            <span style={{ fontSize: 13, fontVariantNumeric: 'tabular-nums', color: 'var(--muted)' }}>
-              {Math.min(index + 1, total)}/{total}
-              {session.xp > 0 && <span style={{ color: '#6DC77A', marginLeft: 8 }}>+{session.xp} XP</span>}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
+              {Math.min(index + 1, total)} / {total}
+              {session.xp > 0 && (
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#81B64C', background: 'rgba(129,182,76,.14)', borderRadius: 6, padding: '2px 7px', fontVariantNumeric: 'tabular-nums' }}>
+                  +{session.xp} XP
+                </span>
+              )}
             </span>
           )}
         </div>
+        {/* Progress bar */}
         {!loading && total > 0 && (
-          <div style={{ marginTop: 10, height: 3, background: 'var(--track)', overflow: 'hidden' }}>
+          <div style={{ height: 4, borderRadius: 4, background: '#3A3835', marginTop: 12, overflow: 'hidden' }}>
             <div style={{
-              height: '100%', background: 'var(--accent)',
-              width: `${Math.min(100, (index / total) * 100)}%`,
+              height: '100%', background: '#81B64C', borderRadius: 4,
+              width: `${Math.max(2, Math.min(100, (index / total) * 100))}%`,
               transition: 'width 0.3s ease',
             }} />
+          </div>
+        )}
+        {/* Title */}
+        {card && index < total && (
+          <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
+            {showAnswer ? 'Вот лучший ход' : 'Найди лучший ход'}
           </div>
         )}
       </div>
 
       {/* Scrollable content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+
+        {/* Loading state */}
         {loading && (
-          <span style={{ fontSize: 14, color: 'var(--muted)', paddingTop: 20 }}>Загрузка…</span>
+          <div style={{ padding: '0 24px 20px' }}>
+            <span style={{ fontSize: 15, color: 'var(--muted)' }}>Загрузка…</span>
+          </div>
         )}
 
+        {/* Empty state */}
         {!loading && cards.length === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 20 }}>
+          <div style={{ padding: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--ivory)' }}>Всё готово на сегодня!</span>
-            <span style={{ fontSize: 14, color: 'var(--muted)' }}>
+            <span style={{ fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>
               {filters.tag || filters.phase
                 ? 'Нет карточек по выбранным фильтрам.'
                 : 'Нет карточек для повторения. Проанализируй партии, чтобы добавить ошибки.'}
             </span>
-            <Link href="/games/analyze" style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', height: 40, padding: '0 20px', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 13, fontWeight: 600 }}>
+            <Link href="/games/analyze" style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', height: 44, padding: '0 20px', background: 'var(--accent)', color: '#fff', fontSize: 15, fontWeight: 600, borderRadius: 'var(--radius-btn)', textDecoration: 'none' }}>
               Анализировать партии
             </Link>
           </div>
         )}
 
+        {/* Session complete */}
         {!loading && cards.length > 0 && index >= cards.length && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 20 }}>
+          <div style={{ padding: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--ivory)' }}>Всё готово на сегодня!</span>
-            <span style={{ fontSize: 14, color: 'var(--muted)' }}>Повторено {cards.length} карточек</span>
+            <span style={{ fontSize: 15, color: 'var(--muted)' }}>Повторено {cards.length} карточек</span>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {[{ label: 'верно', value: session.correct, color: '#6DC77A' },
-                { label: 'ошибок', value: session.incorrect, color: 'var(--control)' },
+              {[{ label: 'верно', value: session.correct, color: '#81B64C' },
+                { label: 'ошибок', value: session.incorrect, color: '#E0574A' },
                 { label: 'XP', value: `+${session.xp}`, color: 'var(--ivory)' }].map(s => (
-                  <div key={s.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '12px 20px', border: '1px solid var(--hairline)' }}>
+                  <div key={s.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 20px', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card)' }}>
                     <span style={{ fontSize: 24, fontWeight: 700, color: s.color as string, fontVariantNumeric: 'tabular-nums' }}>{s.value}</span>
-                    <span style={{ fontSize: 11, color: 'var(--muted)' }}>{s.label}</span>
+                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>{s.label}</span>
                   </div>
               ))}
             </div>
-            <button onClick={() => void loadCards()} style={{ alignSelf: 'flex-start', height: 40, padding: '0 20px', background: 'transparent', color: 'var(--muted)', border: '1px solid var(--hairline)', fontSize: 13, cursor: 'pointer' }}>
+            <button onClick={() => void loadCards()} style={{ alignSelf: 'flex-start', height: 44, padding: '0 20px', background: 'transparent', color: 'var(--muted)', border: '1px solid var(--hairline)', fontSize: 15, cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}>
               Обновить
             </button>
           </div>
         )}
 
+        {/* Active card */}
         {card && index < cards.length && (
           <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--ivory)' }}>
-                Найди лучший ход
-              </span>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                {boardOrientation === 'white' ? '♙ Вы играете белыми' : '♟ Вы играете чёрными'}
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <span style={{ padding: '3px 8px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 12, color: 'var(--muted)' }}>
+            {/* Chips */}
+            <div style={{ padding: '0 24px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ height: 28, display: 'inline-flex', alignItems: 'center', padding: '0 10px', borderRadius: 8, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', fontSize: 13, fontWeight: 500, color: 'var(--ivory)' }}>
                 {TAG_LABEL[card.tag]}
               </span>
-              <span style={{ padding: '3px 8px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 12, color: 'var(--muted)' }}>
+              <span style={{ height: 28, display: 'inline-flex', alignItems: 'center', padding: '0 10px', borderRadius: 8, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', fontSize: 13, fontWeight: 500, color: 'var(--ivory)' }}>
                 {PHASE_LABEL[card.phase]}
               </span>
               {card.eval_loss > 0 && (
-                <span style={{ padding: '3px 8px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 12, color: 'var(--control)' }}>
-                  -{(card.eval_loss / 100).toFixed(2)}
+                <span style={{ height: 28, display: 'inline-flex', alignItems: 'center', padding: '0 10px', borderRadius: 8, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', fontSize: 13, fontWeight: 500, color: '#E59A8F', fontVariantNumeric: 'tabular-nums' }}>
+                  −{(card.eval_loss / 100).toFixed(2)}
                 </span>
               )}
             </div>
 
-            {!answered && !checking && TAG_RULE[card.tag] && (
-              <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
-                {TAG_RULE[card.tag]}
-              </span>
+            {/* Game context block */}
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--hairline)', marginTop: 12 }}>
+              {gameInfo ? (
+                <>
+                  <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 6 }}>
+                    Из твоей партии · против {gameInfo.opp_name} · {fmtDate(gameInfo.played_at)} · {TIME_CLASS_RU[gameInfo.time_class] ?? gameInfo.time_class}
+                  </div>
+                  <div style={{ fontSize: 15, color: 'var(--ivory)', lineHeight: 1.5 }}>
+                    Ты сыграл{' '}
+                    <span style={{ background: 'rgba(255,255,255,.06)', borderRadius: 6, padding: '2px 7px', color: 'var(--ivory)', fontWeight: 500 }}>
+                      {card.my_move}
+                    </span>
+                    {' '}и потерял{' '}
+                    <span style={{ color: '#E59A8F', fontVariantNumeric: 'tabular-nums' }}>
+                      {(card.eval_loss / 100).toFixed(1)} п.
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>
+                  {boardOrientation === 'white' ? '♙ Вы играете белыми' : '♟ Вы играете чёрными'}
+                  {TAG_RULE[card.tag] && !answered && (
+                    <div style={{ marginTop: 8, fontSize: 14, color: 'var(--control)', lineHeight: 1.5 }}>
+                      {TAG_RULE[card.tag]}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Checking indicator */}
+            {checking && (
+              <div style={{ padding: '0 24px 16px' }}>
+                <span style={{ fontSize: 15, color: 'var(--muted)' }}>Проверяем…</span>
+              </div>
             )}
 
-            {checking && <span style={{ fontSize: 14, color: 'var(--muted)' }}>Проверяем…</span>}
-
+            {/* Answer feedback */}
             {answered && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {answered.correct ? (
-                  <div style={{ padding: '14px 16px', background: 'rgba(109,199,122,0.08)', border: '1px solid rgba(109,199,122,0.3)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: '#6DC77A' }}>
-                      Верно!
-                      {answered.xpEarned > 0 && <span style={{ fontWeight: 400, fontSize: 13, marginLeft: 8, color: 'var(--muted)' }}>+{answered.xpEarned} XP</span>}
-                    </span>
-                    {answered.alternate && <span style={{ fontSize: 13, color: 'var(--muted)' }}>Не лучший, но приемлемый ход</span>}
-                    {card.best_move && (
-                      <span style={{ fontSize: 14, fontFamily: 'monospace', color: '#6DC77A', fontWeight: 600 }}>
-                        {uciToSan(card.fen_before, card.best_move)}
+              <div style={{ margin: '0 24px', borderRadius: 12, padding: '16px 18px', border: answered.correct ? '1px solid rgba(129,182,76,.32)' : '1px solid var(--hairline)', background: answered.correct ? 'rgba(129,182,76,.09)' : 'rgba(0,0,0,.18)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {answered.correct
+                    ? <ClassIcon cls={answered.alternate ? 'good' : 'best'} size={28} />
+                    : <ClassIcon cls={userMoveCls ?? 'blunder'} size={28} />
+                  }
+                  <b style={{ fontSize: 19, color: answered.correct ? '#81B64C' : '#E0574A' }}>
+                    {answered.correct ? (answered.alternate ? 'Хороший ход!' : 'Верно! Лучший ход') : 'Не то'}
+                    {answered.xpEarned > 0 && (
+                      <span style={{ fontWeight: 400, fontSize: 14, marginLeft: 10, color: 'var(--muted)' }}>
+                        +{answered.xpEarned} XP
                       </span>
                     )}
-                    {answered.evalBestCp !== undefined && (
-                      <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
-                        Оценка: {fmtEval(answered.evalBestCp)}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <div style={{ padding: '14px 16px', background: 'rgba(110,106,97,0.1)', border: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--control)' }}>Неверно</span>
-                    <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>Ваш ход</span>
-                        <span style={{ fontSize: 14, fontFamily: 'monospace', color: 'var(--control)' }}>{answered.userSan}</span>
-                      </div>
-                      {card.best_move && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>Лучший ход</span>
-                          <span style={{ fontSize: 14, fontFamily: 'monospace', color: '#6DC77A' }}>{uciToSan(card.fen_before, card.best_move)}</span>
-                        </div>
-                      )}
-                    </div>
-                    {answered.evalMyMoveCp !== undefined && answered.evalBestCp !== undefined && (
-                      <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
-                        Ваш: {fmtEval(answered.evalMyMoveCp)} · лучший: {fmtEval(answered.evalBestCp)}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                  <span style={{ fontSize: 11, color: 'var(--muted)', marginRight: 4 }}>Уровень</span>
-                  {[0, 1, 2, 3, 4, 5].map(lvl => (
-                    <span key={lvl} style={{ width: 20, height: 3, background: lvl <= card.mastery ? 'var(--ivory)' : 'var(--track)' }} />
-                  ))}
-                  <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 4 }}>{card.mastery}/5</span>
+                  </b>
                 </div>
-
-                {!answered.correct && (
-                  <button onClick={() => void handleCorrectManual()} style={{ alignSelf: 'flex-start', height: 30, padding: '0 12px', fontSize: 11, background: 'transparent', color: 'var(--muted)', border: '1px solid var(--hairline)', cursor: 'pointer' }}>
-                    Мой ход тоже хороший
-                  </button>
+                {bestMoveSan && (
+                  <p style={{ marginTop: 8, fontSize: 15, color: 'var(--ivory)', lineHeight: 1.5 }}>
+                    <span style={{ background: 'rgba(255,255,255,.06)', borderRadius: 6, padding: '2px 7px', color: '#81B64C', fontWeight: 500 }}>
+                      {bestMoveSan}
+                    </span>
+                    {answered.alternate && ' — тоже хороший ход'}
+                  </p>
                 )}
+                {/* Evals grid */}
+                {(answered.evalMyMoveCp !== undefined || answered.evalBestCp !== undefined) && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+                    <div style={{ background: 'rgba(0,0,0,.18)', borderRadius: 8, padding: '8px 12px' }}>
+                      <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)' }}>
+                        {answered.correct ? 'твой ход' : 'в партии'}
+                      </span>
+                      <b style={{ fontSize: 18, color: answered.correct ? '#81B64C' : '#E59A8F', fontVariantNumeric: 'tabular-nums' }}>
+                        {answered.evalMyMoveCp !== undefined ? fmtEval(answered.evalMyMoveCp) : '—'}
+                      </b>
+                    </div>
+                    <div style={{ background: 'rgba(0,0,0,.18)', borderRadius: 8, padding: '8px 12px' }}>
+                      <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)' }}>
+                        {answered.correct ? 'в партии' : 'лучший ход'}
+                      </span>
+                      <b style={{ fontSize: 18, color: '#81B64C', fontVariantNumeric: 'tabular-nums' }}>
+                        {answered.evalBestCp !== undefined ? fmtEval(answered.evalBestCp) : (card.eval_before !== null ? fmtEval(card.eval_before) : '—')}
+                      </b>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
-                <PlayButton fen={card.fen_before} color={card.fen_before.split(' ')[1] as 'w' | 'b'} label="Играть отсюда" />
+            {/* Mastery bar */}
+            {answered && (
+              <div style={{ padding: '20px 24px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>Карточка выучена</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: 'var(--ivory)' }}>
+                    {card.mastery} / 5
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
+                  {[1, 2, 3, 4, 5].map(lvl => (
+                    <div key={lvl} style={{ height: 6, borderRadius: 3, background: lvl <= card.mastery ? '#81B64C' : '#3A3835' }} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Mark correct manually */}
+            {answered && !answered.correct && (
+              <div style={{ padding: '12px 24px 0' }}>
+                <button
+                  onClick={() => void handleCorrectManual()}
+                  style={{ height: 36, padding: '0 14px', fontSize: 14, background: 'transparent', color: 'var(--muted)', border: '1px solid var(--hairline)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}
+                >
+                  Мой ход тоже хороший
+                </button>
               </div>
             )}
           </>
         )}
       </div>
 
-      {/* Footer */}
-      <div style={{ padding: '12px 20px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {card && index < cards.length && answered && (
-          <button
-            onClick={goNext}
-            style={{ width: '100%', height: 44, fontSize: 14, fontWeight: 600, background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer' }}
-          >
-            Дальше →
-          </button>
-        )}
-        {!loading && cards.length === 0 && (
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 40, fontSize: 14, fontWeight: 600, background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--hairline)' }}>
+      {/* Footer: action buttons */}
+      <div style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {card && index < cards.length && answered ? (
+          <>
+            {/* Primary: Next */}
+            <button
+              onClick={goNext}
+              style={{
+                height: 52, fontSize: 18, fontWeight: 700,
+                background: '#81B64C',
+                boxShadow: '0 4px 0 #5E8C35',
+                color: '#fff', border: 'none', cursor: 'pointer',
+                borderRadius: 'var(--radius-btn)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                fontFamily: 'inherit',
+              }}
+            >
+              Дальше
+              <span style={{ fontSize: 13, fontWeight: 600, background: 'rgba(0,0,0,.18)', borderRadius: 6, padding: '2px 7px' }}>
+                Пробел
+              </span>
+            </button>
+            {/* Secondary: 2-column */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <button
+                onClick={() => card && router.push(`/play?fen=${encodeURIComponent(card.fen_before)}&color=${card.fen_before.split(' ')[1] as 'w' | 'b'}&level=10&mode=free`)}
+                style={{ height: 44, fontSize: 15, fontWeight: 600, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}
+              >
+                Сыграть отсюда
+              </button>
+              {card.game_id ? (
+                <Link
+                  href={gameInfo?.url || `/games/${card.game_id}`}
+                  target={gameInfo?.url ? '_blank' : undefined}
+                  style={{ height: 44, fontSize: 15, fontWeight: 600, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+                >
+                  Открыть партию
+                </Link>
+              ) : (
+                <button disabled style={{ height: 44, fontSize: 15, fontWeight: 600, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: 'var(--control)', cursor: 'default', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', opacity: 0.5 }}>
+                  Открыть партию
+                </button>
+              )}
+            </div>
+            <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--control)' }}>
+              ← → смотреть ходы · H подсказка · Пробел дальше
+            </div>
+          </>
+        ) : card && index < cards.length ? (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+              <button
+                onClick={() => setShowHint(true)}
+                disabled={showHint}
+                style={{ height: 44, fontSize: 15, fontWeight: 600, background: showHint ? 'var(--track)' : 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: showHint ? 'var(--control)' : 'var(--ivory)', cursor: showHint ? 'default' : 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}
+              >
+                <span>Подсказка</span>
+                <span style={{ fontSize: 13, color: 'var(--control)' }}>H</span>
+              </button>
+              <button
+                onClick={() => { setShowHint(true); setShowAnswer(true); }}
+                disabled={showAnswer}
+                style={{ height: 44, fontSize: 15, fontWeight: 600, background: showAnswer ? 'var(--track)' : 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: showAnswer ? 'var(--control)' : 'var(--ivory)', cursor: showAnswer ? 'default' : 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}
+              >
+                <span>Показать ответ</span>
+                <span style={{ fontSize: 13, color: 'var(--control)' }}>A</span>
+              </button>
+              <button
+                onClick={skipCard}
+                style={{ height: 44, fontSize: 15, fontWeight: 600, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}
+              >
+                <span>Пропустить</span>
+                <span style={{ fontSize: 13, color: 'var(--control)' }}>S</span>
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--control)' }}>
+              H подсказка · A ответ · S пропустить
+            </div>
+          </>
+        ) : !loading && cards.length === 0 ? (
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 44, fontSize: 15, fontWeight: 600, background: 'var(--st-b0)', border: '1px solid var(--hairline)', color: 'var(--muted)', borderRadius: 'var(--radius-btn)', textDecoration: 'none' }}>
             На главную
           </Link>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -649,7 +1049,10 @@ export default function MistakesPage() {
   return (
     <TrainerLayout
       sessionPanel={sessionPanel}
+      topPlayer={topPlayer}
+      evalBar={evalBar}
       boardContent={boardContent}
+      bottomPlayer={bottomPlayer}
       taskPanel={taskPanel}
     />
   );

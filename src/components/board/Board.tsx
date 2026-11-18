@@ -65,12 +65,16 @@ export function Board({
   })();
 
   const dim: number | string = size ?? '100%';
+  // react-chessboard v5 only understands FEN strings, not 'start' shorthand
+  const fen = position === 'start'
+    ? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+    : position;
 
   return (
     <Chessboard
       key={`${boardThemeId}-${pieceStyleId}-${orientation}-${cacheKey ?? ''}`}
       options={{
-        position,
+        position: fen,
         boardOrientation: orientation,
         allowDragging,
         onPieceDrop,
@@ -83,10 +87,10 @@ export function Board({
         lightSquareStyle: { backgroundColor: boardTheme.light },
         showNotation,
         animationDurationInMs: animationMs,
-        darkSquareNotationStyle: { color: '#C8C8C8' },
-        lightSquareNotationStyle: { color: '#505050' },
-        alphaNotationStyle: { fontSize: '11px', fontWeight: '700' },
-        numericNotationStyle: { fontSize: '11px', fontWeight: '700' },
+        darkSquareNotationStyle: { color: boardTheme.light },
+        lightSquareNotationStyle: { color: boardTheme.dark },
+        alphaNotationStyle: { fontSize: '13px', fontWeight: '600' },
+        numericNotationStyle: { fontSize: '13px', fontWeight: '600' },
         boardStyle: { borderRadius: 6, width: dim, height: dim },
       }}
     />
