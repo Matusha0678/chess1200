@@ -38,7 +38,7 @@ export function TrainerLayout({ session, topBar, board, evalBar, bottomBar, pane
 
       {/* Left session column */}
       {showLeft && session !== undefined && (
-        <div style={{ width: 280, flexShrink: 0, alignSelf: 'stretch', ...CARD }}>
+        <div data-ui="session" style={{ width: 280, flexShrink: 0, alignSelf: 'stretch', ...CARD }}>
           {session}
         </div>
       )}
@@ -52,7 +52,7 @@ export function TrainerLayout({ session, topBar, board, evalBar, bottomBar, pane
         alignSelf: 'flex-start',
       }}>
         {/* Top player bar 32px */}
-        <div style={{ height: 32, flexShrink: 0, paddingLeft: 32, display: 'flex', alignItems: 'center' }}>
+        <div data-ui="player-top" style={{ height: 32, flexShrink: 0, paddingLeft: 32, display: 'flex', alignItems: 'center' }}>
           {topBar}
         </div>
 
@@ -67,13 +67,13 @@ export function TrainerLayout({ session, topBar, board, evalBar, bottomBar, pane
         </div>
 
         {/* Bottom player bar 32px */}
-        <div style={{ height: 32, flexShrink: 0, paddingLeft: 32, display: 'flex', alignItems: 'center' }}>
+        <div data-ui="player-bottom" style={{ height: 32, flexShrink: 0, paddingLeft: 32, display: 'flex', alignItems: 'center' }}>
           {bottomBar}
         </div>
       </div>
 
       {/* Right panel */}
-      <div style={{ width: rightWidth, flexShrink: 0, alignSelf: 'stretch', ...CARD }}>
+      <div data-ui="panel" style={{ width: rightWidth, flexShrink: 0, alignSelf: 'stretch', ...CARD }}>
         {panel}
       </div>
     </div>

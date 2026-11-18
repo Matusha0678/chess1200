@@ -578,7 +578,7 @@ export default function MistakesPage() {
       </div>
 
       {/* Stats grid */}
-      <div style={{
+      <div data-ui="session-stats" style={{
         display: 'grid', gridTemplateColumns: 'repeat(3,1fr)',
         margin: '0 20px',
         border: '1px solid var(--hairline)',
@@ -627,7 +627,7 @@ export default function MistakesPage() {
       </div>
 
       {/* Queue list */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 10px', display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0 }}>
+      <div data-ui="session-list" style={{ flex: 1, overflowY: 'auto', padding: '0 10px', display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0 }}>
         {!loading && cards.map((c, i) => {
           const isCur = i === index;
           const isDone = i < index;
@@ -724,7 +724,7 @@ export default function MistakesPage() {
   const taskPanel = (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* Header */}
-      <div style={{ padding: '20px 24px 18px', flexShrink: 0 }}>
+      <div data-ui="panel-header" style={{ padding: '20px 24px 18px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--muted)' }}>
           <span>Тренировка · Ошибки</span>
           {!loading && total > 0 && (
@@ -750,7 +750,7 @@ export default function MistakesPage() {
         )}
         {/* Title */}
         {card && index < total && (
-          <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
+          <div data-ui="panel-title" style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
             {showAnswer ? 'Вот лучший ход' : 'Найди лучший ход'}
           </div>
         )}
@@ -937,7 +937,7 @@ export default function MistakesPage() {
       </div>
 
       {/* Footer: action buttons */}
-      <div style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
         {card && index < cards.length && answered ? (
           <>
             {/* Primary: Next */}
