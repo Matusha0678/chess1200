@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Chess } from 'chess.js';
 import type { Square, Color } from 'chess.js';
 import { supabase } from '@/lib/supabase';
 import { Board } from '@/components/board/Board';
-import type { BoardArrow } from '@/components/board/Board';
+import type { BoardArrow, BadgeKind } from '@/components/board/Board';
+import { DEMO_THREAT } from '@/lib/demo-positions';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
 import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
 import { SessionPanel } from '@/components/trainer/SessionPanel';
@@ -223,6 +225,11 @@ const BLITZ_SECONDS = 60;
 export default function ThreatsPage() {
   const router = useRouter();
   const { S } = useTrainerGeometry();
+  const searchParams = useSearchParams();
+  const demoKey = searchParams.get('demo') as 'fork' | null;
+  const isDemo = demoKey === 'fork';
+
+  const [linePreview, setLinePreview] = useState<number | null>(null);
 
   const [positions, setPositions] = useState<ThreatPosition[]>([]);
   const [posIdx, setPosIdx] = useState(0);
@@ -263,6 +270,28 @@ export default function ThreatsPage() {
   useEffect(() => { void loadPositions(); }, []);
 
   async function loadPositions() {
+    if (isDemo && demoKey === 'fork') {
+      const d = DEMO_THREAT[demoKey];
+      const p: ThreatPosition = {
+        id: d.id, game_id: d.game_id, ply: 0,
+        fen: d.fen, my_color: d.my_color,
+        last_move_uci: d.last_move_uci, last_move_san: d.last_move_san,
+        has_threat: d.has_threat, threat_uci: d.threat_uci, threat_san: d.threat_san,
+        threat_pv: d.threat_pv,
+        targets: [...d.targets], optional_targets: [...d.optional_targets],
+        attacker_sq: d.attacker_sq, motif: d.motif, gain_cp: d.gain_cp,
+        mate_in: d.mate_in, difficulty: d.difficulty,
+        missed_in_game: d.missed_in_game, my_move_san: d.my_move_san,
+        version: d.version,
+      };
+      setPositions([p]);
+      setPosIdx(0);
+      setPhase('marking');
+      setMarked(new Set());
+      setPosHistory([]);
+      posStartRef.current = Date.now();
+      return;
+    }
     setPhase('loading');
 
     const { data, error } = await supabase
@@ -430,14 +459,16 @@ export default function ThreatsPage() {
         : 0,
     }));
 
-    await supabase.from('threat_log').insert({
-      position_id: pos.id,
-      fen: pos.fen,
-      found,
-      missed,
-      false_alarms: falseAlarms,
-      time_taken_ms: timeTaken,
-    });
+    if (!isDemo) {
+      await supabase.from('threat_log').insert({
+        position_id: pos.id,
+        fen: pos.fen,
+        found,
+        missed,
+        false_alarms: falseAlarms,
+        time_taken_ms: timeTaken,
+      });
+    }
 
     setHintUsed(false);
     setHintActive(false);
@@ -544,23 +575,40 @@ export default function ThreatsPage() {
     return tints;
   }
 
-  // ── Build overlays for found/missed/wrong ──────────────────────────────────
+  // ── Build rings ────────────────────────────────────────────────────────────
 
-  function buildSquareOverlays(): Array<{ sq: Square; cls: 'found' | 'missed' | 'wrong' }> {
-    if (phase !== 'revealed' && phase !== 'defensive') return [];
-    if (!pos) return [];
+  function buildRings(): Partial<Record<Square, string>> {
+    if ((phase !== 'revealed' && phase !== 'defensive') || !pos) return {};
+    const rings: Partial<Record<Square, string>> = {};
     const targets = new Set(pos.targets);
     const optional = new Set(pos.optional_targets);
-    const out: Array<{ sq: Square; cls: 'found' | 'missed' | 'wrong' }> = [];
 
     for (const sq of marked) {
-      if (targets.has(sq)) out.push({ sq, cls: 'found' });
-      else if (!optional.has(sq)) out.push({ sq, cls: 'wrong' });
+      if (targets.has(sq)) rings[sq] = '#81B64C';
+      else if (!optional.has(sq)) rings[sq] = '#E0574A';
     }
     for (const sq of targets) {
-      if (!marked.has(sq as Square)) out.push({ sq: sq as Square, cls: 'missed' });
+      if (!marked.has(sq as Square)) rings[sq as Square] = '#F0A43A';
     }
-    return out;
+    return rings;
+  }
+
+  // ── Build badges ───────────────────────────────────────────────────────────
+
+  function buildBadges(): Partial<Record<Square, BadgeKind>> {
+    if ((phase !== 'revealed' && phase !== 'defensive') || !pos) return {};
+    const badges: Partial<Record<Square, BadgeKind>> = {};
+    const targets = new Set(pos.targets);
+    const optional = new Set(pos.optional_targets);
+
+    for (const sq of marked) {
+      if (targets.has(sq)) badges[sq] = 'found';
+      else if (!optional.has(sq)) badges[sq] = 'wrong';
+    }
+    for (const sq of targets) {
+      if (!marked.has(sq as Square)) badges[sq as Square] = 'missed';
+    }
+    return badges;
   }
 
   // ── Build arrows ───────────────────────────────────────────────────────────
@@ -570,26 +618,42 @@ export default function ThreatsPage() {
     const arrows: BoardArrow[] = [];
 
     if ((phase === 'revealed' || phase === 'defensive') && pos.threat_uci && pos.threat_uci.length >= 4) {
-      // Red solid arrow: threat move
-      arrows.push({
-        from: pos.threat_uci.slice(0, 2) as Square,
-        to: pos.threat_uci.slice(2, 4) as Square,
-        color: 'rgba(220,50,50,0.85)',
-        style: 'solid',
-        opacity: 0.85,
-      });
-
-      // Orange dashed arrows from threat destination to targets (fork)
-      if (pos.motif === 'fork') {
-        const toSq = pos.threat_uci.slice(2, 4) as Square;
-        for (const tgt of pos.targets.slice(0, 3)) {
+      if (linePreview !== null && pos.threat_pv) {
+        // Show line arrows when hovering
+        const pvMoves = pos.threat_pv.split(' ').filter(Boolean);
+        pvMoves.slice(0, 4).forEach((uci, idx) => {
+          if (!uci || uci.length < 4) return;
+          const isOpp = idx % 2 === 0;
           arrows.push({
-            from: toSq,
-            to: tgt as Square,
-            color: 'rgba(240,164,58,0.65)',
-            style: 'dashed',
-            opacity: 0.65,
+            from: uci.slice(0, 2) as Square, to: uci.slice(2, 4) as Square,
+            color: isOpp ? '#E0574A' : '#4A90E2', style: 'solid', opacity: 0.85,
+            label: String(idx + 1), role: isOpp ? 'line-opp' : 'line-me',
           });
+        });
+      } else {
+        // Red solid arrow: threat move
+        arrows.push({
+          from: pos.threat_uci.slice(0, 2) as Square,
+          to: pos.threat_uci.slice(2, 4) as Square,
+          color: '#E0574A',
+          style: 'solid',
+          opacity: 0.85,
+          role: 'threat',
+        });
+
+        // Orange dashed arrows from threat destination to targets (fork)
+        if (pos.motif === 'fork') {
+          const toSq = pos.threat_uci.slice(2, 4) as Square;
+          for (const tgt of pos.targets.slice(0, 3)) {
+            arrows.push({
+              from: toSq,
+              to: tgt as Square,
+              color: 'rgba(240,164,58,0.65)',
+              style: 'dashed',
+              opacity: 0.65,
+              role: 'fork',
+            });
+          }
         }
       }
     }
@@ -602,6 +666,7 @@ export default function ThreatsPage() {
         color: 'rgba(240,164,58,0.8)',
         style: 'dashed',
         opacity: 0.8,
+        role: 'best',
       });
     }
 
@@ -917,7 +982,6 @@ export default function ThreatsPage() {
   // ── Normal render ─────────────────────────────────────────────────────────
 
   const isRevealed = phase === 'revealed' || phase === 'defensive';
-  const squareOverlays = buildSquareOverlays();
 
   const foundCount = [...marked].filter(sq => pos?.targets.includes(sq)).length;
   const missedCount = pos ? pos.targets.filter(sq => !marked.has(sq as Square)).length : 0;
@@ -930,11 +994,9 @@ export default function ThreatsPage() {
       interactive={phase === 'defensive'}
       onSquareClick={phase === 'marking' ? handleSquareClick : undefined}
       tints={buildTints()}
+      rings={buildRings() as Partial<Record<Square, string>>}
       arrows={buildArrows()}
-      badges={squareOverlays.length > 0
-        ? Object.fromEntries(squareOverlays.map(({ sq, cls }) => [sq, cls]))
-        : undefined
-      }
+      badges={buildBadges() as Partial<Record<Square, BadgeKind>>}
     />
   );
 
@@ -1094,7 +1156,7 @@ export default function ThreatsPage() {
         {isRevealed && pos && (
           <>
             {/* Threat card */}
-            <div data-ui="threat-card" style={{ marginBottom: 16 }}>
+            <div data-ui="threat-card" data-result={pos.has_threat ? 'threat' : 'no-threat'} style={{ marginBottom: 16 }}>
               {!pos.has_threat ? (
                 <FeedbackCard
                   variant={marked.size === 0 ? 'success' : 'warning'}
@@ -1103,18 +1165,44 @@ export default function ThreatsPage() {
                   {buildThreatCardText(pos)}
                 </FeedbackCard>
               ) : (
-                <FeedbackCard
-                  variant={missedCount === 0 && foundCount === pos.targets.length ? 'success' : missedCount > 0 ? 'danger' : 'warning'}
-                  title={
-                    missedCount === 0 && foundCount === pos.targets.length
-                      ? `Нашёл ${foundCount} из ${pos.targets.length}`
-                      : missedCount > 0
-                      ? `Пропустил ${missedCount}`
-                      : `Лишних: ${marked.size - foundCount}`
-                  }
-                >
-                  {buildThreatCardText(pos)}
-                </FeedbackCard>
+                <>
+                  <FeedbackCard
+                    variant={missedCount === 0 && foundCount === pos.targets.length ? 'success' : missedCount > 0 ? 'danger' : 'warning'}
+                    title={
+                      missedCount === 0 && foundCount === pos.targets.length
+                        ? `Нашёл ${foundCount} из ${pos.targets.length}`
+                        : missedCount > 0
+                        ? `Пропустил ${missedCount}`
+                        : `Лишних: ${marked.size - foundCount}`
+                    }
+                  >
+                    {buildThreatCardText(pos)}
+                  </FeedbackCard>
+                  {pos.threat_pv && (
+                    <div
+                      data-ui="threat-line"
+                      onMouseEnter={() => setLinePreview(0)}
+                      onFocus={() => setLinePreview(0)}
+                      onMouseLeave={() => setLinePreview(null)}
+                      onBlur={() => setLinePreview(null)}
+                      tabIndex={0}
+                      style={{
+                        display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, marginTop: 8,
+                        padding: '6px 8px', borderRadius: 8, cursor: 'default', outline: 'none',
+                        ...(linePreview !== null
+                          ? { background: 'rgba(74,144,226,.12)', border: '1px solid rgba(74,144,226,.5)' }
+                          : { border: '1px solid transparent' }),
+                      }}
+                    >
+                      <span style={{ color: 'var(--muted)', flexShrink: 0 }}>Дальше:</span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {pos.threat_pv.split(' ').slice(0, 3).map((uci, j) => (
+                          <MoveChip key={j}>{uci}</MoveChip>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -1299,6 +1387,7 @@ export default function ThreatsPage() {
       board={boardNode}
       bottomBar={bottomBar}
       panel={panelNode}
+      panelAttrs={isDemo && demoKey ? { 'data-demo': demoKey } : undefined}
     />
   );
 }

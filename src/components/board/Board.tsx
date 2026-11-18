@@ -24,7 +24,13 @@ export interface BoardArrow {
   style?: 'solid' | 'dashed';
   opacity?: number;
   label?: string;
+  role?: 'offer' | 'plan' | 'threat' | 'fork' | 'best' | 'line-opp' | 'line-me';
 }
+
+const ROLE_CIRCLE: Record<string, string> = {
+  plan: '#3A78C2', threat: '#C2453A', fork: '#C98424',
+  best: '#5E8C35', 'line-opp': '#C2453A', 'line-me': '#3A78C2', offer: '#C98424',
+};
 
 export interface BoardProps {
   fen: string;
@@ -67,6 +73,7 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
 
   const opacity = arrow.opacity ?? 0.85;
   const color   = arrow.color;
+  const circleColor = arrow.role ? (ROLE_CIRCLE[arrow.role] ?? '#3A78C2') : '#3A78C2';
 
   const isDashed = arrow.style === 'dashed';
   const startOffset = 18 * scale;
@@ -137,7 +144,7 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
     ].map(([x, y]) => `${x},${y}`).join(' ');
 
     return (
-      <g opacity={opacity}>
+      <g opacity={opacity} data-ui="board-arrow" data-role={arrow.role} data-label={arrow.label}>
         <path
           d={shaftD}
           stroke={color}
@@ -170,7 +177,7 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
     const p3x = ex - nx * dHeadHW, p3y = ey - ny * dHeadHW;
 
     return (
-      <g opacity={opacity}>
+      <g opacity={opacity} data-ui="board-arrow" data-role={arrow.role} data-label={arrow.label}>
         <line
           x1={startX} y1={startY} x2={ex} y2={ey}
           stroke={color} strokeWidth={dStroke}
@@ -203,11 +210,11 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
   const labelY = from.y + dy * 0.35;
 
   return (
-    <g opacity={opacity}>
+    <g opacity={opacity} data-ui="board-arrow" data-role={arrow.role} data-label={arrow.label}>
       <polygon points={points} fill={color} />
       {arrow.label && (
         <g>
-          <circle cx={labelX} cy={labelY} r={15 * scale} fill="#3A78C2" />
+          <circle cx={labelX} cy={labelY} r={15 * scale} fill={circleColor} />
           <text
             x={labelX} y={labelY + 5 * scale}
             textAnchor="middle" fontSize={16 * scale} fontWeight="800"
@@ -269,6 +276,8 @@ function BadgeLayer({ badges, S, orientation }: {
         return (
           <div
             key={sq}
+            data-ui="board-badge"
+            data-kind={kind}
             style={{
               position: 'absolute',
               left,

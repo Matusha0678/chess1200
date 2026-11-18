@@ -9,6 +9,7 @@ export interface TrainerLayoutProps {
   evalBar?: React.ReactNode;
   bottomBar: React.ReactNode;
   panel: React.ReactNode;
+  panelAttrs?: Record<string, string>;
 }
 
 const CARD: React.CSSProperties = {
@@ -21,7 +22,7 @@ const CARD: React.CSSProperties = {
   flexDirection: 'column',
 };
 
-export function TrainerLayout({ session, topBar, board, evalBar, bottomBar, panel }: TrainerLayoutProps) {
+export function TrainerLayout({ session, topBar, board, evalBar, bottomBar, panel, panelAttrs }: TrainerLayoutProps) {
   const { showLeft, rightWidth } = useTrainerGeometry();
 
   return (
@@ -73,7 +74,7 @@ export function TrainerLayout({ session, topBar, board, evalBar, bottomBar, pane
       </div>
 
       {/* Right panel */}
-      <div data-ui="panel" style={{ flex: 1, minWidth: 420, alignSelf: 'stretch', ...CARD }}>
+      <div data-ui="panel" {...(panelAttrs ?? {})} style={{ flex: 1, minWidth: 420, alignSelf: 'stretch', ...CARD }}>
         {panel}
       </div>
     </div>

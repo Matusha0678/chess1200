@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Chess } from 'chess.js';
 import type { Square } from 'chess.js';
 import { supabase } from '@/lib/supabase';
 import { Board } from '@/components/board/Board';
-import type { BoardArrow } from '@/components/board/Board';
+import type { BoardArrow, BadgeKind } from '@/components/board/Board';
+import { DEMO_SAC } from '@/lib/demo-positions';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
 import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
 import { SessionPanel } from '@/components/trainer/SessionPanel';
@@ -185,10 +187,44 @@ function evalToCp(e: string | null): number | null {
   return Math.round(v * 100);
 }
 
+function cpToEvalStr(cp: number): string {
+  if (cp >= 9000) return `M${100 - Math.round(cp / 100)}`;
+  if (cp <= -9000) return `−M${100 - Math.round(-cp / 100)}`;
+  const v = cp / 100;
+  return v >= 0 ? `+${v.toFixed(2)}` : v.toFixed(2);
+}
+
+function displayBestNoSac(fen: string, bns: string | null): string | null {
+  if (!bns) return null;
+  if (/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(bns)) return uciToSan(fen, bns);
+  return bns;
+}
+
+function detectCheckSquare(fen: string, uci: string): import('chess.js').Square | null {
+  try {
+    const ch = new Chess(fen);
+    ch.move({ from: uci.slice(0, 2) as import('chess.js').Square, to: uci.slice(2, 4) as import('chess.js').Square, promotion: (uci[4] ?? 'q') as 'q' });
+    if (!ch.inCheck()) return null;
+    for (const row of ch.board()) {
+      for (const cell of row) {
+        if (cell?.type === 'k' && cell.color === ch.turn()) return cell.square as import('chess.js').Square;
+      }
+    }
+  } catch { /* noop */ }
+  return null;
+}
+
+function wp(cp: number): number {
+  return 1 / (1 + Math.exp(-0.00368208 * cp));
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function SacPage() {
   const { S } = useTrainerGeometry();
+  const searchParams = useSearchParams();
+  const demoKey = searchParams.get('demo') as 'works' | 'fails' | null;
+  const isDemo = demoKey === 'works' || demoKey === 'fails';
 
   const [positions, setPositions]     = useState<SacPosition[]>([]);
   const [loading, setLoading]         = useState(true);
@@ -197,6 +233,9 @@ export default function SacPage() {
   const [current, setCurrent]         = useState<SacPosition | null>(null);
   const [answered, setAnswered]       = useState<{ answer: 'sac' | 'calm'; ok: boolean } | null>(null);
   const [sacMoveApplied, setSacMoveApplied] = useState(false);
+
+  type Preview = null | { kind: 'line'; idx: number } | { kind: 'nosac' };
+  const [preview, setPreview] = useState<Preview>(null);
 
   // History: completed positions with their answers
   const [history, setHistory] = useState<Array<{ pos: SacPosition; answer: 'sac' | 'calm'; ok: boolean }>>([]);
@@ -248,6 +287,26 @@ export default function SacPage() {
   }, [answered, current, preparing, positions]);
 
   async function loadData() {
+    if (isDemo && demoKey) {
+      const d = DEMO_SAC[demoKey];
+      const p: SacPosition = {
+        ...d,
+        kind: d.kind,
+        eval_before: cpToEvalStr(d.eval_before),
+        eval_after: cpToEvalStr(d.eval_after),
+        eval_no_sac: cpToEvalStr(d.eval_no_sac),
+        best_no_sac: displayBestNoSac(d.fen, d.best_no_sac),
+        pv: d.pv,
+        defenses: d.defenses.map(def => ({ ...def, pv: Array.isArray(def.pv) ? [...def.pv] : (def.pv as unknown as string).split(' ') })),
+        accepted_pv: d.accepted_pv,
+      };
+      setPositions([p]);
+      setCurrent(p);
+      setAnswered(null);
+      setSacMoveApplied(false);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const [posRes, logRes] = await Promise.all([
       supabase.from('sac_positions').select('*').eq('version', 2).order('score', { ascending: false }).limit(500),
@@ -328,7 +387,9 @@ export default function SacPage() {
       xp: ok ? s.xp + 20 : s.xp,
     }));
 
-    await supabase.from('sac_log').insert({ position_id: current.id, answer, ok });
+    if (!isDemo) {
+      await supabase.from('sac_log').insert({ position_id: current.id, answer, ok });
+    }
   }
 
   // ── Prepare ────────────────────────────────────────────────────────────────
@@ -381,20 +442,6 @@ export default function SacPage() {
     if (positions.length > 0) pickRandom(positions);
   }, [positions]);
 
-  // ── Display ────────────────────────────────────────────────────────────────
-
-  const displayFen = (() => {
-    if (!current) return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-    if (sacMoveApplied) {
-      try {
-        const ch = new Chess(current.fen);
-        ch.move({ from: current.move.slice(0, 2), to: current.move.slice(2, 4), promotion: current.move[4] || 'q' });
-        return ch.fen();
-      } catch { /* noop */ }
-    }
-    return current.fen;
-  })();
-
   if (loading) return (
     <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
   );
@@ -413,42 +460,125 @@ export default function SacPage() {
     return Math.max(0, perGame * (prepProgress.gamesTotal - prepProgress.gamesChecked));
   })();
 
-  // Board arrows & tints
+  // ── Board arrows, tints, rings, badges ─────────────────────────────────────
+  const sacTints: Partial<Record<Square, string>> = {};
+  const sacRings: Partial<Record<Square, string>> = {};
+  const sacBadges: Partial<Record<Square, BadgeKind>> = {};
   const sacArrows: BoardArrow[] = [];
-  const sacTints: Partial<Record<string, string>> = {};
+  let sacCheckSquare: Square | null = null;
 
   if (current && !answered) {
     const from = current.move.slice(0, 2) as Square;
     const to   = current.move.slice(2, 4) as Square;
-    sacArrows.push({ from, to, color: 'rgba(240,164,58,0.9)', style: 'dashed', opacity: 0.9 });
-    sacTints[from] = 'rgba(240,164,58,0.22)';
-    sacTints[to]   = 'rgba(240,164,58,0.18)';
+    sacArrows.push({ from, to, color: '#F0A43A', style: 'dashed', opacity: 0.9, role: 'offer' });
+    sacTints[from] = 'rgba(240,164,58,.22)';
+    sacTints[to]   = 'rgba(240,164,58,.18)';
+    sacRings[to]   = '#F0A43A';
   }
 
   if (current && answered) {
-    const from = current.move.slice(0, 2);
-    const to   = current.move.slice(2, 4);
+    const from = current.move.slice(0, 2) as Square;
+    const to   = current.move.slice(2, 4) as Square;
     const works = current.kind === 'real';
-    sacTints[from] = works ? 'rgba(38,194,163,.45)' : 'rgba(224,87,74,.40)';
-    sacTints[to]   = works ? 'rgba(38,194,163,.55)' : 'rgba(224,87,74,.50)';
 
-    // Plan arrows from accepted_pv (pv[1] and pv[3] = my moves)
-    if (current.accepted_pv && works) {
-      const pvMoves = current.accepted_pv.split(' ').filter(Boolean);
-      // pvMoves[0] = opponent takes, pvMoves[1] = my reply, pvMoves[3] = my 2nd move
-      const planMoves = [pvMoves[1], pvMoves[3]].filter(Boolean);
-      planMoves.forEach((uci, idx) => {
-        if (!uci || uci.length < 4) return;
-        sacArrows.push({
-          from: uci.slice(0, 2) as Square,
-          to: uci.slice(2, 4) as Square,
-          color: `rgba(74,144,226,${idx === 0 ? 0.7 : 0.55})`,
-          style: 'solid',
-          opacity: idx === 0 ? 0.7 : 0.55,
+    if (preview?.kind === 'nosac') {
+      sacTints[from] = works ? 'rgba(38,194,163,.45)' : 'rgba(224,87,74,.40)';
+      sacTints[to]   = works ? 'rgba(38,194,163,.55)' : 'rgba(224,87,74,.50)';
+      if (works) sacBadges[to] = 'brilliant';
+      else {
+        const wpB = wp(evalToCp(current.eval_before) ?? 0);
+        const wpA = wp(evalToCp(current.eval_after) ?? 0);
+        sacBadges[to] = wpB - wpA >= 0.20 ? 'blunder' : 'mistake';
+      }
+      const bns = current.best_no_sac;
+      if (bns && /^[a-h][1-8][a-h][1-8]/.test(bns)) {
+        sacArrows.push({ from: bns.slice(0, 2) as Square, to: bns.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best' });
+      } else if (bns) {
+        try {
+          const ch = new Chess(current.fen);
+          const mv = ch.move(bns);
+          if (mv) sacArrows.push({ from: mv.from as Square, to: mv.to as Square, color: '#81B64C', style: 'dashed', role: 'best' });
+        } catch { /* noop */ }
+      }
+    } else if (preview?.kind === 'line') {
+      const def = current.defenses?.[preview.idx];
+      sacTints[from] = works ? 'rgba(38,194,163,.45)' : 'rgba(224,87,74,.40)';
+      sacTints[to]   = works ? 'rgba(38,194,163,.55)' : 'rgba(224,87,74,.50)';
+      if (works) sacBadges[to] = 'brilliant';
+      else {
+        const wpB = wp(evalToCp(current.eval_before) ?? 0);
+        const wpA = wp(evalToCp(current.eval_after) ?? 0);
+        sacBadges[to] = wpB - wpA >= 0.20 ? 'blunder' : 'mistake';
+      }
+      sacCheckSquare = detectCheckSquare(current.fen, current.move);
+      if (def?.pv) {
+        const pvArr = Array.isArray(def.pv) ? def.pv : (def.pv as string).split(' ');
+        pvArr.slice(0, 4).forEach((uci, idx) => {
+          if (!uci || uci.length < 4) return;
+          const isOpp = idx % 2 === 0;
+          sacArrows.push({
+            from: uci.slice(0, 2) as Square,
+            to:   uci.slice(2, 4) as Square,
+            color: isOpp ? '#E0574A' : '#4A90E2',
+            style: 'solid',
+            opacity: 0.85,
+            label: String(idx + 1),
+            role: isOpp ? 'line-opp' : 'line-me',
+          });
         });
-      });
+      }
+    } else {
+      // Normal answered state
+      sacTints[from] = works ? 'rgba(38,194,163,.45)' : 'rgba(224,87,74,.40)';
+      sacTints[to]   = works ? 'rgba(38,194,163,.55)' : 'rgba(224,87,74,.50)';
+      sacCheckSquare = detectCheckSquare(current.fen, current.move);
+
+      if (works) {
+        sacBadges[to] = 'brilliant';
+        if (current.accepted_pv) {
+          const pvMoves = current.accepted_pv.split(' ').filter(Boolean);
+          [pvMoves[1], pvMoves[3]].forEach((uci, idx) => {
+            if (!uci || uci.length < 4) return;
+            sacArrows.push({
+              from: uci.slice(0, 2) as Square, to: uci.slice(2, 4) as Square,
+              color: '#4A90E2', style: 'solid',
+              opacity: idx === 0 ? 0.7 : 0.55,
+              label: String(idx + 2),
+              role: 'plan',
+            });
+          });
+        }
+      } else {
+        const wpB = wp(evalToCp(current.eval_before) ?? 0);
+        const wpA = wp(evalToCp(current.eval_after) ?? 0);
+        sacBadges[to] = wpB - wpA >= 0.20 ? 'blunder' : 'mistake';
+        if (current.pv) {
+          const pvMoves = current.pv.split(' ').filter(Boolean);
+          const refuteUci = pvMoves[0];
+          if (refuteUci && refuteUci.length >= 4) {
+            sacArrows.push({
+              from: refuteUci.slice(0, 2) as Square, to: refuteUci.slice(2, 4) as Square,
+              color: '#E0574A', style: 'solid', opacity: 0.85, role: 'threat',
+            });
+          }
+        }
+      }
     }
   }
+
+  // displayFen: for nosac preview show pre-sac fen; otherwise show post-sac if answered
+  const displayFen = (() => {
+    if (!current) return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    if (answered && preview?.kind === 'nosac') return current.fen;
+    if (sacMoveApplied) {
+      try {
+        const ch = new Chess(current.fen);
+        ch.move({ from: current.move.slice(0, 2), to: current.move.slice(2, 4), promotion: current.move[4] || 'q' });
+        return ch.fen();
+      } catch { /* noop */ }
+    }
+    return current.fen;
+  })();
 
   // ── EvalBar: use cp from eval_after ────────────────────────────────────────
   const evalCp = answered && current ? evalToCp(current.eval_after) : null;
@@ -656,13 +786,16 @@ export default function SacPage() {
       interactive={false}
       dimmed={!current}
       tints={sacTints as Partial<Record<Square, string>>}
+      rings={sacRings as Partial<Record<Square, string>>}
+      badges={sacBadges as Partial<Record<Square, BadgeKind>>}
       arrows={sacArrows}
+      checkSquare={sacCheckSquare}
     />
   );
 
   // ── Panel content ──────────────────────────────────────────────────────────
   const panelNode = (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+    <div data-demo={isDemo ? demoKey ?? undefined : undefined} style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* Header */}
       <div data-ui="panel-header" style={{ padding: '20px 24px 14px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--muted)' }}>
@@ -681,8 +814,6 @@ export default function SacPage() {
             ? 'Жертвовать или нет?'
             : preparing
             ? 'Готовлю позиции'
-            : answered
-            ? (answered.ok ? 'Правильно!' : 'Неверно')
             : 'Жертвовать или нет?'}
         </div>
 
@@ -832,14 +963,13 @@ export default function SacPage() {
         {/* Answer state */}
         {answered && current && (
           <>
-            <div data-ui="sac-feedback" style={{ marginBottom: 16 }}>
+            <div data-ui="sac-feedback" data-result={current.kind === 'real' ? 'works' : 'fails'} style={{ marginBottom: 16 }}>
               <FeedbackCard
                 variant={answered.ok ? 'success' : 'danger'}
                 title={
-                  answered.answer === 'sac' && answered.ok ? 'Верно! Жертва работает' :
-                  answered.answer === 'calm' && answered.ok ? 'Верно — жертва не работает' :
-                  answered.answer === 'calm' && !answered.ok ? 'Неверно — жертва работает' :
-                  'Неверно — жертва не работает'
+                  current.kind === 'real' ? 'Верно! Жертва работает' :
+                  answered.answer === 'sac' ? 'Неверно — жертва не работает' :
+                  'Верно — жертва не работает'
                 }
               >
                 {buildPhrase(current, sacSan)}
@@ -849,7 +979,19 @@ export default function SacPage() {
             {/* Eval pair */}
             {(current.eval_after != null || current.eval_no_sac != null) && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
+                <div
+                  data-ui="sac-eval-no"
+                  onMouseEnter={() => setPreview({ kind: 'nosac' })}
+                  onFocus={() => setPreview({ kind: 'nosac' })}
+                  onMouseLeave={() => setPreview(null)}
+                  onBlur={() => setPreview(null)}
+                  tabIndex={0}
+                  style={{
+                    background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)',
+                    cursor: 'default', outline: 'none',
+                    ...(preview?.kind === 'nosac' ? { background: 'rgba(74,144,226,.12)', border: '1px solid rgba(74,144,226,.5)' } : {}),
+                  }}
+                >
                   <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
                     без жертвы {current.best_no_sac ? `(${current.best_no_sac})` : ''}
                   </span>
@@ -857,7 +999,10 @@ export default function SacPage() {
                     {current.eval_no_sac ?? '—'}
                   </b>
                 </div>
-                <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
+                <div
+                  data-ui="sac-eval-after"
+                  style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}
+                >
                   <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
                     после {sacSan}
                   </span>
@@ -872,17 +1017,39 @@ export default function SacPage() {
             {current.defenses && current.defenses.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
                 {current.defenses.slice(0, 2).map((def, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13 }}>
+                  <div
+                    key={i}
+                    data-ui="sac-line"
+                    onMouseEnter={() => setPreview({ kind: 'line', idx: i })}
+                    onFocus={() => setPreview({ kind: 'line', idx: i })}
+                    onMouseLeave={() => setPreview(null)}
+                    onBlur={() => setPreview(null)}
+                    tabIndex={0}
+                    style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13,
+                      padding: '6px 8px', borderRadius: 8, cursor: 'default', outline: 'none',
+                      ...(preview?.kind === 'line' && preview.idx === i
+                        ? { background: 'rgba(74,144,226,.12)', border: '1px solid rgba(74,144,226,.5)' }
+                        : { border: '1px solid transparent' }),
+                    }}
+                  >
                     <span style={{ color: 'var(--muted)', flexShrink: 0, marginTop: 1 }}>если</span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {(def.outcome || def.pv?.join(' ')).split(' ').filter(Boolean).slice(0, 4).map((s, j) => (
+                      {(Array.isArray(def.pv) ? def.pv.slice(0, 4) : (def.pv as string).split(' ').slice(0, 4)).map((uci, j) => (
                         <span key={j} style={{ padding: '2px 8px', borderRadius: 6, background: 'var(--surface-2)', border: '1px solid var(--hairline)', fontSize: 13, color: 'var(--ivory)' }}>
-                          {s}
+                          {uciToSan(answered && current && sacMoveApplied ? displayFen : current.fen, uci) || uci}
                         </span>
                       ))}
+                      {def.outcome && (
+                        <span style={{ color: 'var(--muted)', fontSize: 13, alignSelf: 'center' }}>— {def.outcome}</span>
+                      )}
                     </div>
                   </div>
                 ))}
+                <div style={{ fontSize: 13, color: 'var(--faint, var(--muted))', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                  <span>↖</span>
+                  <span>Наведи на вариант или оценку — покажу на доске</span>
+                </div>
               </div>
             )}
 
@@ -892,11 +1059,11 @@ export default function SacPage() {
               return (
                 <div data-ui="sac-gave-got" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
                   <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
-                    <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Отдал</span>
+                    <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600 }}>Отдал</span>
                     <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>{gave}</span>
                   </div>
                   <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
-                    <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Получил</span>
+                    <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600 }}>Получил</span>
                     <span style={{ fontSize: 15, fontWeight: 600, color: gotBad ? '#E0574A' : 'var(--ivory)' }}>{got}</span>
                   </div>
                 </div>
@@ -1038,6 +1205,7 @@ export default function SacPage() {
       evalBar={evalBarNode}
       bottomBar={bottomBarNode}
       panel={panelNode}
+      panelAttrs={isDemo && demoKey ? { 'data-demo': demoKey } : undefined}
     />
   );
 }
