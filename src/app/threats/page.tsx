@@ -1,13 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Chess } from 'chess.js';
-import type { Square } from 'chess.js';
+import type { Square, Color } from 'chess.js';
 import { supabase } from '@/lib/supabase';
-import { useStockfish } from '@/hooks/useStockfish';
-import { findThreats, threatExplanation } from '@/lib/threats';
-import type { Threat } from '@/lib/threats';
 import { Board } from '@/components/board/Board';
 import type { BoardArrow } from '@/components/board/Board';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
@@ -16,16 +13,40 @@ import { SessionPanel } from '@/components/trainer/SessionPanel';
 import { FeedbackCard } from '@/components/ui/FeedbackCard';
 import { Kbd } from '@/components/ui/Kbd';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { MoveChip } from '@/components/ui/MoveChip';
+import { ClassIcon } from '@/components/ClassIcon';
+import { prepareThreatPositions } from '@/lib/threat-prepare';
+import type { ThreatPrepProgress } from '@/lib/threat-prepare';
+import { createBrowserEngine } from '@/lib/engine';
+import type { Engine } from '@/lib/engine';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface Position {
+interface ThreatPosition {
+  id: string;
+  game_id: string | null;
+  ply: number;
   fen: string;
-  myColor: 'w' | 'b';
-  game_id?: string | null;
+  my_color: 'w' | 'b';
+  last_move_uci: string | null;
+  last_move_san: string | null;
+  has_threat: boolean;
+  threat_uci: string | null;
+  threat_san: string | null;
+  threat_pv: string | null;
+  targets: string[];
+  optional_targets: string[];
+  attacker_sq: string | null;
+  motif: string | null;
+  gain_cp: number | null;
+  mate_in: number | null;
+  difficulty: number;
+  missed_in_game: boolean;
+  my_move_san: string | null;
+  version: number;
 }
 
-type Phase = 'loading' | 'marking' | 'revealed' | 'defensive' | 'done';
+type Phase = 'loading' | 'empty' | 'preparing' | 'marking' | 'revealed' | 'defensive' | 'done';
 
 interface SessionScore {
   found: number;
@@ -35,39 +56,203 @@ interface SessionScore {
   streak: number;
 }
 
-const BLITZ_SECONDS = 60;
+// ── Piece name helpers ────────────────────────────────────────────────────────
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const PIECE_NOM: Record<string, string> = {
+  p: 'пешка', n: 'конь', b: 'слон', r: 'ладья', q: 'ферзь', k: 'король',
+};
+const PIECE_GEN: Record<string, string> = {
+  p: 'пешки', n: 'коня', b: 'слона', r: 'ладьи', q: 'ферзя', k: 'короля',
+};
+const PIECE_INSTR: Record<string, string> = {
+  p: 'пешкой', n: 'конём', b: 'слоном', r: 'ладьёй', q: 'ферзём', k: 'королём',
+};
 
-function colorOf(fen: string): 'w' | 'b' {
-  return fen.split(' ')[1] as 'w' | 'b';
+// ── Threat card text builder (LOGIC.md 2.9) ───────────────────────────────────
+
+function buildThreatCardText(pos: ThreatPosition): string {
+  const { motif, threat_san, threat_pv, mate_in, last_move_san, targets, attacker_sq } = pos;
+
+  if (!pos.has_threat) {
+    return `Ход соперника ${last_move_san ?? '?'} выглядит опасно, но ничего не выигрывает.`;
+  }
+
+  const T = threat_san ?? '?';
+  const tgt1 = targets[0] ?? '?';
+  const tgt2 = targets[1] ?? '?';
+
+  // Try to get piece type at target from FEN
+  const getPiece = (sq: string): string => {
+    try {
+      const c = new Chess(pos.fen);
+      const p = c.get(sq as Square);
+      return p ? PIECE_NOM[p.type] ?? '?' : '?';
+    } catch { return '?'; }
+  };
+
+  // Get moving piece from threat
+  const getMovingPiece = (): string => {
+    if (!threat_san) return '?';
+    try {
+      const nf = (() => {
+        const p = pos.fen.split(' ');
+        const me = p[1] as Color;
+        p[1] = me === 'w' ? 'b' : 'w';
+        p[3] = '-';
+        return p.join(' ');
+      })();
+      const c = new Chess(nf);
+      const mv = c.move(threat_san);
+      return mv ? PIECE_INSTR[mv.piece] ?? '?' : '?';
+    } catch { return '?'; }
+  };
+
+  const getAttackerPiece = (): string => {
+    if (!attacker_sq) return '?';
+    try {
+      const nf = (() => {
+        const p = pos.fen.split(' ');
+        const me = p[1] as Color;
+        p[1] = me === 'w' ? 'b' : 'w';
+        p[3] = '-';
+        return p.join(' ');
+      })();
+      const c = new Chess(nf);
+      const p = c.get(attacker_sq as Square);
+      return p ? PIECE_NOM[p.type] ?? '?' : '?';
+    } catch { return '?'; }
+  };
+
+  const lineStr = threat_pv ? threat_pv.split(' ').slice(0, 3).join(' ') : T;
+
+  switch (motif) {
+    case 'fork':
+      return `Вилка: ${getMovingPiece()} на ${tgt1} бьёт ${getPiece(tgt1)} и ${getPiece(tgt2)}.`;
+    case 'hanging':
+      return `${getPiece(tgt1)} на ${tgt1} не защищена — ${T} забирает её.`;
+    case 'cheaper':
+      return `${getPiece(tgt1)} на ${tgt1} дороже ${getAttackerPiece()} — ${T} выигрывает материал.`;
+    case 'back_rank':
+      return `Мат по последней горизонтали: ${T}. Король заперт своими пешками.`;
+    case 'mate':
+      return `Угроза мата в ${mate_in ?? '?'}: ${lineStr}.`;
+    case 'discovered':
+      return `${getAttackerPiece()} уходит и открывает линию.`;
+    case 'pin':
+      return `${getPiece(tgt1)} связана — соперник нападает на неё ещё раз.`;
+    case 'skewer':
+      return `Сквозной удар.`;
+    case 'trapped':
+      return `${getPiece(tgt1) ? PIECE_NOM[getPieceType(pos.fen, tgt1)] ?? 'Фигуре' : 'Фигуре'} на ${tgt1} некуда уйти — соперник её ловит.`;
+    case 'material':
+      return `Соперник выигрывает материал: ${lineStr}.`;
+    default:
+      return `Соперник угрожает: ${T}.`;
+  }
 }
+
+function getPieceType(fen: string, sq: string): string {
+  try {
+    const c = new Chess(fen);
+    const p = c.get(sq as Square);
+    return p?.type ?? '?';
+  } catch { return '?'; }
+}
+
+function motifTitle(motif: string | null, pos: ThreatPosition): string {
+  const T_san = pos.threat_san ?? '';
+  // Figure out moving piece from nullFen + threat_san
+  const getMovingPiece = (): string => {
+    try {
+      const nf = (() => {
+        const p = pos.fen.split(' ');
+        const me = p[1] as Color;
+        p[1] = me === 'w' ? 'b' : 'w';
+        p[3] = '-';
+        return p.join(' ');
+      })();
+      const c = new Chess(nf);
+      const mv = c.move(T_san);
+      return mv ? PIECE_INSTR[mv.piece] ?? '' : '';
+    } catch { return ''; }
+  };
+
+  const getCapturePiece = (): string => {
+    try {
+      const nf = (() => {
+        const p = pos.fen.split(' ');
+        const me = p[1] as Color;
+        p[1] = me === 'w' ? 'b' : 'w';
+        p[3] = '-';
+        return p.join(' ');
+      })();
+      const c = new Chess(nf);
+      const mv = c.move(T_san);
+      return mv?.captured ? PIECE_GEN[mv.captured] ?? '' : '';
+    } catch { return ''; }
+  };
+
+  switch (motif) {
+    case 'back_rank': return 'Мат по последней горизонтали';
+    case 'mate': return 'Угроза мата';
+    case 'fork': return `Вилка ${getMovingPiece()}`;
+    case 'discovered': return 'Вскрытое нападение';
+    case 'skewer': return 'Сквозной удар';
+    case 'pin': return 'Связка';
+    case 'trapped': return 'Ловля фигуры';
+    case 'hanging': return `Зевок ${getCapturePiece()}`;
+    case 'cheaper': return `Нападение на ${getCapturePiece()}`;
+    default: return 'Выигрыш материала';
+  }
+}
+
+function formatEta(seconds: number): string {
+  if (seconds < 60) return `${Math.max(1, Math.round(seconds))} сек`;
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  if (m < 60) return s > 0 ? `${m} мин ${s} сек` : `${m} мин`;
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return mm > 0 ? `${h} ч ${mm} мин` : `${h} ч`;
+}
+
+const BLITZ_SECONDS = 60;
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function ThreatsPage() {
   const router = useRouter();
-  const [positions, setPositions] = useState<Position[]>([]);
+  const { S } = useTrainerGeometry();
+
+  const [positions, setPositions] = useState<ThreatPosition[]>([]);
   const [posIdx, setPosIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('loading');
   const [marked, setMarked] = useState<Set<Square>>(new Set());
-  const [threats, setThreats] = useState<Threat[]>([]);
   const [score, setScore] = useState<SessionScore>({ found: 0, missed: 0, falseAlarms: 0, xp: 0, streak: 0 });
   const [defensiveMoveResult, setDefensiveMoveResult] = useState<'correct' | 'wrong' | null>(null);
   const [blitzMode, setBlitzMode] = useState(false);
   const [timeLeft, setTimeLeft] = useState(BLITZ_SECONDS);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [playerName, setPlayerName] = useState('');
   const [oppName, setOppName] = useState('Соперник');
+  const [playerName, setPlayerName] = useState('');
+  const [hintUsed, setHintUsed] = useState(false);
+  const [hintActive, setHintActive] = useState(false);
 
-  const { S } = useTrainerGeometry();
+  // Preparing
+  const [preparing, setPreparing] = useState(false);
+  const [prepProgress, setPrepProgress] = useState<ThreatPrepProgress | null>(null);
+  const [prepStartedAt, setPrepStartedAt] = useState(0);
+  const engineRef = useRef<(Engine & { quit(): void; init(): Promise<void> }) | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const { getBestMove, startAnalysis, stopAnalysis, isReady } = useStockfish();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const posStartRef = useRef<number>(Date.now());
-  const lastEvalRef = useRef<number>(0);
 
-  // load player username once
+  // Per-position history
+  const [posHistory, setPosHistory] = useState<Array<{
+    pos: ThreatPosition;
+    result: 'correct' | 'partial' | 'miss' | 'false' | 'none_correct' | 'none_wrong';
+  }>>([]);
+
   useEffect(() => {
     supabase.from('games_sync_state').select('username').eq('id', 1).maybeSingle()
       .then(({ data }) => {
@@ -75,50 +260,26 @@ export default function ThreatsPage() {
       });
   }, []);
 
-  // ── Load positions ──────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    void loadPositions();
-  }, []);
+  useEffect(() => { void loadPositions(); }, []);
 
   async function loadPositions() {
-    setLoadError(null);
+    setPhase('loading');
 
-    const { data: gaRows } = await supabase
-      .from('game_analysis')
-      .select('fen_before, color, game_id')
-      .order('created_at', { ascending: false })
-      .limit(60);
+    const { data, error } = await supabase
+      .from('threat_positions')
+      .select('*')
+      .eq('version', 2)
+      .order('missed_in_game', { ascending: false })
+      .order('difficulty', { ascending: true })
+      .limit(12);
 
-    const { data: mcRows } = await supabase
-      .from('mistake_cards')
-      .select('fen_before, game_id')
-      .order('created_at', { ascending: false })
-      .limit(60);
-
-    const seen = new Set<string>();
-    const pool: Position[] = [];
-
-    for (const row of gaRows ?? []) {
-      if (!row.fen_before || seen.has(row.fen_before)) continue;
-      seen.add(row.fen_before);
-      const myColor = (row.color ?? 'w') as 'w' | 'b';
-      pool.push({ fen: row.fen_before, myColor, game_id: (row as { game_id?: string | null }).game_id });
-    }
-
-    for (const row of mcRows ?? []) {
-      if (!row.fen_before || seen.has(row.fen_before)) continue;
-      seen.add(row.fen_before);
-      const myColor = colorOf(row.fen_before);
-      pool.push({ fen: row.fen_before, myColor, game_id: row.game_id });
-    }
-
-    if (pool.length === 0) {
-      setLoadError('Нет позиций для тренировки. Сначала проанализируй партии в разделе Партии.');
+    if (error || !data || data.length === 0) {
+      setPhase('empty');
       return;
     }
 
     // Shuffle
+    const pool = [...(data as ThreatPosition[])];
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -127,10 +288,12 @@ export default function ThreatsPage() {
     setPositions(pool);
     setPosIdx(0);
     setPhase('marking');
+    setMarked(new Set());
+    setPosHistory([]);
     posStartRef.current = Date.now();
   }
 
-  // load opp name when position changes
+  // Load opp name when position changes
   useEffect(() => {
     const pos = positions[posIdx];
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -145,8 +308,7 @@ export default function ThreatsPage() {
       });
   }, [posIdx, positions]);
 
-  // ── Blitz timer ─────────────────────────────────────────────────────────────
-
+  // Blitz timer
   useEffect(() => {
     if (!blitzMode || phase !== 'marking') {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -168,8 +330,7 @@ export default function ThreatsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blitzMode, posIdx, phase]);
 
-  // ── Keyboard shortcuts ───────────────────────────────────────────────────────
-
+  // Keyboard shortcuts
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -182,6 +343,15 @@ export default function ThreatsPage() {
         e.preventDefault();
         void reveal();
       }
+      if (e.key === 'Escape' && phase === 'marking') {
+        e.preventDefault();
+        setMarked(new Set());
+      }
+      if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        if (phase === 'marking') void showHint();
+        // defensive hint handled by button
+      }
       if (e.key === ' ' && (phase === 'revealed' || phase === 'defensive')) {
         e.preventDefault();
         nextPosition();
@@ -192,14 +362,16 @@ export default function ThreatsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, posIdx]);
 
-  // ── Current position ─────────────────────────────────────────────────────────
-
   const pos = positions[posIdx];
-
-  // ── Mark / unmark squares ────────────────────────────────────────────────────
 
   function handleSquareClick(sq: Square) {
     if (phase !== 'marking') return;
+    // Only allow clicking my own pieces
+    if (!pos) return;
+    const c = new Chess(pos.fen);
+    const piece = c.get(sq);
+    if (!piece || piece.color !== (pos.my_color as Color)) return;
+
     setMarked(prev => {
       const next = new Set(prev);
       if (next.has(sq)) next.delete(sq);
@@ -208,30 +380,46 @@ export default function ThreatsPage() {
     });
   }
 
-  // ── Reveal threats ───────────────────────────────────────────────────────────
-
   async function reveal() {
     if (!pos) return;
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const computed = findThreats(pos.fen, pos.myColor);
-    setThreats(computed);
-
     const timeTaken = Date.now() - posStartRef.current;
+    const targets = new Set(pos.targets);
+    const optional = new Set(pos.optional_targets);
 
-    const threatenedSquares = new Set(computed.map(t => t.square));
     let found = 0;
     let falseAlarms = 0;
 
-    for (const sq of marked) {
-      if (threatenedSquares.has(sq)) found++;
-      else falseAlarms++;
+    if (pos.has_threat) {
+      for (const sq of marked) {
+        if (targets.has(sq)) found++;
+        else if (!optional.has(sq)) falseAlarms++;
+      }
+    } else {
+      // No threat: correct if nothing marked
+      falseAlarms += marked.size;
     }
-    const missed = computed.filter(t => !marked.has(t.square)).length;
 
+    const missed = pos.has_threat ? pos.targets.filter(sq => !marked.has(sq as Square)).length : 0;
     const roundXp = found * 15 - missed * 5 - falseAlarms * 5;
     const xpGain = Math.max(0, roundXp);
 
+    // Determine result for history
+    let result: 'correct' | 'partial' | 'miss' | 'false' | 'none_correct' | 'none_wrong';
+    if (!pos.has_threat) {
+      result = falseAlarms === 0 ? 'none_correct' : 'none_wrong';
+    } else if (found === pos.targets.length && falseAlarms === 0) {
+      result = 'correct';
+    } else if (found > 0 && missed === 0) {
+      result = 'partial';
+    } else if (found === 0 && falseAlarms === 0) {
+      result = 'miss';
+    } else {
+      result = 'false';
+    }
+
+    setPosHistory(h => [...h, { pos, result }]);
     setScore(prev => ({
       found: prev.found + found,
       missed: prev.missed + missed,
@@ -243,6 +431,7 @@ export default function ThreatsPage() {
     }));
 
     await supabase.from('threat_log').insert({
+      position_id: pos.id,
       fen: pos.fen,
       found,
       missed,
@@ -250,61 +439,21 @@ export default function ThreatsPage() {
       time_taken_ms: timeTaken,
     });
 
-    setPhase(computed.length > 0 ? 'revealed' : 'done');
+    setHintUsed(false);
+    setHintActive(false);
+    setPhase('revealed');
   }
 
-  // ── Defensive move phase ─────────────────────────────────────────────────────
-
-  function startDefensivePhase() {
-    setDefensiveMoveResult(null);
-    setPhase('defensive');
-    if (pos) {
-      lastEvalRef.current = 0;
-      startAnalysis(pos.fen, info => {
-        if (info.cp !== undefined) lastEvalRef.current = info.cp;
-      });
-    }
+  async function showHint() {
+    if (hintUsed || !pos?.attacker_sq) return;
+    setHintUsed(true);
+    setHintActive(true);
+    setScore(prev => ({ ...prev, xp: Math.max(0, prev.xp - 5) }));
+    // Flash hint for 1.5s
+    setTimeout(() => setHintActive(false), 1500);
   }
-
-  const handleDefensiveMove = useCallback(({ from, to }: { from: Square; to: Square; promotion?: 'q' | 'r' | 'b' | 'n' }): boolean => {
-    if (phase !== 'defensive' || !pos) return false;
-
-    const chess = new Chess(pos.fen);
-    let moveResult;
-    try {
-      moveResult = chess.move({ from, to, promotion: 'q' });
-    } catch {
-      return false;
-    }
-    if (!moveResult) return false;
-
-    const newFen = chess.fen();
-    stopAnalysis();
-
-    getBestMove(newFen, 10, () => {
-      const evalBefore = lastEvalRef.current;
-      startAnalysis(newFen, info => {
-        if (info.cp !== undefined) {
-          const evalAfter = info.cp;
-          const myColor = pos.myColor;
-          const improvement = myColor === 'w'
-            ? evalAfter - evalBefore
-            : evalBefore - evalAfter;
-
-          stopAnalysis();
-          setDefensiveMoveResult(improvement >= -50 ? 'correct' : 'wrong');
-        }
-      });
-    });
-
-    return true;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, pos]);
-
-  // ── Next position ────────────────────────────────────────────────────────────
 
   function nextPosition() {
-    stopAnalysis();
     const next = posIdx + 1;
     if (next >= positions.length) {
       setPhase('done');
@@ -312,40 +461,82 @@ export default function ThreatsPage() {
     }
     setPosIdx(next);
     setMarked(new Set());
-    setThreats([]);
     setDefensiveMoveResult(null);
+    setHintUsed(false);
+    setHintActive(false);
     posStartRef.current = Date.now();
     setPhase('marking');
   }
 
-  // ── Board tints ──────────────────────────────────────────────────────────────
+  // ── Prepare ────────────────────────────────────────────────────────────────
+
+  async function handlePrepare() {
+    if (preparing) return;
+    abortRef.current = new AbortController();
+    setPreparing(true);
+    setPrepProgress({ gamesChecked: 0, gamesTotal: 0, found: 0 });
+    setPrepStartedAt(Date.now());
+
+    try {
+      if (!engineRef.current) {
+        engineRef.current = await createBrowserEngine();
+      }
+      await prepareThreatPositions(
+        engineRef.current,
+        (p) => { setPrepProgress(p); },
+        abortRef.current.signal,
+      );
+      await loadPositions();
+    } catch (e) {
+      console.error('prepareThreatPositions failed:', e);
+    } finally {
+      setPreparing(false);
+    }
+  }
+
+  function stopPrepare() {
+    abortRef.current?.abort();
+  }
+
+  // ── Build tints ────────────────────────────────────────────────────────────
 
   function buildTints(): Partial<Record<Square, string>> {
     const tints: Partial<Record<Square, string>> = {};
 
+    // Last move highlight
+    if (pos?.last_move_uci && pos.last_move_uci.length >= 4) {
+      const lFrom = pos.last_move_uci.slice(0, 2) as Square;
+      const lTo   = pos.last_move_uci.slice(2, 4) as Square;
+      tints[lFrom] = 'rgba(247,214,74,.42)';
+      tints[lTo]   = 'rgba(247,214,74,.55)';
+    }
+
     if (phase === 'marking') {
       for (const sq of marked) {
-        tints[sq] = 'rgba(255,200,0,0.45)';
+        tints[sq] = 'rgba(74,144,226,.28)';
+      }
+      // Hint
+      if (hintActive && pos?.attacker_sq) {
+        tints[pos.attacker_sq as Square] = 'rgba(240,164,58,.7)';
       }
     }
 
     if (phase === 'revealed' || phase === 'defensive') {
-      const threatenedSquares = new Set(threats.map(t => t.square));
+      const targets = new Set(pos?.targets ?? []);
+      const optional = new Set(pos?.optional_targets ?? []);
+
       for (const sq of marked) {
-        if (threatenedSquares.has(sq)) {
-          tints[sq] = 'rgba(80,200,80,0.5)';
+        if (targets.has(sq)) {
+          tints[sq] = 'rgba(129,182,76,.25)';
+        } else if (optional.has(sq)) {
+          tints[sq] = 'rgba(74,144,226,.28)';
         } else {
-          tints[sq] = 'rgba(255,100,100,0.4)';
+          tints[sq] = 'rgba(224,87,74,.22)';
         }
       }
-      for (const threat of threats) {
-        if (!marked.has(threat.square)) {
-          tints[threat.square] = 'rgba(255,80,80,0.55)';
-        }
-        for (const atk of threat.attackers) {
-          if (!tints[atk]) {
-            tints[atk] = 'rgba(255,160,0,0.35)';
-          }
+      for (const sq of targets) {
+        if (!marked.has(sq as Square)) {
+          tints[sq as Square] = 'rgba(240,164,58,.25)';
         }
       }
     }
@@ -353,39 +544,191 @@ export default function ThreatsPage() {
     return tints;
   }
 
-  // ── Build threat arrows ───────────────────────────────────────────────────────
+  // ── Build overlays for found/missed/wrong ──────────────────────────────────
+
+  function buildSquareOverlays(): Array<{ sq: Square; cls: 'found' | 'missed' | 'wrong' }> {
+    if (phase !== 'revealed' && phase !== 'defensive') return [];
+    if (!pos) return [];
+    const targets = new Set(pos.targets);
+    const optional = new Set(pos.optional_targets);
+    const out: Array<{ sq: Square; cls: 'found' | 'missed' | 'wrong' }> = [];
+
+    for (const sq of marked) {
+      if (targets.has(sq)) out.push({ sq, cls: 'found' });
+      else if (!optional.has(sq)) out.push({ sq, cls: 'wrong' });
+    }
+    for (const sq of targets) {
+      if (!marked.has(sq as Square)) out.push({ sq: sq as Square, cls: 'missed' });
+    }
+    return out;
+  }
+
+  // ── Build arrows ───────────────────────────────────────────────────────────
 
   function buildArrows(): BoardArrow[] {
-    if (phase !== 'revealed' && phase !== 'defensive') return [];
+    if (!pos) return [];
     const arrows: BoardArrow[] = [];
-    for (const threat of threats) {
-      for (const atk of threat.attackers) {
-        arrows.push({
-          from: atk as Square,
-          to: threat.square,
-          color: 'rgba(220,50,50,0.75)',
-          style: 'solid',
-          opacity: 0.75,
-        });
+
+    if ((phase === 'revealed' || phase === 'defensive') && pos.threat_uci && pos.threat_uci.length >= 4) {
+      // Red solid arrow: threat move
+      arrows.push({
+        from: pos.threat_uci.slice(0, 2) as Square,
+        to: pos.threat_uci.slice(2, 4) as Square,
+        color: 'rgba(220,50,50,0.85)',
+        style: 'solid',
+        opacity: 0.85,
+      });
+
+      // Orange dashed arrows from threat destination to targets (fork)
+      if (pos.motif === 'fork') {
+        const toSq = pos.threat_uci.slice(2, 4) as Square;
+        for (const tgt of pos.targets.slice(0, 3)) {
+          arrows.push({
+            from: toSq,
+            to: tgt as Square,
+            color: 'rgba(240,164,58,0.65)',
+            style: 'dashed',
+            opacity: 0.65,
+          });
+        }
       }
     }
+
+    // Hint in marking: highlight attacker
+    if (phase === 'marking' && hintActive && pos.threat_uci && pos.threat_uci.length >= 4) {
+      arrows.push({
+        from: pos.threat_uci.slice(0, 2) as Square,
+        to: pos.threat_uci.slice(2, 4) as Square,
+        color: 'rgba(240,164,58,0.8)',
+        style: 'dashed',
+        opacity: 0.8,
+      });
+    }
+
     return arrows;
   }
 
-  // ── Restart ───────────────────────────────────────────────────────────────────
+  // ── Restart ───────────────────────────────────────────────────────────────
 
   function handleRestart() {
     setScore({ found: 0, missed: 0, falseAlarms: 0, xp: 0, streak: 0 });
     setPositions([]);
     setPhase('loading');
+    setPosHistory([]);
     void loadPositions();
   }
 
-  // ── Done screen ───────────────────────────────────────────────────────────────
+  const isWhite = pos?.my_color === 'w';
+  const boardOrientation: 'white' | 'black' = isWhite ? 'white' : 'black';
 
-  // ── Session panel (shared across all states) ──────────────────────────────
+  // ── Prep ETA ───────────────────────────────────────────────────────────────
+  const prepEta: number | null = (() => {
+    if (!prepProgress || !preparing || prepProgress.gamesChecked === 0) return null;
+    const elapsed = (Date.now() - prepStartedAt) / 1000;
+    const perGame = elapsed / prepProgress.gamesChecked;
+    return Math.max(0, perGame * (prepProgress.gamesTotal - prepProgress.gamesChecked));
+  })();
 
-  const sessionPanelShared = (
+  // ── Empty state board ─────────────────────────────────────────────────────
+  const emptyBoard = (
+    <Board
+      fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+      orientation="white"
+      size={S}
+      interactive={false}
+      dimmed
+    />
+  );
+
+  // ── Session panel ─────────────────────────────────────────────────────────
+  const blitzToggle = (
+    <div style={{ display: 'flex', borderRadius: 10, border: '1px solid var(--hairline)', overflow: 'hidden' }}>
+      {(['Обычный', 'Блиц 60с'] as const).map((label, i) => {
+        const active = i === 0 ? !blitzMode : blitzMode;
+        return (
+          <button
+            key={label}
+            onClick={() => setBlitzMode(i === 1)}
+            disabled={phase === 'marking'}
+            style={{
+              flex: 1, height: 36, fontSize: 13, fontWeight: 500,
+              background: active ? 'var(--track)' : 'transparent',
+              color: active ? 'var(--ivory)' : 'var(--muted)',
+              border: 'none', cursor: phase === 'marking' ? 'not-allowed' : 'pointer',
+              fontFamily: 'inherit', opacity: phase === 'marking' ? 0.6 : 1,
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const getResultIcon = (r: typeof posHistory[0]['result']): string => {
+    switch (r) {
+      case 'correct': case 'none_correct': return '✓';
+      case 'partial': return '!';
+      case 'miss': case 'false': case 'none_wrong': return '✗';
+      default: return '?';
+    }
+  };
+  const getResultColor = (r: typeof posHistory[0]['result']): string => {
+    switch (r) {
+      case 'correct': case 'none_correct': return '#81B64C';
+      case 'partial': return '#F4B45C';
+      default: return '#E0574A';
+    }
+  };
+
+  const sessionList = (
+    <>
+      {positions.map((p, i) => {
+        const isCur = i === posIdx;
+        const done = posHistory.find(h => h.pos.id === p.id);
+        const isDone = !!done;
+        return (
+          <div
+            key={p.id + i}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '26px 1fr',
+              alignItems: 'center',
+              gap: 8,
+              height: 50,
+              padding: '0 10px',
+              borderRadius: 10,
+              position: 'relative',
+              background: isCur ? 'var(--track)' : 'transparent',
+              opacity: isDone ? 0.7 : 1,
+            }}
+          >
+            {isCur && (
+              <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: '#81B64C' }} />
+            )}
+            <div style={{ display: 'grid', placeItems: 'center', fontSize: 13, color: isCur ? '#81B64C' : 'var(--control)', fontWeight: isCur ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+              {isDone ? (
+                <span style={{ color: getResultColor(done.result), fontSize: 15 }}>{getResultIcon(done.result)}</span>
+              ) : <span>{i + 1}</span>}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, color: isDone ? 'var(--control)' : 'var(--ivory)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {isDone ? motifTitle(done.pos.motif, done.pos) : `Позиция ${i + 1}`}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--control)', marginTop: 1 }}>
+                {isDone
+                  ? (done.result === 'correct' || done.result === 'none_correct' ? 'верно' : done.result === 'partial' ? `нашёл не всё` : 'ошибка')
+                  : isCur ? `партия против ${oppName}` : 'ожидает'
+                }
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+
+  const sessionPanel = (
     <SessionPanel
       title="Сессия"
       rightNote={positions.length > 0 ? `осталось ${Math.max(0, positions.length - posIdx)}` : undefined}
@@ -394,31 +737,149 @@ export default function ThreatsPage() {
         { value: score.missed, label: 'пропустил', color: '#E0574A' },
         { value: score.falseAlarms, label: 'лишних', color: '#F4B45C' },
       ]}
-      list={<></>}
+      controls={blitzToggle}
+      listLabel={positions.length > 0 ? 'Позиции' : undefined}
+      listRight={positions.length > 0 ? `${posIdx + 1} / ${positions.length}` : undefined}
+      list={sessionList}
+      footer={
+        <button
+          onClick={handleRestart}
+          style={{
+            width: '100%', height: 44, fontSize: 15, fontWeight: 600,
+            background: 'var(--surface-2)', border: '1px solid var(--hairline-2)',
+            color: 'var(--ivory)', cursor: 'pointer', fontFamily: 'inherit',
+            borderRadius: 'var(--radius-btn)',
+          }}
+        >
+          Начать заново
+        </button>
+      }
     />
   );
+
+  // ── Empty state ───────────────────────────────────────────────────────────
+
+  if (phase === 'empty') {
+    return (
+      <TrainerLayout
+        session={sessionPanel}
+        topBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Соперник</span>}
+        board={emptyBoard}
+        bottomBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Ты</span>}
+        panel={
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+            <div data-ui="panel-header" style={{ padding: '20px 24px 18px', flexShrink: 0 }}>
+              <div style={{ fontSize: 13, color: 'var(--muted)' }}>Тренировка · Проверка угроз</div>
+              <div data-ui="panel-title" style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
+                Позиций пока нет
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px' }}>
+              <div data-ui="threat-task" style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
+                <div style={{ padding: '14px 16px', background: 'rgba(129,182,76,.14)', border: '1px solid rgba(129,182,76,.3)', borderRadius: 14 }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ivory)', marginBottom: 6 }}>Позиций пока нет</div>
+                  <div style={{ fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>
+                    Сайт найдёт угрозы в твоих партиях и проверит каждую движком. Нужны проанализированные партии.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[
+                    { n: '01', text: 'Проанализируй свои партии' },
+                    { n: '02', text: 'Нажми «Подготовить позиции»' },
+                    { n: '03', text: 'Позиции появятся в тренажёре' },
+                  ].map(({ n, text }) => (
+                    <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                      <span style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, color: 'var(--muted)', flexShrink: 0 }}>{n}</span>
+                      <span style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.5, paddingTop: 5 }}>{text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div data-ui="threat-rules" style={{ padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, marginBottom: 16 }}>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                  Нужны партии с анализом
+                </div>
+              </div>
+              <div data-ui="threat-marked" style={{ padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, fontSize: 13, color: 'var(--muted)' }}>
+                Нет отметок
+              </div>
+            </div>
+            <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {!preparing ? (
+                <button
+                  onClick={handlePrepare}
+                  style={{ height: 52, fontSize: 16, fontWeight: 700, background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}
+                >
+                  Подготовить позиции
+                </button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+                    Проверено {prepProgress?.gamesChecked ?? 0} из {prepProgress?.gamesTotal ?? 0} партий · найдено {prepProgress?.found ?? 0}
+                    {prepEta != null && ` · ~${formatEta(prepEta)}`}
+                  </div>
+                  <ProgressBar value={prepProgress?.gamesChecked ?? 0} max={Math.max(1, prepProgress?.gamesTotal ?? 1)} height={6} />
+                  <button onClick={stopPrepare} style={{ height: 44, fontSize: 14, fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}>
+                    Стоп
+                  </button>
+                </div>
+              )}
+              <button
+                onClick={() => router.push('/games/analyze')}
+                style={{ height: 44, fontSize: 15, fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}
+              >
+                Анализ партий
+              </button>
+            </div>
+          </div>
+        }
+      />
+    );
+  }
+
+  // ── Loading ───────────────────────────────────────────────────────────────
+
+  if (phase === 'loading') {
+    return (
+      <TrainerLayout
+        session={sessionPanel}
+        topBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Соперник</span>}
+        board={emptyBoard}
+        bottomBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Ты</span>}
+        panel={
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+            <div data-ui="panel-header" style={{ padding: '20px 24px 18px', flexShrink: 0 }}>
+              <div style={{ fontSize: 13, color: 'var(--muted)' }}>Тренировка · Проверка угроз</div>
+              <div data-ui="panel-title" style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>Загрузка…</div>
+            </div>
+            <div style={{ flex: 1, padding: '0 24px' }}>
+              <div data-ui="threat-task" style={{ marginBottom: 16 }}><div style={{ fontSize: 15, color: 'var(--muted)' }}>Загружаем позиции…</div></div>
+              <div data-ui="threat-rules" style={{ padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, marginBottom: 16 }}><div style={{ fontSize: 13, color: 'var(--muted)' }}>Подготовка…</div></div>
+              <div data-ui="threat-marked" style={{ padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, fontSize: 13, color: 'var(--muted)' }}>Нет отметок</div>
+            </div>
+            <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
+              <div style={{ fontSize: 13, color: 'var(--muted)' }}>Загрузка…</div>
+            </div>
+          </div>
+        }
+      />
+    );
+  }
+
+  // ── Done ──────────────────────────────────────────────────────────────────
 
   if (phase === 'done') {
     return (
       <TrainerLayout
-        session={sessionPanelShared}
+        session={sessionPanel}
         topBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Соперник</span>}
-        board={
-          <Board
-            fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-            orientation="white"
-            size={S}
-            interactive={false}
-          />
-        }
+        board={emptyBoard}
         bottomBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Ты</span>}
         panel={
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
             <div data-ui="panel-header" style={{ padding: '20px 24px 18px', flexShrink: 0 }}>
               <div style={{ fontSize: 13, color: 'var(--muted)' }}>Тренировка · Угрозы</div>
-              <div data-ui="panel-title" style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
-                Итоги сессии
-              </div>
+              <div data-ui="panel-title" style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>Итоги сессии</div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px' }}>
               <div data-ui="threat-task" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, marginBottom: 20 }}>
@@ -435,19 +896,14 @@ export default function ThreatsPage() {
                 ))}
               </div>
               <div data-ui="threat-rules" style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8, minHeight: 20 }}>
-                {score.streak > 2 ? `Серия точных ответов: ${score.streak}` : ''}
+                {score.streak > 2 ? `Серия: ${score.streak}` : ''}
               </div>
               <div data-ui="threat-marked" style={{ fontSize: 13, color: 'var(--muted)', minHeight: 20 }}>{'\xa0'}</div>
             </div>
-            <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
               <button
                 onClick={handleRestart}
-                style={{
-                  height: 52, fontSize: 18, fontWeight: 700,
-                  background: '#81B64C', boxShadow: '0 4px 0 #5E8C35',
-                  color: '#fff', border: 'none', cursor: 'pointer',
-                  borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
-                }}
+                style={{ height: 52, fontSize: 18, fontWeight: 700, background: '#81B64C', boxShadow: '0 4px 0 #5E8C35', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', width: '100%' }}
               >
                 Начать заново
               </button>
@@ -458,68 +914,13 @@ export default function ThreatsPage() {
     );
   }
 
-  // ── Loading / error ───────────────────────────────────────────────────────────
+  // ── Normal render ─────────────────────────────────────────────────────────
 
-  if (phase === 'loading' || loadError) {
-    return (
-      <TrainerLayout
-        session={sessionPanelShared}
-        topBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Соперник</span>}
-        board={
-          <Board
-            fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-            orientation="white"
-            size={S}
-            interactive={false}
-          />
-        }
-        bottomBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Ты</span>}
-        panel={
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-            <div data-ui="panel-header" style={{ padding: '20px 24px 18px', flexShrink: 0 }}>
-              <div style={{ fontSize: 13, color: 'var(--muted)' }}>Тренировка · Угрозы</div>
-              <div data-ui="panel-title" style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
-                {loadError ? 'Ошибка' : 'Загрузка…'}
-              </div>
-            </div>
-            <div style={{ flex: 1, padding: '0 24px' }}>
-              <div data-ui="threat-task" style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 15, color: 'var(--ivory)', lineHeight: 1.5 }}>
-                  {loadError ?? 'Загружаем позиции…'}
-                </div>
-              </div>
-              <div data-ui="threat-rules" style={{ padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, marginBottom: 16 }}>
-                <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                  {loadError ? 'Нужно сначала проанализировать партии' : 'Подготовка…'}
-                </div>
-              </div>
-              <div data-ui="threat-marked" style={{ padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, fontSize: 13, color: 'var(--muted)' }}>
-                Нет отметок
-              </div>
-              {loadError && (
-                <div style={{ marginTop: 16 }}>
-                  <button
-                    onClick={() => router.push('/games/analyze')}
-                    style={{ height: 44, padding: '0 20px', fontSize: 15, fontWeight: 600, background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}
-                  >
-                    Анализ партий
-                  </button>
-                </div>
-              )}
-            </div>
-            <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
-              <div style={{ fontSize: 13, color: 'var(--muted)' }}>{loadError ? 'Загрузите данные, чтобы начать' : 'Загрузка…'}</div>
-            </div>
-          </div>
-        }
-      />
-    );
-  }
+  const isRevealed = phase === 'revealed' || phase === 'defensive';
+  const squareOverlays = buildSquareOverlays();
 
-  // ── Normal render ─────────────────────────────────────────────────────────────
-
-  const boardOrientation: 'white' | 'black' = pos?.myColor === 'w' ? 'white' : 'black';
-  const isWhite = boardOrientation === 'white';
+  const foundCount = [...marked].filter(sq => pos?.targets.includes(sq)).length;
+  const missedCount = pos ? pos.targets.filter(sq => !marked.has(sq as Square)).length : 0;
 
   const boardNode = (
     <Board
@@ -527,86 +928,20 @@ export default function ThreatsPage() {
       orientation={boardOrientation}
       size={S}
       interactive={phase === 'defensive'}
-      onMove={phase === 'defensive' ? handleDefensiveMove : undefined}
       onSquareClick={phase === 'marking' ? handleSquareClick : undefined}
       tints={buildTints()}
       arrows={buildArrows()}
+      badges={squareOverlays.length > 0
+        ? Object.fromEntries(squareOverlays.map(({ sq, cls }) => [sq, cls]))
+        : undefined
+      }
     />
   );
-
-  // ── Session list items ─────────────────────────────────────────────────────
-
-  const sessionList = (
-    <>
-      {positions.map((p, i) => {
-        const isCur = i === posIdx;
-        const isDone = i < posIdx;
-        return (
-          <div key={p.fen + i} style={{
-            display: 'grid',
-            gridTemplateColumns: '26px 1fr',
-            alignItems: 'center',
-            gap: 8,
-            height: 50,
-            padding: '0 10px',
-            borderRadius: 10,
-            position: 'relative',
-            background: isCur ? 'var(--track)' : 'transparent',
-            opacity: isDone ? 0.5 : 1,
-          }}>
-            {isCur && (
-              <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: '#81B64C' }} />
-            )}
-            <div style={{ display: 'grid', placeItems: 'center', fontSize: 13, color: isCur ? '#81B64C' : 'var(--control)', fontWeight: isCur ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
-              {isDone ? <span style={{ color: '#81B64C', fontSize: 15 }}>✓</span> : <span>{i + 1}</span>}
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 14, color: isDone ? 'var(--control)' : 'var(--ivory)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                Позиция {i + 1}
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--control)', marginTop: 1 }}>
-                {/* Don't reveal threat type until answered */}
-                {isDone ? 'проверено' : isCur ? 'текущая' : 'ожидает'}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </>
-  );
-
-  // ── Blitz mode toggle ───────────────────────────────────────────────────────
-
-  const blitzToggle = (
-    <div style={{ display: 'flex', borderRadius: 10, border: '1px solid var(--hairline)', overflow: 'hidden' }}>
-      {(['Обычный', 'Блиц 60с'] as const).map((label, i) => {
-        const active = i === 0 ? !blitzMode : blitzMode;
-        return (
-          <button
-            key={label}
-            onClick={() => setBlitzMode(i === 1)}
-            style={{
-              flex: 1, height: 36, fontSize: 13, fontWeight: 500,
-              background: active ? 'var(--track)' : 'transparent',
-              color: active ? 'var(--ivory)' : 'var(--muted)',
-              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            {label}
-          </button>
-        );
-      })}
-    </div>
-  );
-
-  // Per-position result for revealed
-  const foundCount = [...marked].filter(sq => threats.some(t => t.square === sq)).length;
-  const missedCount = threats.filter(t => !marked.has(t.square)).length;
 
   // ── Player bars ────────────────────────────────────────────────────────────
 
   const topBar = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+    <div data-ui="player-top" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--track)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
           <span style={{ fontSize: 16 }}>{isWhite ? '♟' : '♙'}</span>
@@ -614,11 +949,17 @@ export default function ThreatsPage() {
         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>{oppName}</span>
         <span style={{ fontSize: 13, color: 'var(--muted)' }}>{isWhite ? 'чёрные' : 'белые'}</span>
       </div>
+      {pos?.last_move_san && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>последний ход</span>
+          <MoveChip>{pos.last_move_san}</MoveChip>
+        </div>
+      )}
     </div>
   );
 
   const bottomBar = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+    <div data-ui="player-bottom" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--track)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
           <span style={{ fontSize: 16 }}>{isWhite ? '♙' : '♟'}</span>
@@ -646,8 +987,6 @@ export default function ThreatsPage() {
 
   // ── Panel content ──────────────────────────────────────────────────────────
 
-  const isRevealed = phase === 'revealed' || phase === 'defensive';
-
   const panelNode = (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* Header */}
@@ -655,15 +994,41 @@ export default function ThreatsPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--muted)' }}>
           <span>Тренировка · Проверка угроз</span>
           {positions.length > 0 && (
-            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
-              {posIdx + 1} / {positions.length}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
+                {posIdx + 1} / {positions.length}
+              </span>
+              {score.xp > 0 && (
+                <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 20, background: 'rgba(129,182,76,.12)', border: '1px solid rgba(129,182,76,.3)', color: '#81B64C' }}>
+                  +{score.xp} XP
+                </span>
+              )}
+            </div>
           )}
         </div>
-        <ProgressBar value={posIdx} max={positions.length} height={4} />
+        <ProgressBar value={posIdx} max={Math.max(1, positions.length)} height={4} />
         <div data-ui="panel-title" style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
           {phase === 'marking' ? 'Что хочет соперник?' : phase === 'defensive' ? 'Защитись' : 'Результат'}
         </div>
+
+        {/* Chips */}
+        {pos && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+            <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+              {isWhite ? 'Ты играешь белыми' : 'Ты играешь чёрными'}
+            </span>
+            {oppName !== 'Соперник' && (
+              <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+                Партия против {oppName}
+              </span>
+            )}
+            {isRevealed && pos.has_threat && pos.motif && (
+              <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'rgba(224,87,74,.12)', border: '1px solid rgba(224,87,74,.3)', color: '#F08277' }}>
+                {motifTitle(pos.motif, pos)}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Scrollable content */}
@@ -673,101 +1038,162 @@ export default function ThreatsPage() {
         {phase === 'marking' && (
           <>
             <div data-ui="threat-task" style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 15, color: 'var(--ivory)', lineHeight: 1.5, marginBottom: 6 }}>
-                Кликни на свои фигуры, которым угрожает опасность.
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Задание</div>
+              <div style={{ fontSize: 15, color: 'var(--ivory)', lineHeight: 1.5 }}>
+                {pos?.last_move_san
+                  ? <>Соперник сыграл <MoveChip>{pos.last_move_san}</MoveChip>. Отметь свои фигуры, которые он может выиграть следующим ходом. Если угроз нет — нажми «Угроз нет».</>
+                  : 'Отметь свои фигуры, которые соперник может выиграть следующим ходом. Если угроз нет — нажми «Угроз нет».'
+                }
               </div>
-              <div style={{ fontSize: 13, color: 'var(--muted)' }}>Шах, зевок фигуры, вилка</div>
             </div>
 
             <div data-ui="threat-rules" style={{ padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, marginBottom: 16 }}>
-              <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>
-                Клик по фигуре — отметить · ещё клик — снять
-              </div>
+              {[
+                { text: 'Шах твоему королю' },
+                { text: 'Фигура без защиты или под ударом более дешёвой' },
+                { text: 'Вилка и двойной удар' },
+              ].map(({ text }, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, height: 30 }}>
+                  <span style={{ fontSize: 18, color: 'var(--muted)', flexShrink: 0 }}>·</span>
+                  <span style={{ fontSize: 14, color: 'var(--ivory)' }}>{text}</span>
+                </div>
+              ))}
             </div>
 
-            <div data-ui="threat-marked" style={{ padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, marginBottom: 16, fontSize: 13, color: marked.size > 0 ? 'var(--ivory)' : 'var(--muted)' }}>
-              {marked.size > 0
-                ? `Отмечено: ${[...marked].join(', ')}`
-                : 'Нет отметок — кликни на фигуру'}
+            <div data-ui="threat-marked" style={{ padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, marginBottom: 16, minHeight: 44 }}>
+              {marked.size > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {[...marked].map(sq => {
+                    const c = new Chess(pos?.fen ?? '');
+                    const p = pos ? c.get(sq) : null;
+                    return (
+                      <span
+                        key={sq}
+                        onClick={() => setMarked(prev => { const n = new Set(prev); n.delete(sq); return n; })}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          padding: '4px 10px', borderRadius: 20,
+                          background: 'var(--track)', border: '1px solid var(--hairline)',
+                          fontSize: 13, color: 'var(--ivory)', cursor: 'pointer',
+                        }}
+                      >
+                        {sq} · {p ? PIECE_NOM[p.type] ?? '?' : '?'}
+                        <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 2 }}>✕</span>
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ fontSize: 14, color: 'var(--muted)' }}>Пока ничего не отмечено</div>
+              )}
             </div>
           </>
         )}
 
         {/* Phase: revealed */}
-        {isRevealed && (
+        {isRevealed && pos && (
           <>
-            {/* Feedback card */}
+            {/* Threat card */}
             <div data-ui="threat-card" style={{ marginBottom: 16 }}>
-              {threats.length === 0 ? (
-                <FeedbackCard variant="success" title={marked.size === 0 ? 'Верно! Угроз нет' : 'Угроз нет'}>
-                  {marked.size > 0 ? 'Соперник не угрожает ничему серьёзному.' : 'Позиция в порядке — прямых угроз нет.'}
+              {!pos.has_threat ? (
+                <FeedbackCard
+                  variant={marked.size === 0 ? 'success' : 'warning'}
+                  title={marked.size === 0 ? 'Верно! Угроз нет' : 'Угроз не было'}
+                >
+                  {buildThreatCardText(pos)}
                 </FeedbackCard>
               ) : (
                 <FeedbackCard
-                  variant={missedCount === 0 && foundCount === threats.length ? 'success' : missedCount > 0 ? 'danger' : 'warning'}
+                  variant={missedCount === 0 && foundCount === pos.targets.length ? 'success' : missedCount > 0 ? 'danger' : 'warning'}
                   title={
-                    missedCount === 0 && foundCount === threats.length
-                      ? `Нашёл ${foundCount} из ${threats.length}`
+                    missedCount === 0 && foundCount === pos.targets.length
+                      ? `Нашёл ${foundCount} из ${pos.targets.length}`
                       : missedCount > 0
                       ? `Пропустил ${missedCount}`
                       : `Лишних: ${marked.size - foundCount}`
                   }
                 >
-                  <div style={{ display: 'flex', gap: 16, fontSize: 13, flexWrap: 'wrap', marginTop: 4 }}>
-                    <span>Нашёл: <strong style={{ color: '#81B64C' }}>{foundCount}</strong></span>
-                    <span>Пропустил: <strong style={{ color: missedCount > 0 ? '#E0574A' : 'var(--ivory)' }}>{missedCount}</strong></span>
-                  </div>
+                  {buildThreatCardText(pos)}
                 </FeedbackCard>
               )}
             </div>
 
-            {/* Threat list */}
-            {threats.length > 0 && (
+            {/* Threat marks */}
+            {pos.has_threat && (
               <div data-ui="threat-marks" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                {threats.map((t, i) => (
-                  <div key={i} style={{ padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#F4B45C' }}>
-                        {t.type === 'check' ? 'Шах' : t.type === 'hanging' ? 'Зевок' : 'Вилка'}
-                      </span>
-                      <span style={{ fontSize: 13, color: marked.has(t.square) ? '#81B64C' : '#E0574A', fontWeight: 600 }}>
-                        {marked.has(t.square) ? '✓ Нашёл' : '✗ Пропустил'}
-                      </span>
+                {/* Union of marked + targets */}
+                {Array.from(new Set([...pos.targets, ...[...marked]])).map(sq => {
+                  const isTarget = pos.targets.includes(sq);
+                  const isMarked = marked.has(sq as Square);
+                  const isOptional = pos.optional_targets.includes(sq);
+                  let cls: 'found' | 'missed' | 'wrong' = 'found';
+                  if (isTarget && isMarked) cls = 'found';
+                  else if (isTarget && !isMarked) cls = 'missed';
+                  else if (!isTarget && isMarked && !isOptional) cls = 'wrong';
+                  else return null;
+
+                  const c = new Chess(pos.fen);
+                  const p = c.get(sq as Square);
+                  const pieceName = p ? PIECE_NOM[p.type] ?? '?' : '?';
+
+                  return (
+                    <div
+                      key={sq}
+                      style={{
+                        padding: '10px 14px', background: 'var(--surface-2)',
+                        border: `1px solid ${cls === 'found' ? 'rgba(129,182,76,.35)' : cls === 'missed' ? 'rgba(240,164,58,.35)' : 'rgba(224,87,74,.35)'}`,
+                        borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10,
+                      }}
+                    >
+                      <div style={{
+                        width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                        background: cls === 'found' ? 'rgba(129,182,76,.2)' : cls === 'missed' ? 'rgba(240,164,58,.2)' : 'rgba(224,87,74,.2)',
+                        display: 'grid', placeItems: 'center',
+                        fontSize: 13, fontWeight: 700,
+                        color: cls === 'found' ? '#81B64C' : cls === 'missed' ? '#F4B45C' : '#E0574A',
+                      }}>
+                        {cls === 'found' ? '✓' : cls === 'missed' ? '!' : '✕'}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>
+                          {sq} · {pieceName}
+                        </div>
+                        <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                          {cls === 'found' ? 'нашёл' : cls === 'missed' ? 'пропустил' : 'лишняя'}
+                        </div>
+                      </div>
+                      <ClassIcon cls={cls} size={22} />
                     </div>
-                    <span style={{ fontSize: 14, color: 'var(--ivory)' }}>
-                      {pos ? threatExplanation(t, pos.fen) : ''}
-                    </span>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                        Клетка: <strong style={{ color: 'var(--ivory)' }}>{t.square.toUpperCase()}</strong>
-                      </span>
-                      {t.attackers.length > 0 && (
-                        <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                          Атакует: <strong style={{ color: 'var(--ivory)' }}>{t.attackers.map(a => a.toUpperCase()).join(', ')}</strong>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
-            {/* Defensive phase result */}
+            {/* Missed in game note */}
+            {pos.missed_in_game && pos.my_move_san && (
+              <div style={{ padding: '10px 14px', background: 'rgba(224,87,74,.08)', border: '1px solid rgba(224,87,74,.2)', borderRadius: 10, fontSize: 14, color: '#F08277', marginBottom: 16 }}>
+                В партии ты сыграл <strong>{pos.my_move_san}</strong> и пропустил эту угрозу.
+              </div>
+            )}
+
+            {/* Defensive phase */}
             {phase === 'defensive' && (
               <div data-ui="threat-defense" style={{ marginBottom: 16 }}>
-                {defensiveMoveResult === 'correct' && (
+                {defensiveMoveResult === 'correct' ? (
                   <FeedbackCard variant="success" title="Угроза нейтрализована!">
                     Хороший ход — позиция улучшилась.
                   </FeedbackCard>
-                )}
-                {defensiveMoveResult === 'wrong' && (
+                ) : defensiveMoveResult === 'wrong' ? (
                   <FeedbackCard variant="danger" title="Угроза не снята">
                     Попробуй другой ход.
                   </FeedbackCard>
-                )}
-                {!defensiveMoveResult && (
-                  <div style={{ padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, fontSize: 14, color: 'var(--ivory)' }}>
-                    Сделай ход, который нейтрализует угрозу.
+                ) : (
+                  <div style={{ padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 12, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(129,182,76,.14)', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 18 }}>🛡</div>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ivory)', marginBottom: 4 }}>Шаг 2. Найди защиту</div>
+                      <div style={{ fontSize: 14, color: 'var(--muted)' }}>Сделай ход на доске, который убирает угрозу.</div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -795,8 +1221,25 @@ export default function ThreatsPage() {
                 <Kbd>{marked.size === 0 ? 'N' : 'Enter'}</Kbd>
               </button>
             </div>
-            <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--control)' }}>
-              Клик по фигуре — отметить · Enter — проверить · N — угроз нет
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => void reveal()}
+                style={{ flex: 1, height: 40, fontSize: 14, fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', color: 'var(--muted)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}
+              >
+                Угроз нет
+                <span style={{ fontSize: 11, marginLeft: 4 }}>(N)</span>
+              </button>
+              <button
+                onClick={() => void showHint()}
+                disabled={hintUsed}
+                style={{ flex: 1, height: 40, fontSize: 14, fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', color: hintUsed ? 'var(--muted)' : 'var(--ivory)', cursor: hintUsed ? 'not-allowed' : 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', opacity: hintUsed ? 0.5 : 1 }}
+              >
+                Подсказка
+                <span style={{ fontSize: 11, marginLeft: 4 }}>(H)</span>
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
+              Клик по фигуре — отметить · ещё клик — снять
             </div>
           </>
         )}
@@ -804,29 +1247,9 @@ export default function ThreatsPage() {
         {phase === 'revealed' && (
           <>
             <div style={{ display: 'flex', gap: 10 }}>
-              {threats.length > 0 && isReady && (
-                <button
-                  onClick={startDefensivePhase}
-                  style={{
-                    flex: 1, height: 44, fontSize: 15, fontWeight: 600,
-                    background: 'var(--surface-2)', border: '1px solid var(--hairline-2)',
-                    color: 'var(--ivory)', cursor: 'pointer',
-                    borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  }}
-                >
-                  Подсказка защиты
-                  <Kbd>H</Kbd>
-                </button>
-              )}
               <button
-                onClick={() => router.push(`/play?fen=${encodeURIComponent(pos?.fen ?? '')}&color=${pos?.myColor ?? 'w'}&level=10&mode=free`)}
-                style={{
-                  height: 44, padding: '0 16px', fontSize: 15, fontWeight: 600,
-                  background: 'var(--surface-2)', border: '1px solid var(--hairline-2)',
-                  color: 'var(--ivory)', cursor: 'pointer',
-                  borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
-                }}
+                onClick={() => router.push(`/play?fen=${encodeURIComponent(pos?.fen ?? '')}&color=${pos?.my_color ?? 'w'}&level=10&mode=free`)}
+                style={{ height: 44, padding: '0 16px', fontSize: 15, fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}
               >
                 Сыграть отсюда
               </button>
@@ -844,6 +1267,9 @@ export default function ThreatsPage() {
               Дальше
               <Kbd>Пробел</Kbd>
             </button>
+            <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
+              Защиту можно пропустить — сразу «Дальше»
+            </div>
           </>
         )}
 
@@ -864,37 +1290,6 @@ export default function ThreatsPage() {
         )}
       </div>
     </div>
-  );
-
-  // ── Session panel ──────────────────────────────────────────────────────────
-
-  const sessionPanel = (
-    <SessionPanel
-      title="Сессия"
-      rightNote={positions.length > 0 ? `осталось ${Math.max(0, positions.length - posIdx)}` : undefined}
-      stats={[
-        { value: score.found, label: 'нашёл', color: '#81B64C' },
-        { value: score.missed, label: 'пропустил', color: '#E0574A' },
-        { value: score.falseAlarms, label: 'лишних', color: '#F4B45C' },
-      ]}
-      controls={blitzToggle}
-      listLabel="Позиции"
-      listRight={positions.length > 0 ? `${posIdx + 1} / ${positions.length}` : undefined}
-      list={sessionList}
-      footer={
-        <button
-          onClick={handleRestart}
-          style={{
-            width: '100%', height: 44, fontSize: 15, fontWeight: 600,
-            background: 'var(--surface-2)', border: '1px solid var(--hairline-2)',
-            color: 'var(--ivory)', cursor: 'pointer', fontFamily: 'inherit',
-            borderRadius: 'var(--radius-btn)',
-          }}
-        >
-          Начать заново
-        </button>
-      }
-    />
   );
 
   return (

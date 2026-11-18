@@ -33,3 +33,5 @@
 | 25-move-classes.sql | classification columns in game_analysis/games |
 | 26-course-cascade.sql | cascade deletes on course-related tables |
 | 27-sac-context.sql | game_id/ply/san/eval_no_sac/pv/defenses в sac_positions |
+| 28-sac-v2.sql | version/sac_type/piece/material_given/king_attack/mate_in/score/accepted_pv/pattern/is_decoy в sac_positions; sac_version в master_games |
+| 29-threat-positions.sql | threat_positions — подготовленные позиции для «Проверки угроз» |
