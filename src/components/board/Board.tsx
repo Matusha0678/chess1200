@@ -68,13 +68,19 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
   const opacity = arrow.opacity ?? 0.85;
   const color   = arrow.color;
 
+  const isDashed = arrow.style === 'dashed';
   const startOffset = 18 * scale;
   const endOffset   = 14 * scale;
-  const headLen     = 34 * scale;
-  const headHW      = 22 * scale;
-  const shaftHW     =  9 * scale;
-  const shaftStroke = 18 * scale; // stroke width for path-based shaft
-  const dash        = `${12 * scale} ${9 * scale}`;
+  // Solid dimensions
+  const headLen  = 34 * scale;
+  const headHW   = 22 * scale;
+  const shaftHW  =  9 * scale;
+  const shaftStroke = 18 * scale;
+  // Dashed dimensions (thin line + small head)
+  const dHeadLen = 22 * scale;
+  const dHeadHW  = 10 * scale;
+  const dStroke  =  5 * scale;
+  const dash     = `${10 * scale} ${8 * scale}`;
 
   // Detect knight L-shape: file diff × rank diff must equal 2
   const df = Math.abs(arrow.from.charCodeAt(0) - arrow.to.charCodeAt(0));
@@ -112,18 +118,22 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
     const ux2 = dx2 / len2, uy2 = dy2 / len2;
     const nx2 = -uy2, ny2 = ux2;
 
+    const aHL = isDashed ? dHeadLen : headLen;
+    const aHW = isDashed ? dHeadHW  : headHW;
+    const aSW = isDashed ? dStroke  : shaftStroke;
+
     const startX = from.x + ux1 * startOffset;
     const startY = from.y + uy1 * startOffset;
     const tipX   = to.x - ux2 * endOffset;
     const tipY   = to.y - uy2 * endOffset;
-    const baseX  = tipX - ux2 * headLen;
-    const baseY  = tipY - uy2 * headLen;
+    const baseX  = tipX - ux2 * aHL;
+    const baseY  = tipY - uy2 * aHL;
 
     const shaftD = `M ${startX} ${startY} L ${midX} ${midY} L ${baseX} ${baseY}`;
     const headPts = [
       [tipX, tipY],
-      [baseX + nx2 * headHW, baseY + ny2 * headHW],
-      [baseX - nx2 * headHW, baseY - ny2 * headHW],
+      [baseX + nx2 * aHW, baseY + ny2 * aHW],
+      [baseX - nx2 * aHW, baseY - ny2 * aHW],
     ].map(([x, y]) => `${x},${y}`).join(' ');
 
     return (
@@ -131,11 +141,11 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
         <path
           d={shaftD}
           stroke={color}
-          strokeWidth={shaftStroke}
+          strokeWidth={aSW}
           fill="none"
           strokeLinejoin="round"
           strokeLinecap="round"
-          strokeDasharray={arrow.style === 'dashed' ? dash : undefined}
+          strokeDasharray={isDashed ? dash : undefined}
         />
         <polygon points={headPts} fill={color} />
       </g>
@@ -150,20 +160,20 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
   const ux = dx / len, uy = dy / len;
   const nx = -uy, ny = ux;
 
-  if (arrow.style === 'dashed') {
-    const ex = to.x - ux * headLen;
-    const ey = to.y - uy * headLen;
+  if (isDashed) {
+    const ex = to.x - ux * dHeadLen;
+    const ey = to.y - uy * dHeadLen;
     const startX = from.x + ux * startOffset;
     const startY = from.y + uy * startOffset;
-    const p1x = to.x,                    p1y = to.y;
-    const p2x = ex + nx * headHW / 2,    p2y = ey + ny * headHW / 2;
-    const p3x = ex - nx * headHW / 2,    p3y = ey - ny * headHW / 2;
+    const p1x = to.x,              p1y = to.y;
+    const p2x = ex + nx * dHeadHW, p2y = ey + ny * dHeadHW;
+    const p3x = ex - nx * dHeadHW, p3y = ey - ny * dHeadHW;
 
     return (
       <g opacity={opacity}>
         <line
           x1={startX} y1={startY} x2={ex} y2={ey}
-          stroke={color} strokeWidth={shaftStroke * 0.33}
+          stroke={color} strokeWidth={dStroke}
           strokeDasharray={dash} strokeLinecap="round"
         />
         <polygon points={`${p1x},${p1y} ${p2x},${p2y} ${p3x},${p3y}`} fill={color} />
