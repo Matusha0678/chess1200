@@ -8,6 +8,7 @@ import { buildSacRowsForGame } from '../src/lib/sac-prepare';
 import { buildThreatRowsForGame } from '../src/lib/threat-prepare';
 import type { ThreatAnalysisRow } from '../src/lib/threat-prepare';
 import { uciOf } from '../src/lib/see';
+import { fenAfterSac, lineSan, lineOutcome } from '../src/lib/sac-text';
 
 const args = process.argv.slice(2);
 const arg = (name: string, def: string) => {
@@ -115,6 +116,31 @@ const BUILD_SAC_TESTS = [
     white: 'Morphy',
     black: 'Duke of Brunswick and Count Isouard',
   },
+];
+
+const P16 = 'rn1r2k1/pbq2ppp/1p1bp3/2pPN3/4PB2/6PB/PPQ2P1P/R4RK1 w - - 0 16';
+const DW = 'r1bq1rk1/pppnbppp/2n1p3/3pP3/3P3P/2NB1N2/PPP2PP1/R1BQK2R w KQ - 0 8';
+const DF = 'r1bq1rk1/ppp1bppp/2n1pn2/3p4/3P4/2NBPN2/PPP2PPP/R1BQK2R w KQ - 0 7';
+
+const SAC_TEXT_TESTS: Array<{
+  id: string;
+  kind: 'lineOutcome' | 'lineSan';
+  fen?: string;
+  sacUci?: string;
+  pv: string[];
+  cpWhite?: number | null;
+  mateWhite?: number | null;
+  maxPlies?: number;
+  fenStart?: string;
+  expect: string | string[];
+}> = [
+  { id: 'L1', kind: 'lineOutcome', fen: P16, sacUci: 'e5f7', pv: ['c7f7','h3e6','f7e6','d5e6','b8c6','f1d1'], cpWhite: 661, mateWhite: null, expect: 'выигрыш ферзя' },
+  { id: 'L2', kind: 'lineOutcome', fen: P16, sacUci: 'e5f7', pv: ['e6e5','f7d8','c7d8','f4e3','b7c8','h3c8'], cpWhite: 566, mateWhite: null, expect: 'выигрыш материала (+3)' },
+  { id: 'L3', kind: 'lineOutcome', fen: DW, sacUci: 'd3h7', pv: ['g8h7','f3g5','h7g6','h4h5','g6h6','g5f7'], cpWhite: 706, mateWhite: null, expect: 'перевес +7.1' },
+  { id: 'L4', kind: 'lineOutcome', fen: DF, sacUci: 'd3h7', pv: ['f6h7','h2h4','e7b4','f3g5','d8e8','g5h7'], cpWhite: -444, mateWhite: null, expect: 'чёрные отбиваются' },
+  { id: 'L5', kind: 'lineOutcome', fen: DW, sacUci: 'd3h7', pv: ['g8h7','f3g5','h7h6','g5f7','h6h7','f7d8','e7d8','h1h3'], cpWhite: null, mateWhite: null, maxPlies: 8, expect: 'выигрыш ферзя' },
+  { id: 'LS1', kind: 'lineSan', fenStart: undefined, sacUci: 'e5f7', pv: ['c7f7','h3e6','f7e6','d5e6'], expect: ['Qxf7','Bxe6','Qxe6','dxe6'] },
+  { id: 'LS2', kind: 'lineSan', fenStart: undefined, sacUci: 'e5f7', pv: ['c7f7','a1a8','f7e6'], expect: ['Qxf7'] },
 ];
 
 const T1_FEN = 'r3k2r/ppp2pb1/5q2/1N1P2pp/2B1P3/3Q1b2/PP3P2/R3K1R1 b - - 0 20';
@@ -291,6 +317,22 @@ const want = (id: string) => !ONLY || ONLY.includes(id);
       (rows.length ? ` · ply ${rows.map(r => r.ply).join(', ')} · has_threat ${rows.map(r => r.has_threat).join(', ')}` : '')
     );
     for (const b of bad) console.log(`    ОШИБКА ${b}`);
+  }
+
+  // sac-text.ts тесты (синхронные, без движка)
+  for (const t of SAC_TEXT_TESTS) {
+    if (!want(t.id)) continue;
+    total++;
+    let got: string | string[];
+    if (t.kind === 'lineOutcome') {
+      got = lineOutcome(t.fen!, t.sacUci!, t.pv, t.cpWhite ?? null, t.mateWhite ?? null, t.maxPlies);
+    } else {
+      const fStart = t.fenStart ?? fenAfterSac(P16, t.sacUci!);
+      got = lineSan(fStart, t.pv);
+    }
+    const ok = JSON.stringify(got) === JSON.stringify(t.expect);
+    if (ok) pass++;
+    console.log(`${ok ? '✓' : '✗'} ${t.id}: получили ${JSON.stringify(got)}${ok ? '' : ` ожидали ${JSON.stringify(t.expect)}`}`);
   }
 
   console.log(`\nИтог: ${pass} из ${total} · ${Math.round((Date.now() - t0) / 1000)} с`);

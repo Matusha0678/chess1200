@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Играть — макет</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@700&display=swap">
+<style>
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:14px 12px;display:flex;flex-direction:column}
+.item{height:40px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:15px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:16px 12px 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.grp .ico{width:14px;height:14px}
+.side .bottom{margin-top:auto;color:var(--faint)}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.muted{color:var(--muted)} .faint{color:var(--faint)} .ok{color:var(--accent)} .warn{color:var(--warn)} .bad{color:#F08277}
+
+/* LEFT */
+.left{width:280px;height:854px;display:flex;flex-direction:column;flex:none}
+.left .hd{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:baseline}
+.h2{font-size:19px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.lab{margin:18px 20px 8px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.seg{display:grid;margin:0 20px;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.seg div{height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;color:var(--muted);font-weight:500}
+.seg div img{width:18px;height:18px}
+.seg .on{background:#45423E;color:var(--text);font-weight:600}
+.lvl{margin:0 20px;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.lvl div{height:8px;border-radius:4px;background:#3D3B38}
+.lvl div.on{background:var(--accent)}
+.lvlnames{margin:8px 20px 0;display:flex;justify-content:space-between;font-size:13px;color:var(--faint)}
+.lvl div{height:10px}
+.modes{padding:0 10px;display:flex;flex-direction:column;gap:2px}
+.mode{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:center;min-height:58px;padding:8px 10px;border-radius:10px;position:relative}
+.mode .pic{width:32px;height:32px;border-radius:8px;background:#3A3835;display:grid;place-items:center;color:#D9D6D2}
+.mode .t{font-size:15px;font-weight:500;color:#E6E3DE;line-height:1.25}
+.mode .p{font-size:13px;color:var(--faint)}
+.mode.on{background:var(--row)}
+.mode.on::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--accent)}
+.mode.on .t{color:var(--text);font-weight:600}
+.lfoot{margin-top:auto;padding:16px 20px 20px;border-top:1px solid var(--hair)}
+.btn1{height:48px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#E8E5E0}
+.btn2 .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.btn2.on{border-color:rgba(129,182,76,.6);color:#B7DB8F;background:rgba(129,182,76,.1)}
+.ghost{height:38px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:500;color:var(--muted);border-radius:var(--r-btn)}
+
+/* BOARD */
+.bcol{width:806px;height:854px;display:flex;flex-direction:column;gap:8px;flex:none}
+.pbar{height:32px;display:flex;align-items:center;justify-content:space-between;padding-left:32px}
+.who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.ava{width:28px;height:28px;border-radius:6px;background:#4A4744;display:grid;place-items:center;color:#E8E5E0}
+.ava.me{background:var(--accent);color:#fff;font-size:14px;font-weight:700}
+.tag{font-size:13px;font-weight:500;color:var(--muted)}
+.cap{display:flex;align-items:center;gap:0;margin-left:6px}
+.cap img{width:18px;height:18px;margin-right:-5px}
+.cap span{margin-left:9px;font-size:13px;color:var(--muted);font-weight:600}
+.turn{height:26px;border-radius:7px;padding:0 10px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
+.turn.me{background:rgba(129,182,76,.16);color:#9BCB6A}
+.turn.bad{background:rgba(224,87,74,.16);color:#F08277}
+.brow{display:flex;gap:8px;height:774px}
+.evalbar{width:24px;height:774px;border-radius:5px;overflow:hidden;background:#403D3A;position:relative}
+.evalbar .w{position:absolute;left:0;right:0;bottom:0;background:#EDEBE7}
+.evalbar .lbl{position:absolute;left:0;right:0;top:6px;text-align:center;font-size:10px;font-weight:700;color:#D8D5D0}
+.board{width:774px;height:774px;position:relative}
+.sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden}
+.sq{position:relative}
+.sq .hl{position:absolute;inset:0}
+.sq img{position:absolute;inset:0;width:100%;height:100%}
+.co{position:absolute;font-size:13px;font-weight:600;line-height:1}
+.co.r{left:5px;top:5px}.co.f{right:6px;bottom:4px}
+.over{position:absolute;inset:0;pointer-events:none}
+.badge{position:absolute;width:36px;height:36px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+
+/* RIGHT */
+.right{flex:1;height:854px;display:flex;flex-direction:column;min-width:0}
+.rp-h{padding:20px 24px 16px}
+.crumbs{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:12px;line-height:1.15}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:500;color:#DCD8D3}
+.chip img{width:17px;height:17px}
+.coach{margin:0 24px;border-radius:12px;background:rgba(247,198,49,.07);border:1px solid rgba(247,198,49,.28);padding:12px 14px;display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start}
+.coach b{font-size:15px}
+.coach p{font-size:14px;color:#D6D2CC;margin-top:2px}
+.mv{background:rgba(255,255,255,.06);border-radius:6px;padding:1px 6px;color:#E6E3DE;font-weight:600}
+.sech{margin:16px 24px 8px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.navb{display:flex;gap:4px}
+.navb div{width:30px;height:28px;border-radius:7px;background:var(--surface2);border:1px solid var(--hair2);display:grid;place-items:center;color:var(--muted)}
+.navb .ico{width:16px;height:16px}
+.moves{margin:0 24px;flex:1;min-height:0;overflow:hidden;border:1px solid var(--hair);border-radius:10px}
+.mr{display:grid;grid-template-columns:44px 1fr 1fr;height:32px;align-items:center;font-size:14px}
+.mr:nth-child(odd){background:rgba(255,255,255,.025)}
+.mr .n{color:var(--faint);text-align:center;font-size:13px}
+.mr .m{display:flex;align-items:center;gap:7px;padding:0 10px;height:28px;border-radius:7px;margin-right:6px;color:#E6E3DE;font-weight:500}
+.mr .m.cur{background:#45423E;color:var(--text);font-weight:700}
+.mr .m svg{flex:none}
+.toggles{margin:12px 24px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tg{height:40px;border-radius:10px;background:var(--surface2);border:1px solid var(--hair);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:14px;color:#DCD8D3}
+.sw{width:34px;height:20px;border-radius:10px;background:#4A4744;position:relative}
+.sw::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:8px;background:#BDB9B3}
+.sw.on{background:var(--accent)} .sw.on::after{left:16px;background:#fff}
+.act{margin-top:auto;padding:16px 24px 20px;border-top:1px solid var(--hair);margin-top:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.small{display:flex;justify-content:space-between;margin-top:10px}
+.small div{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--muted);font-weight:500;height:32px;padding:0 4px}
+.small .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+/* review */
+.res{margin:0 24px;border-radius:12px;background:var(--surface2);border:1px solid var(--hair);padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.acc b{display:block;font-size:34px;font-weight:700;line-height:1}
+.acc span{font-size:13px;color:var(--muted)}
+.cls{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 10px}
+.cls div{display:flex;align-items:center;gap:7px;font-size:14px;color:#DCD8D3}
+.cls b{margin-left:auto;font-weight:700}
+.km{margin:0 24px;display:flex;flex-direction:column;gap:6px}
+.kr{display:grid;grid-template-columns:24px 1fr auto;gap:12px;align-items:center;height:52px;padding:0 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--hair);position:relative}
+.kr.on{background:var(--row);border-color:rgba(224,87,74,.45)}
+.kr .t{font-size:15px;font-weight:600}
+.kr .p{font-size:13px;color:var(--muted)}
+.kr .d{font-size:14px;font-weight:700;color:#F08277}
+body:not(.over) .ov{display:none !important}
+body.over .pl{display:none !important}
+.flexv{display:flex;flex-direction:column}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+
+<aside class="side" id="side"></aside>
+
+<main class="main">
+  <!-- LEFT: настройки партии -->
+  <section class="card left" data-ui="session">
+    <div class="hd"><div class="h2">Партия</div><div class="muted" style="font-size:14px">против Stockfish</div></div>
+    <div class="stats" data-ui="session-stats">
+      <div class="stat"><b class="num ok" id="sw">5</b><span>побед</span></div>
+      <div class="stat"><b class="num">2</b><span>ничьи</span></div>
+      <div class="stat"><b class="num bad" id="sl">7</b><span>поражений</span></div>
+    </div>
+    <div class="lab"><span>Твой цвет</span></div>
+    <div class="seg" style="grid-template-columns:repeat(3,1fr)"><div class="on"><img src="pieces/wK.svg">Белые</div><div><img src="pieces/bK.svg">Чёрные</div><div><i class="ico" data-i="shuffle" style="width:16px;height:16px"></i>Любой</div></div>
+    <div class="lab"><span>Сила Stockfish</span><span style="color:var(--text);font-weight:600">Клубный · 10</span></div>
+    <div class="lvl"><div class="on"></div><div class="on"></div><div class="on"></div><div></div><div></div></div>
+    <div class="lvlnames"><span>слабее</span><span>сильнее</span></div>
+    <div class="lab"><span>Режим</span></div>
+    <div class="modes" data-ui="session-list">
+      <div class="mode on"><div class="pic"><i class="ico" data-i="swords"></i></div><div><div class="t">Обычная партия</div><div class="p">с начала или с позиции</div></div></div>
+      <div class="mode"><div class="pic"><i class="ico" data-i="trophy"></i></div><div><div class="t">Реализация перевеса</div><div class="p">7 позиций · выиграно 3 из 5</div></div></div>
+      <div class="mode"><div class="pic"><i class="ico" data-i="graduation-cap"></i></div><div><div class="t">С форой</div><div class="p">Stockfish без ферзя, ладьи или коня</div></div></div>
+    </div>
+    <div class="lfoot">
+      <div class="btn1 pl"><i class="ico" data-i="play" style="width:18px;height:18px"></i>Новая партия <span class="k">N</span></div>
+      <div class="btn1 ov"><i class="ico" data-i="repeat" style="width:18px;height:18px"></i>Реванш <span class="k">R</span></div>
+    </div>
+  </section>
+
+  <!-- BOARD -->
+  <section class="bcol">
+    <div class="pbar" data-ui="player-top">
+      <div class="who"><div class="ava"><i class="ico" data-i="cpu" style="width:18px;height:18px"></i></div>Stockfish <span class="tag">уровень 10 · клубный</span><span class="cap" id="capTop"></span></div>
+    </div>
+    <div class="brow">
+      <div class="evalbar" data-ui="eval-bar"><div class="w" id="evw"></div><div class="lbl" id="evl"></div></div>
+      <div class="board"><div class="sqs" id="sqs"></div><div class="over" id="over"></div></div>
+    </div>
+    <div class="pbar" data-ui="player-bottom">
+      <div class="who"><div class="ava me">R</div>rozt1shka <span class="tag">ты · белые</span><span class="cap" id="capBot"></span></div>
+      <div class="turn me pl">Твой ход</div>
+      <div class="turn bad ov">Мат</div>
+    </div>
+  </section>
+
+  <!-- RIGHT -->
+  <section class="card right" data-ui="panel">
+    <div class="rp-h" data-ui="panel-header">
+      <div class="crumbs"><span>Играть · Обычная партия</span><span class="num pl" style="color:var(--text);font-weight:600">ход 12</span><span class="num ov" style="color:var(--text);font-weight:600">7 ходов</span></div>
+      <div class="title tight pl" data-ui="panel-title">Твой ход</div>
+      <div class="title tight ov bad" data-ui="panel-title">Поражение</div>
+      <div class="chips pl">
+        <div class="chip"><img src="pieces/wK.svg">Белые</div>
+        <div class="chip">Уровень 10 · клубный</div>
+        <div class="chip">Оценка −0.6</div>
+      </div>
+      <div class="chips ov">
+        <div class="chip">Мат на 7-м ходу</div>
+        <div class="chip"><img src="pieces/wK.svg">Белые</div>
+        <div class="chip">Уровень 10 · клубный</div>
+      </div>
+    </div>
+
+    <!-- PLAY: тренер + ходы -->
+    <div class="pl flexv" style="flex:1;min-height:0">
+      <div class="coach" data-ui="play-coach">
+        <span id="coachIco"></span>
+        <div><b>11. g4 — неточность</b><p>Лучше было <span class="mv">Nf1</span> — оценка +0.2 вместо −0.6. Наведи, чтобы увидеть на доске.</p></div>
+      </div>
+      <div class="sech"><span>Ходы</span><div class="navb"><div><i class="ico" data-i="chevrons-left"></i></div><div><i class="ico" data-i="chevron-left"></i></div><div><i class="ico" data-i="chevron-right"></i></div><div><i class="ico" data-i="chevrons-right"></i></div></div></div>
+      <div class="moves" data-ui="play-moves" id="moves"></div>
+      <div class="toggles">
+        <div class="tg">Полоса оценки <span class="sw on"></span></div>
+        <div class="tg">Значки ходов <span class="sw on"></span></div>
+      </div>
+    </div>
+
+    <!-- OVER: разбор -->
+    <div class="ov flexv" style="flex:1;min-height:0">
+      <div class="res" data-ui="play-review">
+        <div class="acc"><b class="num">69%</b><span>точность</span></div>
+        <div class="cls" id="cls"></div>
+      </div>
+      <div class="sech"><span>Главные ошибки — нажми, чтобы увидеть на доске</span></div>
+      <div class="km" id="km"></div>
+      <div class="sech"><span>Ходы</span><div class="navb"><div><i class="ico" data-i="chevrons-left"></i></div><div><i class="ico" data-i="chevron-left"></i></div><div><i class="ico" data-i="chevron-right"></i></div><div><i class="ico" data-i="chevrons-right"></i></div></div></div>
+      <div class="moves" data-ui="play-moves" id="moves2"></div>
+    </div>
+
+    <div class="act" data-ui="panel-actions">
+      <div class="pl">
+        <div class="two">
+          <div class="btn2" id="hintBtn"><i class="ico" data-i="lightbulb"></i>Подсказка <span class="k">H</span></div>
+          <div class="btn2"><i class="ico" data-i="undo-2"></i>Отменить ход <span class="k">Z</span></div>
+        </div>
+        <div class="small"><div><i class="ico" data-i="flag" style="width:16px;height:16px"></i>Сдаться</div><div>Новая партия <span class="k">N</span></div></div>
+      </div>
+      <div class="ov">
+        <div class="two">
+          <div class="btn2"><i class="ico" data-i="play"></i>Играть с этого хода</div>
+          <div class="btn2"><i class="ico" data-i="circle-alert"></i>В тренажёр ошибок</div>
+        </div>
+        <div class="small"><div class="faint">Разбор: Stockfish, глубина 14</div><div>Новая партия <span class="k">N</span></div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script>
+const OVER = location.hash === '#over';
+const HINT = location.hash === '#hint';
+if (OVER) document.body.classList.add('over');
+const ico = (n, s = '') => `<i class="ico" data-i="${n}" style="${s}"></i>`;
+const nav = [
+  ['calendar', 'Сегодня'],
+  ['#', 'Учиться'], ['layers', 'Дебюты'], ['book-open', 'Курсы'], ['flag', 'Ловушки'], ['lightbulb', 'Идеи позиций'],
+  ['#', 'Тренироваться'], ['circle-alert', 'Ошибки'], ['triangle-alert', 'Проверка угроз'], ['grid-3x3', 'Эндшпили'], ['shield', 'Жертвы'], ['search', 'Угадай дебют'], ['circle-play', 'Играть', 1],
+  ['#', 'Партии'], ['message-square', 'Мои партии'], ['star', 'Мастера'],
+];
+document.getElementById('side').innerHTML = nav.map(([i, t, a]) => i === '#'
+  ? `<div class="grp">${t}${ico('chevron-down')}</div>`
+  : `<div class="item${a ? ' active' : ''}">${ico(i)}${t}</div>`).join('')
+  + `<div class="item bottom">${ico('panel-left-close')}Свернуть меню</div>`;
+
+// значки классов (как ClassIcon): цвет + символ
+const CI = { best: ['#81B64C', '★'], excellent: ['#96BC4B', '!'], good: ['#96AF8B', '✓'], inaccuracy: ['#F7C631', '?!'], mistake: ['#E58F2A', '?'], blunder: ['#CA3431', '??'] };
+const icon = (k, size) => { const [c, s] = CI[k]; const fs = s.length > 1 ? 10.5 : 13; return `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11.5" fill="${c}"/><text x="12" y="${s === '★' ? 16.5 : 16.4}" text-anchor="middle" font-family="Inter" font-weight="800" font-size="${s === '★' ? 13 : fs}" fill="#fff" letter-spacing="-.5">${s}</text></svg>`; };
+
+const files = 'abcdefgh';
+const S = 774 / 8;
+const ctr = sq => [(files.indexOf(sq[0]) + .5) * S, (8 - +sq[1] + .5) * S];
+function drawBoard(fen, hl) {
+  const grid = {};
+  fen.split('/').forEach((row, ri) => { let f = 0; for (const ch of row) { if (/\d/.test(ch)) f += +ch; else { grid[files[f] + (8 - ri)] = ch; f++; } } });
+  let h = '';
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const sq = files[c] + (8 - r), light = (c + r) % 2 === 0;
+    let inner = hl[sq] ? `<div class="hl" style="background:${hl[sq]}"></div>` : '';
+    const p = grid[sq];
+    if (p) inner += `<img src="pieces/${p === p.toUpperCase() ? 'w' : 'b'}${p.toUpperCase()}.svg">`;
+    const co = light ? 'var(--dark)' : 'var(--light)';
+    if (c === 0) inner += `<span class="co r" style="color:${co}">${8 - r}</span>`;
+    if (r === 7) inner += `<span class="co f" style="color:${co}">${files[c]}</span>`;
+    h += `<div class="sq" style="background:var(--${light ? 'light' : 'dark'})">${inner}</div>`;
+  }
+  document.getElementById('sqs').innerHTML = h;
+}
+function arrow(a, b, color, op = .85) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const start = 18, end = L - 14, head = 34, sw = 9, hw = 22;
+  const P = (t, o) => [(x1 + ux * t + px * o).toFixed(1), (y1 + uy * t + py * o).toFixed(1)].join(',');
+  return `<polygon points="${[P(start, -sw), P(end - head, -sw), P(end - head, -hw), P(end, 0), P(end - head, hw), P(end - head, sw), P(start, sw)].join(' ')}" fill="${color}" opacity="${op}"/>`;
+}
+function dashed(a, b, color) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const s = 30, e = L - 18, hl = 26, hw = 16, ex = x1 + ux * e, ey = y1 + uy * e;
+  const head = [[ex, ey], [ex - ux * hl + px * hw, ey - uy * hl + py * hw], [ex - ux * hl - px * hw, ey - uy * hl - py * hw]].map(p => p.map(v => v.toFixed(1)).join(',')).join(' ');
+  return `<line x1="${(x1 + ux * s).toFixed(1)}" y1="${(y1 + uy * s).toFixed(1)}" x2="${(ex - ux * hl).toFixed(1)}" y2="${(ey - uy * hl).toFixed(1)}" stroke="${color}" stroke-width="9" stroke-dasharray="16 11" stroke-linecap="round" opacity=".95"/><polygon points="${head}" fill="${color}" opacity=".95"/>`;
+}
+const badgeAt = (sq, html) => { const [x, y] = ctr(sq); return `<div class="badge" style="left:${(x + S / 2 - 24).toFixed(1)}px;top:${(y - S / 2 - 12).toFixed(1)}px">${html}</div>`; };
+const setEval = (pawns) => { const w = Math.max(5, Math.min(95, 50 + pawns * 8)); document.getElementById('evw').style.height = w + '%'; document.getElementById('evl').textContent = (pawns > 0 ? '+' : '') + pawns.toFixed(1); };
+const capHTML = (pcs, diff) => pcs.map(p => `<img src="pieces/${p}.svg">`).join('') + (diff ? `<span>${diff}</span>` : '');
+
+function moveRows(list, curIdx) {
+  let h = '';
+  for (let i = 0; i < list.length; i += 2) {
+    const cell = (j) => {
+      const m = list[j]; if (!m) return '<div></div>';
+      return `<div class="m${j === curIdx ? ' cur' : ''}">${m[0]}${m[1] ? icon(m[1], 18) : ''}</div>`;
+    };
+    h += `<div class="mr"><div class="n">${i / 2 + 1}.</div>${cell(i)}${cell(i + 1)}</div>`;
+  }
+  return h;
+}
+
+if (!OVER) {
+  drawBoard('r1bqr1k1/bpp2pp1/p2p1n1p/n3p3/4P1P1/1BPP1N1P/PP1N1P2/R1BQR1K1', { c6: 'rgba(247,214,74,.30)', a5: 'rgba(247,214,74,.42)' });
+  let over = `<svg width="774" height="774" style="position:absolute;inset:0">${HINT ? dashed('d2', 'f1', '#81B64C') : ''}</svg>`;
+  over += badgeAt('g4', icon('inaccuracy', 36));
+  document.getElementById('over').innerHTML = over;
+  setEval(-0.6);
+  if (HINT) document.getElementById('hintBtn').classList.add('on');
+  const G = [['e4', 'best'], ['e5'], ['Nf3', 'excellent'], ['Nc6'], ['Bc4', 'excellent'], ['Bc5'], ['c3', 'excellent'], ['Nf6'], ['d3', 'excellent'], ['d6'], ['O-O', 'best'], ['O-O'], ['Re1', 'excellent'], ['a6'], ['Bb3', 'excellent'], ['Ba7'], ['h3', 'best'], ['h6'], ['Nbd2', 'best'], ['Re8'], ['g4', 'inaccuracy'], ['Na5']];
+  document.getElementById('moves').innerHTML = moveRows(G, 21);
+  document.getElementById('coachIco').innerHTML = icon('inaccuracy', 28);
+} else {
+  // позиция перед 5. Nxf7?? (после 4...Qg5)
+  drawBoard('r1b1kbnr/pppp1ppp/8/4N1q1/2BnP3/8/PPPP1PPP/RNBQK2R', { d8: 'rgba(247,214,74,.30)', g5: 'rgba(247,214,74,.42)' });
+  const over = `<svg width="774" height="774" style="position:absolute;inset:0">${arrow('e5', 'f7', '#E0574A', .85)}${dashed('c4', 'f7', '#81B64C')}</svg>` + badgeAt('f7', icon('blunder', 36));
+  document.getElementById('over').innerHTML = over;
+  setEval(-0.8);
+  document.getElementById('capBot').innerHTML = capHTML(['bP'], '+1');
+  const G = [['e4', 'best'], ['e5'], ['Nf3', 'excellent'], ['Nc6'], ['Bc4', 'excellent'], ['Nd4'], ['Nxe5', 'mistake'], ['Qg5'], ['Nxf7', 'blunder'], ['Qxg2'], ['Rf1', 'inaccuracy'], ['Qxe4+'], ['Be2', 'inaccuracy'], ['Nf3#']];
+  document.getElementById('moves2').innerHTML = moveRows(G, 8);
+  const CLS = [['best', 'Лучший', 1], ['excellent', 'Отличный', 2], ['good', 'Хороший', 0], ['inaccuracy', 'Неточность', 2], ['mistake', 'Ошибка', 1], ['blunder', 'Зевок', 1]];
+  document.getElementById('cls').innerHTML = CLS.map(([k, t, n]) => `<div>${icon(k, 18)}${t}<b class="num">${n}</b></div>`).join('');
+  const KM = [['blunder', '5. Nxf7', 'лучше Bxf7+ · дальше было Qxg2', '−4.2', 1], ['mistake', '4. Nxe5', 'лучше Nxd4 · дальше было Qg5', '−1.6'], ['inaccuracy', '6. Rf1', 'лучше d3 · дальше было Qxe4+', '−1.9']];
+  document.getElementById('km').innerHTML = KM.map(([k, m, p, d, on]) => `<div class="kr${on ? ' on' : ''}">${icon(k, 24)}<div><div class="t">${m}</div><div class="p">${p}</div></div><div class="d num">${d}</div></div>`).join('');
+}
+
+document.querySelectorAll('[data-i]').forEach(el => {
+  const u = window.ICONS && ICONS[el.dataset.i];
+  if (u) el.style.setProperty('--i', `url("${u}")`);
+});
+</script>
+</body>
+</html>
