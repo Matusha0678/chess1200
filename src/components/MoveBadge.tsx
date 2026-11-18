@@ -1,6 +1,21 @@
 'use client';
 import type { MoveLabel } from '@/types/courses';
+import { ClassIcon } from '@/components/ClassIcon';
+import type { MoveClass } from '@/lib/classify';
 export type { MoveLabel };
+
+// Map course MoveLabel → classify MoveClass (for unified ClassIcon rendering)
+const LABEL_TO_CLASS: Partial<Record<MoveLabel, MoveClass>> = {
+  '!!':   'brilliant',
+  '!':    'great',
+  'best': 'best',
+  'book': 'book',
+  'good': 'good',
+  '?!':   'inaccuracy',
+  '?':    'mistake',
+  'miss': 'miss',
+  '??':   'blunder',
+};
 
 interface BadgeMeta { symbol: string; name: string; color: string }
 
@@ -28,25 +43,28 @@ export function MoveBadge({ label, variant }: MoveBadgeProps) {
   const m = LABEL_META[label];
 
   if (variant === 'square') {
+    const cls = LABEL_TO_CLASS[label];
     return (
       <div
         aria-hidden="true"
         title={m.name}
-        className="move-badge-sq"
-        style={{ position: 'absolute', top: 2, right: 3, zIndex: 10, pointerEvents: 'auto' }}
+        style={{ position: 'absolute', top: 2, right: 2, zIndex: 10, pointerEvents: 'none',
+          filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.65))' }}
       >
-        <span
-          className="move-badge-sq-inner"
-          style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 20, height: 20, borderRadius: 4,
-            background: m.color, color: '#fff',
-            fontSize: 10, fontWeight: 800, fontFamily: 'monospace', lineHeight: 1,
-            boxShadow: '0 1px 4px rgba(0,0,0,0.65)',
-          }}
-        >
-          {m.symbol}
-        </span>
+        {cls
+          ? <ClassIcon cls={cls} size={22} />
+          : (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 22, height: 22, borderRadius: '50%',
+              background: m.color, color: '#fff',
+              fontSize: 10, fontWeight: 800, fontFamily: 'monospace',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.65)',
+            }}>
+              {m.symbol}
+            </span>
+          )
+        }
       </div>
     );
   }
