@@ -196,8 +196,9 @@ function BadgeLayer({ badges, S, orientation }: {
         } else {
           col = 7 - file; row = rank - 1;
         }
-        const left = (col + 1) * q - 0.25 * q - badgeSize / 2;
-        const top = row * q - 0.125 * q - badgeSize / 2;
+        // Center badge on the top-right corner of the square
+        const left = (col + 1) * q - badgeSize / 2;
+        const top = row * q - badgeSize / 2;
 
         return (
           <div
