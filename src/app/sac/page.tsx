@@ -7,8 +7,15 @@ import { supabase } from '@/lib/supabase';
 import { useStockfish } from '@/hooks/useStockfish';
 import type { EvalResult } from '@/hooks/useStockfish';
 import { Board } from '@/components/board/Board';
+import type { BoardArrow } from '@/components/board/Board';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
 import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
+import { SessionPanel } from '@/components/trainer/SessionPanel';
+import { EvalBar } from '@/components/trainer/EvalBar';
+import { FeedbackCard } from '@/components/ui/FeedbackCard';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { MoveChip } from '@/components/ui/MoveChip';
+import { Kbd } from '@/components/ui/Kbd';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -31,9 +38,9 @@ interface SacStats {
 }
 
 interface PrepProgress {
-  done: number;         // games processed in this run
-  total: number;        // batch size for this run
-  saved: number;        // positions saved in this run
+  done: number;
+  total: number;
+  saved: number;
   startedAt: number;
 }
 
@@ -97,8 +104,13 @@ function formatEta(seconds: number): string {
 }
 
 function sanitizePlayerFilter(s: string): string {
-  // Strip chars that would break Supabase's OR filter or SQL ILIKE pattern
   return s.replace(/[,()*%_\\]/g, '').trim();
+}
+
+// Move number from FEN
+function fenMoveNumber(fen: string): number {
+  const parts = fen.split(' ');
+  return parseInt(parts[5] ?? '1', 10);
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -107,7 +119,6 @@ export default function SacPage() {
   const { S } = useTrainerGeometry();
   const { getEval, isReady: engineReady } = useStockfish();
 
-  const [tab, setTab]                 = useState<'train' | 'prepare'>('train');
   const [positions, setPositions]     = useState<SacPosition[]>([]);
   const [loading, setLoading]         = useState(true);
   const [stats, setStats]             = useState<SacStats>({ total: 0, correct: 0, streak: 0, missedReal: 0, wrongFake: 0 });
@@ -116,9 +127,11 @@ export default function SacPage() {
   const [answered, setAnswered]       = useState<{ answer: 'sac' | 'calm'; ok: boolean; eval_before: number | null; eval_after: number | null } | null>(null);
   const [sacMoveApplied, setSacMoveApplied] = useState(false);
 
-  // Prepare mode
-  const [prepBatchSize, setPrepBatchSize] = useState(200);
+  // Filter: 'Tal' or '' for all masters
   const [prepFilter, setPrepFilter]       = useState('Tal');
+
+  // Prepare mode
+  const [prepBatchSize] = useState(200);
   const [preparing, setPreparing]         = useState(false);
   const [prepStop, setPrepStop]           = useState(false);
   const [prepProgress, setPrepProgress]   = useState<PrepProgress | null>(null);
@@ -131,9 +144,9 @@ export default function SacPage() {
   useEffect(() => { loadData(); }, []);
 
   useEffect(() => {
-    if (tab === 'prepare') refreshCounts();
+    refreshCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, prepFilter]);
+  }, [prepFilter]);
 
   async function loadData() {
     setLoading(true);
@@ -163,14 +176,12 @@ export default function SacPage() {
     const safe = sanitizePlayerFilter(prepFilter);
     const orExpr = safe ? `white.ilike.%${safe}%,black.ilike.%${safe}%` : null;
 
-    // Count games remaining (unscanned, matching filter)
     const q1 = supabase
       .from('master_games')
       .select('id', { count: 'exact', head: true })
       .is('sac_scanned_at', null);
     const { count: remCount } = await (orExpr ? q1.or(orExpr) : q1);
 
-    // Count games already scanned (matching filter)
     const q2 = supabase
       .from('master_games')
       .select('id', { count: 'exact', head: true })
@@ -217,7 +228,6 @@ export default function SacPage() {
     setPrepStop(false);
     prepStopRef.current = false;
 
-    // Fetch next batch of unscanned games matching filter
     const q = supabase
       .from('master_games')
       .select('id,pgn')
@@ -275,7 +285,6 @@ export default function SacPage() {
         setPrepProgress({ done, total, saved, startedAt });
       }
 
-      // Mark game scanned (even if no candidates found — don't re-scan)
       await supabase.from('master_games').update({ sac_scanned_at: new Date().toISOString() }).eq('id', game.id);
 
       done++;
@@ -285,7 +294,6 @@ export default function SacPage() {
     setPreparing(false);
     refreshCounts();
 
-    // Reload positions
     const { data: fresh } = await supabase.from('sac_positions').select('*').limit(500);
     if (fresh) {
       setPositions(fresh as SacPosition[]);
@@ -297,20 +305,6 @@ export default function SacPage() {
     prepStopRef.current = true;
     setPrepStop(true);
   }
-
-  // ── Display ────────────────────────────────────────────────────────────────
-
-  const displayFen = (() => {
-    if (!current) return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-    if (sacMoveApplied) {
-      try {
-        const ch = new Chess(current.fen);
-        ch.move({ from: current.move.slice(0,2), to: current.move.slice(2,4) });
-        return ch.fen();
-      } catch {}
-    }
-    return current.fen;
-  })();
 
   function explainResult(): string {
     if (!answered || !current) return '';
@@ -332,14 +326,29 @@ export default function SacPage() {
     return 'Эта жертва не работает — противник просто забирает материал без достаточной компенсации.';
   }
 
+  // ── Display ────────────────────────────────────────────────────────────────
+
+  const displayFen = (() => {
+    if (!current) return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    if (sacMoveApplied) {
+      try {
+        const ch = new Chess(current.fen);
+        ch.move({ from: current.move.slice(0,2), to: current.move.slice(2,4) });
+        return ch.fen();
+      } catch {}
+    }
+    return current.fen;
+  })();
+
   if (loading) return (
-    <div className="page-wrap">
-      <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
-    </div>
+    <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
   );
 
   const sideToMove = current?.fen.split(' ')[1] === 'w' ? 'white' : 'black';
+  const oppSide = sideToMove === 'white' ? 'black' : 'white';
   const correctPct = stats.total > 0 ? Math.round(100 * stats.correct / stats.total) : null;
+  const sacSan = current ? uciToSan(current.fen, current.move) : '';
+  const moveNum = current ? fenMoveNumber(current.fen) : 1;
 
   // ETA
   const prepEta: number | null = (() => {
@@ -349,7 +358,56 @@ export default function SacPage() {
     return Math.max(0, perGame * (prepProgress.total - prepProgress.done));
   })();
 
-  // ── Shared: board node ─────────────────────────────────────────────────────
+  // Board arrows & tints for sacrifice move
+  const sacArrows: BoardArrow[] = [];
+  const sacTints: Partial<Record<string, string>> = {};
+  if (current && !answered) {
+    const from = current.move.slice(0, 2) as Square;
+    const to   = current.move.slice(2, 4) as Square;
+    sacArrows.push({
+      from, to,
+      color: 'rgba(240,164,58,0.9)',
+      style: 'dashed',
+      opacity: 0.9,
+    });
+    sacTints[to] = 'rgba(240,164,58,0.18)';
+  }
+
+  // ── Player bars ────────────────────────────────────────────────────────────
+
+  const topBarNode = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--track)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: 16 }}>{oppSide === 'white' ? '♙' : '♟'}</span>
+        </div>
+        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>
+          {oppSide === 'white' ? 'Белые' : 'Чёрные'}
+        </span>
+      </div>
+      {current && (
+        <span style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+          ход {moveNum}
+        </span>
+      )}
+    </div>
+  );
+
+  const bottomBarNode = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--track)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: 16 }}>{sideToMove === 'white' ? '♙' : '♟'}</span>
+        </div>
+        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>
+          {sideToMove === 'white' ? 'Белые' : 'Чёрные'}
+        </span>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>· ты решаешь за них</span>
+      </div>
+    </div>
+  );
+
+  // ── Board node ─────────────────────────────────────────────────────────────
 
   const boardNode = (
     <Board
@@ -358,261 +416,395 @@ export default function SacPage() {
       size={S}
       interactive={false}
       dimmed={!current}
+      tints={sacTints as Partial<Record<Square, string>>}
+      arrows={sacArrows}
     />
   );
 
-  const topBarNode = (
-    <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-      {sideToMove === 'white' ? 'Белые' : 'Чёрные'}
-    </span>
+  // ── Eval bar ────────────────────────────────────────────────────────────────
+
+  const evalBarNode = answered && current?.eval_before != null
+    ? <EvalBar cp={current.eval_before} orientation={sideToMove} />
+    : undefined;
+
+  // ── Filter toggle (Таль / Все мастера) ─────────────────────────────────────
+
+  const filterToggle = (
+    <div style={{ display: 'flex', borderRadius: 10, border: '1px solid var(--hairline)', overflow: 'hidden' }}>
+      {(['Таль', 'Все мастера'] as const).map((label, i) => {
+        const active = i === 0 ? prepFilter === 'Tal' : prepFilter === '';
+        return (
+          <button
+            key={label}
+            onClick={() => setPrepFilter(i === 0 ? 'Tal' : '')}
+            style={{
+              flex: 1, height: 36, fontSize: 13, fontWeight: 500,
+              background: active ? 'var(--track)' : 'transparent',
+              color: active ? 'var(--ivory)' : 'var(--muted)',
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
   );
 
-  const bottomBarNode = (
-    <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-      {!answered && current
-        ? <>Ход: <strong style={{ color: 'var(--ivory)', fontFamily: 'ui-monospace, monospace' }}>{uciToSan(current.fen, current.move)}</strong></>
-        : null}
-    </span>
+  // ── Prep block in session ──────────────────────────────────────────────────
+
+  const prepBlock = (
+    <div data-ui="sac-prep" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 16 }}>🗄</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ivory)' }}>
+          {preparing ? 'Подготовка позиций…' : 'Подготовить позиции'}
+        </span>
+      </div>
+      {preparing && prepProgress && (
+        <>
+          <div style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+            Партий: {prepProgress.done} / {prepProgress.total} · Позиций: {prepProgress.saved}
+            {prepEta != null && ` · ~${formatEta(prepEta)}`}
+          </div>
+          <ProgressBar value={prepProgress.done} max={prepProgress.total} height={6} />
+        </>
+      )}
+      {!preparing && (
+        <div style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+          Обработано: {scanned ?? '—'} · Осталось: {remaining ?? '—'}
+        </div>
+      )}
+      <button
+        onClick={preparing ? stopPrepare : handlePrepare}
+        disabled={!preparing && (!engineReady || remaining === 0)}
+        style={{
+          height: 36, fontSize: 13, fontWeight: 600,
+          background: preparing ? 'var(--surface-2)' : 'var(--accent)',
+          color: preparing ? 'var(--muted)' : '#fff',
+          border: preparing ? '1px solid var(--hairline-2)' : 'none',
+          cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
+          opacity: (!preparing && (!engineReady || remaining === 0)) ? 0.5 : 1,
+        }}
+      >
+        {preparing
+          ? (prepStop ? 'Остановка…' : 'Стоп')
+          : !engineReady ? 'Движок загружается…'
+          : remaining === 0 ? 'Нечего обрабатывать'
+          : scanned && scanned > 0 ? `Подготовить ещё ${Math.min(prepBatchSize, remaining ?? prepBatchSize)}`
+          : `Подготовить ${Math.min(prepBatchSize, remaining ?? prepBatchSize)}`}
+      </button>
+    </div>
+  );
+
+  // ── Session panel ──────────────────────────────────────────────────────────
+
+  const sessionPanel = (
+    <SessionPanel
+      title="Сессия"
+      stats={[
+        { value: correctPct != null ? correctPct : 0, label: 'верных %', color: '#81B64C' },
+        { value: stats.streak, label: 'серия', color: 'var(--ivory)' },
+        { value: stats.missedReal, label: 'пропустил', color: '#E0574A' },
+      ]}
+      controls={filterToggle}
+      prepBlock={prepBlock}
+      listLabel={positions.length > 0 ? 'Позиции' : undefined}
+      listRight={positions.length > 0 ? `${positions.length}` : undefined}
+      list={
+        positions.length === 0 ? (
+          <div style={{ padding: '12px 10px', fontSize: 14, color: 'var(--muted)' }}>
+            Нет позиций. Запусти подготовку выше.
+          </div>
+        ) : (
+          <>
+            {positions.slice(0, 20).map((p, i) => {
+              const isCur = current?.id === p.id;
+              return (
+                <div
+                  key={p.id}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '26px 1fr auto',
+                    alignItems: 'center',
+                    gap: 8,
+                    height: 50,
+                    padding: '0 10px',
+                    borderRadius: 10,
+                    position: 'relative',
+                    background: isCur ? 'var(--track)' : 'transparent',
+                  }}
+                >
+                  {isCur && (
+                    <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: '#81B64C' }} />
+                  )}
+                  <div style={{ display: 'grid', placeItems: 'center', fontSize: 13, color: isCur ? '#81B64C' : 'var(--control)', fontWeight: isCur ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+                    {i + 1}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14, color: 'var(--ivory)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      Позиция {i + 1}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--control)', marginTop: 1 }}>
+                      {isCur ? 'текущая' : p.source}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: p.kind === 'real' ? '#81B64C' : '#E0574A', fontWeight: 600 }} data-allow-small>
+                    {/* Don't show kind until answered */}
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )
+      }
+      footer={
+        positions.length > 0 ? (
+          <button
+            onClick={() => pickRandom(positions)}
+            style={{
+              width: '100%', height: 44, fontSize: 15, fontWeight: 600,
+              background: 'var(--surface-2)', border: '1px solid var(--hairline-2)',
+              color: 'var(--ivory)', cursor: 'pointer', fontFamily: 'inherit',
+              borderRadius: 'var(--radius-btn)',
+            }}
+          >
+            Случайная позиция
+          </button>
+        ) : undefined
+      }
+    />
   );
 
   // ── Panel content ──────────────────────────────────────────────────────────
 
   const panelNode = (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* Header */}
-      <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
-        <Link href="/masters" className="ui-back" style={{ marginBottom: 8, display: 'inline-block' }}>← Мастера</Link>
-        <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
-          Тренажёр · В стиле Таля
+      <div data-ui="panel-header" style={{ padding: '20px 24px 14px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--muted)' }}>
+          <span>Тренажёр · Жертвы мастеров</span>
+          {positions.length > 0 && (
+            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
+              {positions.length} позиций
+            </span>
+          )}
         </div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ivory)' }}>Жертвовать или нет?</div>
+        {stats.total > 0 && (
+          <ProgressBar value={stats.correct} max={stats.total} height={4} />
+        )}
+        <div data-ui="panel-title" style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
+          {positions.length === 0 && !preparing
+            ? 'Нет позиций'
+            : preparing
+            ? 'Готовлю позиции'
+            : answered
+            ? (answered.ok ? 'Правильно!' : 'Неверно')
+            : 'Жертвовать?'}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="ui-tabs" style={{ padding: '0 20px', flexShrink: 0 }}>
-        <button className={`ui-tab ${tab === 'train' ? 'ui-tab-active' : ''}`} onClick={() => setTab('train')}>
-          Тренажёр
-        </button>
-        <button className={`ui-tab ${tab === 'prepare' ? 'ui-tab-active' : ''}`} onClick={() => setTab('prepare')}>
-          Подготовить
-        </button>
-      </div>
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0, padding: '0 24px' }}>
 
-      {/* Scrollable body */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px 20px' }}>
+        {/* Empty state */}
+        {positions.length === 0 && !preparing && (
+          <div data-ui="sac-empty" style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 20 }}>
+            <div style={{ fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>
+              Сначала загрузи партии мастеров, затем запусти подготовку позиций.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[
+                { n: '01', text: 'Загрузи партии мастеров через импорт PGN' },
+                { n: '02', text: 'Нажми «Подготовить позиции» в левой колонке' },
+                { n: '03', text: 'Начни тренировку — реальные или ложные жертвы?' },
+              ].map(({ n, text }) => (
+                <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)', flexShrink: 0, fontVariantNumeric: 'tabular-nums', marginTop: 2 }}>{n}</span>
+                  <span style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.5 }}>{text}</span>
+                </div>
+              ))}
+            </div>
+            <Link
+              href="/masters"
+              style={{ display: 'inline-flex', alignItems: 'center', height: 44, padding: '0 20px', background: 'var(--accent)', color: '#fff', fontSize: 15, fontWeight: 600, borderRadius: 'var(--radius-btn)', textDecoration: 'none', alignSelf: 'flex-start' }}
+            >
+              Загрузить партии
+            </Link>
+          </div>
+        )}
 
-        {/* ── Train ── */}
-        {tab === 'train' && (
+        {/* Preparing state */}
+        {preparing && prepProgress && (
+          <div data-ui="sac-prep-progress" style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 20 }}>🗄</span>
+              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)' }}>Готовлю позиции</span>
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+              Партий: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.done}</strong> / {prepProgress.total}
+              {' '}· Позиций: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.saved}</strong>
+              {prepEta != null && (
+                <span style={{ marginLeft: 8 }}>
+                  · ~<strong style={{ color: 'var(--ivory)' }}>{formatEta(prepEta)}</strong>
+                </span>
+              )}
+            </div>
+            <ProgressBar value={prepProgress.done} max={prepProgress.total} height={8} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+              {[
+                { label: 'Партий', value: prepProgress.done },
+                { label: 'Позиций', value: prepProgress.saved },
+                { label: 'Осталось', value: prepProgress.total - prepProgress.done },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ padding: '10px 12px', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card)', textAlign: 'center' }}>
+                  <b style={{ display: 'block', fontSize: 20, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{value}</b>
+                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>{label}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic' }}>
+              Держи вкладку открытой — движок работает в этой вкладке
+            </div>
+          </div>
+        )}
+
+        {/* Question state */}
+        {!answered && current && !preparing && (
           <>
-            {positions.length === 0 ? (
-              <div style={{ textAlign: 'center', paddingTop: 20 }}>
-                <div style={{ fontSize: 28, marginBottom: 10 }}>♟</div>
-                <div style={{ fontSize: 15, color: 'var(--ivory)', marginBottom: 6 }}>Позиций пока нет</div>
-                <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 18, lineHeight: 1.6 }}>
-                  Сначала загрузи партии мастеров, затем запусти подготовку позиций.
-                </div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <Link href="/masters" className="ui-btn ui-btn-primary">Загрузить партии</Link>
-                  <button className="ui-btn ui-btn-outline" onClick={() => setTab('prepare')}>Подготовить позиции</button>
-                </div>
+            <div data-ui="sac-offer" style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#F4B45C', letterSpacing: '-0.01em', marginBottom: 8 }}>
+                <MoveChip>{sacSan}</MoveChip>
               </div>
-            ) : current && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div className="stat-grid">
-                  <div className="stat-card">
-                    <div className="stat-value">{correctPct != null ? `${correctPct}%` : '—'}</div>
-                    <div className="stat-label">Верных</div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-value">{stats.streak}</div>
-                    <div className="stat-label">Серия</div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-value">{stats.missedReal}</div>
-                    <div className="stat-label">Пропустил</div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-value">{stats.wrongFake}</div>
-                    <div className="stat-label">Ложные</div>
-                  </div>
-                </div>
-
-                {!answered && (
-                  <div className="ui-card">
-                    <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', marginBottom: 6 }}>
-                      Стоит ли пойти <span style={{ fontFamily: 'ui-monospace, monospace' }}>{uciToSan(current.fen, current.move)}</span>?
-                    </div>
-                    <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
-                      Это возможная жертва материала. Доверься интуиции.
-                    </div>
-                  </div>
-                )}
-
-                {!answered && (
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <button
-                      className="ui-btn ui-btn-lg"
-                      style={{
-                        flex: 1,
-                        background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
-                        color: 'var(--accent)',
-                        borderColor: 'color-mix(in srgb, var(--accent) 50%, transparent)',
-                      }}
-                      onClick={() => handleAnswer('sac')}
-                    >
-                      ⚡ Жертвую
-                    </button>
-                    <button
-                      className="ui-btn ui-btn-lg ui-btn-ghost"
-                      style={{ flex: 1 }}
-                      onClick={() => handleAnswer('calm')}
-                    >
-                      🛡 Спокойно
-                    </button>
-                  </div>
-                )}
-
-                {answered && (
-                  <div className={`ui-banner ${answered.ok ? 'ui-banner-success' : 'ui-banner-danger'}`}>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--ivory)', marginBottom: 8 }}>
-                      {answered.ok ? '✓ Правильно!' : '✗ Неверно'}
-                    </div>
-                    <div style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.6, marginBottom: 10 }}>
-                      {explainResult()}
-                    </div>
-                    {answered.eval_before != null && answered.eval_after != null && (
-                      <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>
-                        Оценка до: <strong style={{ color: 'var(--ivory)' }}>{cpToPawns(answered.eval_before)}</strong>
-                        {' '}· после: <strong style={{ color: 'var(--ivory)' }}>{cpToPawns(answered.eval_after)}</strong>
-                      </div>
-                    )}
-                    <button className="ui-btn ui-btn-primary" onClick={() => pickRandom(positions)}>
-                      Следующая позиция →
-                    </button>
-                  </div>
-                )}
-
-                <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                  Позиция {positions.indexOf(current) + 1} из {positions.length}
-                  {answered && <> · {current.kind === 'real' ? 'реальная' : 'ложная'} жертва</>}
-                </div>
+              <div style={{ fontSize: 15, color: 'var(--ivory)', lineHeight: 1.5 }}>
+                Это возможная жертва материала. Доверься интуиции.
               </div>
-            )}
+            </div>
+
+            <div data-ui="sac-weigh" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20, padding: '14px 16px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, color: 'var(--muted)' }}>Ход</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ivory)' }}>{sacSan}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, color: 'var(--muted)' }}>Сторона</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ivory)' }}>{sideToMove === 'white' ? 'Белые' : 'Чёрные'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, color: 'var(--muted)' }}>Ход №</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{moveNum}</span>
+              </div>
+            </div>
           </>
         )}
 
-        {/* ── Prepare ── */}
-        {tab === 'prepare' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div className="ui-card ui-card-lg" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', marginBottom: 6 }}>
-                  Подготовка позиций
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65 }}>
-                  Сканирует партии мастеров, находит возможные жертвы и оценивает движком (глубина 12).
-                  Потеря оценки ≤ 0.3 пешки — <strong style={{ color: 'var(--ivory)' }}>реальная</strong>,
-                  ≥ 1.0 — <strong style={{ color: 'var(--ivory)' }}>ложная</strong>.
-                  Уже обработанные партии повторно не считаются.
-                </div>
-              </div>
-
-              {/* Settings */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 12 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 500 }}>
-                    Фильтр по игроку
-                  </label>
-                  <input
-                    type="text"
-                    value={prepFilter}
-                    onChange={e => setPrepFilter(e.target.value)}
-                    disabled={preparing}
-                    placeholder="например: Tal"
-                    style={{
-                      height: 40, padding: '0 14px', fontSize: 14,
-                      background: 'var(--surface)', color: 'var(--ivory)',
-                      border: '1px solid var(--hairline)',
-                      borderRadius: 'var(--radius-btn)', outline: 'none', fontFamily: 'inherit',
-                    }}
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 500 }}>
-                    Партий за раз
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={2000}
-                    value={prepBatchSize}
-                    onChange={e => setPrepBatchSize(Math.max(1, Math.min(2000, parseInt(e.target.value || '200', 10))))}
-                    disabled={preparing}
-                    style={{
-                      height: 40, padding: '0 14px', fontSize: 14,
-                      background: 'var(--surface)', color: 'var(--ivory)',
-                      border: '1px solid var(--hairline)',
-                      borderRadius: 'var(--radius-btn)', outline: 'none', fontFamily: 'inherit',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Counts */}
-              <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--muted)', flexWrap: 'wrap' }}>
-                <span>Обработано: <strong style={{ color: 'var(--ivory)' }}>{scanned ?? '—'}</strong></span>
-                <span>Осталось: <strong style={{ color: 'var(--ivory)' }}>{remaining ?? '—'}</strong></span>
-                <span>Позиций в базе: <strong style={{ color: 'var(--ivory)' }}>{positions.length}</strong></span>
-              </div>
-
-              {/* Action */}
-              {!preparing ? (
-                <button
-                  className="ui-btn ui-btn-primary"
-                  onClick={handlePrepare}
-                  disabled={!engineReady || remaining === 0}
-                >
-                  {!engineReady
-                    ? 'Движок загружается…'
-                    : remaining === 0
-                    ? 'Нечего обрабатывать'
-                    : scanned && scanned > 0
-                    ? `Подготовить ещё ${Math.min(prepBatchSize, remaining ?? prepBatchSize)}`
-                    : `Подготовить ${Math.min(prepBatchSize, remaining ?? prepBatchSize)}`}
-                </button>
-              ) : prepProgress && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                    <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                      Партий: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.done}</strong> / {prepProgress.total}
-                      {' '}· Позиций: <strong style={{ color: 'var(--ivory)' }}>{prepProgress.saved}</strong>
-                    </div>
-                    {prepEta != null && (
-                      <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                        Осталось: <strong style={{ color: 'var(--ivory)' }}>~{formatEta(prepEta)}</strong>
-                      </div>
-                    )}
-                  </div>
-                  <div className="progress-track">
-                    <div className="progress-fill" style={{
-                      width: prepProgress.total > 0 ? `${100 * prepProgress.done / prepProgress.total}%` : '0%',
-                    }} />
-                  </div>
-                  <div style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic' }}>
-                    Держи вкладку открытой — движок работает в этой вкладке
-                  </div>
-                  <button className="ui-btn ui-btn-outline" onClick={stopPrepare} disabled={prepStop} style={{ alignSelf: 'flex-start' }}>
-                    {prepStop ? 'Остановка…' : 'Стоп'}
-                  </button>
-                </div>
-              )}
+        {/* Answer state */}
+        {answered && current && (
+          <>
+            <div data-ui="sac-feedback" style={{ marginBottom: 16 }}>
+              <FeedbackCard
+                variant={answered.ok ? 'success' : 'danger'}
+                title={answered.ok ? '✓ Правильно!' : '✗ Неверно'}
+              >
+                {explainResult()}
+              </FeedbackCard>
             </div>
 
-            <div className="ui-card ui-card-sm" style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>
-              <strong style={{ color: 'var(--ivory)' }}>Нет партий?</strong>{' '}
-              Сначала <Link href="/masters" style={{ color: 'var(--accent)' }}>загрузи партии мастеров</Link> через импорт PGN.
+            {answered.eval_before != null && answered.eval_after != null && (
+              <div data-ui="sac-gave-got" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
+                  <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>Оценка до</span>
+                  <b style={{ fontSize: 20, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
+                    {cpToPawns(answered.eval_before)}
+                  </b>
+                </div>
+                <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
+                  <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>Оценка после</span>
+                  <b style={{ fontSize: 20, color: answered.ok ? '#81B64C' : '#E0574A', fontVariantNumeric: 'tabular-nums' }}>
+                    {cpToPawns(answered.eval_after)}
+                  </b>
+                </div>
+              </div>
+            )}
+
+            {/* Position counter */}
+            <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
+              Позиция {positions.indexOf(current) + 1} из {positions.length}
+              {' '} · {current.kind === 'real' ? 'реальная жертва' : 'ложная жертва'}
             </div>
-          </div>
+          </>
+        )}
+      </div>
+
+      {/* Footer: actions */}
+      <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {!answered && current && !preparing && (
+          <>
+            <div data-ui="sac-choice" style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => void handleAnswer('sac')}
+                style={{
+                  flex: 1, height: 64, fontSize: 17, fontWeight: 700,
+                  background: 'rgba(240,164,58,.14)',
+                  border: '1px solid rgba(240,164,58,.55)',
+                  color: '#F4B45C',
+                  boxShadow: '0 4px 0 rgba(240,164,58,.25)',
+                  cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                Жертвую
+                <Kbd>J</Kbd>
+              </button>
+              <button
+                onClick={() => void handleAnswer('calm')}
+                style={{
+                  flex: 1, height: 64, fontSize: 17, fontWeight: 700,
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--hairline-2)',
+                  color: '#E8E5E0',
+                  boxShadow: '0 4px 0 rgba(0,0,0,.25)',
+                  cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                Не жертвую
+                <Kbd>K</Kbd>
+              </button>
+            </div>
+          </>
+        )}
+
+        {answered && positions.length > 0 && (
+          <button
+            onClick={() => pickRandom(positions)}
+            style={{
+              height: 52, fontSize: 18, fontWeight: 700,
+              background: '#81B64C', boxShadow: '0 4px 0 #5E8C35',
+              color: '#fff', border: 'none', cursor: 'pointer',
+              borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            }}
+          >
+            Дальше
+            <Kbd>Пробел</Kbd>
+          </button>
+        )}
+
+        {positions.length === 0 && !preparing && (
+          <button
+            onClick={handlePrepare}
+            disabled={!engineReady}
+            style={{
+              height: 52, fontSize: 16, fontWeight: 700,
+              background: 'var(--accent)', color: '#fff',
+              border: 'none', cursor: 'pointer',
+              borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
+              opacity: !engineReady ? 0.6 : 1,
+            }}
+          >
+            {engineReady ? 'Подготовить позиции' : 'Движок загружается…'}
+          </button>
         )}
       </div>
     </div>
@@ -620,8 +812,10 @@ export default function SacPage() {
 
   return (
     <TrainerLayout
+      session={sessionPanel}
       topBar={topBarNode}
       board={boardNode}
+      evalBar={evalBarNode}
       bottomBar={bottomBarNode}
       panel={panelNode}
     />
