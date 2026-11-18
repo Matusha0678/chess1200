@@ -1,157 +1,97 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
-const COLLAPSE_KEY = 'chess1200-trainer-session-collapsed';
-
 export interface TrainerLayoutProps {
-  /** Left panel content — if omitted the column is hidden. */
+  /** Left 280px session column (card). Omit to hide. */
   sessionPanel?: React.ReactNode;
-  /** Strip rendered above the board (e.g. opponent player row). */
+  /** 32px strip above the board — opponent row. */
   topPlayer?: React.ReactNode;
-  /** The board itself — rendered inside a flex-square sizer. */
+  /** 24px eval bar to the left of the board. Provide to reserve space. */
+  evalBar?: React.ReactNode;
+  /** The board itself — fills 774×774 container. */
   boardContent: React.ReactNode;
-  /** Strip rendered below the board (e.g. user player row). */
+  /** 32px strip below the board — my row. */
   bottomPlayer?: React.ReactNode;
-  /** Right panel (task prompt, feedback, buttons). */
+  /** Right flex:1 task panel (card). */
   taskPanel: React.ReactNode;
 }
 
+const CARD: React.CSSProperties = {
+  background: 'var(--surface)',
+  borderRadius: 'var(--radius-card)',
+  boxShadow: 'var(--shadow-card)',
+  border: '1px solid var(--hairline)',
+  overflow: 'hidden',
+};
+
 /**
- * Full-viewport trainer layout: Session | Board | Task panel.
- * Heights: fills 100vh − topbar. No body scroll while mounted.
+ * 3-column trainer layout. Dimensions from docs/mockups/README.md:
+ * left 280px | board 806px (24px eval + 8px gap + 774px) | right flex:1
+ * Padding 20px around, gap 20px between columns.
+ * Player strips 32px, board area fills to 774×774.
  */
 export function TrainerLayout({
   sessionPanel,
   topPlayer,
+  evalBar,
   boardContent,
   bottomPlayer,
   taskPanel,
 }: TrainerLayoutProps) {
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    try {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === 'true');
-    } catch { /* ignore */ }
-  }, []);
-
-  function toggle() {
-    setCollapsed(c => {
-      const next = !c;
-      try { localStorage.setItem(COLLAPSE_KEY, String(next)); } catch { /* ignore */ }
-      return next;
-    });
-  }
-
   return (
     <div style={{
       display: 'flex',
       height: 'calc(100vh - var(--topbar-h))',
       overflow: 'hidden',
+      padding: 20,
+      gap: 20,
+      boxSizing: 'border-box',
+      background: 'var(--bg)',
     }}>
 
-      {/* ── Session panel ───────────────────────────────────────────────── */}
+      {/* ── Left: session panel 280px ──────────────────────────────────── */}
       {sessionPanel !== undefined && (
-        <div style={{
-          width: collapsed ? 56 : 272,
-          flexShrink: 0,
-          borderRight: '1px solid var(--hairline)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          position: 'relative',
-          transition: 'width 0.18s ease',
-        }}>
-          {/* Collapse toggle */}
-          <button
-            onClick={toggle}
-            aria-label={collapsed ? 'Развернуть панель' : 'Свернуть панель'}
-            style={{
-              position: 'absolute',
-              top: 10,
-              right: collapsed ? 16 : 10,
-              zIndex: 5,
-              width: 22,
-              height: 22,
-              padding: 0,
-              background: 'var(--surface)',
-              border: '1px solid var(--hairline)',
-              color: 'var(--muted)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 11,
-              lineHeight: 1,
-              flexShrink: 0,
-            }}
-          >
-            {collapsed ? '›' : '‹'}
-          </button>
-
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            visibility: collapsed ? 'hidden' : 'visible',
-          }}>
-            {sessionPanel}
-          </div>
+        <div style={{ width: 280, flexShrink: 0, display: 'flex', flexDirection: 'column', ...CARD }}>
+          {sessionPanel}
         </div>
       )}
 
-      {/* ── Board column ────────────────────────────────────────────────── */}
+      {/* ── Center: board column 806px ─────────────────────────────────── */}
       <div style={{
-        flex: 1,
-        minWidth: 0,
+        width: 806,
+        flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '8px 12px',
-        gap: 4,
-        overflow: 'hidden',
+        gap: 8,
       }}>
+        {/* Top player strip 32px */}
         {topPlayer && (
-          <div style={{ width: '100%', maxWidth: 760 }}>{topPlayer}</div>
+          <div style={{ height: 32, flexShrink: 0, paddingLeft: 32, display: 'flex', alignItems: 'center' }}>
+            {topPlayer}
+          </div>
         )}
 
-        {/* Square sizer — fills remaining height, constrained by width */}
-        <div style={{
-          flex: '1 1 0',
-          minHeight: 0,
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            height: '100%',
-            aspectRatio: '1 / 1',
-            maxWidth: '100%',
-            overflow: 'hidden',
-          }}>
+        {/* Board row: evalbar (24px) + 8px gap + board (774px) */}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 8 }}>
+          {/* Always reserve 24px for eval bar alignment */}
+          <div style={{ width: 24, flexShrink: 0, display: 'flex' }}>
+            {evalBar}
+          </div>
+          {/* Board: 806 - 24 - 8 = 774px wide, fills remaining height */}
+          <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
             {boardContent}
           </div>
         </div>
 
+        {/* Bottom player strip 32px */}
         {bottomPlayer && (
-          <div style={{ width: '100%', maxWidth: 760 }}>{bottomPlayer}</div>
+          <div style={{ height: 32, flexShrink: 0, paddingLeft: 32, display: 'flex', alignItems: 'center' }}>
+            {bottomPlayer}
+          </div>
         )}
       </div>
 
-      {/* ── Task panel ──────────────────────────────────────────────────── */}
-      <div style={{
-        width: 420,
-        flexShrink: 0,
-        borderLeft: '1px solid var(--hairline)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflowY: 'auto',
-      }}>
+      {/* ── Right: task panel flex:1 ────────────────────────────────────── */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', ...CARD }}>
         {taskPanel}
       </div>
     </div>
