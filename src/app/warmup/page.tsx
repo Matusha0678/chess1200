@@ -6,6 +6,9 @@ import { Chess } from 'chess.js';
 import { supabase } from '@/lib/supabase';
 import { findThreats } from '@/lib/threats';
 import type { Threat } from '@/lib/threats';
+import { Board } from '@/components/board/Board';
+import { TrainerLayout } from '@/components/trainer/TrainerLayout';
+import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -23,22 +26,40 @@ type StepData =
   | { kind: 'mistake'; fen: string; best_move: string; tag: string }
   | { kind: 'finish' };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+function movesListToFen(moves: Array<{ san: string }>): string {
+  const chess = new Chess();
+  for (const m of moves) {
+    try { chess.move(m.san); } catch { break; }
+  }
+  return chess.fen();
+}
+
+function getFenForStep(data: StepData): string {
+  if (data.kind === 'threat') return data.fen;
+  if (data.kind === 'trap') return data.fen;
+  if (data.kind === 'mistake') return data.fen;
+  if (data.kind === 'line') return movesListToFen(data.moves);
+  return START_FEN;
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function WarmupPage() {
+  const { S } = useTrainerGeometry();
   const [steps, setSteps]           = useState<Step[]>([]);
   const [stepIdx, setStepIdx]       = useState(0);
   const [loading, setLoading]       = useState(true);
-  const [started, setStarted]       = useState(false);
   const [timeLeft, setTimeLeft]     = useState(5 * 60);
-  const [stepsDone, setStepsDone]   = useState(0);
   const [sqlMissing, setSqlMissing] = useState(false);
   const startTimeRef = useRef(0);
+  const stepsDoneRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const today = new Date().toISOString().slice(0, 10);
 
-  // Threat step state
-  const [threatAnswer, setThreatAnswer] = useState<string | null>(null);
   const [showThreatResult, setShowThreatResult] = useState(false);
 
   const buildSteps = useCallback(async (): Promise<Step[]> => {
@@ -50,7 +71,6 @@ export default function WarmupPage() {
     for (const row of (mcRows ?? []) as Array<{ fen_before: string }>) {
       if (threatFens.length >= 3) break;
       try {
-        // Determine whose turn it is so we look for threats against them
         const fenColor = row.fen_before.split(' ')[1] as 'w' | 'b';
         const threats = findThreats(row.fen_before, fenColor);
         if (threats.length > 0) {
@@ -86,38 +106,9 @@ export default function WarmupPage() {
       result.push({ kind: 'mistake', data: { kind: 'mistake', fen: m.fen_before, best_move: m.best_move, tag: m.tag } });
     }
 
-    // Finish
     result.push({ kind: 'finish', data: { kind: 'finish' } });
     return result;
   }, []);
-
-  useEffect(() => {
-    (async () => {
-      const stps = await buildSteps();
-      setSteps(stps);
-      setLoading(false);
-    })();
-  }, [buildSteps]);
-
-  async function startWarmup() {
-    setStarted(true);
-    setStepIdx(0);
-    setTimeLeft(5 * 60);
-    setStepsDone(0);
-    startTimeRef.current = Date.now();
-
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          void finishWarmup(stepsDone);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }
 
   async function finishWarmup(done: number) {
     clearInterval(timerRef.current!);
@@ -128,7 +119,6 @@ export default function WarmupPage() {
       const err = e as { code?: string };
       if (err?.code === '42P01') setSqlMissing(true);
     }
-    // Add XP
     if (done > 0) {
       const { data: xpRow } = await supabase.from('user_xp').select('total_xp').eq('id', 1).maybeSingle();
       const cur = (xpRow as { total_xp?: number } | null)?.total_xp ?? 0;
@@ -136,10 +126,34 @@ export default function WarmupPage() {
     }
   }
 
+  useEffect(() => {
+    (async () => {
+      const stps = await buildSteps();
+      setSteps(stps);
+      setLoading(false);
+      // Auto-start
+      setStepIdx(0);
+      stepsDoneRef.current = 0;
+      setTimeLeft(5 * 60);
+      startTimeRef.current = Date.now();
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current!);
+            void finishWarmup(stepsDoneRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildSteps]);
+
   function nextStep() {
-    setStepsDone(prev => prev + 1);
+    stepsDoneRef.current++;
     setStepIdx(prev => prev + 1);
-    setThreatAnswer(null);
     setShowThreatResult(false);
   }
 
@@ -148,87 +162,79 @@ export default function WarmupPage() {
     return `${m}:${(s % 60).toString().padStart(2, '0')}`;
   }
 
+  // ── Shared layout helpers ──────────────────────────────────────────────────
+
   if (sqlMissing) {
     return (
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={{ padding: '16px 20px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 14, color: 'var(--muted)' }}>
-          Выполни <strong>supabase/23-warmup-log.sql</strong>, затем повтори.
-        </div>
-      </main>
+      <TrainerLayout
+        topBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Разминка</span>}
+        board={<Board fen={START_FEN} size={S} orientation="white" interactive={false} />}
+        bottomBar={<span />}
+        panel={
+          <div style={{ padding: 24 }}>
+            <div style={{ padding: '16px 20px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 14, color: 'var(--muted)' }}>
+              Выполни <strong>supabase/23-warmup-log.sql</strong>, затем повтори.
+            </div>
+          </div>
+        }
+      />
     );
   }
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={{ color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
-      </main>
-    );
-  }
-
-  if (!started) {
-    return (
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '40px 24px 72px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <Link href="/" style={{ fontSize: 13, color: 'var(--muted)' }}>← Сегодня</Link>
-        <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
-          Разминка 5 минут
-        </h1>
-        <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>
-          Быстрая тренировка: угрозы, повторение линии, ловушка, ошибка.
-          Всего {steps.length - 1} шагов.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {steps.filter(s => s.kind !== 'finish').map((s, i) => (
-            <div key={i} style={{ padding: '10px 14px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 13, color: 'var(--muted)', display: 'flex', gap: 10 }}>
-              <span style={{ fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{i + 1}.</span>
-              <span>
-                {s.kind === 'threat' ? 'Угрозы соперника'
-                 : s.kind === 'line' ? 'Повтор линии'
-                 : s.kind === 'trap' ? 'Ловушка'
-                 : s.kind === 'mistake' ? 'Ошибка из банка'
-                 : ''}
-              </span>
-            </div>
-          ))}
-        </div>
-        <button onClick={() => void startWarmup()} style={{ height: 48, padding: '0 32px', background: 'var(--ivory)', color: 'var(--ink)', border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}>
-          Начать разминку
-        </button>
-      </main>
+      <TrainerLayout
+        topBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Загрузка…</span>}
+        board={<Board fen={START_FEN} size={S} orientation="white" interactive={false} />}
+        bottomBar={<span />}
+        panel={<div style={{ padding: 24, color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>}
+      />
     );
   }
 
   const step = steps[stepIdx];
   if (!step) return null;
-
   const stepData = step.data;
+  const currentFen = getFenForStep(stepData);
 
-  return (
-    <main style={{ maxWidth: 560, margin: '0 auto', padding: '24px 24px 72px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <span style={{ fontSize: 13, color: 'var(--muted)' }}>Шаг {Math.min(stepIdx + 1, steps.length)} / {steps.length}</span>
-        <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 14, fontVariantNumeric: 'tabular-nums', color: timeLeft < 60 ? 'rgba(220,80,60,0.9)' : 'var(--muted)', fontWeight: 600 }}>
-          {fmtTime(timeLeft)}
-        </span>
-        <button onClick={nextStep} style={{ height: 32, padding: '0 12px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
-          Пропустить
-        </button>
-      </div>
+  const topBar = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+        Шаг {Math.min(stepIdx + 1, steps.length)} / {steps.length}
+      </span>
+      <div style={{ flex: 1 }} />
+      <span style={{
+        fontSize: 14, fontVariantNumeric: 'tabular-nums', fontWeight: 600,
+        color: timeLeft < 60 ? 'rgba(220,80,60,0.9)' : 'var(--muted)',
+      }}>
+        {fmtTime(timeLeft)}
+      </span>
+    </div>
+  );
 
-      {/* Step content */}
-      {stepData.kind === 'threat' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Что угрожает сопернику?</h2>
-          <div style={{ padding: '12px 16px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 13, color: 'var(--muted)' }}>
-            FEN: <code style={{ fontSize: 12 }}>{stepData.fen.slice(0, 40)}…</code>
-          </div>
+  // ── Panel content per step ─────────────────────────────────────────────────
+
+  const skipBtn = (
+    <button onClick={nextStep} style={{ height: 28, padding: '0 12px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+      Пропустить
+    </button>
+  );
+
+  let panelContent: React.ReactNode = null;
+
+  if (stepData.kind === 'threat') {
+    panelContent = (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div data-ui="panel-header" className="panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+          <span data-ui="panel-title" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>Что угрожает сопернику?</span>
+          {skipBtn}
+        </div>
+        <div style={{ padding: '16px 20px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {!showThreatResult ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {stepData.threats.slice(0, 4).map((t, i) => (
-                <button key={i} onClick={() => { setThreatAnswer(t.square); setShowThreatResult(true); }}
-                  style={{ height: 42, padding: '0 16px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--ivory)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+                <button key={i} onClick={() => setShowThreatResult(true)}
+                  style={{ height: 42, padding: '0 16px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--ivory)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
                   {t.type} на {t.square}
                 </button>
               ))}
@@ -244,27 +250,37 @@ export default function WarmupPage() {
             </div>
           )}
         </div>
-      )}
-
-      {stepData.kind === 'line' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Повтори линию</h2>
+      </div>
+    );
+  } else if (stepData.kind === 'line') {
+    panelContent = (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div data-ui="panel-header" className="panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+          <span data-ui="panel-title" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>Повтори линию</span>
+          {skipBtn}
+        </div>
+        <div style={{ padding: '16px 20px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontFamily: 'monospace', fontSize: 14, color: 'var(--ivory)', padding: '12px 16px', border: '1px solid var(--hairline)', background: 'var(--surface)' }}>
             {stepData.moves.slice(0, 10).reduce((acc: string, m, i) => {
-              return acc + (m.color === 'w' ? `${Math.floor(i/2)+1}. ` : '') + m.san + ' ';
+              return acc + (m.color === 'w' ? `${Math.floor(i / 2) + 1}. ` : '') + m.san + ' ';
             }, '').trim()}
             {stepData.moves.length > 10 ? '…' : ''}
           </div>
-          <Link href={`/openings`} style={{ fontSize: 13, color: 'var(--muted)' }}>→ Открыть дебюты</Link>
+          <Link href="/openings" style={{ fontSize: 13, color: 'var(--muted)' }}>→ Открыть дебюты</Link>
           <button onClick={nextStep} style={{ height: 40, padding: '0 20px', background: 'var(--ivory)', color: 'var(--ink)', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}>
             Знаю →
           </button>
         </div>
-      )}
-
-      {stepData.kind === 'trap' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Ловушка</h2>
+      </div>
+    );
+  } else if (stepData.kind === 'trap') {
+    panelContent = (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div data-ui="panel-header" className="panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+          <span data-ui="panel-title" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>Ловушка</span>
+          {skipBtn}
+        </div>
+        <div style={{ padding: '16px 20px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.6 }}>{stepData.question}</div>
           {!showThreatResult ? (
             <button onClick={() => setShowThreatResult(true)} style={{ height: 40, padding: '0 20px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}>
@@ -281,11 +297,16 @@ export default function WarmupPage() {
             </div>
           )}
         </div>
-      )}
-
-      {stepData.kind === 'mistake' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Ошибка из банка</h2>
+      </div>
+    );
+  } else if (stepData.kind === 'mistake') {
+    panelContent = (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div data-ui="panel-header" className="panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+          <span data-ui="panel-title" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>Ошибка из банка</span>
+          {skipBtn}
+        </div>
+        <div style={{ padding: '16px 20px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 13, color: 'var(--muted)' }}>Тег: {stepData.tag}</div>
           {!showThreatResult ? (
             <button onClick={() => setShowThreatResult(true)} style={{ height: 40, padding: '0 20px', border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}>
@@ -301,21 +322,40 @@ export default function WarmupPage() {
             </div>
           )}
         </div>
-      )}
-
-      {stepData.kind === 'finish' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '20px 0' }}>
-          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Разминка завершена!</h2>
+      </div>
+    );
+  } else if (stepData.kind === 'finish') {
+    panelContent = (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div data-ui="panel-header" className="panel-header" style={{ padding: '14px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+          <span data-ui="panel-title" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>Разминка завершена!</span>
+        </div>
+        <div style={{ padding: '16px 20px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
           <p style={{ margin: 0, fontSize: 15, color: 'var(--ivory)', lineHeight: 1.7, padding: '14px 18px', border: '1px solid var(--hairline)', background: 'var(--surface)' }}>
             Перед каждым ходом спроси: что хочет сделать соперник?
           </p>
           <a href="https://chess.com" target="_blank" rel="noopener noreferrer"
-            style={{ height: 48, padding: '0 28px', display: 'inline-flex', alignItems: 'center', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
+            style={{ height: 48, padding: '0 28px', display: 'inline-flex', alignItems: 'center', background: 'var(--ivory)', color: 'var(--ink)', fontSize: 15, fontWeight: 700, textDecoration: 'none', alignSelf: 'flex-start' }}>
             Идти играть →
           </a>
           <Link href="/" style={{ fontSize: 13, color: 'var(--muted)' }}>← На главную</Link>
         </div>
-      )}
-    </main>
+      </div>
+    );
+  }
+
+  const bottomBarLabel =
+    stepData.kind === 'threat' ? 'Угрозы' :
+    stepData.kind === 'line' ? 'Дебютная линия' :
+    stepData.kind === 'trap' ? 'Ловушка' :
+    stepData.kind === 'mistake' ? 'Позиция' : '';
+
+  return (
+    <TrainerLayout
+      topBar={topBar}
+      board={<Board fen={currentFen} size={S} orientation="white" interactive={false} />}
+      bottomBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>{bottomBarLabel}</span>}
+      panel={panelContent ?? <div />}
+    />
   );
 }

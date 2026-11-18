@@ -4,6 +4,9 @@ import { Chessboard } from 'react-chessboard';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useStockfish } from '@/hooks/useStockfish';
+import { Board } from '@/components/board/Board';
+import { TrainerLayout } from '@/components/trainer/TrainerLayout';
+import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
 import type { CourseLessonMove } from '@/types/courses';
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -18,8 +21,8 @@ const SECTION_HEADER: React.CSSProperties = {
   minHeight: 48,
 };
 const LABEL: React.CSSProperties = {
-  margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.18em',
-  color: 'var(--ivory)', textTransform: 'uppercase',
+  margin: 0, fontSize: 13, fontWeight: 600,
+  color: 'var(--ivory)',
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -73,6 +76,7 @@ function colorLabel(c: 'white' | 'black' | 'both'): string {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TrapsPage() {
+  const { S } = useTrainerGeometry();
   const [traps, setTraps] = useState<TrapRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [evalMap, setEvalMap] = useState<Record<string, EvalResult>>({});
@@ -266,23 +270,29 @@ export default function TrapsPage() {
 
   if (traps.length === 0) {
     return (
-      <div className="page">
-        <div className="page-head">
-          <div className="page-head-text">
-            <h1 className="page-title">Ловушки</h1>
-            <p className="page-lead">Ловушек пока нет</p>
+      <TrainerLayout
+        topBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Соперник</span>}
+        board={<Board fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" size={S} orientation="white" interactive={false} />}
+        bottomBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Ты</span>}
+        panel={
+          <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)' }}>Ловушки</div>
+            <div style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>
+              Ловушек пока нет.
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>
+              Добавьте в курс секции{' '}
+              <code style={{ fontSize: 13, background: 'var(--bg)', padding: '2px 6px', borderRadius: 3 }}>
+                ## Ловушка: Название
+              </code>{' '}
+              — они появятся здесь автоматически.
+            </div>
+            <Link href="/courses/import" className="ui-btn ui-btn-primary" style={{ alignSelf: 'flex-start' }}>
+              Импортировать курс
+            </Link>
           </div>
-        </div>
-        <div className="ui-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ivory)' }}>Создать курс с ловушками</span>
-          <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
-            Добавьте в курс секции <code style={{ fontSize: 12, background: 'var(--bg)', padding: '2px 6px', borderRadius: 3 }}>## Ловушка: Название</code> — они появятся здесь автоматически.
-          </span>
-          <Link href="/courses/import" className="ui-btn ui-btn-primary" style={{ alignSelf: 'flex-start' }}>
-            Импортировать курс
-          </Link>
-        </div>
-      </div>
+        }
+      />
     );
   }
 
@@ -364,7 +374,7 @@ export default function TrapsPage() {
       <section>
         <div style={SECTION_HEADER}>
           <h2 style={LABEL}>ЛОВУШКИ</h2>
-          <span style={{ fontSize: 12, color: 'var(--muted)' }}>{filtered.length}</span>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>{filtered.length}</span>
         </div>
 
         {filtered.length === 0 ? (
@@ -401,7 +411,7 @@ export default function TrapsPage() {
                   <div style={{ flex: 1, minWidth: 160, display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {/* Eyebrow */}
-                      <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+                      <div style={{ fontSize: 13, color: 'var(--muted)' }}>
                         {trap.opening || trap.course_name} · {colorLabel(trap.color)}
                       </div>
                       {/* Title */}
@@ -447,7 +457,7 @@ export default function TrapsPage() {
 
                     {/* Hit counters */}
                     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--muted)' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--muted)' }}>
                         Заманил: <span style={{ color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{hits.caught}</span>
                         <button
                           onClick={() => void addHit(trap.trap_key, 'caught')}
@@ -455,7 +465,7 @@ export default function TrapsPage() {
                           title="Заманил соперника"
                         >+</button>
                       </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--muted)' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--muted)' }}>
                         Попался: <span style={{ color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{hits.caught_self}</span>
                         <button
                           onClick={() => void addHit(trap.trap_key, 'caught_self')}
@@ -468,7 +478,7 @@ export default function TrapsPage() {
                     {/* Course link */}
                     <Link
                       href={`/courses/${trap.course_id}/${trap.lesson_id}`}
-                      style={{ fontSize: 12, color: 'var(--muted)', textDecoration: 'none' }}
+                      style={{ fontSize: 13, color: 'var(--muted)', textDecoration: 'none' }}
                       className="play-button-link"
                     >
                       {trap.course_name} →

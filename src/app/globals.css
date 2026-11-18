@@ -813,7 +813,7 @@ html, body {
 
 .ui-eyebrow {
   display: inline-flex; align-items: center; gap: 12px;
-  font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.08em;
   color: var(--muted); text-transform: uppercase;
 }
 .ui-eyebrow-line { width: 48px; height: 1px; background: var(--eyebrow-line); flex-shrink: 0; }
@@ -937,7 +937,7 @@ html, body {
 [data-site-theme^="soft"] .stat-card { border-color: transparent; }
 .stat-value { font-size: 24px; font-weight: 700; color: var(--ivory); line-height: 1; margin-bottom: 4px;
   font-family: var(--font-inter-tight, 'Inter Tight', 'Inter', sans-serif); }
-.stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.stat-label { font-size: 13px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
 
 /* ── Status banners ─────────────────────────────────────────────────────── */
 .ui-banner { padding: 16px 20px; border-radius: var(--radius-card); border: 1px solid var(--hairline); background: var(--surface); }
@@ -981,7 +981,7 @@ html, body {
 [data-site-theme^="soft"] .option-card { border-color: transparent; }
 .option-card:hover:not(:disabled) { border-color: var(--card-hover); }
 .option-card:disabled { cursor: default; }
-.option-card-eco { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 0.05em; }
+.option-card-eco { display: block; font-size: 13px; color: var(--muted); margin-top: 3px; }
 .option-card-correct {
   background: color-mix(in srgb, var(--accent) 15%, var(--surface));
   border-color: var(--accent) !important; font-weight: 600;
@@ -1077,7 +1077,7 @@ html, body {
   font-family: var(--font-inter-tight, 'Inter Tight', 'Inter', sans-serif);
   color: var(--muted); line-height: 1; }
 .scoring-slot-pts-active { color: var(--accent); }
-.scoring-slot-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
+.scoring-slot-label { font-size: 13px; color: var(--muted); margin-top: 3px; }
 
 /* ── Big-board layout (used on /masters/[id]) ───────────────────────────── */
 /* Board sized to min(100% of column, 75vh, 760px). Layout: board left, panel right. */
@@ -1158,7 +1158,7 @@ html, body {
   border: none;
   background: transparent;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   border-radius: calc(var(--radius-btn) - 3px);
