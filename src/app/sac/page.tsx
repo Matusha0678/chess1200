@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Chess } from 'chess.js';
@@ -220,7 +220,7 @@ function wp(cp: number): number {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-export default function SacPage() {
+function SacPageInner() {
   const { S } = useTrainerGeometry();
   const searchParams = useSearchParams();
   const demoKey = searchParams.get('demo') as 'works' | 'fails' | null;
@@ -1208,4 +1208,8 @@ export default function SacPage() {
       panelAttrs={isDemo && demoKey ? { 'data-demo': demoKey } : undefined}
     />
   );
+}
+
+export default function SacPage() {
+  return <Suspense><SacPageInner /></Suspense>;
 }
