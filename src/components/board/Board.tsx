@@ -1,10 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Chessboard } from 'react-chessboard';
+import dynamic from 'next/dynamic';
+import type { ComponentProps } from 'react';
+import type { Chessboard as ChessboardType } from 'react-chessboard';
 import type { SquareRenderer, PieceDropHandlerArgs, SquareHandlerArgs, Arrow } from 'react-chessboard';
 import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import type { Square } from 'chess.js';
+
+const Chessboard = dynamic(
+  () => import('react-chessboard').then(m => m.Chessboard),
+  { ssr: false, loading: () => null },
+) as React.ComponentType<ComponentProps<typeof ChessboardType>>;
 
 export interface BoardProps {
   position: string;
@@ -41,10 +47,6 @@ export function Board({
     showNotation, boardThemeId, pieceStyleId,
   } = useBoardTheme();
 
-  const [mounted, setMounted] = useState(false);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setMounted(true); }, []);
-
   // Compose: check glow + caller's squareRenderer
   const composedRenderer: SquareRenderer | undefined = (() => {
     if (!checkSquare && !squareRenderer) return undefined;
@@ -63,10 +65,6 @@ export function Board({
   })();
 
   const dim: number | string = size ?? '100%';
-
-  if (!mounted) {
-    return <div style={{ width: dim, height: dim, background: 'var(--surface)' }} />;
-  }
 
   return (
     <Chessboard
