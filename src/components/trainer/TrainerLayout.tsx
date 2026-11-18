@@ -73,7 +73,7 @@ export function TrainerLayout({ session, topBar, board, evalBar, bottomBar, pane
       </div>
 
       {/* Right panel */}
-      <div data-ui="panel" style={{ width: rightWidth, flexShrink: 0, alignSelf: 'stretch', ...CARD }}>
+      <div data-ui="panel" style={{ flex: 1, minWidth: 420, alignSelf: 'stretch', ...CARD }}>
         {panel}
       </div>
     </div>

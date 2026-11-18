@@ -383,9 +383,25 @@ export default function ThreatsPage() {
 
   // ── Done screen ───────────────────────────────────────────────────────────────
 
+  // ── Session panel (shared across all states) ──────────────────────────────
+
+  const sessionPanelShared = (
+    <SessionPanel
+      title="Сессия"
+      rightNote={positions.length > 0 ? `осталось ${Math.max(0, positions.length - posIdx)}` : undefined}
+      stats={[
+        { value: score.found, label: 'нашёл', color: '#81B64C' },
+        { value: score.missed, label: 'пропустил', color: '#E0574A' },
+        { value: score.falseAlarms, label: 'лишних', color: '#F4B45C' },
+      ]}
+      list={<></>}
+    />
+  );
+
   if (phase === 'done') {
     return (
       <TrainerLayout
+        session={sessionPanelShared}
         topBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Соперник</span>}
         board={
           <Board
@@ -405,7 +421,7 @@ export default function ThreatsPage() {
               </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, marginBottom: 20 }}>
+              <div data-ui="threat-task" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, marginBottom: 20 }}>
                 {[
                   { label: 'Найдено', value: score.found, color: '#81B64C' },
                   { label: 'Пропущено', value: score.missed, color: '#E0574A' },
@@ -418,11 +434,10 @@ export default function ThreatsPage() {
                   </div>
                 ))}
               </div>
-              {score.streak > 2 && (
-                <div style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 16 }}>
-                  Серия точных ответов: <strong style={{ color: 'var(--ivory)' }}>{score.streak}</strong>
-                </div>
-              )}
+              <div data-ui="threat-rules" style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8, minHeight: 20 }}>
+                {score.streak > 2 ? `Серия точных ответов: ${score.streak}` : ''}
+              </div>
+              <div data-ui="threat-marked" style={{ fontSize: 13, color: 'var(--muted)', minHeight: 20 }}>{'\xa0'}</div>
             </div>
             <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button
@@ -448,6 +463,7 @@ export default function ThreatsPage() {
   if (phase === 'loading' || loadError) {
     return (
       <TrainerLayout
+        session={sessionPanelShared}
         topBar={<span style={{ fontSize: 13, color: 'var(--muted)' }}>Соперник</span>}
         board={
           <Board
@@ -467,17 +483,32 @@ export default function ThreatsPage() {
               </div>
             </div>
             <div style={{ flex: 1, padding: '0 24px' }}>
+              <div data-ui="threat-task" style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 15, color: 'var(--ivory)', lineHeight: 1.5 }}>
+                  {loadError ?? 'Загружаем позиции…'}
+                </div>
+              </div>
+              <div data-ui="threat-rules" style={{ padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, marginBottom: 16 }}>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                  {loadError ? 'Нужно сначала проанализировать партии' : 'Подготовка…'}
+                </div>
+              </div>
+              <div data-ui="threat-marked" style={{ padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, fontSize: 13, color: 'var(--muted)' }}>
+                Нет отметок
+              </div>
               {loadError && (
-                <>
-                  <div style={{ fontSize: 14, color: '#E0574A', lineHeight: 1.5, marginBottom: 16 }}>{loadError}</div>
+                <div style={{ marginTop: 16 }}>
                   <button
                     onClick={() => router.push('/games/analyze')}
                     style={{ height: 44, padding: '0 20px', fontSize: 15, fontWeight: 600, background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}
                   >
                     Анализ партий
                   </button>
-                </>
+                </div>
               )}
+            </div>
+            <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
+              <div style={{ fontSize: 13, color: 'var(--muted)' }}>{loadError ? 'Загрузите данные, чтобы начать' : 'Загрузка…'}</div>
             </div>
           </div>
         }
@@ -654,11 +685,11 @@ export default function ThreatsPage() {
               </div>
             </div>
 
-            {marked.size > 0 && (
-              <div data-ui="threat-marked" style={{ padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, marginBottom: 16, fontSize: 13, color: 'var(--ivory)' }}>
-                Отмечено: {[...marked].join(', ')}
-              </div>
-            )}
+            <div data-ui="threat-marked" style={{ padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', borderRadius: 10, marginBottom: 16, fontSize: 13, color: marked.size > 0 ? 'var(--ivory)' : 'var(--muted)' }}>
+              {marked.size > 0
+                ? `Отмечено: ${[...marked].join(', ')}`
+                : 'Нет отметок — кликни на фигуру'}
+            </div>
           </>
         )}
 
