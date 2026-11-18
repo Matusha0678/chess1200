@@ -109,7 +109,7 @@ function abbreviateLine(line: LineWithProgress, max = 10): string {
 
 function MoveList({ moves }: { moves: string[] }) {
   if (moves.length === 0) {
-    return <span className="text-[13px] text-[#505050]">Ходы пока не сделаны</span>;
+    return <span className="text-[13px]" style={{ color: 'var(--muted)' }}>Ходы пока не сделаны</span>;
   }
   return (
     <div className="flex flex-col gap-[3px]">
@@ -120,9 +120,19 @@ function MoveList({ moves }: { moves: string[] }) {
         const isLastB = pairIdx * 2 + 1 === moves.length - 1;
         return (
           <div key={pairIdx} className="grid grid-cols-[24px_1fr_1fr] gap-x-2 items-center">
-            <span className="text-[12px] text-[#505050] text-right">{pairIdx + 1}.</span>
-            <span className={`text-[13px] font-mono px-1 py-[1px] rounded ${isLastW ? 'bg-[#1A1A1A] text-[#FFFFFF] font-semibold' : 'text-[#A0A0A0]'}`}>{w ?? ''}</span>
-            <span className={`text-[13px] font-mono px-1 py-[1px] rounded ${isLastB ? 'bg-[#1A1A1A] text-[#FFFFFF] font-semibold' : 'text-[#A0A0A0]'}`}>{b ?? ''}</span>
+            <span className="text-[12px] text-right" style={{ color: 'var(--muted)' }}>{pairIdx + 1}.</span>
+            <span
+              className="text-[13px] font-mono px-1 py-[1px] rounded"
+              style={isLastW
+                ? { background: 'var(--surface2, #1A1A1A)', color: '#FFFFFF', fontWeight: 600 }
+                : { color: 'var(--muted)' }}
+            >{w ?? ''}</span>
+            <span
+              className="text-[13px] font-mono px-1 py-[1px] rounded"
+              style={isLastB
+                ? { background: 'var(--surface2, #1A1A1A)', color: '#FFFFFF', fontWeight: 600 }
+                : { color: 'var(--muted)' }}
+            >{b ?? ''}</span>
           </div>
         );
       })}
@@ -508,23 +518,18 @@ export default function PracticePage({ params }: Props) {
             ? 'Ваш ход'
             : 'Соперник думает…';
   const feedbackIcon = bf === 'correct' ? '✓' : bf === 'wrong' ? '✗' : null;
-  const feedbackBg = bf === 'correct'
-    ? 'bg-[#141414] border-[#303030]'
+  const feedbackStyle: React.CSSProperties = bf === 'correct'
+    ? { background: 'var(--surface)', color: 'var(--ivory)', borderColor: 'var(--hairline)' }
     : bf === 'wrong'
-      ? 'bg-[#1A1A1A] border-[#404040]'
-      : 'bg-[#0D0D0D] border-[#262626]';
-  const feedbackColor = bf === 'correct'
-    ? 'text-[#D0D0D0]'
-    : bf === 'wrong'
-      ? 'text-[#A0A0A0]'
-      : 'text-[#A0A0A0]';
+      ? { background: 'var(--surface2, #1A1A1A)', color: 'var(--muted)', borderColor: 'var(--hairline)' }
+      : { background: 'var(--surface)', color: 'var(--muted)', borderColor: 'var(--hairline)' };
 
   if (loading) {
     return (
       <div className="h-[calc(100vh-64px)] overflow-hidden flex flex-col items-center justify-center px-5 pt-5 pb-6">
         <div
-          className="bg-[#0D0D0D] border border-[#262626] rounded-[4px] animate-pulse"
-          style={{ width: boardSize, height: boardSize }}
+          className="rounded-[4px] animate-pulse"
+          style={{ width: boardSize, height: boardSize, background: 'var(--surface)', border: '1px solid var(--hairline)' }}
         />
       </div>
     );
@@ -535,14 +540,15 @@ export default function PracticePage({ params }: Props) {
       <div className="max-w-[1600px] mx-auto px-5 md:px-10 pt-5 pb-6">
         <Link
           href={`/openings/${id}`}
-          className="inline-flex items-center gap-2 text-[13px] text-[#A0A0A0] hover:text-[#F5F5F5] transition-colors no-underline mb-6"
+          className="inline-flex items-center gap-2 text-[13px] transition-colors no-underline mb-6"
+          style={{ color: 'var(--muted)' }}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
           Назад
         </Link>
-        <div className="text-center py-20 text-[#A0A0A0]">
+        <div className="text-center py-20" style={{ color: 'var(--muted)' }}>
           <p className="font-cormorant text-[32px] mb-3">Нет линий для тренировки</p>
           <p className="text-[15px]">Добавь PGN с вариациями к этому дебюту.</p>
         </div>
@@ -557,21 +563,21 @@ export default function PracticePage({ params }: Props) {
     <>
       {/* Overlay: session done */}
       {sessionDone && !celebrating && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050505]">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center" style={{ background: 'var(--bg)' }}>
           <div className="text-[64px] leading-none select-none mb-6">✓</div>
-          <div className="text-[32px] font-[500] text-[#F5F5F5] mb-2">На сегодня всё!</div>
-          <div className="text-[15px] text-[#808080] mb-8">
+          <div className="text-[32px] font-[500] mb-2" style={{ color: 'var(--ivory)' }}>На сегодня всё!</div>
+          <div className="text-[15px] mb-8" style={{ color: 'var(--muted)' }}>
             {sessionCorrect + sessionIncorrect > 0
               ? `${sessionCorrect + sessionIncorrect} ${pluralLines(sessionCorrect + sessionIncorrect)} пройдено`
               : 'Нечего повторять сегодня'}
           </div>
           <div className="flex gap-3">
-            <a
+            <Link
               href="/"
               className="h-11 flex items-center bg-white text-[#050505] hover:bg-[#ECECEC] rounded-full px-7 text-[14px] font-semibold transition-colors no-underline"
             >
               На главную
-            </a>
+            </Link>
             <button
               onClick={() => {
                 setSessionDone(false);
@@ -589,7 +595,8 @@ export default function PracticePage({ params }: Props) {
                   return latest;
                 });
               }}
-              className="h-11 flex items-center border border-[#383838] text-[#A0A0A0] hover:border-[#A0A0A0] hover:text-[#F5F5F5] rounded-full px-7 text-[14px] transition-colors bg-transparent cursor-pointer"
+              className="h-11 flex items-center rounded-full px-7 text-[14px] transition-colors bg-transparent cursor-pointer"
+              style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}
             >
               Продолжить
             </button>
@@ -599,23 +606,23 @@ export default function PracticePage({ params }: Props) {
 
       {/* Overlay: correct or wrong completion */}
       {celebrating && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050505]/90">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center" style={{ background: 'color-mix(in srgb, var(--bg) 90%, transparent)' }}>
           {celebrationCorrect ? (
             <>
-              <div className="font-cormorant text-[80px] leading-none text-[#FFFFFF]">✓</div>
-              <div className="font-cormorant text-[48px] font-[500] mt-4 text-[#F5F5F5]">
+              <div className="font-cormorant text-[80px] leading-none" style={{ color: 'var(--ivory)' }}>✓</div>
+              <div className="font-cormorant text-[48px] font-[500] mt-4" style={{ color: 'var(--ivory)' }}>
                 Линия освоена!
               </div>
               {celebrationXP > 0 && (
-                <div className="text-[20px] text-[#D0D0D0] mt-2 font-medium">
+                <div className="text-[20px] mt-2 font-medium" style={{ color: 'var(--ivory)' }}>
                   +{celebrationXP} XP
                 </div>
               )}
             </>
           ) : (
             <>
-              <div className="font-cormorant text-[80px] leading-none text-[#686868]">○</div>
-              <div className="font-cormorant text-[48px] font-[500] mt-4 text-[#A0A0A0]">
+              <div className="font-cormorant text-[80px] leading-none" style={{ color: 'var(--muted)' }}>○</div>
+              <div className="font-cormorant text-[48px] font-[500] mt-4" style={{ color: 'var(--muted)' }}>
                 Запомни линию
               </div>
             </>
@@ -634,7 +641,7 @@ export default function PracticePage({ params }: Props) {
             <div className="flex flex-col flex-shrink-0" style={{ width: boardSize }}>
 
               {/* Player bar — 44px */}
-              <div className="h-11 flex items-center justify-between gap-2 text-[13px] text-[#A0A0A0]">
+              <div className="h-11 flex items-center justify-between gap-2 text-[13px]" style={{ color: 'var(--muted)' }}>
                 <span className="flex items-center gap-2">
                   {playerColor === 'w'
                     ? <><span className="text-[15px]">♙</span> Вы играете белыми</>
@@ -643,10 +650,10 @@ export default function PracticePage({ params }: Props) {
                 <button
                   onClick={() => setBoardFlipped(f => !f)}
                   title="Перевернуть доску"
-                  className={[
-                    'flex items-center justify-center w-8 h-8 rounded transition-colors shrink-0',
-                    boardFlipped ? 'bg-[#1E1E1E] text-[#F5F5F5]' : 'hover:bg-[#1A1A1A] text-[#505050] hover:text-[#A0A0A0]',
-                  ].join(' ')}
+                  className="flex items-center justify-center w-8 h-8 rounded transition-colors shrink-0"
+                  style={boardFlipped
+                    ? { background: 'var(--surface2, #1E1E1E)', color: 'var(--ivory)' }
+                    : { color: 'var(--muted)' }}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M7 16V4m0 0L3 8m4-4l4 4"/>
@@ -680,7 +687,8 @@ export default function PracticePage({ params }: Props) {
 
               {/* Feedback bar — 44px */}
               <div
-                className={`h-11 flex-shrink-0 rounded-[12px] border px-5 text-[15px] font-medium transition-all duration-300 flex items-center gap-3 ${feedbackBg} ${feedbackColor}`}
+                className="h-11 flex-shrink-0 rounded-[12px] border px-5 text-[15px] font-medium transition-all duration-300 flex items-center gap-3"
+                style={feedbackStyle}
               >
                 {feedbackIcon
                   ? <span className="text-[17px] font-bold leading-none shrink-0">{feedbackIcon}</span>
@@ -694,22 +702,23 @@ export default function PracticePage({ params }: Props) {
 
             {/* ── Right sidebar ── */}
             <div
-              className="flex-shrink-0 w-[260px] bg-[#0A0A0A] border border-[#1E1E1E] rounded-[20px] p-5 flex flex-col gap-4 overflow-y-auto"
-              style={{ maxHeight: `calc(${boardSize} + 98px)` }}
+              className="flex-shrink-0 w-[260px] rounded-[20px] p-5 flex flex-col gap-4 overflow-y-auto"
+              style={{ maxHeight: `calc(${boardSize} + 98px)`, background: 'var(--surface)', border: '1px solid var(--hairline)' }}
             >
               {/* Opening name + back link */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-[3px]">
                   <Link
                     href={`/openings/${id}`}
-                    className="flex items-center gap-[5px] text-[11px] font-bold tracking-[0.12em] uppercase text-[#404040] hover:text-[#707070] transition-colors no-underline"
+                    className="flex items-center gap-[5px] text-[11px] font-bold tracking-[0.12em] uppercase transition-colors no-underline"
+                    style={{ color: 'var(--muted)' }}
                   >
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M19 12H5M12 5l-7 7 7 7" />
                     </svg>
                     Дебют
                   </Link>
-                  <span className="text-[18px] leading-tight text-[#E0E0E0] font-[500] tracking-[-0.01em]">
+                  <span className="text-[18px] leading-tight font-[500] tracking-[-0.01em]" style={{ color: 'var(--ivory)' }}>
                     {opening.name}
                   </span>
                 </div>
@@ -723,40 +732,40 @@ export default function PracticePage({ params }: Props) {
                 return (
                   <div className="flex flex-col gap-[8px]">
                     <div className="flex items-center justify-between text-[12px]">
-                      <span className="text-[#505050]">Прогресс сессии</span>
-                      <span className="text-[#D0D0D0] font-semibold tabular-nums">{done} / {sessionTotal}</span>
+                      <span style={{ color: 'var(--muted)' }}>Прогресс сессии</span>
+                      <span className="font-semibold tabular-nums" style={{ color: 'var(--ivory)' }}>{done} / {sessionTotal}</span>
                     </div>
-                    <div className="h-[3px] bg-[#1A1A1A] rounded-full overflow-hidden">
+                    <div className="h-[3px] rounded-full overflow-hidden" style={{ background: 'var(--surface2, #1A1A1A)' }}>
                       <div
                         className="h-full bg-white rounded-full transition-all duration-500"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-[#505050]">
+                      <span style={{ color: 'var(--muted)' }}>
                         {remaining > 0
                           ? `${remaining} ${remaining === 1 ? 'осталась' : remaining < 5 ? 'осталось' : 'осталось'}`
                           : 'всё сделано'}
                       </span>
                       <span className="flex items-center gap-2">
-                        {sessionCorrect > 0 && <span className="text-[#606060]">{sessionCorrect} ✓</span>}
-                        {sessionIncorrect > 0 && <span className="text-[#404040]">{sessionIncorrect} ✗</span>}
+                        {sessionCorrect > 0 && <span style={{ color: 'var(--muted)' }}>{sessionCorrect} ✓</span>}
+                        {sessionIncorrect > 0 && <span style={{ color: 'var(--muted)' }}>{sessionIncorrect} ✗</span>}
                       </span>
                     </div>
                   </div>
                 );
               })()}
 
-              <div className="border-t border-[#1E1E1E]" />
+              <div className="border-t" style={{ borderColor: 'var(--hairline)' }} />
 
               {/* Current line + mastery */}
               <div className="flex flex-col gap-2">
-                <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-[#505050]">
+                <span className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--muted)' }}>
                   Текущая линия
                 </span>
                 {currentLine && (
                   <>
-                    <p className="m-0 text-[13px] font-mono text-[#A0A0A0] leading-relaxed break-words">
+                    <p className="m-0 text-[13px] font-mono leading-relaxed break-words" style={{ color: 'var(--muted)' }}>
                       {lineLabel}
                     </p>
                     <div className="flex items-center gap-2">
@@ -764,13 +773,12 @@ export default function PracticePage({ params }: Props) {
                         {Array.from({ length: 5 }, (_, dot) => (
                           <span
                             key={dot}
-                            className={`inline-block w-[8px] h-[8px] rounded-full transition-colors ${
-                              dot < currentLineMastery ? 'bg-[#FFFFFF]' : 'bg-[#262626]'
-                            }`}
+                            className="inline-block w-[8px] h-[8px] rounded-full transition-colors"
+                            style={{ background: dot < currentLineMastery ? 'var(--ivory, #FFFFFF)' : 'var(--hairline, #262626)' }}
                           />
                         ))}
                       </div>
-                      <span className="text-[12px] text-[#505050]">{currentLineMastery}/5</span>
+                      <span className="text-[12px]" style={{ color: 'var(--muted)' }}>{currentLineMastery}/5</span>
                     </div>
                   </>
                 )}
@@ -780,7 +788,8 @@ export default function PracticePage({ params }: Props) {
               <div className="flex gap-2">
                 <button
                   onClick={() => { setHintActive(true); setTimeout(() => setHintActive(false), 2000); }}
-                  className="flex-1 h-8 border border-[#1E1E1E] text-[#707070] hover:border-[#383838] hover:text-[#C0C0C0] rounded-full text-[12px] transition-colors bg-transparent cursor-pointer flex items-center justify-center gap-[6px]"
+                  className="flex-1 h-8 rounded-full text-[12px] transition-colors bg-transparent cursor-pointer flex items-center justify-center gap-[6px]"
+                  style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
@@ -789,25 +798,26 @@ export default function PracticePage({ params }: Props) {
                 </button>
                 <button
                   onClick={handleSkip}
-                  className="flex-1 h-8 border border-[#1E1E1E] text-[#707070] hover:border-[#383838] hover:text-[#C0C0C0] rounded-full text-[12px] transition-colors bg-transparent cursor-pointer"
+                  className="flex-1 h-8 rounded-full text-[12px] transition-colors bg-transparent cursor-pointer"
+                  style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}
                 >
                   Следующая
                 </button>
               </div>
-              <div className="flex justify-between text-[11px] text-[#333333]">
+              <div className="flex justify-between text-[11px]" style={{ color: 'var(--muted)' }}>
                 <span>Пробел — подсказка</span>
                 <span>N — следующая · ? — клавиши</span>
               </div>
 
-              <div className="border-t border-[#1E1E1E]" />
+              <div className="border-t" style={{ borderColor: 'var(--hairline)' }} />
 
               {/* Played moves */}
               <div className="flex flex-col gap-2">
-                <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-[#505050]">Ходы</span>
+                <span className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--muted)' }}>Ходы</span>
                 <MoveList moves={playedMoves} />
               </div>
 
-              <div className="border-t border-[#1E1E1E]" />
+              <div className="border-t" style={{ borderColor: 'var(--hairline)' }} />
 
               {/* All-time stats */}
               {(() => {
@@ -823,21 +833,21 @@ export default function PracticePage({ params }: Props) {
                 if (atTotal === 0) return null;
                 return (
                   <div className="flex flex-col gap-2">
-                    <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#505050]">За всё время</span>
+                    <span className="text-[11px] font-semibold tracking-[0.12em] uppercase" style={{ color: 'var(--muted)' }}>За всё время</span>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                       <div className="flex flex-col gap-[1px]">
-                        <span className="text-[11px] text-[#505050]">Попыток</span>
-                        <span className="font-cormorant text-[22px] font-semibold leading-[1.1] text-[#F5F5F5]">{atTotal}</span>
+                        <span className="text-[11px]" style={{ color: 'var(--muted)' }}>Попыток</span>
+                        <span className="font-cormorant text-[22px] font-semibold leading-[1.1]" style={{ color: 'var(--ivory)' }}>{atTotal}</span>
                       </div>
                       <div className="flex flex-col gap-[1px]">
-                        <span className="text-[11px] text-[#505050]">Точность</span>
-                        <span className="font-cormorant text-[22px] font-semibold leading-[1.1] text-[#D0D0D0]">
+                        <span className="text-[11px]" style={{ color: 'var(--muted)' }}>Точность</span>
+                        <span className="font-cormorant text-[22px] font-semibold leading-[1.1]" style={{ color: 'var(--ivory)' }}>
                           {atAccuracy !== null ? `${atAccuracy}%` : '—'}
                         </span>
                       </div>
                     </div>
                     {lastPracticed && (
-                      <span className="text-[11px] text-[#505050]">
+                      <span className="text-[11px]" style={{ color: 'var(--muted)' }}>
                         Последнее: {(() => {
                           const diffDays = Math.floor((Date.now() - new Date(lastPracticed).getTime()) / 86400000);
                           if (diffDays === 0) return 'Сегодня';
@@ -850,7 +860,7 @@ export default function PracticePage({ params }: Props) {
                 );
               })()}
 
-              <div className="border-t border-[#1E1E1E]" />
+              <div className="border-t" style={{ borderColor: 'var(--hairline)' }} />
 
               {/* All lines mini-list */}
               <div className="flex flex-col gap-[5px]">
@@ -860,22 +870,22 @@ export default function PracticePage({ params }: Props) {
                   return (
                     <div
                       key={line.id}
-                      className={`flex items-center gap-2 px-2 py-[5px] rounded-[8px] transition-colors ${
-                        isActive ? 'bg-[#1A1A1A] border border-[#303030]' : 'border border-transparent'
-                      }`}
+                      className="flex items-center gap-2 px-2 py-[5px] rounded-[8px] transition-colors"
+                      style={isActive
+                        ? { background: 'var(--surface2, #1A1A1A)', border: '1px solid var(--hairline)' }
+                        : { border: '1px solid transparent' }}
                     >
-                      <span className="text-[11px] text-[#505050] w-4 text-right shrink-0">{i + 1}</span>
+                      <span className="text-[11px] w-4 text-right shrink-0" style={{ color: 'var(--muted)' }}>{i + 1}</span>
                       <div className="flex items-center gap-[3px] shrink-0">
                         {Array.from({ length: 5 }, (_, dot) => (
                           <span
                             key={dot}
-                            className={`inline-block w-[5px] h-[5px] rounded-full ${
-                              dot < (prog?.mastery ?? 0) ? 'bg-[#FFFFFF]' : 'bg-[#262626]'
-                            }`}
+                            className="inline-block w-[5px] h-[5px] rounded-full"
+                            style={{ background: dot < (prog?.mastery ?? 0) ? 'var(--ivory, #FFFFFF)' : 'var(--hairline, #262626)' }}
                           />
                         ))}
                       </div>
-                      <span className="text-[11px] font-mono text-[#505050] truncate flex-1">
+                      <span className="text-[11px] font-mono truncate flex-1" style={{ color: 'var(--muted)' }}>
                         {line.moves.slice(0, 4).map((m, mi) => (mi === 0 ? '1.' : '') + m.san).join(' ')}
                       </span>
                     </div>

@@ -44,10 +44,6 @@ export default function GameCoursesPage() {
   const [loading, setLoading] = useState(true);
   const [noGames, setNoGames] = useState(false);
 
-  useEffect(() => {
-    void compute();
-  }, []);
-
   async function compute() {
     setLoading(true);
 
@@ -132,6 +128,12 @@ export default function GameCoursesPage() {
     setStats(sorted);
     setLoading(false);
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void compute();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="page">

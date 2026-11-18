@@ -42,7 +42,8 @@ export default function ChessBoardWrapper({
 }: Props) {
   const { boardTheme, customPieces, showNotation: notationEnabled, animationMs, soundEnabled, boardThemeId, pieceStyleId } = useBoardTheme();
   const soundRef = useRef(soundEnabled);
-  soundRef.current = soundEnabled;
+  // Keep ref in sync via effect so callbacks always read the latest value
+  useEffect(() => { soundRef.current = soundEnabled; }, [soundEnabled]);
 
   const [chess] = useState(() => new Chess(INITIAL_FEN));
   const [fen, setFen] = useState(INITIAL_FEN);

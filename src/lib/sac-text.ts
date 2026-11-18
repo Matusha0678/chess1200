@@ -89,8 +89,6 @@ export function lineOutcome(
     const balanceBefore = materialBalance(chBefore, S);
 
     // Проходим pv
-    let curFen = fenAfter;
-    // Нам нужно отслеживать после чьего хода (opp) мы смотрим последнее значение
     // Ходы в pv: pv[0] — ответ соперника (opp), pv[1] — ход S, pv[2] — opp, ...
     let lastOppFen: string | null = null;
 
@@ -98,7 +96,7 @@ export function lineOutcome(
     const chAfter0 = new Chess(fenAfter);
     // После жертвы ход перешёл к opp (они должны взять или сделать ход)
     // pv[0] = opp, pv[1] = S, pv[2] = opp, ...
-    let curChess = chAfter0;
+    const curChess = chAfter0;
     const limit = Math.min(pv.length, maxPlies);
 
     for (let i = 0; i < limit; i++) {

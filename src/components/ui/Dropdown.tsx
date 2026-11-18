@@ -23,9 +23,11 @@ export function Dropdown({ value, onChange, options, style }: DropdownProps) {
   const selected = options.find(o => o.value === value);
   const focusedIdx = options.findIndex(o => o.value === value);
 
-  useEffect(() => {
-    if (open) setFocused(Math.max(0, focusedIdx));
-  }, [open, focusedIdx]);
+  // openDropdown initializes focused to the currently-selected item
+  const openDropdown = useCallback(() => {
+    setFocused(Math.max(0, options.findIndex(o => o.value === value)));
+    setOpen(true);
+  }, [options, value]);
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -42,7 +44,7 @@ export function Dropdown({ value, onChange, options, style }: DropdownProps) {
     if (!open) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
         e.preventDefault();
-        setOpen(true);
+        openDropdown();
       }
       return;
     }
@@ -63,7 +65,7 @@ export function Dropdown({ value, onChange, options, style }: DropdownProps) {
         role="combobox"
         aria-expanded={open}
         aria-haspopup="listbox"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => { if (open) close(); else openDropdown(); }}
         onKeyDown={handleKeyDown}
         style={{
           width: '100%', height: 38, borderRadius: 10,

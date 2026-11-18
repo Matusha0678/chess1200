@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { BOARD_THEMES, PIECE_STYLES, PIECE_KEYS, type BoardTheme, type PieceStyle } from '@/lib/themes';
 
 type PieceRenderObject = Record<string, (props?: { fill?: string; square?: string; svgStyle?: React.CSSProperties }) => React.JSX.Element>;
@@ -82,13 +82,10 @@ function buildCustomPieces(baseUrl: string): PieceRenderObject {
 const BoardThemeContext = createContext<BoardThemeContextValue | null>(null);
 
 export function BoardThemeProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<BoardThemeSettings>(DEFAULT_SETTINGS);
+  // Lazy initializer reads localStorage on mount — no setState-in-effect needed
+  const [settings, setSettings] = useState<BoardThemeSettings>(loadSettings);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
 
   // Apply site theme to <html> data attribute so CSS overrides kick in
   useEffect(() => {
@@ -127,15 +124,10 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
   const pieceStyle = PIECE_STYLES.find(p => p.id === settings.pieceStyleId) ?? PIECE_STYLES[0];
 
   // Memoize customPieces by baseUrl to avoid recreating functions on every render
-  const customPiecesRef = useRef<{ url: string; pieces: PieceRenderObject } | null>(null);
-  if (pieceStyle.baseUrl) {
-    if (!customPiecesRef.current || customPiecesRef.current.url !== pieceStyle.baseUrl) {
-      customPiecesRef.current = { url: pieceStyle.baseUrl, pieces: buildCustomPieces(pieceStyle.baseUrl) };
-    }
-  } else {
-    customPiecesRef.current = null;
-  }
-  const customPieces = customPiecesRef.current?.pieces;
+  const customPieces = useMemo<PieceRenderObject | undefined>(
+    () => pieceStyle.baseUrl ? buildCustomPieces(pieceStyle.baseUrl) : undefined,
+    [pieceStyle.baseUrl],
+  );
 
   const animationMs = ANIMATION_MS[settings.animationSpeed];
 

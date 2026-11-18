@@ -33,11 +33,6 @@ export default function NotesPage() {
   const [filterResolved, setFilterResolved] = useState(false);
   const [sqlMissing, setSqlMissing] = useState(false);
 
-  useEffect(() => {
-    void load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterKind, filterResolved]);
-
   async function load() {
     setLoading(true);
     let q = supabase.from('lesson_notes').select('*').order('created_at', { ascending: false }).limit(200);
@@ -79,6 +74,12 @@ export default function NotesPage() {
     }
     setLoading(false);
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterKind, filterResolved]);
 
   async function markResolved(id: string) {
     await supabase.from('lesson_notes').update({ resolved: true }).eq('id', id);

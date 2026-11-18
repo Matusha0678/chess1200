@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:logic": "for f in scripts/test-classify.ts scripts/test-insights.ts scripts/test-play-eval.ts scripts/test-repertoire.ts scripts/test-threats.ts; do echo \"--- $f ---\"; npx --yes tsx \"$f\" || exit 1; done"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

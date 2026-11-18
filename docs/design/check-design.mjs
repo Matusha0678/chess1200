@@ -10,6 +10,7 @@
 // Версия 3.4: + проигрывание варианта по кнопке ▶ (ходы идут по очереди, а не прыжком в конец).
 // Версия 3.5: + /repertoire «Дебюты в партиях» (pages/repertoire/REPERTOIRE.md): структура и демо ?demo=1.
 // Версия 3.6: /endgames — карточка не должна обрезать доску и название (сплющенные ряды сетки).
+// Версия 3.7: на страницах-тренажёрах в правой панели нет ходов в UCI (e2e4) — только SAN.
 //
 // Запуск (dev-сервер должен работать):
 //   node docs/design/check-design.mjs                                  # http://localhost:3001, все тренажёры + ответы
@@ -267,6 +268,7 @@ try {
         res.scrollX = se.scrollWidth - innerWidth;
         res.selects = document.querySelectorAll('select').length;
         res.text = document.body.innerText || '';
+        res.panelText = document.querySelector('[data-ui="panel"]')?.innerText || '';
 
         // Метки data-ui: видимые элементы и их размеры
         res.ui = {};
@@ -421,6 +423,8 @@ try {
         for (const t of (FORBIDDEN[pp] || [])) {
           if (m.text.includes(t)) errors.push(`старый элемент на странице: «${t}»`);
         }
+        const uci = (m.panelText || '').match(/(^|[^a-z0-9])([a-h][1-8][a-h][1-8][qrbn]?)(?![a-z0-9])/);
+        if (uci) errors.push(`в панели ход в формате UCI «${uci[2]}» — нужен SAN`);
       }
 
       const dir = path.join(OUT, `${size.w}x${size.h}`);
@@ -533,7 +537,7 @@ for (const [w, map] of Object.entries(colorsBySize)) {
 }
 
 let fails = 0;
-console.log('\nПроверка дизайна тренажёров (v3.6)\n');
+console.log('\nПроверка дизайна тренажёров (v3.7)\n');
 for (const r of report) {
   if (r.errors.length) {
     fails++;

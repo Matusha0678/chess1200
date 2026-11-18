@@ -315,6 +315,31 @@ function IconCircleAlert({ size = 16 }: { size?: number }) {
   );
 }
 
+// ── Shared UI components (defined outside component to satisfy react-hooks/static-components) ────
+
+interface PlayerBarProps {
+  label: string;
+  bottom?: boolean;
+  boardOrientation: 'white' | 'black';
+  openingLabel?: string;
+}
+
+function PlayerBar({ label, bottom, boardOrientation, openingLabel }: PlayerBarProps) {
+  const parts = label.split(' · ');
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 600 }}>
+      <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--surface2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+        <span style={{ fontSize: 18 }}>{bottom ? (boardOrientation === 'white' ? '♙' : '♟') : (boardOrientation === 'white' ? '♟' : '♙')}</span>
+      </div>
+      <span>{parts[0]}</span>
+      {parts[1] && <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--muted)' }}>· {parts[1]}</span>}
+      {bottom && openingLabel && (
+        <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--muted)', marginLeft: 'auto' }}>{openingLabel}</span>
+      )}
+    </div>
+  );
+}
+
 // ── Main page component (wrapped in Suspense) ─────────────────────────────────
 
 function RepertoirePage() {
@@ -339,8 +364,20 @@ function RepertoirePage() {
   const [checkDone, setCheckDone] = useState(0);
   const [checkTotal, setCheckTotal] = useState(0);
 
-  const [colorFilter, setColorFilter] = useState<'white' | 'black' | 'all'>('all');
-  const [periodFilter, setPeriodFilter] = useState<'30d' | 'all'>('all');
+  const [colorFilter, setColorFilter] = useState<'white' | 'black' | 'all'>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('rep-filters') || 'null');
+      if (saved?.color) return saved.color as 'white' | 'black' | 'all';
+    } catch { /* ignore */ }
+    return 'all';
+  });
+  const [periodFilter, setPeriodFilter] = useState<'30d' | 'all'>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('rep-filters') || 'null');
+      if (saved?.period) return saved.period as '30d' | 'all';
+    } catch { /* ignore */ }
+    return 'all';
+  });
   const [selOpeningId, setSelOpeningId] = useState<string | null>(null);
 
   const [selected, setSelected] = useState<SelItem | null>(null);
@@ -350,19 +387,6 @@ function RepertoirePage() {
 
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // ── Load filters from localStorage ────────────────────────────────────────
-
-  useEffect(() => {
-    if (isDemo) return;
-    try {
-      const saved = JSON.parse(localStorage.getItem('rep-filters') || 'null');
-      if (saved) {
-        if (saved.color) setColorFilter(saved.color);
-        if (saved.period) setPeriodFilter(saved.period);
-      }
-    } catch { /* ignore */ }
-  }, [isDemo]);
 
   const saveFilters = useCallback((color: typeof colorFilter, period: typeof periodFilter) => {
     try { localStorage.setItem('rep-filters', JSON.stringify({ color, period })); } catch { /* ignore */ }
@@ -409,6 +433,7 @@ function RepertoirePage() {
     setLoading(false);
   }, [isDemo]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- loadData is an async fetch that sets state after await
   useEffect(() => { loadData(); }, [loadData]);
 
   // ── Build demo game_openings ───────────────────────────────────────────────
@@ -446,6 +471,7 @@ function RepertoirePage() {
         rep_hash: hash,
       };
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- demo data is computed synchronously from props
     setGameOpenings(gos);
   }, [isDemo, openings, lines, games]);
 
@@ -463,6 +489,7 @@ function RepertoirePage() {
     const idxW = buildIndex(openings, lines, 'w');
     const idxB = buildIndex(openings, lines, 'b');
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initializing progress UI state before async batch
     setChecking(true);
     setCheckTotal(toCheck.length);
     setCheckDone(0);
@@ -560,6 +587,7 @@ function RepertoirePage() {
   const openingMap = new Map(openings.map(o => [o.id, o.name]));
 
   // Filter game_openings
+  // eslint-disable-next-line react-hooks/purity -- Date.now() is intentional for a 30-day cutoff filter
   const cutoff = periodFilter === '30d' ? new Date(Date.now() - 30 * 86400_000).toISOString() : null;
   const gameById = new Map(games.map(g => [g.id, g]));
 
@@ -615,10 +643,13 @@ function RepertoirePage() {
 
   useEffect(() => {
     if (devGroups.length > 0 && selected === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-selecting first item when groups load
       setSelected({ type: 'dev', key: devGroups[0].key });
     } else if (devGroups.length === 0 && holeNormal.length > 0 && selected === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-selecting first item when groups load
       setSelected({ type: 'hole', key: holeNormal[0].key });
     } else if (devGroups.length === 0 && holeNormal.length === 0 && nolineGroups.length > 0 && selected === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-selecting first item when groups load
       setSelected({ type: 'noline', key: nolineGroups[0].key });
     }
   }, [devGroups.length, holeNormal.length, nolineGroups.length]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -770,11 +801,13 @@ function RepertoirePage() {
       : selNolineGroup
         ? fenAfterUci(selNolineGroup.fenBefore, selNolineGroup.playedUci)
         : null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetchLichess sets loading state before async fetch
     if (fenForFetch) fetchLichess(fenForFetch);
   }, [selHoleGroup, selNolineGroup, isDemo, fetchLichess]);
 
   // Update selected Lichess move when hole changes or data arrives
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- updating derived selection state from Lichess cache
     if (!selHoleGroup && !selNolineGroup) { setSelLichessMove(null); return; }
     const afterFen = selHoleGroup
       ? fenAfterUci(selHoleGroup.fenBefore, selHoleGroup.playedUci)
@@ -784,7 +817,9 @@ function RepertoirePage() {
     if (!afterFen) return;
     const key = posKey(afterFen);
     const lData = (isDemo ? (DEMO_LICHESS[key as keyof typeof DEMO_LICHESS] ?? null) : (lichessCache.get(key) ?? null)) as LichessData | null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- updating derived selection state from Lichess cache
     if (lData?.moves?.[0]) setSelLichessMove(lData.moves[0]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- updating derived selection state from Lichess cache
     else setSelLichessMove(null);
   }, [selHoleGroup, selNolineGroup, lichessCache, isDemo]);
 
@@ -804,6 +839,7 @@ function RepertoirePage() {
         const next = e.key === 'ArrowDown' ? idx + 1 : idx - 1;
         if (next >= 0 && next < allRows.length) setSelected(allRows[next]);
       } else if (e.key === 'Enter') {
+        // eslint-disable-next-line react-hooks/immutability -- handleMainAction is a function declaration and is hoisted
         handleMainAction();
       }
     }
@@ -991,23 +1027,6 @@ function RepertoirePage() {
   // ── UI pieces ──────────────────────────────────────────────────────────────
 
   const insight = buildInsight();
-
-  // Player bar
-  function PlayerBar({ label, bottom }: { label: string; bottom?: boolean }) {
-    const parts = label.split(' · ');
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 600 }}>
-        <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--surface2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 18 }}>{bottom ? (boardOrientation === 'white' ? '♙' : '♟') : (boardOrientation === 'white' ? '♟' : '♙')}</span>
-        </div>
-        <span>{parts[0]}</span>
-        {parts[1] && <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--muted)' }}>· {parts[1]}</span>}
-        {bottom && openingLabel && (
-          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--muted)', marginLeft: 'auto' }}>{openingLabel}</span>
-        )}
-      </div>
-    );
-  }
 
   // Result display for deviation row
   function ResultLabel({ losses, wins, draws, times }: { losses: number; wins: number; draws: number; times: number }) {
@@ -1442,7 +1461,7 @@ function RepertoirePage() {
       session={sessionPanel}
       topBar={
         <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', paddingRight: 8 }}>
-          <PlayerBar label={playerTopLabel || 'Соперник'} />
+          <PlayerBar label={playerTopLabel || 'Соперник'} boardOrientation={boardOrientation} openingLabel={openingLabel} />
           <div style={{ fontSize: 13, color: 'var(--muted)' }}>{posNote}</div>
         </div>
       }
@@ -1456,7 +1475,7 @@ function RepertoirePage() {
           interactive={false}
         />
       }
-      bottomBar={<PlayerBar label={playerBottomLabel || 'Ты'} bottom />}
+      bottomBar={<PlayerBar label={playerBottomLabel || 'Ты'} bottom boardOrientation={boardOrientation} openingLabel={openingLabel} />}
       panel={rightPanel}
       panelAttrs={panelAttrs}
     />

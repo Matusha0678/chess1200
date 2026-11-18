@@ -27,6 +27,142 @@ const COLOR_ICON: Record<'white' | 'black' | 'both', string> = {
   both: '♗',
 };
 
+interface ActionCardProps {
+  id: string;
+  linesDue: number;
+  lines: LineWithProgress[];
+  exportFlash: boolean;
+  confirmDelete: boolean;
+  deleting: boolean;
+  bestExam: { perfect: number; total: number; pct: number } | null;
+  onExportPgn: () => void;
+  onConfirmDelete: (v: boolean) => void;
+  onDelete: () => void;
+}
+
+function ActionCard({
+  id,
+  linesDue,
+  lines,
+  exportFlash,
+  confirmDelete,
+  deleting,
+  bestExam,
+  onExportPgn,
+  onConfirmDelete,
+  onDelete,
+}: ActionCardProps) {
+  return (
+    <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-3">
+      {linesDue > 0 && (
+        <div className="flex items-center justify-between bg-[#141414] border border-[#2A2A2A] rounded-[10px] px-4 py-3 mb-1">
+          <div className="flex items-center gap-2">
+            <span className="w-[6px] h-[6px] rounded-full bg-white shrink-0" />
+            <span className="text-[13px] text-[#E5E5E5] font-medium">
+              {linesDue} {linesDue === 1 ? 'линия' : linesDue <= 4 ? 'линии' : 'линий'} к повторению
+            </span>
+          </div>
+        </div>
+      )}
+
+      <Link
+        href={`/openings/${id}/practice`}
+        className="h-11 flex items-center justify-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[10px] px-6 text-[15px] font-semibold transition-colors no-underline"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polygon points="5 3 19 12 5 21 5 3" />
+        </svg>
+        Тренировка
+      </Link>
+
+      <Link
+        href={`/openings/${id}/study`}
+        className="h-10 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-[10px] px-6 text-[14px] font-medium transition-colors no-underline"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        Учёба
+      </Link>
+
+      <Link
+        href={`/openings/${id}/exam`}
+        className="h-10 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-[10px] px-6 text-[14px] font-medium transition-colors no-underline"
+      >
+        Экзамен {bestExam && bestExam.total > 0 ? <span className="text-[12px] text-[#A0A0A0] ml-1">Лучший: {bestExam.pct}%</span> : null}
+      </Link>
+
+      <div className="flex gap-2">
+        <Link
+          href={`/openings/${id}/stats`}
+          className="flex-1 h-9 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors no-underline"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Статистика
+        </Link>
+        <Link
+          href={`/openings/${id}/edit`}
+          className="flex-1 h-9 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors no-underline"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+          Изменить
+        </Link>
+      </div>
+
+      <button
+        onClick={onExportPgn}
+        disabled={lines.length === 0}
+        className={[
+          'h-9 w-full flex items-center justify-center gap-2 border rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer disabled:opacity-30',
+          exportFlash
+            ? 'border-[#505050] text-[#A0A0A0]'
+            : 'border-[#303030] text-[#606060] hover:border-[#505050] hover:text-[#A0A0A0]',
+        ].join(' ')}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        {exportFlash ? 'Скачано!' : 'Скачать PGN'}
+      </button>
+
+      {confirmDelete ? (
+        <div className="flex flex-col gap-2 pt-1">
+          <p className="text-[13px] text-[#A0A0A0] text-center">Удалить дебют и все линии?</p>
+          <div className="flex gap-2">
+            <button
+              onClick={onDelete}
+              disabled={deleting}
+              className="flex-1 h-9 border border-[#404040] text-[#A0A0A0] hover:bg-[#1A1A1A] rounded-full px-4 text-[13px] font-semibold transition-colors bg-transparent disabled:opacity-50 cursor-pointer"
+            >
+              {deleting ? 'Удаление...' : 'Да, удалить'}
+            </button>
+            <button
+              onClick={() => onConfirmDelete(false)}
+              className="flex-1 h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-4 text-[13px] transition-colors bg-transparent cursor-pointer"
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => onConfirmDelete(true)}
+          className="h-9 w-full border border-transparent text-[#505050] hover:border-[#404040] hover:text-[#A0A0A0] rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer"
+        >
+          Удалить дебют
+        </button>
+      )}
+    </div>
+  );
+}
+
 function masteryDots(mastery: number) {
   return Array.from({ length: 5 }, (_, i) => (
     <span
@@ -312,118 +448,18 @@ export default function OpeningDetailPage({ params }: Props) {
 
   const masteryPct = linesTotal > 0 ? Math.round((linesMastered / linesTotal) * 100) : 0;
 
-  /* Shared action card content — rendered twice (mobile inline, desktop sidebar) */
-  function ActionCard() {
-    return (
-      <div className="bg-[#0D0D0D] border border-[#262626] rounded-[20px] p-5 flex flex-col gap-3">
-        {linesDue > 0 && (
-          <div className="flex items-center justify-between bg-[#141414] border border-[#2A2A2A] rounded-[10px] px-4 py-3 mb-1">
-            <div className="flex items-center gap-2">
-              <span className="w-[6px] h-[6px] rounded-full bg-white shrink-0" />
-              <span className="text-[13px] text-[#E5E5E5] font-medium">
-                {linesDue} {linesDue === 1 ? 'линия' : linesDue <= 4 ? 'линии' : 'линий'} к повторению
-              </span>
-            </div>
-          </div>
-        )}
-
-        <Link
-          href={`/openings/${id}/practice`}
-          className="h-11 flex items-center justify-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[10px] px-6 text-[15px] font-semibold transition-colors no-underline"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <polygon points="5 3 19 12 5 21 5 3" />
-          </svg>
-          Тренировка
-        </Link>
-
-        <Link
-          href={`/openings/${id}/study`}
-          className="h-10 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-[10px] px-6 text-[14px] font-medium transition-colors no-underline"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-          </svg>
-          Учёба
-        </Link>
-
-        <Link
-          href={`/openings/${id}/exam`}
-          className="h-10 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-[10px] px-6 text-[14px] font-medium transition-colors no-underline"
-        >
-          Экзамен {bestExam && bestExam.total > 0 ? <span className="text-[12px] text-[#A0A0A0] ml-1">Лучший: {bestExam.pct}%</span> : null}
-        </Link>
-
-        <div className="flex gap-2">
-          <Link
-            href={`/openings/${id}/stats`}
-            className="flex-1 h-9 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors no-underline"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-            Статистика
-          </Link>
-          <Link
-            href={`/openings/${id}/edit`}
-            className="flex-1 h-9 flex items-center justify-center gap-2 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-5 text-[14px] transition-colors no-underline"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-            Изменить
-          </Link>
-        </div>
-
-        <button
-          onClick={handleExportPgn}
-          disabled={lines.length === 0}
-          className={[
-            'h-9 w-full flex items-center justify-center gap-2 border rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer disabled:opacity-30',
-            exportFlash
-              ? 'border-[#505050] text-[#A0A0A0]'
-              : 'border-[#303030] text-[#606060] hover:border-[#505050] hover:text-[#A0A0A0]',
-          ].join(' ')}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          {exportFlash ? 'Скачано!' : 'Скачать PGN'}
-        </button>
-
-        {confirmDelete ? (
-          <div className="flex flex-col gap-2 pt-1">
-            <p className="text-[13px] text-[#A0A0A0] text-center">Удалить дебют и все линии?</p>
-            <div className="flex gap-2">
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex-1 h-9 border border-[#404040] text-[#A0A0A0] hover:bg-[#1A1A1A] rounded-full px-4 text-[13px] font-semibold transition-colors bg-transparent disabled:opacity-50 cursor-pointer"
-              >
-                {deleting ? 'Удаление...' : 'Да, удалить'}
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="flex-1 h-9 border border-[#303030] text-[#E5E5E5] hover:border-[#FFFFFF] rounded-full px-4 text-[13px] transition-colors bg-transparent cursor-pointer"
-              >
-                Отмена
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setConfirmDelete(true)}
-            className="h-9 w-full border border-transparent text-[#505050] hover:border-[#404040] hover:text-[#A0A0A0] rounded-full px-5 text-[13px] transition-colors bg-transparent cursor-pointer"
-          >
-            Удалить дебют
-          </button>
-        )}
-      </div>
-    );
-  }
+  const actionCardProps: ActionCardProps = {
+    id,
+    linesDue,
+    lines,
+    exportFlash,
+    confirmDelete,
+    deleting,
+    bestExam,
+    onExportPgn: handleExportPgn,
+    onConfirmDelete: setConfirmDelete,
+    onDelete: handleDelete,
+  };
 
   return (
     <div className="page">
@@ -482,7 +518,7 @@ export default function OpeningDetailPage({ params }: Props) {
 
           {/* Action card — mobile only */}
           <div className="lg:hidden">
-            <ActionCard />
+            <ActionCard {...actionCardProps} />
           </div>
 
           {/* Stats — 2 rows of 3 */}
@@ -723,7 +759,7 @@ export default function OpeningDetailPage({ params }: Props) {
 
         {/* ── Right: sticky action sidebar (desktop only) ─────────────────── */}
         <div className="hidden lg:block w-[270px] shrink-0 sticky top-5">
-          <ActionCard />
+          <ActionCard {...actionCardProps} />
         </div>
 
       </div>

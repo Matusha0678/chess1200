@@ -89,6 +89,13 @@ assert('last move exd4', moves[5] === 'exd4');
 const fenPgn = `[FEN "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4"]\n\n1. d3 1-0`;
 assert('FEN header → []', parsePgnMoves(fenPgn).length === 0);
 
+// chess.com format with %clk and %eval annotations
+const chesscomPgn = `[Event "Live Chess"]\n[TimeControl "600"]\n\n1. e4 {[%eval 0.21] [%clk 0:09:58]} 1... c5 {[%eval 0.35] [%clk 0:09:55]} 2. Nf3 {[%eval 0.28] [%clk 0:09:50]} 2... Nc6 {[%eval 0.30] [%clk 0:09:45]} *`;
+const chesscomMoves = parsePgnMoves(chesscomPgn);
+assert('chess.com annotations: 4 moves', chesscomMoves.length === 4);
+assert('chess.com first move e4', chesscomMoves[0] === 'e4');
+assert('chess.com last move Nc6', chesscomMoves[3] === 'Nc6');
+
 // ── 8. g6 hole first=true ────────────────────────────────────────────────────
 console.log('\n8. g6 hole first=true');
 const r6 = checkGameFull(DEMO_GAMES[5].moves.split(' '), DEMO_GAMES[5].color, idx[DEMO_GAMES[5].color]);
