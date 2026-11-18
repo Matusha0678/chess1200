@@ -430,14 +430,31 @@ export default function MistakesPage() {
     }
   }
 
-  // arrows: show answer arrow
   const arrows: BoardArrow[] = [];
+  // Before answer: hint/show arrow
   if (!answered && showAnswer && card && card.best_move?.length >= 4) {
     arrows.push({
       from: card.best_move.slice(0, 2) as Square,
       to: card.best_move.slice(2, 4) as Square,
       color: '#81B64C',
     });
+  }
+  // After answer: show user's move + best move arrows
+  if (answered && card) {
+    try {
+      const mv = new Chess(card.fen_before).move(answered.userSan);
+      if (mv) {
+        const isCorrect = answered.correct;
+        arrows.push({ from: mv.from as Square, to: mv.to as Square, color: isCorrect ? '#81B64C' : '#E0574A' });
+      }
+    } catch { /* ignore */ }
+    if (!answered.correct && card.best_move?.length >= 4) {
+      arrows.push({
+        from: card.best_move.slice(0, 2) as Square,
+        to: card.best_move.slice(2, 4) as Square,
+        color: '#81B64C',
+      });
+    }
   }
 
   let userMoveToSq: string | null = null;
