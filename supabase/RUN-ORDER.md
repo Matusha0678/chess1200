@@ -36,3 +36,5 @@
 | 28-sac-v2.sql | version/sac_type/piece/material_given/king_attack/mate_in/score/accepted_pv/pattern/is_decoy в sac_positions; sac_version в master_games |
 | 29-threat-positions.sql | threat_positions — подготовленные позиции для «Проверки угроз» |
 | 30-game-openings.sql | game_openings — проверка дебютов в партиях |
+| 31-game-insights.sql | game_insights — анализ «Где я теряю очки» и «Дожми партию» |
+| 32-puzzles.sql | puzzles, puzzle_sets, puzzle_attempts — тактика и расчёт вслепую |

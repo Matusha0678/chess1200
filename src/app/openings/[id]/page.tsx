@@ -67,7 +67,7 @@ function ActionCard({
 
       <Link
         href={`/openings/${id}/practice`}
-        className="h-11 flex items-center justify-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[10px] px-6 text-[15px] font-semibold transition-colors no-underline"
+        style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'var(--accent)', color: '#fff', borderRadius: 10, padding: '0 24px', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <polygon points="5 3 19 12 5 21 5 3" />
@@ -506,10 +506,9 @@ export default function OpeningDetailPage({ params }: Props) {
                   <span className="text-[12px] text-[#606060]">Освоено {linesMastered} из {linesTotal}</span>
                   <span className="text-[12px] font-semibold text-[#808080]">{masteryPct}%</span>
                 </div>
-                <div className="h-[3px] bg-[#1E1E1E] rounded-full overflow-hidden">
+                <div style={{ height: 3, background: 'var(--hairline)', borderRadius: 2, overflow: 'hidden' }}>
                   <div
-                    className="h-full bg-white rounded-full transition-all duration-500"
-                    style={{ width: `${masteryPct}%` }}
+                    style={{ height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 0.5s', width: `${masteryPct}%` }}
                   />
                 </div>
               </div>
@@ -736,7 +735,7 @@ export default function OpeningDetailPage({ params }: Props) {
                   <button
                     onClick={handleAddLines}
                     disabled={addingLine || !addLinePgn.trim()}
-                    className="h-9 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[13px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    style={{ height: 36, background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 18, padding: '0 20px', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', opacity: addingLine || !addLinePgn.trim() ? 0.4 : 1 }}
                   >
                     {addingLine ? 'Добавление...' : 'Добавить'}
                   </button>

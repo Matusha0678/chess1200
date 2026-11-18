@@ -942,7 +942,7 @@ function PlayContent() {
                 borderRadius: 'var(--radius-btn)',
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 4px',
               }}
-            >{p.label}</button>
+            >{p.skill}</button>
           ))}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>

@@ -574,7 +574,7 @@ export default function PracticePage({ params }: Props) {
           <div className="flex gap-3">
             <Link
               href="/"
-              className="h-11 flex items-center bg-white text-[#050505] hover:bg-[#ECECEC] rounded-full px-7 text-[14px] font-semibold transition-colors no-underline"
+              style={{ height: 44, display: 'flex', alignItems: 'center', background: 'var(--accent)', color: '#fff', borderRadius: 22, padding: '0 28px', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}
             >
               На главную
             </Link>
@@ -735,10 +735,9 @@ export default function PracticePage({ params }: Props) {
                       <span style={{ color: 'var(--muted)' }}>Прогресс сессии</span>
                       <span className="font-semibold tabular-nums" style={{ color: 'var(--ivory)' }}>{done} / {sessionTotal}</span>
                     </div>
-                    <div className="h-[3px] rounded-full overflow-hidden" style={{ background: 'var(--surface2, #1A1A1A)' }}>
+                    <div style={{ height: 3, borderRadius: 2, overflow: 'hidden', background: 'var(--hairline)' }}>
                       <div
-                        className="h-full bg-white rounded-full transition-all duration-500"
-                        style={{ width: `${pct}%` }}
+                        style={{ height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 0.5s', width: `${pct}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
