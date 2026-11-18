@@ -29,20 +29,24 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'ТРЕНИРОВАТЬСЯ',
     items: [
-      { label: 'Ошибки',         href: '/mistakes',      icon: 'mistakes'  },
-      { label: 'Проверка угроз', href: '/threats',       icon: 'threats'   },
-      { label: 'Эндшпили',       href: '/endgames',      icon: 'endgames'  },
-      { label: 'Жертвы',         href: '/sac',           icon: 'sac'       },
-      { label: 'Угадай дебют',   href: '/guess-opening', icon: 'guess'     },
-      { label: 'Играть',         href: '/play',          icon: 'play'      },
+      { label: 'Тактика',          href: '/tactics',       icon: 'zap'       },
+      { label: 'Расчёт вслепую',   href: '/blind',         icon: 'eye'       },
+      { label: 'Ошибки',           href: '/mistakes',      icon: 'mistakes'  },
+      { label: 'Проверка угроз',   href: '/threats',       icon: 'threats'   },
+      { label: 'Эндшпили',         href: '/endgames',      icon: 'endgames'  },
+      { label: 'Дожми партию',     href: '/convert',       icon: 'target'    },
+      { label: 'Жертвы',           href: '/sac',           icon: 'sac'       },
+      { label: 'Угадай дебют',     href: '/guess-opening', icon: 'guess'     },
+      { label: 'Играть',           href: '/play',          icon: 'play'      },
     ],
   },
   {
     label: 'ПАРТИИ',
     items: [
-      { label: 'Мои партии',        href: '/games',      icon: 'games'      },
-      { label: 'Дебюты в партиях', href: '/repertoire', icon: 'repertoire' },
-      { label: 'Мастера',          href: '/masters',    icon: 'masters'    },
+      { label: 'Мои партии',           href: '/games',      icon: 'games'      },
+      { label: 'Дебюты в партиях',     href: '/repertoire', icon: 'repertoire' },
+      { label: 'Где я теряю очки',     href: '/stats',      icon: 'stats'      },
+      { label: 'Мастера',              href: '/masters',    icon: 'masters'    },
     ],
   },
 ];

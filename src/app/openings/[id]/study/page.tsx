@@ -241,8 +241,8 @@ export default function StudyPage({ params }: Props) {
   if (allDone) {
     return (
       <div className="max-w-[1600px] mx-auto px-6 pt-10 pb-16 flex flex-col items-center justify-center min-h-[60vh] gap-8 text-center">
-        <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#050505" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12.5l4.5 4.5L19 7.5" />
           </svg>
         </div>
@@ -254,7 +254,7 @@ export default function StudyPage({ params }: Props) {
         </div>
         <div className="flex flex-wrap gap-3 justify-center">
           <Link href={`/openings/${id}/practice`}
-            className="h-11 px-8 bg-white text-[#050505] rounded-[10px] text-[15px] font-semibold no-underline flex items-center hover:bg-[#F0F0F0] transition-colors">
+            style={{ height: 44, padding: '0 32px', background: 'var(--accent)', color: '#fff', borderRadius: 10, fontSize: 15, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             Перейти к тренировке →
           </Link>
           <button onClick={() => { setAllDone(false); resetBoard(0); }}
@@ -331,8 +331,8 @@ export default function StudyPage({ params }: Props) {
                   <div className="flex items-center gap-2 mb-[2px]">
                     <span className="text-[11px] font-mono" style={{ color: 'var(--muted)' }}>{String(i + 1).padStart(2, '0')}</span>
                     {isStudied && (
-                      <span className="w-4 h-4 rounded-full bg-white flex items-center justify-center shrink-0">
-                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#050505" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <span style={{ width: 16, height: 16, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M5 12.5l4.5 4.5L19 7.5" />
                         </svg>
                       </span>
@@ -370,6 +370,7 @@ export default function StudyPage({ params }: Props) {
                 boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
                 darkSquareStyle: { backgroundColor: boardTheme.dark },
                 lightSquareStyle: { backgroundColor: boardTheme.light },
+                pieces: customPieces,
               }}
             />
           </div>
@@ -392,12 +393,12 @@ export default function StudyPage({ params }: Props) {
 
             {!lineDone ? (
               <button onClick={handleNext}
-                className="h-9 px-5 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[8px] text-[13px] font-semibold cursor-pointer transition-colors">
+                style={{ height: 36, padding: '0 20px', background: 'var(--accent)', color: '#fff', border: '1px solid var(--accent)', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>
                 Следующий ход →
               </button>
             ) : (
               <button onClick={handleNext}
-                className="h-9 px-5 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[8px] text-[13px] font-semibold cursor-pointer transition-colors">
+                style={{ height: 36, padding: '0 20px', background: 'var(--accent)', color: '#fff', border: '1px solid var(--accent)', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>
                 {currentLineIndex < allLines.length - 1 ? 'Следующая линия →' : 'Завершить →'}
               </button>
             )}
@@ -489,10 +490,9 @@ export default function StudyPage({ params }: Props) {
           {/* Progress bar for this line */}
           {currentLine && currentLine.moves.length > 0 && (
             <div className="px-4 pb-4">
-              <div className="h-[3px] w-full rounded-full overflow-hidden" style={{ background: 'var(--surface2, #1E1E1E)' }}>
+              <div style={{ height: 3, width: '100%', borderRadius: 2, overflow: 'hidden', background: 'var(--hairline)' }}>
                 <div
-                  className="h-full bg-white rounded-full transition-all duration-300"
-                  style={{ width: `${(currentMoveIndex / currentLine.moves.length) * 100}%` }}
+                  style={{ height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 0.3s', width: `${(currentMoveIndex / currentLine.moves.length) * 100}%` }}
                 />
               </div>
             </div>
