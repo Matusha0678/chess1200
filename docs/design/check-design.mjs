@@ -8,12 +8,14 @@
 // Версия 3.3: «Жертвы» — ответ (pages/sac/FIX-ANSWER.md): оба ответа «1» и «2», позиция после жертвы на доске,
 //             значок на фигуре жертвующей стороны, 4 заголовка, ходы только в SAN, просмотр варианта по ходам.
 // Версия 3.4: + проигрывание варианта по кнопке ▶ (ходы идут по очереди, а не прыжком в конец).
+// Версия 3.5: + /repertoire «Дебюты в партиях» (pages/repertoire/REPERTOIRE.md): структура и демо ?demo=1.
 //
 // Запуск (dev-сервер должен работать):
 //   node docs/design/check-design.mjs                                  # http://localhost:3001, все тренажёры + ответы
 //   node docs/design/check-design.mjs http://localhost:3001 /mistakes /threats /sac
 //   node docs/design/check-design.mjs --answers-only                   # только ответы (быстро)
 //   node docs/design/check-design.mjs http://localhost:3001 /endgames --no-answers   # одна страница, без ответов
+//   node docs/design/check-design.mjs http://localhost:3001 /repertoire               # страница + её демо
 //
 // Скриншоты: docs/design/shots/<окно>/<страница>.png
 // Код выхода: 0 — всё хорошо, 1 — есть ошибки.
@@ -27,8 +29,9 @@ const ANSWERS_ONLY = rawArgs.includes('--answers-only');
 const NO_ANSWERS = rawArgs.includes('--no-answers');
 const args = rawArgs.filter(a => a !== '--answers-only' && a !== '--no-answers');
 const base = args[0] && /^(https?|file):/.test(args[0]) ? args.shift().replace(/\/$/, '') : 'http://localhost:3001';
+const EXPLICIT = args.length > 0;   // страницы указаны — ответы проверяем только для них
 const PAGES = args.length ? args : [
-  '/mistakes', '/threats', '/sac', '/play', '/endgames', '/guess-opening', '/traps',
+  '/mistakes', '/threats', '/sac', '/play', '/repertoire', '/endgames', '/guess-opening', '/traps',
   '/plans', '/evaluate', '/warmup', '/openings/random',
 ];
 const SIZES = [
@@ -37,12 +40,13 @@ const SIZES = [
 ];
 
 // Страницы, у которых проверяется структура (метки data-ui). Остальные — только техника.
-const STRUCTURE = ['/mistakes', '/threats', '/sac', '/play'];
+const STRUCTURE = ['/mistakes', '/threats', '/sac', '/play', '/repertoire'];
 const COMMON_UI = ['player-top', 'player-bottom', 'panel', 'panel-header', 'panel-title', 'panel-actions'];
 const SESSION_UI = ['session', 'session-stats', 'session-list'];
 // «a|b» — достаточно любой из меток (разные состояния страницы)
 const PAGE_UI = {
   '/play': ['play-moves', 'play-coach|play-review'],
+  '/repertoire': ['rep-opening|rep-empty', 'rep-insight|rep-empty'],
   '/threats': ['threat-task|threat-card', 'threat-rules|threat-marks', 'threat-marked|threat-defense'],
   '/sac': [
     'sac-offer|sac-feedback|sac-empty|sac-prep-progress',
@@ -134,6 +138,21 @@ const sacFlow = (demo, key) => {
 };
 const ANSWER_FLOWS = [
   sacFlow('works', '1'), sacFlow('works', '2'), sacFlow('fails', '1'), sacFlow('fails', '2'),
+  // v3.5: «Дебюты в партиях», демо (REPERTOIRE.md, раздел 10)
+  { url: '/repertoire?demo=1', demo: 'repertoire', name: 'repertoire_demo', wait: 'rep-deviations', title: 'демо',
+    answer: async () => {},
+    expect: {
+      fen: 'r1bqk1nr/pppp1ppp/2n5/2b5/3NP3/8/PPP2PPP/RNBQKB1R', noBadges: true, noUci: true,
+      roles: { played: 1, best: 1 },
+      ui: ['session', 'session-stats', 'session-list', 'rep-opening', 'rep-insight', 'rep-deviations', 'rep-holes', 'rep-nolines', 'rep-repeat'],
+      text: { 'rep-dev': ['Nf5', 'Nxc6', '2 раза'], 'rep-insight': ['Главное', 'Nf5'], 'rep-hole': ['Qh4'], 'rep-nolines': ['d4'] },
+      textRe: { 'session-stats': /2[^0-9]*по линии[^0-9]*3[^0-9]*отклонил[^0-9]*2[^0-9]*дыр/ },
+    },
+    steps: [
+      { click: '[data-ui="rep-hole"]', shot: 'hole', fen: 'r1b1kbnr/pppp1ppp/2n5/8/3NP2q/8/PPP2PPP/RNBQKB1R', roles: { best: 1 }, noBadges: true, noUci: true,
+        ui: ['rep-explorer', 'rep-add'], text: { 'rep-explorer': ['Nc3'], 'rep-add': ['Nc3'] } },
+      { click: '[data-ui="rep-nolines"]', shot: 'nolines', fen: 'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR', noBadges: true },
+    ] },
   { url: '/threats?demo=fork', demo: 'fork', name: 'threats_demo_fork', wait: 'threat-card',
     answer: async page => { await clickSquare(page, 'c7'); await clickSquare(page, 'f3'); await page.keyboard.press('Enter'); },
     expect: {
@@ -185,6 +204,9 @@ function checkOverlay(o, ex, errors, pre) {
   }
   for (const [k, v] of Object.entries(ex.result || {})) if (k in o.res && o.res[k] !== v) errors.push(`${pre}data-ui="${k}": data-result="${o.res[k]}", нужно "${v}"`);
   // v3.3
+  for (const [k, re] of Object.entries(ex.textRe || {})) {
+    if (k in o.ui && !re.test(o.ui[k].replace(/\s+/g, ' '))) errors.push(`${pre}в data-ui="${k}" текст не такой: «${o.ui[k].replace(/\s+/g, ' ').slice(0, 80)}»`);
+  }
   for (const [k, words] of Object.entries(ex.textNot || {})) {
     for (const w of words) if (k in o.ui && o.ui[k].includes(w)) errors.push(`${pre}в data-ui="${k}" лишний текст «${w}»`);
   }
@@ -209,7 +231,7 @@ function checkOverlay(o, ex, errors, pre) {
   }
   if (ex.noUci) {
     const m = o.panelText.match(/(^|[^a-z0-9])([a-h][1-8][a-h][1-8][qrbn]?)(?![a-z0-9])/);
-    if (m) errors.push(`${pre}в панели ход в формате UCI «${m[2]}» — нужен SAN (FIX-ANSWER.md, раздел 3)`);
+    if (m) errors.push(`${pre}в панели ход в формате UCI «${m[2]}» — нужен SAN`);
   }
 }
 
@@ -400,8 +422,8 @@ try {
   // ── v3: ответы на демо-позициях и объяснения на доске ───────────────────
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 950 } });
   const page = await ctx.newPage();
-  for (const flow of (NO_ANSWERS ? [] : ANSWER_FLOWS)) {
-    const label = `1920×950 ${flow.url} → ответ${flow.key ? ` «${flow.key}»` : ''}`;
+  for (const flow of (NO_ANSWERS ? [] : ANSWER_FLOWS.filter(f => !EXPLICIT || PAGES.includes(pathOf(f.url))))) {
+    const label = `1920×950 ${flow.url} → ${flow.title || 'ответ'}${flow.key ? ` «${flow.key}»` : ''}`;
     const errors = [];
     try {
       await page.goto(base + flow.url, { waitUntil: 'networkidle', timeout: 30000 }).catch(() => page.goto(base + flow.url, { waitUntil: 'load', timeout: 30000 }));
@@ -500,7 +522,7 @@ for (const [w, map] of Object.entries(colorsBySize)) {
 }
 
 let fails = 0;
-console.log('\nПроверка дизайна тренажёров (v3.4)\n');
+console.log('\nПроверка дизайна тренажёров (v3.5)\n');
 for (const r of report) {
   if (r.errors.length) {
     fails++;

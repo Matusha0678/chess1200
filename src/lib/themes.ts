@@ -81,5 +81,8 @@ export const SITE_THEMES: SiteTheme[] = [
   { id: 'amber',    name: 'Янтарь',     bg: '#0A0804', card: '#15110A' },
   { id: 'copper',   name: 'Медь',       bg: '#090601', card: '#130E04' },
   { id: 'slate',    name: 'Сланец',     bg: '#06080C', card: '#0D1018' },
-  { id: 'light',    name: 'Светлый',    bg: '#F8F8F8', card: '#FFFFFF' },
+  { id: 'teal',    name: 'Бирюза',     bg: '#020B0C', card: '#061517' },
+  { id: 'wine',    name: 'Вино',       bg: '#09020A', card: '#120413' },
+  { id: 'jade',    name: 'Нефрит',     bg: '#030809', card: '#071314' },
+  { id: 'light',   name: 'Светлый',    bg: '#F8F8F8', card: '#FFFFFF' },
 ];

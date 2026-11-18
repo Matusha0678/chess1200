@@ -352,7 +352,7 @@ if (!OVER) {
 } else {
   // позиция перед 5. Nxf7?? (после 4...Qg5)
   drawBoard('r1b1kbnr/pppp1ppp/8/4N1q1/2BnP3/8/PPPP1PPP/RNBQK2R', { d8: 'rgba(247,214,74,.30)', g5: 'rgba(247,214,74,.42)' });
-  const over = `<svg width="774" height="774" style="position:absolute;inset:0">${arrow('e5', 'f7', '#E0574A', .85)}${dashed('c4', 'f7', '#81B64C')}</svg>` + badgeAt('f7', icon('blunder', 36));
+  const over = `<svg width="774" height="774" style="position:absolute;inset:0">${arrow('e5', 'f7', '#E0574A', .85)}${dashed('c4', 'f7', '#81B64C')}</svg>`;   // позиция до хода — без значка (REPERTOIRE.md, раздел 0)
   document.getElementById('over').innerHTML = over;
   setEval(-0.8);
   document.getElementById('capBot').innerHTML = capHTML(['bP'], '+1');

@@ -13,6 +13,7 @@ import type { MistakeCard } from '@/lib/mistakes';
 import { TAG_LABEL } from '@/lib/mistakes';
 import { CLASS_LABEL, CLASS_COLOR, type MoveClass } from '@/lib/classify';
 import { ClassIcon } from '@/components/ClassIcon';
+import { checkGameFull, buildIndex, parsePgnMoves, repHash, type Opening, type OpeningLine, type CheckResult } from '@/lib/repertoire';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -275,6 +276,7 @@ export default function GameViewerPage({ params }: Props) {
   const [analysis,     setAnalysis]    = useState<Map<string, AnalysisInfo>>(new Map());
   const [loading,      setLoading]     = useState(true);
   const [courseMatch,  setCourseMatch] = useState<CourseMatch | null>(null);
+  const [repLine,      setRepLine]     = useState<{ result: CheckResult; openingName: string | null } | null>(null);
   const [selectedPly,  setSelectedPly] = useState<number | null>(null);
   const [orientation,  setOrientation] = useState<'white' | 'black'>('white');
   const [boardPx,      setBoardPx]     = useState(360);
@@ -394,6 +396,73 @@ export default function GameViewerPage({ params }: Props) {
         bestMatch = { courseId: lesson.course_id, courseName: course.name, lessonId: lesson.id, lessonTitle: lesson.title, deviationPly, gameMove, courseMove, whoDeviated };
       }
       setCourseMatch(bestMatch);
+    } catch { /* ignore */ }
+
+    // ── Repertoire line check ─────────────────────────────────────────────────
+    try {
+      const myC: 'w' | 'b' = g.color === 'white' ? 'w' : 'b';
+      const { data: goRow } = await supabase
+        .from('game_openings')
+        .select('*, opening:openings(name)')
+        .eq('game_id', id)
+        .maybeSingle();
+      if (goRow) {
+        const openingName = (goRow.opening as { name: string } | null)?.name ?? null;
+        setRepLine({
+          result: {
+            status: goRow.status,
+            ply: goRow.ply,
+            moveNumber: goRow.move_number,
+            color: goRow.color,
+            fenBefore: goRow.fen_before,
+            played: goRow.played,
+            playedUci: goRow.played_uci,
+            prevUci: goRow.prev_uci,
+            expected: goRow.expected,
+            expectedUci: goRow.expected_uci,
+            openingId: goRow.opening_id,
+            lineIds: goRow.line_ids ?? [],
+            bookPlies: goRow.book_plies,
+            first: goRow.first,
+          },
+          openingName,
+        });
+      } else {
+        const [{ data: ops }, { data: lns }] = await Promise.all([
+          supabase.from('openings').select('id, name, color'),
+          supabase.from('opening_lines').select('id, opening_id, moves'),
+        ]);
+        if (ops && lns) {
+          const openings = ops as Opening[];
+          const lines = lns as OpeningLine[];
+          const hash = repHash(openings, lines);
+          const idx = buildIndex(openings, lines, myC);
+          const pgnMoves = parsePgnMoves(g.pgn ?? '');
+          const result = checkGameFull(pgnMoves, myC, idx);
+          const openingName = result.openingId
+            ? (openings.find(o => o.id === result.openingId)?.name ?? null)
+            : null;
+          setRepLine({ result, openingName });
+          void supabase.from('game_openings').upsert({
+            game_id: id,
+            status: result.status,
+            ply: result.ply,
+            move_number: result.moveNumber,
+            color: result.color,
+            fen_before: result.fenBefore,
+            played: result.played,
+            played_uci: result.playedUci,
+            prev_uci: result.prevUci,
+            expected: result.expected,
+            expected_uci: result.expectedUci,
+            opening_id: result.openingId,
+            line_ids: result.lineIds,
+            book_plies: result.bookPlies,
+            first: result.first,
+            rep_hash: hash,
+          });
+        }
+      }
     } catch { /* ignore */ }
 
     setLoading(false);
@@ -611,6 +680,55 @@ export default function GameViewerPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Rep line */}
+      {repLine && repLine.result.status !== 'none' && (
+        <div
+          data-ui="rep-line"
+          style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', paddingTop: 4 }}
+        >
+          {repLine.result.status === 'in_line' && (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                <polyline points="9 11 11 13 15 9"/>
+              </svg>
+              <span style={{ color: 'var(--accent)' }}>
+                {repLine.openingName ? `«${repLine.openingName}»` : 'Дебют'} — по твоей линии {repLine.result.bookPlies} ходов
+              </span>
+            </>
+          )}
+          {repLine.result.status === 'deviation' && (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--control)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+              </svg>
+              <span style={{ color: 'var(--muted)' }}>
+                {repLine.openingName ? `«${repLine.openingName}»` : 'Дебют'} — отошёл от линии на {repLine.result.moveNumber}-м ходу:{' '}
+                <code style={{ color: 'var(--control)' }}>{repLine.result.played}</code> вместо{' '}
+                <code style={{ color: 'var(--accent)' }}>{repLine.result.expected?.[0]}</code>
+              </span>
+              <Link href={`/repertoire?game=${id}`} style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: 13 }}>Разобрать →</Link>
+            </>
+          )}
+          {repLine.result.status === 'hole' && (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                <circle cx="12" cy="11" r="2"/>
+              </svg>
+              <span style={{ color: 'var(--muted)' }}>
+                {repLine.openingName ? `«${repLine.openingName}»` : 'Дебют'} — соперник ушёл из линии на {repLine.result.moveNumber}-м ходу ({repLine.result.played})
+              </span>
+              <Link href={`/repertoire?game=${id}`} style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: 13 }}>Что отвечать →</Link>
+            </>
+          )}
+          {repLine.result.status === 'other' && (
+            <span style={{ color: 'var(--muted)' }}>Дебют не из твоих</span>
+          )}
+        </div>
+      )}
 
       {/* Analyze banner */}
       {!hasAnalysis && (
