@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Chess } from 'chess.js';
 import type { Square } from 'chess.js';
-import type { PieceDropHandlerArgs, Arrow } from 'react-chessboard';
 import { ClassIcon } from '@/components/ClassIcon';
+import type { BoardArrow, BadgeKind } from '@/components/board/Board';
 import type { MoveClass } from '@/lib/classify';
 import { supabase } from '@/lib/supabase';
 import { useStockfish } from '@/hooks/useStockfish';
+import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
 import { Board } from '@/components/board/Board';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
+import { Dropdown } from '@/components/ui/Dropdown';
 import {
   type MistakeCard, type MistakeTag, type GamePhase,
   TAG_LABEL, PHASE_LABEL, nextReviewDate,
@@ -104,39 +106,15 @@ const TAG_RULE: Record<string, string> = {
   deviation:      'Выучи линию точно: каждое отклонение даёт сопернику преимущество.',
 };
 
-// ── Styled select ─────────────────────────────────────────────────────────────
-
-function StyledSelect({ value, onChange, children }: {
-  value: string;
-  onChange: (v: string) => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div style={{ position: 'relative', flex: 1 }}>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        style={{
-          width: '100%', height: 38, borderRadius: 'var(--radius-btn)',
-          background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)',
-          color: 'var(--ivory)', fontSize: 14, padding: '0 32px 0 12px',
-          appearance: 'none', WebkitAppearance: 'none', cursor: 'pointer',
-          fontFamily: 'inherit', outline: 'none',
-        }}
-      >
-        {children}
-      </select>
-      {/* chevron */}
-      <svg
-        viewBox="0 0 24 24" width={14} height={14}
-        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted)' }}
-        fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-      >
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
-    </div>
-  );
-}
+// TAG_OPTIONS and PHASE_OPTIONS for Dropdown
+const TAG_OPTIONS = [
+  { value: '', label: 'Все типы' },
+  ...Object.entries(TAG_LABEL).map(([k, v]) => ({ value: k, label: v })),
+];
+const PHASE_OPTIONS = [
+  { value: '', label: 'Все фазы' },
+  ...Object.entries(PHASE_LABEL).map(([k, v]) => ({ value: k, label: v })),
+];
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -158,6 +136,7 @@ export default function MistakesPage() {
   const [showAnswer, setShowAnswer] = useState(false);
 
   const { getMultiPV, evalPosition, setSkillLevel, isReady } = useStockfish();
+  const { S } = useTrainerGeometry();
   const cardLinesRef = useRef<ComputedLine[] | null>(null);
 
   // load player username once
@@ -327,17 +306,16 @@ export default function MistakesPage() {
     if (cards[next]) setCurrentFen(cards[next].fen_before);
   }
 
-  function handlePieceDrop({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean {
+  function handleMove({ from, to, promotion }: { from: Square; to: Square; promotion?: 'q' | 'r' | 'b' | 'n' }): boolean {
     if (!card || answered || checking) return false;
-    if (!targetSquare) return false;
     const chess = new Chess(card.fen_before);
     let moveResult;
-    try { moveResult = chess.move({ from: sourceSquare as Square, to: targetSquare as Square }); }
+    try { moveResult = chess.move({ from, to, promotion }); }
     catch { return false; }
     if (!moveResult) return false;
 
     const userSan = moveResult.san;
-    const userUci = sourceSquare + targetSquare + (moveResult.promotion ?? '');
+    const userUci = from + to + (moveResult.promotion ?? '');
     const newFen = chess.fen();
     setCurrentFen(newFen);
 
@@ -424,40 +402,40 @@ export default function MistakesPage() {
     ? (card.fen_before.split(' ')[1] === 'w' ? 'white' : 'black')
     : 'white';
 
-  const squareStyles: Record<string, React.CSSProperties> = {};
+  const tints: Partial<Record<Square, string>> = {};
 
   if (answered && card) {
     try {
       const chess = new Chess(card.fen_before);
       const mv = chess.move(answered.userSan);
       if (mv) {
-        squareStyles[mv.from] = { background: 'rgba(230,160,60,0.6)' };
-        squareStyles[mv.to] = { background: 'rgba(230,160,60,0.6)' };
+        tints[mv.from as Square] = 'rgba(230,160,60,0.6)';
+        tints[mv.to as Square] = 'rgba(230,160,60,0.6)';
       }
     } catch { /* ignore */ }
     if (card.best_move?.length >= 4) {
-      squareStyles[card.best_move.slice(0, 2)] = { background: 'rgba(100,200,120,0.55)' };
-      squareStyles[card.best_move.slice(2, 4)] = { background: 'rgba(60,180,90,0.75)' };
+      tints[card.best_move.slice(0, 2) as Square] = 'rgba(100,200,120,0.55)';
+      tints[card.best_move.slice(2, 4) as Square] = 'rgba(60,180,90,0.75)';
     }
   }
 
   // hint / show answer highlights
   if (!answered && card && card.best_move?.length >= 4) {
-    const fromSq = card.best_move.slice(0, 2);
-    const toSq = card.best_move.slice(2, 4);
-    if (showHint) squareStyles[fromSq] = { background: 'rgba(129,182,76,0.38)' };
+    const fromSq = card.best_move.slice(0, 2) as Square;
+    const toSq = card.best_move.slice(2, 4) as Square;
+    if (showHint) tints[fromSq] = 'rgba(129,182,76,0.38)';
     if (showAnswer) {
-      squareStyles[fromSq] = { background: 'rgba(129,182,76,0.45)' };
-      squareStyles[toSq] = { background: 'rgba(129,182,76,0.6)' };
+      tints[fromSq] = 'rgba(129,182,76,0.45)';
+      tints[toSq] = 'rgba(129,182,76,0.6)';
     }
   }
 
   // arrows: show answer arrow
-  const arrows: Arrow[] = [];
+  const arrows: BoardArrow[] = [];
   if (!answered && showAnswer && card && card.best_move?.length >= 4) {
     arrows.push({
-      startSquare: card.best_move.slice(0, 2),
-      endSquare: card.best_move.slice(2, 4),
+      from: card.best_move.slice(0, 2) as Square,
+      to: card.best_move.slice(2, 4) as Square,
       color: '#81B64C',
     });
   }
@@ -479,19 +457,9 @@ export default function MistakesPage() {
     }
   }
 
-  const overlays: Record<string, React.ReactNode> = {};
-  const ICON_OVERLAY = (cls: MoveClass) => (
-    <div aria-hidden="true" style={{
-      position: 'absolute', top: 2, left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 10, pointerEvents: 'none',
-      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
-    }}>
-      <ClassIcon cls={cls} size={30} />
-    </div>
-  );
-  if (answered && userMoveToSq) overlays[userMoveToSq] = ICON_OVERLAY(userMoveCls ?? 'blunder');
-  if (answered && !answered.correct && bestMoveToSq) overlays[bestMoveToSq] = ICON_OVERLAY('best');
+  const badges: Partial<Record<Square, BadgeKind>> = {};
+  if (answered && userMoveToSq) badges[userMoveToSq as Square] = (userMoveCls ?? 'blunder') as BadgeKind;
+  if (answered && !answered.correct && bestMoveToSq) badges[bestMoveToSq as Square] = 'best';
 
   // ── Eval bar ──────────────────────────────────────────────────────────────
 
@@ -618,18 +586,16 @@ export default function MistakesPage() {
 
       {/* Filters */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '14px 20px 6px', flexShrink: 0 }}>
-        <StyledSelect value={filters.tag} onChange={v => setFilters(f => ({ ...f, tag: v as MistakeTag | '' }))}>
-          <option value="">Все типы</option>
-          {(Object.entries(TAG_LABEL) as [MistakeTag, string][]).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </StyledSelect>
-        <StyledSelect value={filters.phase} onChange={v => setFilters(f => ({ ...f, phase: v as GamePhase | '' }))}>
-          <option value="">Все фазы</option>
-          {(Object.entries(PHASE_LABEL) as [GamePhase, string][]).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </StyledSelect>
+        <Dropdown
+          value={filters.tag}
+          onChange={v => setFilters(f => ({ ...f, tag: v as MistakeTag | '' }))}
+          options={TAG_OPTIONS}
+        />
+        <Dropdown
+          value={filters.phase}
+          onChange={v => setFilters(f => ({ ...f, phase: v as GamePhase | '' }))}
+          options={PHASE_OPTIONS}
+        />
       </div>
 
       {/* Queue header */}
@@ -718,16 +684,18 @@ export default function MistakesPage() {
 
   // ── Board content ─────────────────────────────────────────────────────────
 
+  const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
   const boardContent = (
     <Board
-      position={loading ? 'start' : (currentFen || 'start')}
+      fen={loading ? START_FEN : (currentFen || START_FEN)}
       orientation={boardOrientation}
-      allowDragging={!answered && !checking && !loading && !!card}
-      onPieceDrop={card && !answered && !checking ? handlePieceDrop : undefined}
-      squareStyles={squareStyles}
-      overlays={overlays}
+      size={S}
+      interactive={!answered && !checking && !loading && !!card}
+      onMove={card && !answered && !checking ? handleMove : undefined}
+      tints={tints}
+      badges={badges}
       arrows={arrows}
-      cacheKey={`${boardOrientation}-${card?.id ?? 'none'}`}
     />
   );
 
@@ -968,9 +936,9 @@ export default function MistakesPage() {
               }}
             >
               Дальше
-              <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(0,0,0,.22)', borderRadius: 4, padding: '1px 7px', lineHeight: '16px' }}>
+              <kbd data-allow-small style={{ fontSize: 12, fontWeight: 700, background: 'rgba(0,0,0,.22)', borderRadius: 4, padding: '1px 7px', lineHeight: '16px', fontStyle: 'normal' }}>
                 Пробел
-              </span>
+              </kbd>
             </button>
             {/* Secondary: 2-column */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -1007,7 +975,7 @@ export default function MistakesPage() {
                 style={{ height: 44, fontSize: 15, fontWeight: 600, background: showHint ? 'var(--track)' : 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: showHint ? 'var(--control)' : 'var(--ivory)', cursor: showHint ? 'default' : 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
                 Подсказка
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--control)', background: 'rgba(255,255,255,.08)', borderRadius: 4, padding: '1px 5px', lineHeight: '16px' }}>H</span>
+                <kbd data-allow-small style={{ fontSize: 12, fontWeight: 700, color: 'var(--control)', background: 'rgba(255,255,255,.08)', borderRadius: 4, padding: '1px 5px', lineHeight: '16px', fontStyle: 'normal' }}>H</kbd>
               </button>
               <button
                 onClick={() => { setShowHint(true); setShowAnswer(true); }}
@@ -1015,14 +983,14 @@ export default function MistakesPage() {
                 style={{ height: 44, fontSize: 15, fontWeight: 600, background: showAnswer ? 'var(--track)' : 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: showAnswer ? 'var(--control)' : 'var(--ivory)', cursor: showAnswer ? 'default' : 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
                 Показать ответ
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--control)', background: 'rgba(255,255,255,.08)', borderRadius: 4, padding: '1px 5px', lineHeight: '16px' }}>A</span>
+                <kbd data-allow-small style={{ fontSize: 12, fontWeight: 700, color: 'var(--control)', background: 'rgba(255,255,255,.08)', borderRadius: 4, padding: '1px 5px', lineHeight: '16px', fontStyle: 'normal' }}>A</kbd>
               </button>
               <button
                 onClick={skipCard}
                 style={{ height: 44, fontSize: 15, fontWeight: 600, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
                 Пропустить
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--control)', background: 'rgba(255,255,255,.08)', borderRadius: 4, padding: '1px 5px', lineHeight: '16px' }}>S</span>
+                <kbd data-allow-small style={{ fontSize: 12, fontWeight: 700, color: 'var(--control)', background: 'rgba(255,255,255,.08)', borderRadius: 4, padding: '1px 5px', lineHeight: '16px', fontStyle: 'normal' }}>S</kbd>
               </button>
             </div>
             <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--control)' }}>
@@ -1040,12 +1008,12 @@ export default function MistakesPage() {
 
   return (
     <TrainerLayout
-      sessionPanel={sessionPanel}
-      topPlayer={topPlayer}
+      session={sessionPanel}
+      topBar={topPlayer}
       evalBar={evalBar}
-      boardContent={boardContent}
-      bottomPlayer={bottomPlayer}
-      taskPanel={taskPanel}
+      board={boardContent}
+      bottomBar={bottomPlayer}
+      panel={taskPanel}
     />
   );
 }
