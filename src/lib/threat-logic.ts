@@ -1,6 +1,6 @@
 import { Chess } from 'chess.js';
 import type { Move, Square, Color } from 'chess.js';
-import { VAL, other, material, squaresOf, kingSquare, nullFen, play } from './see';
+import { VAL, other, material, squaresOf, kingSquare, nullFen, play, uciOf } from './see';
 import { isMateFor, forSide, fmtEval } from './engine';
 import type { Engine } from './engine';
 
@@ -23,6 +23,8 @@ export interface ThreatResult {
   nul?: string;
   gain?: number;
   line?: string;
+  threatUci?: string;    // uciOf(T) in UCI notation
+  threatPv?: string[];   // nul.pv first 6 moves in UCI
 }
 
 // ── Helper: is a piece pinned ──────────────────────────────────────────────
@@ -242,6 +244,8 @@ export async function analyseThreat(engine: Engine, fen: string): Promise<Threat
     title: motifTitle(motif, T),
     difficulty,
     mate_in: mateNul ? Math.abs(nul.mate!) : null,
+    threatUci: uciOf(T),
+    threatPv: nul.pv.slice(0, 6),
     ...base,
   };
 }
