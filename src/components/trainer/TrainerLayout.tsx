@@ -1,18 +1,14 @@
 'use client';
 
+import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
+
 export interface TrainerLayoutProps {
-  /** Left 280px session column (card). Omit to hide. */
-  sessionPanel?: React.ReactNode;
-  /** 32px strip above the board — opponent row. */
-  topPlayer?: React.ReactNode;
-  /** 24px eval bar to the left of the board. Provide to reserve space. */
+  session?: React.ReactNode;
+  topBar: React.ReactNode;
+  board: React.ReactNode;
   evalBar?: React.ReactNode;
-  /** The board itself — fills 774×774 container. */
-  boardContent: React.ReactNode;
-  /** 32px strip below the board — my row. */
-  bottomPlayer?: React.ReactNode;
-  /** Right flex:1 task panel (card). */
-  taskPanel: React.ReactNode;
+  bottomBar: React.ReactNode;
+  panel: React.ReactNode;
 }
 
 const CARD: React.CSSProperties = {
@@ -21,22 +17,13 @@ const CARD: React.CSSProperties = {
   boxShadow: 'var(--shadow-card)',
   border: '1px solid var(--hairline)',
   overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
 };
 
-/**
- * 3-column trainer layout. Dimensions from docs/mockups/README.md:
- * left 280px | board 806px (24px eval + 8px gap + 774px) | right flex:1
- * Padding 20px around, gap 20px between columns.
- * Player strips 32px, board area fills to 774×774.
- */
-export function TrainerLayout({
-  sessionPanel,
-  topPlayer,
-  evalBar,
-  boardContent,
-  bottomPlayer,
-  taskPanel,
-}: TrainerLayoutProps) {
+export function TrainerLayout({ session, topBar, board, evalBar, bottomBar, panel }: TrainerLayoutProps) {
+  const { showLeft, rightWidth } = useTrainerGeometry();
+
   return (
     <div style={{
       display: 'flex',
@@ -46,53 +33,48 @@ export function TrainerLayout({
       gap: 20,
       boxSizing: 'border-box',
       background: 'var(--bg)',
+      alignItems: 'flex-start',
     }}>
 
-      {/* ── Left: session panel 280px ──────────────────────────────────── */}
-      {sessionPanel !== undefined && (
-        <div style={{ width: 280, flexShrink: 0, display: 'flex', flexDirection: 'column', ...CARD }}>
-          {sessionPanel}
+      {/* Left session column */}
+      {showLeft && session !== undefined && (
+        <div style={{ width: 280, flexShrink: 0, alignSelf: 'stretch', ...CARD }}>
+          {session}
         </div>
       )}
 
-      {/* ── Center: board column 806px ─────────────────────────────────── */}
+      {/* Board column */}
       <div style={{
-        width: 806,
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
+        alignSelf: 'flex-start',
       }}>
-        {/* Top player strip 32px */}
-        {topPlayer && (
-          <div style={{ height: 32, flexShrink: 0, paddingLeft: 32, display: 'flex', alignItems: 'center' }}>
-            {topPlayer}
-          </div>
-        )}
+        {/* Top player bar 32px */}
+        <div style={{ height: 32, flexShrink: 0, paddingLeft: 32, display: 'flex', alignItems: 'center' }}>
+          {topBar}
+        </div>
 
-        {/* Board row: evalbar (24px) + 8px gap + board (774px) */}
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 8 }}>
-          {/* Always reserve 24px for eval bar alignment */}
-          <div style={{ width: 24, flexShrink: 0, display: 'flex' }}>
+        {/* Eval bar + board */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ width: 24, flexShrink: 0 }}>
             {evalBar}
           </div>
-          {/* Board: 806 - 24 - 8 = 774px wide, fills remaining height */}
-          <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
-            {boardContent}
+          <div>
+            {board}
           </div>
         </div>
 
-        {/* Bottom player strip 32px */}
-        {bottomPlayer && (
-          <div style={{ height: 32, flexShrink: 0, paddingLeft: 32, display: 'flex', alignItems: 'center' }}>
-            {bottomPlayer}
-          </div>
-        )}
+        {/* Bottom player bar 32px */}
+        <div style={{ height: 32, flexShrink: 0, paddingLeft: 32, display: 'flex', alignItems: 'center' }}>
+          {bottomBar}
+        </div>
       </div>
 
-      {/* ── Right: task panel flex:1 ────────────────────────────────────── */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', ...CARD }}>
-        {taskPanel}
+      {/* Right panel */}
+      <div style={{ width: rightWidth, flexShrink: 0, alignSelf: 'stretch', ...CARD }}>
+        {panel}
       </div>
     </div>
   );
