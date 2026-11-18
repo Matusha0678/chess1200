@@ -45,6 +45,18 @@
   --radius-btn:   0px;
   --shadow-card:  none;
   --shadow-btn:   none;
+
+  /* ── Новые токены тренажёров (газетный fallback) ──────────────────────── */
+  --surface-2:    #1C1B1A;
+  --row:          #252320;
+  --hairline-2:   #3A3836;
+  --faint:        #6E6A61;
+  --accent-press: #5E8C35;
+  --c-bad:        #E0574A;
+  --c-warn:       #F0A43A;
+  --c-mark:       #4A90E2;
+  --c-plan:       #4A90E2;
+  --c-brill:      #26C2A3;
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────────── */
@@ -298,6 +310,18 @@ html, body {
   --st-b0:    #2E2C2A; --st-b1:    #3A3836; --st-b2:    #454340;
   --st-b3:    #504E4B; --st-b4:    #5A5856;
   --st-text:  #FFFFFF; --st-t2:    #C3C2C1; --st-t3:    #888; --st-t4:    #666;
+
+  /* ── Новые токены тренажёров ───────────────────────────────────────────── */
+  --surface-2:    #2F2D2A;
+  --row:          #373532;
+  --hairline-2:   rgba(255,255,255,.11);
+  --faint:        #7C7974;
+  --accent-press: #5E8C35;
+  --c-bad:        #E0574A;
+  --c-warn:       #F0A43A;
+  --c-mark:       #4A90E2;
+  --c-plan:       #4A90E2;
+  --c-brill:      #26C2A3;
 }
 
 /* ── Мягкий светлый ──────────────────────────────────────────────────────── */
@@ -331,6 +355,18 @@ html, body {
   --st-b0:    #E0E0DC; --st-b1:    #D0D0CC; --st-b2:    #BBBBB8;
   --st-b3:    #AAAAAA; --st-b4:    #999999;
   --st-text:  #262522; --st-t2:    #666666; --st-t3:    #888888; --st-t4:    #AAAAAA;
+
+  /* ── Новые токены тренажёров ───────────────────────────────────────────── */
+  --surface-2:    #F5F5F3;
+  --row:          #ECEBE7;
+  --hairline-2:   rgba(0,0,0,.12);
+  --faint:        #9A968F;
+  --accent-press: #5E8C35;
+  --c-bad:        #E0574A;
+  --c-warn:       #F0A43A;
+  --c-mark:       #4A90E2;
+  --c-plan:       #4A90E2;
+  --c-brill:      #26C2A3;
 }
 
 /* ── Soft theme – shared overrides ──────────────────────────────────────── */
