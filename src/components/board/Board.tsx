@@ -62,41 +62,108 @@ function squareCenter(sq: Square, S: number, orientation: 'white' | 'black'): { 
 function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
   const q = S / 8;
   const scale = q / 96;
-  const from = squareCenter(arrow.from, S, 'white'); // orientation handled separately
-  const to = squareCenter(arrow.to, S, 'white');
+  const from = squareCenter(arrow.from, S, 'white'); // orientation handled by ArrowLayer
+  const to   = squareCenter(arrow.to,   S, 'white');
 
+  const opacity = arrow.opacity ?? 0.85;
+  const color   = arrow.color;
+
+  const startOffset = 18 * scale;
+  const endOffset   = 14 * scale;
+  const headLen     = 34 * scale;
+  const headHW      = 22 * scale;
+  const shaftHW     =  9 * scale;
+  const shaftStroke = 18 * scale; // stroke width for path-based shaft
+  const dash        = `${12 * scale} ${9 * scale}`;
+
+  // Detect knight L-shape: file diff × rank diff must equal 2
+  const df = Math.abs(arrow.from.charCodeAt(0) - arrow.to.charCodeAt(0));
+  const dr = Math.abs(parseInt(arrow.from[1]) - parseInt(arrow.to[1]));
+  const isKnight = (df === 1 && dr === 2) || (df === 2 && dr === 1);
+
+  if (isKnight) {
+    // Corner of the L: go in the "long" direction first
+    const fromFile = arrow.from.charCodeAt(0) - 97;
+    const fromRank = parseInt(arrow.from[1]);
+    const toFile   = arrow.to.charCodeAt(0) - 97;
+    const toRank   = parseInt(arrow.to[1]);
+
+    let midX: number, midY: number;
+    if (dr > df) {
+      // Long = vertical → intermediate = (fromFile, toRank)
+      midX = (fromFile + 0.5) * q;
+      midY = (8 - toRank + 0.5) * q;
+    } else {
+      // Long = horizontal → intermediate = (toFile, fromRank)
+      midX = (toFile + 0.5) * q;
+      midY = (8 - fromRank + 0.5) * q;
+    }
+
+    // Direction of segment 1 (from → mid)
+    const dx1 = midX - from.x, dy1 = midY - from.y;
+    const len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+    const ux1 = len1 > 0 ? dx1 / len1 : 0;
+    const uy1 = len1 > 0 ? dy1 / len1 : 0;
+
+    // Direction of segment 2 (mid → to)
+    const dx2 = to.x - midX, dy2 = to.y - midY;
+    const len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+    if (len2 < 1) return null;
+    const ux2 = dx2 / len2, uy2 = dy2 / len2;
+    const nx2 = -uy2, ny2 = ux2;
+
+    const startX = from.x + ux1 * startOffset;
+    const startY = from.y + uy1 * startOffset;
+    const tipX   = to.x - ux2 * endOffset;
+    const tipY   = to.y - uy2 * endOffset;
+    const baseX  = tipX - ux2 * headLen;
+    const baseY  = tipY - uy2 * headLen;
+
+    const shaftD = `M ${startX} ${startY} L ${midX} ${midY} L ${baseX} ${baseY}`;
+    const headPts = [
+      [tipX, tipY],
+      [baseX + nx2 * headHW, baseY + ny2 * headHW],
+      [baseX - nx2 * headHW, baseY - ny2 * headHW],
+    ].map(([x, y]) => `${x},${y}`).join(' ');
+
+    return (
+      <g opacity={opacity}>
+        <path
+          d={shaftD}
+          stroke={color}
+          strokeWidth={shaftStroke}
+          fill="none"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          strokeDasharray={arrow.style === 'dashed' ? dash : undefined}
+        />
+        <polygon points={headPts} fill={color} />
+      </g>
+    );
+  }
+
+  // Straight arrow
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const len = Math.sqrt(dx * dx + dy * dy);
   if (len < 1) return null;
-
-  const ux = dx / len;
-  const uy = dy / len;
-
-  const opacity = arrow.opacity ?? 0.85;
-  const color = arrow.color;
+  const ux = dx / len, uy = dy / len;
+  const nx = -uy, ny = ux;
 
   if (arrow.style === 'dashed') {
-    const strokeW = 6 * scale;
-    const arrowLen = 24 * scale;
-    const arrowW = 20 * scale;
-    // End before tip
-    const ex = to.x - ux * arrowLen;
-    const ey = to.y - uy * arrowLen;
-    const startX = from.x + ux * 18 * scale;
-    const startY = from.y + uy * 18 * scale;
-    // Arrowhead triangle
-    const nx = -uy, ny = ux;
-    const p1x = to.x, p1y = to.y;
-    const p2x = ex + nx * arrowW / 2, p2y = ey + ny * arrowW / 2;
-    const p3x = ex - nx * arrowW / 2, p3y = ey - ny * arrowW / 2;
-    const dash = `${12 * scale} ${9 * scale}`;
+    const ex = to.x - ux * headLen;
+    const ey = to.y - uy * headLen;
+    const startX = from.x + ux * startOffset;
+    const startY = from.y + uy * startOffset;
+    const p1x = to.x,                    p1y = to.y;
+    const p2x = ex + nx * headHW / 2,    p2y = ey + ny * headHW / 2;
+    const p3x = ex - nx * headHW / 2,    p3y = ey - ny * headHW / 2;
 
     return (
       <g opacity={opacity}>
         <line
           x1={startX} y1={startY} x2={ex} y2={ey}
-          stroke={color} strokeWidth={strokeW}
+          stroke={color} strokeWidth={shaftStroke * 0.33}
           strokeDasharray={dash} strokeLinecap="round"
         />
         <polygon points={`${p1x},${p1y} ${p2x},${p2y} ${p3x},${p3y}`} fill={color} />
@@ -104,32 +171,24 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
     );
   }
 
-  // Solid arrow
-  const shaftHW = 9 * scale;
-  const headHW = 22 * scale;
-  const headLen = 34 * scale;
-  const startOffset = 18 * scale;
-  const endOffset = 14 * scale;
-
+  // Solid straight arrow
   const startX = from.x + ux * startOffset;
   const startY = from.y + uy * startOffset;
-  const tipX = to.x - ux * endOffset;
-  const tipY = to.y - uy * endOffset;
-  const baseX = tipX - ux * headLen;
-  const baseY = tipY - uy * headLen;
-  const nx = -uy, ny = ux;
+  const tipX   = to.x - ux * endOffset;
+  const tipY   = to.y - uy * endOffset;
+  const baseX  = tipX - ux * headLen;
+  const baseY  = tipY - uy * headLen;
 
   const points = [
     [tipX, tipY],
-    [baseX + nx * headHW, baseY + ny * headHW],
+    [baseX + nx * headHW,  baseY + ny * headHW],
     [baseX + nx * shaftHW, baseY + ny * shaftHW],
     [startX + nx * shaftHW, startY + ny * shaftHW],
     [startX - nx * shaftHW, startY - ny * shaftHW],
     [baseX - nx * shaftHW, baseY - ny * shaftHW],
-    [baseX - nx * headHW, baseY - ny * headHW],
+    [baseX - nx * headHW,  baseY - ny * headHW],
   ].map(([x, y]) => `${x},${y}`).join(' ');
 
-  // Label position: 35% along arrow
   const labelX = from.x + dx * 0.35;
   const labelY = from.y + dy * 0.35;
 
@@ -141,11 +200,8 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
           <circle cx={labelX} cy={labelY} r={15 * scale} fill="#3A78C2" />
           <text
             x={labelX} y={labelY + 5 * scale}
-            textAnchor="middle"
-            fontSize={16 * scale}
-            fontWeight="800"
-            fill="white"
-            fontFamily="Inter,sans-serif"
+            textAnchor="middle" fontSize={16 * scale} fontWeight="800"
+            fill="white" fontFamily="Inter,sans-serif"
           >
             {arrow.label}
           </text>
@@ -222,8 +278,8 @@ function BadgeLayer({ badges, S, orientation }: {
 }
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const LAST_MOVE_FROM = 'rgba(247,214,74,.42)';
-const LAST_MOVE_TO   = 'rgba(247,214,74,.55)';
+const LAST_MOVE_FROM = 'rgba(247,214,74,.26)';
+const LAST_MOVE_TO   = 'rgba(247,214,74,.35)';
 const CHECK_GLOW     = 'radial-gradient(circle, rgba(232,64,52,.95) 0%, rgba(232,64,52,.6) 38%, rgba(232,64,52,0) 72%)';
 const MOVE_DOT       = 'radial-gradient(circle, rgba(0,0,0,.16) 0 18%, transparent 19%)';
 const CAPTURE_RING   = 'radial-gradient(circle, transparent 0 74%, rgba(0,0,0,.16) 75%)';
