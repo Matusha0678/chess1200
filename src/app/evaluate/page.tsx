@@ -289,7 +289,7 @@ export default function EvaluatePage() {
 
   if (sqlMissing) {
     return (
-      <div className="page" style={{ maxWidth: 760 }}>
+      <div className="page">
         <div style={{ padding: '20px 24px', border: '1px solid var(--hairline)', background: 'var(--surface)', fontSize: 14, color: 'var(--muted)' }}>
           Таблица <code>eval_log</code> не создана. Выполни <strong>supabase/20-eval-log.sql</strong>.
         </div>
@@ -298,7 +298,7 @@ export default function EvaluatePage() {
   }
 
   return (
-    <div className="page" style={{ maxWidth: 900 }}>
+    <div className="page">
       {/* Header */}
       <div className="page-head">
         <div className="page-head-text">
@@ -324,7 +324,7 @@ export default function EvaluatePage() {
       ) : (
         <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'flex-start' }}>
           {/* Board */}
-          <div style={{ flex: '0 0 auto', width: 'min(100%, 420px)' }}>
+          <div style={{ flex: '1 1 480px', maxWidth: 640 }}>
             <div style={{ width: '100%', aspectRatio: '1' }}>
               <Chessboard
                 key={boardKey}
@@ -344,7 +344,7 @@ export default function EvaluatePage() {
           </div>
 
           {/* Panel */}
-          <div style={{ flex: '1 1 260px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Q1: Who's better */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>1. Кто лучше?</div>

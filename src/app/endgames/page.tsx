@@ -407,6 +407,7 @@ function PlayView(props: {
   startEndgame: (eg: Endgame) => void;
 }) {
   const { current, chess, fen, hintMove, handleDrop, moveCount, phase, status, hintIdea, setHintIdea, requestHintMove, achieved, setPhase, startEndgame } = props;
+  const { boardTheme } = useBoardTheme();
   if (!current) return null;
 
   const pColor = playerColor(current);
@@ -423,22 +424,26 @@ function PlayView(props: {
   const isPlayerTurn = chess.turn() === pColor && phase === 'playing';
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px' }}>
+    <div className="page">
       <div style={{ display: 'flex', gap: 40, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* Board */}
-        <div>
-          <Chessboard options={{
-            position: fen,
-            boardOrientation: orientation,
-            allowDragging: isPlayerTurn,
-            onPieceDrop: handleDrop,
-            squareStyles,
-            boardStyle: { width: 420, height: 420 },
-          }} />
+        <div style={{ flex: '1 1 480px', maxWidth: 640 }}>
+          <div style={{ width: '100%', aspectRatio: '1' }}>
+            <Chessboard options={{
+              position: fen,
+              boardOrientation: orientation,
+              allowDragging: isPlayerTurn,
+              onPieceDrop: handleDrop,
+              squareStyles,
+              boardStyle: { width: '100%', height: '100%' },
+              darkSquareStyle:  { backgroundColor: boardTheme.dark },
+              lightSquareStyle: { backgroundColor: boardTheme.light },
+            }} />
+          </div>
         </div>
 
         {/* Sidebar */}
-        <div style={{ flex: 1, minWidth: 220 }}>
+        <div style={{ flex: '1 1 280px' }}>
           {/* Header */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 4, textTransform: 'uppercase' }}>

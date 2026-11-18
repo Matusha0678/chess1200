@@ -255,7 +255,7 @@ export default function TrapsPage() {
 
   if (loading) {
     return (
-      <div className="page" style={{ maxWidth: 900 }}>
+      <div className="page">
         <div style={{ height: 60, background: 'var(--surface)', borderRadius: 'var(--radius-card)' }} className="animate-pulse" />
         {[0, 1, 2].map(i => (
           <div key={i} className="ui-card animate-pulse" style={{ height: 180 }} />
@@ -266,7 +266,7 @@ export default function TrapsPage() {
 
   if (traps.length === 0) {
     return (
-      <div className="page" style={{ maxWidth: 760 }}>
+      <div className="page">
         <div className="page-head">
           <div className="page-head-text">
             <h1 className="page-title">Ловушки</h1>

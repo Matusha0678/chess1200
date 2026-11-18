@@ -390,7 +390,7 @@ export default function MistakesPage() {
 
   if (loading) {
     return (
-      <div className="page" style={{ maxWidth: 900 }}>
+      <div className="page">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} className="animate-pulse">
           <div style={{ height: 40, width: 180, background: 'var(--surface)', borderRadius: 'var(--radius-btn)' }} />
           <div className="ui-card" style={{ height: 480 }} />
@@ -430,7 +430,7 @@ export default function MistakesPage() {
   const boardKey = `${boardThemeId}-${pieceStyleId}-${boardOrientation}-${card?.id ?? 'none'}`;
 
   return (
-    <div className="page" style={{ maxWidth: 900 }}>
+    <div className="page">
 
       {/* Header */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -532,7 +532,7 @@ export default function MistakesPage() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, alignItems: 'flex-start' }}>
 
           {/* Board area */}
-          <div style={{ flex: '1 1 480px', maxWidth: 520 }}>
+          <div style={{ flex: '1 1 480px', maxWidth: 640 }}>
             {/* Card meta */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
               <span style={{ padding: '3px 8px', background: 'var(--surface)', border: '1px solid var(--hairline)', fontSize: 12, color: 'var(--muted)' }}>
@@ -577,7 +577,7 @@ export default function MistakesPage() {
           </div>
 
           {/* Feedback panel */}
-          <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 20, paddingTop: 44 }}>
+          <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: 20, paddingTop: 44 }}>
 
             {/* Mastery */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

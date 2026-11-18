@@ -361,8 +361,8 @@ export default function StudyPage({ params }: Props) {
                 allowDragging: false,
                 squareStyles: highlightSquares,
                 boardStyle: { borderRadius: '0', width: '100%', height: '100%' },
-                darkSquareStyle: { backgroundColor: '#3A3A3A' },
-                lightSquareStyle: { backgroundColor: '#8A8A8A' },
+                darkSquareStyle: { backgroundColor: boardTheme.dark },
+                lightSquareStyle: { backgroundColor: boardTheme.light },
               }}
             />
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import type { Course, CourseKind, LessonProgress } from '@/types/courses';
@@ -31,13 +31,59 @@ function DiffBadge({ value }: { value: number }) {
   return <span className="diff-pill diff-hard">Сложный</span>;
 }
 
-function CourseCard({ course }: { course: CourseWithStats }) {
+function CourseCard({
+  course,
+  onDelete,
+  onRename,
+}: {
+  course: CourseWithStats;
+  onDelete: (id: string) => void;
+  onRename: (id: string, name: string) => void;
+}) {
   const pct = course.lessonsTotal > 0
     ? Math.min(100, (course.lessonsCompleted / course.lessonsTotal) * 100)
     : 0;
 
+  const [renaming, setRenaming] = useState(false);
+  const [renameVal, setRenameVal] = useState(course.name);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function startRename() {
+    setRenameVal(course.name);
+    setRenaming(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  }
+
+  async function saveRename() {
+    const trimmed = renameVal.trim();
+    if (!trimmed || trimmed === course.name) { setRenaming(false); return; }
+    setSaving(true);
+    await supabase.from('courses').update({ name: trimmed }).eq('id', course.id);
+    onRename(course.id, trimmed);
+    setRenaming(false);
+    setSaving(false);
+  }
+
+  async function confirmAndDelete() {
+    setSaving(true);
+    // Get lesson IDs, then delete related data in order
+    const { data: lessonList } = await supabase.from('course_lessons').select('id').eq('course_id', course.id);
+    const lIds = (lessonList ?? []).map((l: { id: string }) => l.id);
+    if (lIds.length > 0) {
+      await supabase.from('lesson_tests').delete().in('lesson_id', lIds);
+      await supabase.from('lesson_progress').delete().in('lesson_id', lIds);
+      await supabase.from('lesson_notes').delete().in('lesson_id', lIds);
+      await supabase.from('lesson_lines').delete().in('lesson_id', lIds);
+      await supabase.from('course_lessons').delete().eq('course_id', course.id);
+    }
+    await supabase.from('courses').delete().eq('id', course.id);
+    onDelete(course.id);
+  }
+
   return (
-    <div className="ui-card opening-card-link" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div className="ui-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
         <div style={{
@@ -51,21 +97,107 @@ function CourseCard({ course }: { course: CourseWithStats }) {
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, lineHeight: 1.2, color: 'var(--ivory)' }}>
-            {course.name}
-          </h2>
-          {course.opening && (
+          {renaming ? (
+            <input
+              ref={inputRef}
+              className="ui-input"
+              value={renameVal}
+              onChange={e => setRenameVal(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setRenaming(false); }}
+              style={{ fontSize: 15, fontWeight: 700, padding: '4px 8px', width: '100%' }}
+              disabled={saving}
+            />
+          ) : (
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, lineHeight: 1.2, color: 'var(--ivory)' }}>
+              {course.name}
+            </h2>
+          )}
+          {course.opening && !renaming && (
             <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>
               {course.opening}
             </span>
           )}
         </div>
 
-        <DiffBadge value={course.difficulty} />
+        {/* Edit/delete icons */}
+        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          {renaming ? (
+            <>
+              <button
+                className="ui-btn ui-btn-primary ui-btn-sm"
+                onClick={saveRename}
+                disabled={saving}
+                style={{ padding: '4px 10px', fontSize: 12 }}
+              >
+                Сохранить
+              </button>
+              <button
+                className="ui-btn ui-btn-outline ui-btn-sm"
+                onClick={() => setRenaming(false)}
+                style={{ padding: '4px 10px', fontSize: 12 }}
+              >
+                Отмена
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={startRename}
+                title="Переименовать"
+                style={{
+                  width: 28, height: 28, border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn)',
+                  background: 'transparent', color: 'var(--muted)', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                title="Удалить курс"
+                style={{
+                  width: 28, height: 28, border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn)',
+                  background: 'transparent', color: 'var(--muted)', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>
+              <DiffBadge value={course.difficulty} />
+            </>
+          )}
+        </div>
       </div>
 
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <div style={{
+          background: 'var(--bg)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn)',
+          padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+        }}>
+          <span style={{ flex: 1, fontSize: 13, color: 'var(--ivory)' }}>Удалить курс «{course.name}»? Это необратимо.</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="ui-btn ui-btn-sm" onClick={confirmAndDelete} disabled={saving}
+              style={{ background: '#c0392b', color: '#fff', border: 'none', borderRadius: 'var(--radius-btn)' }}>
+              {saving ? 'Удаляю…' : 'Удалить'}
+            </button>
+            <button className="ui-btn ui-btn-outline ui-btn-sm" onClick={() => setConfirmDelete(false)}>
+              Отмена
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Description */}
-      {course.description && (
+      {course.description && !renaming && (
         <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {course.description}
         </p>
@@ -132,6 +264,14 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<CourseWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('all');
+
+  function handleDelete(id: string) {
+    setCourses(prev => prev.filter(c => c.id !== id));
+  }
+
+  function handleRename(id: string, name: string) {
+    setCourses(prev => prev.map(c => c.id === id ? { ...c, name } : c));
+  }
 
   useEffect(() => {
     async function load() {
@@ -213,7 +353,9 @@ export default function CoursesPage() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(440px, 100%), 1fr))', gap: 16 }}>
           {visibleCourses.length > 0
-            ? visibleCourses.map(course => <CourseCard key={course.id} course={course} />)
+            ? visibleCourses.map(course => (
+                <CourseCard key={course.id} course={course} onDelete={handleDelete} onRename={handleRename} />
+              ))
             : <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', gridColumn: '1/-1' }}>Нет курсов в этой категории</p>
           }
         </div>

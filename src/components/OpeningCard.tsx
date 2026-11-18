@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
+import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import type { ChessMove } from '@/types/openings';
 
 interface Props {
@@ -39,6 +40,7 @@ function linesPlural(n: number): string {
 const HEADING: React.CSSProperties = { fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" };
 
 export default function OpeningCard({ opening, index, linesTotal, linesMastered, linesDue, firstLineMoves, href }: Props) {
+  const { boardTheme } = useBoardTheme();
   const progress = linesTotal > 0 ? linesMastered / linesTotal : 0;
   const fen = firstLineMoves && firstLineMoves.length > 0 ? computeFen(firstLineMoves) : 'start';
   const isWhite = opening.color === 'white';
@@ -66,8 +68,8 @@ export default function OpeningCard({ opening, index, linesTotal, linesMastered,
               boardOrientation: opening.color === 'black' ? 'black' : 'white',
               allowDragging: false,
               boardStyle: { borderRadius: 0, width: '100%', height: '100%' },
-              darkSquareStyle: { backgroundColor: 'var(--board-dark)' },
-              lightSquareStyle: { backgroundColor: 'var(--board-light)' },
+              darkSquareStyle: { backgroundColor: boardTheme.dark },
+              lightSquareStyle: { backgroundColor: boardTheme.light },
             }}
           />
         </div>

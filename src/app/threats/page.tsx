@@ -329,7 +329,7 @@ export default function ThreatsPage() {
 
   if (phase === 'loading' && !loadError) {
     return (
-      <div className="page" style={{ maxWidth: 800 }}>
+      <div className="page">
         <Link href="/" className="page-back">← Сегодня</Link>
         <h1 className="page-title">Проверка угроз</h1>
         <p style={{ fontSize: 14, color: 'var(--muted)' }}>Загрузка позиций…</p>
@@ -339,7 +339,7 @@ export default function ThreatsPage() {
 
   if (loadError) {
     return (
-      <div className="page" style={{ maxWidth: 800 }}>
+      <div className="page">
         <Link href="/" className="page-back">← Сегодня</Link>
         <h1 className="page-title">Проверка угроз</h1>
         <div className="ui-banner ui-banner-warn" style={{ fontSize: 14 }}>{loadError}</div>
@@ -352,7 +352,7 @@ export default function ThreatsPage() {
 
   if (phase === 'done') {
     return (
-      <div className="page" style={{ maxWidth: 760 }}>
+      <div className="page">
         <div className="page-head">
           <div className="page-head-text">
             <h1 className="page-title">Итоги сессии</h1>
@@ -391,7 +391,7 @@ export default function ThreatsPage() {
   const boardOrientation: 'white' | 'black' = pos?.myColor === 'w' ? 'white' : 'black';
 
   return (
-    <div className="page" style={{ maxWidth: 1100 }}>
+    <div className="page">
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
@@ -429,7 +429,7 @@ export default function ThreatsPage() {
       <div style={{ display: 'flex', gap: 36, alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
         {/* Board */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
+        <div style={{ flex: '1 1 480px', maxWidth: 640, position: 'relative' }}>
           {/* Blitz timer bar */}
           {blitzMode && phase === 'marking' && (
             <div style={{ marginBottom: 8 }}>
@@ -447,21 +447,23 @@ export default function ThreatsPage() {
             </div>
           )}
 
-          <Chessboard
-            options={{
-              position: pos?.fen ?? 'start',
-              boardOrientation,
-              allowDragging: phase === 'defensive',
-              onSquareClick: phase === 'marking' ? handleSquareClick : undefined,
-              onPieceDrop: phase === 'defensive' ? handleDefensiveDrop : undefined,
-              squareStyles: buildSquareStyles(),
-              boardStyle: { width: 420, height: 420 },
-            }}
-          />
+          <div style={{ width: '100%', aspectRatio: '1' }}>
+            <Chessboard
+              options={{
+                position: pos?.fen ?? 'start',
+                boardOrientation,
+                allowDragging: phase === 'defensive',
+                onSquareClick: phase === 'marking' ? handleSquareClick : undefined,
+                onPieceDrop: phase === 'defensive' ? handleDefensiveDrop : undefined,
+                squareStyles: buildSquareStyles(),
+                boardStyle: { width: '100%', height: '100%' },
+              }}
+            />
+          </div>
         </div>
 
         {/* Right panel */}
-        <div style={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           {/* Phase: marking */}
           {phase === 'marking' && (

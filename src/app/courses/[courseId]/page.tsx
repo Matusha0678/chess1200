@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useRef, use } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Course, CourseLesson, LessonProgress, LessonLine, TestQuestion } from '@/types/courses';
 import { LessonTest } from '@/components/LessonTest';
@@ -37,6 +38,7 @@ function ColorLabel({ color }: { color: 'white' | 'black' | 'both' }) {
 
 export default function CourseOverviewPage({ params }: Props) {
   const { courseId } = use(params);
+  const router = useRouter();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<LessonWithMeta[]>([]);
@@ -44,6 +46,37 @@ export default function CourseOverviewPage({ params }: Props) {
   const [weakSpots, setWeakSpots] = useState<WeakSpot[]>([]);
   const [latestTestMap, setLatestTestMap] = useState<Record<string, { score: number; max: number; pct: number }>>({});
   const [showWeakTest, setShowWeakTest] = useState(false);
+
+  const [renaming, setRenaming] = useState(false);
+  const [renameVal, setRenameVal] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [actionSaving, setActionSaving] = useState(false);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  async function saveRename() {
+    if (!course) return;
+    const trimmed = renameVal.trim();
+    if (!trimmed || trimmed === course.name) { setRenaming(false); return; }
+    setActionSaving(true);
+    await supabase.from('courses').update({ name: trimmed }).eq('id', courseId);
+    setCourse(prev => prev ? { ...prev, name: trimmed } : prev);
+    setRenaming(false);
+    setActionSaving(false);
+  }
+
+  async function deleteCourse() {
+    setActionSaving(true);
+    const lIds = lessons.map(l => l.id);
+    if (lIds.length > 0) {
+      await supabase.from('lesson_tests').delete().in('lesson_id', lIds);
+      await supabase.from('lesson_progress').delete().in('lesson_id', lIds);
+      await supabase.from('lesson_notes').delete().in('lesson_id', lIds);
+      await supabase.from('lesson_lines').delete().in('lesson_id', lIds);
+      await supabase.from('course_lessons').delete().eq('course_id', courseId);
+    }
+    await supabase.from('courses').delete().eq('id', courseId);
+    router.push('/courses');
+  }
 
   useEffect(() => {
     async function load() {
@@ -181,7 +214,23 @@ export default function CourseOverviewPage({ params }: Props) {
       <div className="page-head">
         <div className="page-head-text">
           <Link href="/courses" className="page-back">← Курсы</Link>
-          <h1 className="page-title">{course.name}</h1>
+          {renaming ? (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input
+                ref={renameInputRef}
+                className="ui-input"
+                value={renameVal}
+                onChange={e => setRenameVal(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setRenaming(false); }}
+                style={{ fontSize: 22, fontWeight: 700, padding: '6px 10px', flex: 1 }}
+                disabled={actionSaving}
+              />
+              <button className="ui-btn ui-btn-primary ui-btn-sm" onClick={saveRename} disabled={actionSaving}>Сохранить</button>
+              <button className="ui-btn ui-btn-outline ui-btn-sm" onClick={() => setRenaming(false)}>Отмена</button>
+            </div>
+          ) : (
+            <h1 className="page-title">{course.name}</h1>
+          )}
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
             <ColorLabel color={course.color} />
             {course.opening && (
@@ -201,10 +250,45 @@ export default function CourseOverviewPage({ params }: Props) {
             </div>
           </div>
         </div>
-        <Link href={`/courses/${courseId}/cheatsheet`} className="ui-btn ui-btn-outline" style={{ textDecoration: 'none' }}>
-          Шпаргалка
-        </Link>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <Link href={`/courses/${courseId}/cheatsheet`} className="ui-btn ui-btn-outline" style={{ textDecoration: 'none' }}>
+            Шпаргалка
+          </Link>
+          {!renaming && (
+            <button
+              className="ui-btn ui-btn-outline"
+              onClick={() => { setRenameVal(course.name); setRenaming(true); setTimeout(() => renameInputRef.current?.select(), 0); }}
+            >
+              Переименовать
+            </button>
+          )}
+          <button
+            className="ui-btn ui-btn-outline"
+            onClick={() => setConfirmDelete(true)}
+            style={{ color: '#c0392b', borderColor: '#c0392b' }}
+          >
+            Удалить
+          </button>
+        </div>
       </div>
+
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <div className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', background: 'var(--bg)', border: '1px solid #c0392b' }}>
+          <span style={{ flex: 1, fontSize: 14, color: 'var(--ivory)' }}>
+            Удалить курс «{course.name}» и все {lessons.length} уроков? Это необратимо.
+          </span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="ui-btn ui-btn-sm" onClick={deleteCourse} disabled={actionSaving}
+              style={{ background: '#c0392b', color: '#fff', border: 'none', borderRadius: 'var(--radius-btn)' }}>
+              {actionSaving ? 'Удаляю…' : 'Удалить'}
+            </button>
+            <button className="ui-btn ui-btn-outline ui-btn-sm" onClick={() => setConfirmDelete(false)}>
+              Отмена
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Lessons list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
