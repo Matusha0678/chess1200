@@ -18,7 +18,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { MoveChip } from '@/components/ui/MoveChip';
 import { Kbd } from '@/components/ui/Kbd';
 import { prepareSacPositions } from '@/lib/sac-prepare';
-import type { PrepProgress } from '@/lib/sac-prepare';
+import type { PrepProgress as SacPrepProgress } from '@/lib/sac-prepare';
 import { createBrowserEngine } from '@/lib/engine';
 import type { Engine } from '@/lib/engine';
 
@@ -30,9 +30,9 @@ interface SacPosition {
   move: string;
   san: string | null;
   kind: 'real' | 'fake';
-  eval_before: string | null;
-  eval_after: string | null;
-  eval_no_sac: string | null;
+  eval_before: number | null;   // centipawns for sac side S
+  eval_after: number | null;
+  eval_no_sac: number | null;
   best_no_sac: string | null;
   pv: string | null;
   defenses: Array<{ move: string; pv: string[]; cp: number | null; mate: number | null; outcome: string }> | null;
@@ -174,18 +174,7 @@ function buildChipText(pos: SacPosition): string {
   return 'Настоящая жертва';
 }
 
-// Parse cp from eval string like "+2.34" or "M4" or "−M3"
-function evalToCp(e: string | null): number | null {
-  if (!e) return null;
-  if (e.includes('M')) {
-    const neg = e.startsWith('−');
-    const n = parseInt(e.replace(/[^0-9]/g, ''), 10);
-    return neg ? -(100 - n) * 100 : (100 - n) * 100;
-  }
-  const v = parseFloat(e);
-  if (isNaN(v)) return null;
-  return Math.round(v * 100);
-}
+
 
 function cpToEvalStr(cp: number): string {
   if (cp >= 9000) return `M${100 - Math.round(cp / 100)}`;
@@ -245,7 +234,8 @@ function SacPageInner() {
 
   // Prepare mode
   const [preparing, setPreparing]         = useState(false);
-  const [prepProgress, setPrepProgress]   = useState<PrepProgress | null>(null);
+  const [prepProgress, setPrepProgress]   = useState<SacPrepProgress | null>(null);
+  const [prepError, setPrepError]         = useState<string | null>(null);
   const [prepStartedAt, setPrepStartedAt] = useState<number>(0);
   const prepStopRef = useRef(false);
   const engineRef   = useRef<(Engine & { quit(): void; init(): Promise<void> }) | null>(null);
@@ -292,9 +282,9 @@ function SacPageInner() {
       const p: SacPosition = {
         ...d,
         kind: d.kind,
-        eval_before: cpToEvalStr(d.eval_before),
-        eval_after: cpToEvalStr(d.eval_after),
-        eval_no_sac: cpToEvalStr(d.eval_no_sac),
+        eval_before: d.eval_before,
+        eval_after: d.eval_after,
+        eval_no_sac: d.eval_no_sac,
         best_no_sac: displayBestNoSac(d.fen, d.best_no_sac),
         pv: d.pv,
         defenses: d.defenses.map(def => ({ ...def, pv: Array.isArray(def.pv) ? [...def.pv] : (def.pv as unknown as string).split(' ') })),
@@ -400,6 +390,7 @@ function SacPageInner() {
     abortRef.current = new AbortController();
     setPreparing(true);
     setPrepProgress({ gamesChecked: 0, gamesTotal: 0, found: 0, works: 0, fails: 0 });
+    setPrepError(null);
     setPrepStartedAt(Date.now());
 
     try {
@@ -410,7 +401,10 @@ function SacPageInner() {
       await prepareSacPositions(
         engineRef.current,
         prepFilter,
-        (p) => { setPrepProgress(p); },
+        (p) => {
+          setPrepProgress(p);
+          if (p.error) setPrepError(p.error);
+        },
         abortRef.current.signal,
       );
 
@@ -446,7 +440,7 @@ function SacPageInner() {
     <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Загрузка…</div>
   );
 
-  const sideToMove = current?.fen.split(' ')[1] === 'w' ? 'white' : 'black';
+  const sideToMove = current ? (current.fen.split(' ')[1] === 'w' ? 'white' : 'black') : 'white';
   const oppSide = sideToMove === 'white' ? 'black' : 'white';
   const correctPct = stats.total > 0 ? Math.round(100 * stats.correct / stats.total) : null;
   const sacSan = current ? (current.san ?? uciToSan(current.fen, current.move)) : '';
@@ -486,8 +480,8 @@ function SacPageInner() {
       sacTints[to]   = works ? 'rgba(38,194,163,.55)' : 'rgba(224,87,74,.50)';
       if (works) sacBadges[to] = 'brilliant';
       else {
-        const wpB = wp(evalToCp(current.eval_before) ?? 0);
-        const wpA = wp(evalToCp(current.eval_after) ?? 0);
+        const wpB = wp(current.eval_before ?? 0);
+        const wpA = wp(current.eval_after ?? 0);
         sacBadges[to] = wpB - wpA >= 0.20 ? 'blunder' : 'mistake';
       }
       const bns = current.best_no_sac;
@@ -506,8 +500,8 @@ function SacPageInner() {
       sacTints[to]   = works ? 'rgba(38,194,163,.55)' : 'rgba(224,87,74,.50)';
       if (works) sacBadges[to] = 'brilliant';
       else {
-        const wpB = wp(evalToCp(current.eval_before) ?? 0);
-        const wpA = wp(evalToCp(current.eval_after) ?? 0);
+        const wpB = wp(current.eval_before ?? 0);
+        const wpA = wp(current.eval_after ?? 0);
         sacBadges[to] = wpB - wpA >= 0.20 ? 'blunder' : 'mistake';
       }
       sacCheckSquare = detectCheckSquare(current.fen, current.move);
@@ -549,8 +543,8 @@ function SacPageInner() {
           });
         }
       } else {
-        const wpB = wp(evalToCp(current.eval_before) ?? 0);
-        const wpA = wp(evalToCp(current.eval_after) ?? 0);
+        const wpB = wp(current.eval_before ?? 0);
+        const wpA = wp(current.eval_after ?? 0);
         sacBadges[to] = wpB - wpA >= 0.20 ? 'blunder' : 'mistake';
         if (current.pv) {
           const pvMoves = current.pv.split(' ').filter(Boolean);
@@ -581,7 +575,7 @@ function SacPageInner() {
   })();
 
   // ── EvalBar: use cp from eval_after ────────────────────────────────────────
-  const evalCp = answered && current ? evalToCp(current.eval_after) : null;
+  const evalCp = answered && current ? current.eval_after : null;
   const evalBarNode = answered && evalCp != null
     ? <EvalBar cp={evalCp} orientation={sideToMove} />
     : undefined;
@@ -630,6 +624,9 @@ function SacPageInner() {
           {scanned != null ? `Готово ${scanned} позиций` : '—'}
           {remaining != null && remaining > 0 ? ` · ещё ${remaining} партий не проверено` : ''}
         </div>
+      )}
+      {prepError && (
+        <div style={{ fontSize: 13, color: '#E0574A', lineHeight: 1.4 }}>{prepError}</div>
       )}
       <button
         onClick={preparing ? stopPrepare : handlePrepare}
@@ -886,6 +883,9 @@ function SacPageInner() {
                 Партий {prepFilter === 'tal' ? 'Таля' : 'мастеров'} уже загружено: {masterCount}
               </div>
             )}
+            {prepError && (
+              <div style={{ fontSize: 13, color: '#E0574A', lineHeight: 1.4 }}>{prepError}</div>
+            )}
           </div>
         )}
 
@@ -996,7 +996,7 @@ function SacPageInner() {
                     без жертвы {current.best_no_sac ? `(${current.best_no_sac})` : ''}
                   </span>
                   <b style={{ fontSize: 20, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
-                    {current.eval_no_sac ?? '—'}
+                    {current.eval_no_sac != null ? cpToEvalStr(current.eval_no_sac) : '—'}
                   </b>
                 </div>
                 <div
@@ -1007,7 +1007,7 @@ function SacPageInner() {
                     после {sacSan}
                   </span>
                   <b style={{ fontSize: 20, color: answered.ok ? '#81B64C' : '#E0574A', fontVariantNumeric: 'tabular-nums' }}>
-                    {current.eval_after ?? '—'}
+                    {current.eval_after != null ? cpToEvalStr(current.eval_after) : '—'}
                   </b>
                 </div>
               </div>

@@ -2,7 +2,11 @@ import { Chess } from 'chess.js';
 import { createNodeEngine } from './node-engine';
 import { quickSac, analyseSac, temptingMoves } from '../src/lib/sac-logic';
 import { analyseThreat } from '../src/lib/threat-logic';
-import type { SacResult, ThreatResult } from '../src/lib/sac-logic';
+import type { SacResult } from '../src/lib/sac-logic';
+import type { ThreatResult } from '../src/lib/threat-logic';
+import { buildSacRowsForGame } from '../src/lib/sac-prepare';
+import { buildThreatRowsForGame } from '../src/lib/threat-prepare';
+import type { ThreatAnalysisRow } from '../src/lib/threat-prepare';
 import { uciOf } from '../src/lib/see';
 
 const args = process.argv.slice(2);
@@ -98,6 +102,37 @@ const GAME_TESTS = [
     id: 'G2', name: 'Андерсен — Дюфрень, 1852 («Вечнозелёная»)',
     pgn: '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 exd4 7. O-O d3 8. Qb3 Qf6 9. e5 Qg6 10. Re1 Nge7 11. Ba3 b5 12. Qxb5 Rb8 13. Qa4 Bb6 14. Nbd2 Bb7 15. Ne4 Qf5 16. Bxd3 Qh5 17. Nf6+ gxf6 18. exf6 Rg8 19. Rad1 Qxf3 20. Rxe7+ Nxe7 21. Qxd7+ Kxd7 22. Bf5+ Ke8 23. Bd7+ Kf8 24. Bxe7#',
     expectSacs: ['17. Nf6+', '20. Rxe7+', '21. Qxd7+'],
+  },
+];
+
+const BUILD_SAC_TESTS = [
+  {
+    id: 'P1',
+    name: 'buildSacRowsForGame — Opera game: numeric evals + UCI accepted_pv',
+    pgn: GAME_TESTS.find(g => g.id === 'G1')!.pgn,
+    gameId: 'opera-1858',
+    filter: 'all' as const,
+    white: 'Morphy',
+    black: 'Duke of Brunswick and Count Isouard',
+  },
+];
+
+const T1_FEN = 'r3k2r/ppp2pb1/5q2/1N1P2pp/2B1P3/3Q1b2/PP3P2/R3K1R1 b - - 0 20';
+
+const BUILD_THREAT_TESTS = [
+  {
+    id: 'Q1',
+    name: 'buildThreatRowsForGame — skips opponent-color rows, correct ply',
+    gameId: 'q1-test',
+    gameColor: 'b' as const,
+    rows: [
+      // White's row — SKIPPED (gameColor='b')
+      { move_number: 10, color: 'w' as const, san: 'Nb5', fen_before: T1_FEN, eval_before: 0, classification: 'mistake' },
+      // Black's row — PROCESSED, ply = (10-1)*2+2 = 20
+      { move_number: 10, color: 'b' as const, san: 'Qf6', fen_before: T1_FEN, eval_before: 0, classification: 'mistake' },
+    ] as ThreatAnalysisRow[],
+    expectRowCount: 1,
+    expectPly: 20,
   },
 ];
 
@@ -219,6 +254,43 @@ const want = (id: string) => !ONLY || ONLY.includes(id);
         }`
       );
     if (!ok) console.log(`    ОШИБКА ждали ${G.expectSacs.join(', ')}`);
+  }
+
+  for (const t of BUILD_SAC_TESTS) {
+    if (!want(t.id)) continue;
+    total++;
+    const rows = await buildSacRowsForGame(t.pgn, t.gameId, engine, t.filter, t.white, t.black);
+    const bad: string[] = [];
+    if (rows.length === 0) bad.push('нет строк');
+    for (const row of rows) {
+      if (typeof row.eval_before !== 'number' && row.eval_before !== null)
+        bad.push(`eval_before не число: ${JSON.stringify(row.eval_before)}`);
+      if (row.accepted_pv && !/^[a-h][1-8][a-h][1-8]/.test(row.accepted_pv))
+        bad.push(`accepted_pv не UCI: ${row.accepted_pv}`);
+    }
+    if (!bad.length) pass++;
+    console.log(
+      `${bad.length ? '✗' : '✓'} ${t.id} ${t.name}: ${rows.length} строк` +
+      (rows.length ? ` · ходы ${rows.map(r => r.move).join(', ')}` : '')
+    );
+    for (const b of bad) console.log(`    ОШИБКА ${b}`);
+  }
+
+  for (const t of BUILD_THREAT_TESTS) {
+    if (!want(t.id)) continue;
+    total++;
+    const rows = await buildThreatRowsForGame(t.rows, t.gameId, t.gameColor, engine);
+    const bad: string[] = [];
+    if (rows.length !== t.expectRowCount)
+      bad.push(`ожидали ${t.expectRowCount} строк, получили ${rows.length}`);
+    if (t.expectPly !== undefined && rows[0]?.ply !== t.expectPly)
+      bad.push(`ply: ждали ${t.expectPly}, получили ${rows[0]?.ply}`);
+    if (!bad.length) pass++;
+    console.log(
+      `${bad.length ? '✗' : '✓'} ${t.id} ${t.name}: ${rows.length} строк` +
+      (rows.length ? ` · ply ${rows.map(r => r.ply).join(', ')} · has_threat ${rows.map(r => r.has_threat).join(', ')}` : '')
+    );
+    for (const b of bad) console.log(`    ОШИБКА ${b}`);
   }
 
   console.log(`\nИтог: ${pass} из ${total} · ${Math.round((Date.now() - t0) / 1000)} с`);

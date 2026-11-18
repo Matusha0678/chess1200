@@ -1,7 +1,7 @@
 import { Chess } from 'chess.js';
 import type { Move, Square, Color } from 'chess.js';
-import { VAL, other, material, squaresOf, kingSquare, dist, nullFen, uciOf, play, see, doomed } from './see';
-import { isMateFor, forSide, wp, fmtEval } from './engine';
+import { VAL, other, material, squaresOf, kingSquare, dist, uciOf, play, see, doomed } from './see';
+import { isMateFor, wp, fmtEval } from './engine';
 import type { Engine, EngineLine } from './engine';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -44,6 +44,12 @@ export interface SacResult {
   san?: string;
   sacSquare?: string;
   sacPiece?: string;
+  // Raw engine data for DB storage
+  bestLine?: EngineLine;
+  candLine?: EngineLine;
+  altLine?: EngineLine;
+  acceptedPvUci?: string[];  // acc.pv — starts with opponent's capture
+  afterLines?: EngineLine[]; // multipv responses after the sacrifice
 }
 
 // ── 1.1 А: quick filter (no engine) ───────────────────────────────────────
@@ -255,6 +261,12 @@ export async function analyseSac(
     keep: !notKept && score >= 30,
     notKept: notKept || (score < 30 ? 'неинтересно (score < 30)' : null),
     defenses: afterLines.map(l => play(fenAfter!, l.pv, 5).sans.join(' ')),
+    // Raw engine data for DB storage
+    bestLine: best,
+    candLine: cand,
+    altLine: alt,
+    acceptedPvUci: acc.pv,
+    afterLines,
     ...resBase,
   };
 }

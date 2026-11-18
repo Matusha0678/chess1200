@@ -247,6 +247,7 @@ function ThreatsPageInner() {
   // Preparing
   const [preparing, setPreparing] = useState(false);
   const [prepProgress, setPrepProgress] = useState<ThreatPrepProgress | null>(null);
+  const [prepError, setPrepError] = useState<string | null>(null);
   const [prepStartedAt, setPrepStartedAt] = useState(0);
   const engineRef = useRef<(Engine & { quit(): void; init(): Promise<void> }) | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -267,6 +268,7 @@ function ThreatsPageInner() {
       });
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { void loadPositions(); }, []);
 
   async function loadPositions() {
@@ -514,7 +516,10 @@ function ThreatsPageInner() {
       }
       await prepareThreatPositions(
         engineRef.current,
-        (p) => { setPrepProgress(p); },
+        (p) => {
+          setPrepProgress(p);
+          if (p.error) setPrepError(p.error);
+        },
         abortRef.current.signal,
       );
       await loadPositions();
@@ -844,8 +849,14 @@ function ThreatsPageInner() {
                 <div style={{ padding: '14px 16px', background: 'rgba(129,182,76,.14)', border: '1px solid rgba(129,182,76,.3)', borderRadius: 14 }}>
                   <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ivory)', marginBottom: 6 }}>Позиций пока нет</div>
                   <div style={{ fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>
-                    Сайт найдёт угрозы в твоих партиях и проверит каждую движком. Нужны проанализированные партии.
+                    {prepProgress?.noAnalyzedGames
+                      ? 'Сначала проанализируй партии: Мои партии → Анализ'
+                      : 'Сайт найдёт угрозы в твоих партиях и проверит каждую движком. Нужны проанализированные партии.'
+                    }
                   </div>
+                  {prepError && (
+                    <div style={{ fontSize: 13, color: '#E0574A', lineHeight: 1.4, marginTop: 8 }}>{prepError}</div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
@@ -884,6 +895,9 @@ function ThreatsPageInner() {
                     {prepEta != null && ` · ~${formatEta(prepEta)}`}
                   </div>
                   <ProgressBar value={prepProgress?.gamesChecked ?? 0} max={Math.max(1, prepProgress?.gamesTotal ?? 1)} height={6} />
+                  {prepError && (
+                    <div style={{ fontSize: 13, color: '#E0574A', lineHeight: 1.4 }}>{prepError}</div>
+                  )}
                   <button onClick={stopPrepare} style={{ height: 44, fontSize: 14, fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}>
                     Стоп
                   </button>
