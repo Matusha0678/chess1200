@@ -208,13 +208,17 @@ function groupHoles(
       let prevMove: string | null = null;
       if (go.prev_uci) {
         try {
+          const to = go.prev_uci.slice(2, 4) as Square;
           const ch = new Chess(go.fen_before);
-          // fen_before is BEFORE the hole move; prev move put us here
-          // We need to find the previous move SAN from prev_uci
-          // prev_uci is the UCI of the move BEFORE fen_before (opponent's last move in OUR lines)
-          // We use it only for the label "после X"
-          prevMove = go.prev_uci; // will be shown as UCI-ish, let's compute SAN
-          // We need the fen 2 half-moves back to compute the SAN — skip for now, store UCI
+          const piece = ch.get(to);
+          const pieceSan = piece ? (piece.type === 'p' ? '' : piece.type.toUpperCase()) : '';
+          const san = `${pieceSan}${to}`;
+          // prevUci color is opposite of hole color; prevMoveNum:
+          // hole by white (color='w') on move N → prevUci is black's N-1 move
+          // hole by black (color='b') on move N → prevUci is white's N move
+          const prevColor: 'w' | 'b' = go.color === 'w' ? 'b' : 'w';
+          const prevMoveNum = go.color === 'w' ? (go.move_number ?? 1) - 1 : (go.move_number ?? 1);
+          prevMove = prevColor === 'b' ? `${prevMoveNum}...${san}` : `${prevMoveNum}. ${san}`;
         } catch { /* noop */ }
       }
 
@@ -388,16 +392,20 @@ function RepertoirePage() {
     }
 
     setLoading(true);
-    const [{ data: ops }, { data: lns }, { data: gms }, { data: gos }] = await Promise.all([
-      supabase.from('openings').select('id, name, color').order('name'),
-      supabase.from('opening_lines').select('id, opening_id, moves'),
-      supabase.from('games').select('id, pgn, color, result, opp_name, played_at').order('played_at', { ascending: false }),
-      supabase.from('game_openings').select('*'),
-    ]);
-    setOpenings((ops ?? []) as Opening[]);
-    setLines((lns ?? []) as OpeningLine[]);
-    setGames((gms ?? []) as GameRow[]);
-    setGameOpenings((gos ?? []) as GameOpening[]);
+    try {
+      const [{ data: ops }, { data: lns }, { data: gms }, { data: gos }] = await Promise.all([
+        supabase.from('openings').select('id, name, color').order('name'),
+        supabase.from('opening_lines').select('id, opening_id, moves'),
+        supabase.from('games').select('id, pgn, color, result, opp_name, played_at').order('played_at', { ascending: false }),
+        supabase.from('game_openings').select('*'),
+      ]);
+      setOpenings((ops ?? []) as Opening[]);
+      setLines((lns ?? []) as OpeningLine[]);
+      setGames((gms ?? []) as GameRow[]);
+      setGameOpenings((gos ?? []) as GameOpening[]);
+    } catch {
+      // network error — show empty state
+    }
     setLoading(false);
   }, [isDemo]);
 
@@ -580,6 +588,7 @@ function RepertoirePage() {
   for (const go of filteredGOs) {
     if (!['in_line','deviation','hole'].includes(go.status)) continue;
     if (!go.opening_id) continue;
+    if (go.first) continue; // first-move "no lines against" holes don't count in opening stats
     const s = openingStats.get(go.opening_id) ?? { inLine: 0, total: 0 };
     s.total++;
     if (go.status === 'in_line') s.inLine++;
@@ -658,7 +667,8 @@ function RepertoirePage() {
           const from = selDevGroup.prevUci.slice(0, 2);
           const to = selDevGroup.prevUci.slice(2, 4);
           // move number for the previous half-move
-          const prevMn = selDevGroup.moveNumber - (selDevGroup.color === 'b' ? 1 : 0);
+          // my color='w' deviating on N → prevUci is black's N-1; my color='b' on N → prevUci is white's N
+          const prevMn = selDevGroup.color === 'w' ? selDevGroup.moveNumber - 1 : selDevGroup.moveNumber;
           const prevC: 'w' | 'b' = selDevGroup.color === 'w' ? 'b' : 'w';
           // We need SAN of prev move from a FEN before it — approximate with piece on 'to' in fenBefore
           const ch = new Chess(selDevGroup.fenBefore);
@@ -713,8 +723,8 @@ function RepertoirePage() {
       if (lData && lData.moves) {
         const mv0 = lData.moves[0];
         const mv1 = lData.moves[1];
-        if (mv0?.uci) boardArrows.push({ from: mv0.uci.slice(0, 2) as Square, to: mv0.uci.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best', opacity: 0.95 });
-        if (mv1?.uci) boardArrows.push({ from: mv1.uci.slice(0, 2) as Square, to: mv1.uci.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best', opacity: 0.55 });
+        if (mv0?.uci) boardArrows.push({ from: mv0.uci.slice(0, 2) as Square, to: mv0.uci.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best', opacity: 0.95, label: '1' });
+        if (mv1?.uci) boardArrows.push({ from: mv1.uci.slice(0, 2) as Square, to: mv1.uci.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best', opacity: 0.55, label: '2' });
       }
     }
 
@@ -923,7 +933,8 @@ function RepertoirePage() {
     const rawData = isDemo ? (DEMO_LICHESS[key as keyof typeof DEMO_LICHESS] ?? null) : (lichessCache.get(key) ?? null);
     const lData: LichessData | null = rawData as LichessData | null;
 
-    const myColor = hGroup.color === 'w' ? 'белых' : 'чёрных';
+    // hGroup.color is the opponent's hole move; I am the OPPOSITE side (side to move in resulting pos)
+    const myColor = hGroup.color === 'w' ? 'чёрных' : 'белых';
 
     return (
       <div data-ui="rep-explorer" style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -1039,7 +1050,7 @@ function RepertoirePage() {
             onClick={() => { setColorFilter(c); saveFilters(c, periodFilter); setSelected(null); }}
             style={{ height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, fontWeight: c === colorFilter ? 600 : 500, color: c === colorFilter ? 'var(--ivory)' : 'var(--muted)', background: c === colorFilter ? 'var(--surface3,#45423E)' : 'transparent', cursor: 'pointer' }}
           >
-            {c === 'white' ? '♙ Белыми' : c === 'black' ? '♟ Чёрными' : 'Все'}
+            {c === 'white' ? 'Белыми' : c === 'black' ? 'Чёрными' : 'Все'}
           </div>
         ))}
       </div>
@@ -1175,9 +1186,9 @@ function RepertoirePage() {
         <div data-ui="panel-title" style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 12, lineHeight: 1.15, fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
           {selOpeningId ? (openingMap.get(selOpeningId) ?? 'Дебют') : 'Все дебюты'}
         </div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        <div data-ui="rep-opening" style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
           <div style={{ height: 28, borderRadius: 8, background: 'var(--surface2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', fontSize: 13, fontWeight: 500, color: 'var(--ivory)' }}>
-            {colorFilter === 'all' ? 'Белые и чёрные' : colorFilter === 'white' ? '♙ Белыми' : '♟ Чёрными'}
+            {colorFilter === 'all' ? 'Белые и чёрные' : colorFilter === 'white' ? 'Белыми' : 'Чёрными'}
           </div>
           <div style={{ height: 28, borderRadius: 8, background: 'var(--surface2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', fontSize: 13, fontWeight: 500, color: 'var(--ivory)' }}>
             {periodFilter === '30d' ? '30 дней' : 'Всё время'}
@@ -1218,7 +1229,7 @@ function RepertoirePage() {
                     onClick={() => setSelected({ type: 'dev', key: grp.key })}
                     style={{ borderRadius: 10, padding: '10px 12px', display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: 10, alignItems: 'start', border: `1px solid ${isOn ? 'var(--hairline)' : 'transparent'}`, background: isOn ? 'var(--surface3,#373532)' : 'transparent', cursor: 'pointer', marginBottom: 4 }}
                   >
-                    <div style={{ width: 28, height: 28, borderRadius: 14, display: 'grid', placeItems: 'center', color: '#fff', fontSize: 12, fontWeight: 800, marginTop: 1, background: badge.bg, flexShrink: 0 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 14, display: 'grid', placeItems: 'center', color: '#fff', fontSize: 13, fontWeight: 800, marginTop: 1, background: badge.bg, flexShrink: 0 }}>
                       {badge.text}
                     </div>
                     <div>
@@ -1298,7 +1309,8 @@ function RepertoirePage() {
 
               {nolineGroups.map(nGrp => {
                 const isOn = selected?.type === 'noline' && selected.key === nGrp.key;
-                const colorLabel = nGrp.color === 'w' ? 'белыми' : 'чёрными';
+                // nGrp.color is the opponent's first move color; I am playing the OPPOSITE color
+                const colorLabel = nGrp.color === 'w' ? 'чёрными' : 'белыми';
                 return (
                   <div
                     key={nGrp.key}
@@ -1338,7 +1350,7 @@ function RepertoirePage() {
             >
               <IconGitBranch size={18} />
               Повторить линию
-              <span style={{ fontSize: 12, fontWeight: 600, background: 'rgba(0,0,0,.18)', borderRadius: 6, padding: '2px 7px' }}>Enter</span>
+              <span style={{ fontSize: 13, fontWeight: 600, background: 'rgba(0,0,0,.18)', borderRadius: 6, padding: '2px 7px' }}>Enter</span>
             </button>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
               <button
