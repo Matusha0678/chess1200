@@ -213,9 +213,9 @@ export default function StudyPage({ params }: Props) {
     return (
       <div className="max-w-[1600px] mx-auto px-6 pt-8 pb-10">
         <div className="animate-pulse flex flex-col gap-5">
-          <div className="h-4 w-40 bg-[#1E1E1E] rounded-full" />
-          <div className="h-10 w-72 bg-[#1E1E1E] rounded-[8px]" />
-          <div className="h-[500px] bg-[#0D0D0D] border border-[#262626] rounded-[12px]" />
+          <div className="h-4 w-40 rounded-full" style={{ background: 'var(--surface2, #1E1E1E)' }} />
+          <div className="h-10 w-72 rounded-[8px]" style={{ background: 'var(--surface2, #1E1E1E)' }} />
+          <div className="h-[500px] rounded-[12px]" style={{ background: 'var(--surface)', border: '1px solid var(--hairline)' }} />
         </div>
       </div>
     );
@@ -225,11 +225,12 @@ export default function StudyPage({ params }: Props) {
     return (
       <div className="max-w-[1600px] mx-auto px-6 pt-8 pb-10">
         <Link href={`/openings/${id}`}
-          className="inline-flex items-center gap-2 text-[13px] text-[#A0A0A0] hover:text-[#F5F5F5] no-underline mb-6">
+          className="inline-flex items-center gap-2 text-[13px] no-underline mb-6"
+          style={{ color: 'var(--muted)' }}>
           ← Назад
         </Link>
-        <div className="text-center py-20 text-[#A0A0A0]">
-          <p className="text-[28px] font-semibold mb-3 text-[#F5F5F5]">Нет линий для изучения</p>
+        <div className="text-center py-20" style={{ color: 'var(--muted)' }}>
+          <p className="text-[28px] font-semibold mb-3" style={{ color: 'var(--ivory)' }}>Нет линий для изучения</p>
           <p className="text-[15px]">Добавь PGN с вариациями к этому дебюту.</p>
         </div>
       </div>
@@ -246,8 +247,8 @@ export default function StudyPage({ params }: Props) {
           </svg>
         </div>
         <div>
-          <h2 className="text-[36px] font-semibold text-[#F5F5F5] m-0 mb-2">Все линии изучены!</h2>
-          <p className="text-[16px] text-[#A0A0A0] m-0">
+          <h2 className="text-[36px] font-semibold m-0 mb-2" style={{ color: 'var(--ivory)' }}>Все линии изучены!</h2>
+          <p className="text-[16px] m-0" style={{ color: 'var(--muted)' }}>
             {allLines.length} {pluralLines(allLines.length)} — {opening.name}
           </p>
         </div>
@@ -257,11 +258,13 @@ export default function StudyPage({ params }: Props) {
             Перейти к тренировке →
           </Link>
           <button onClick={() => { setAllDone(false); resetBoard(0); }}
-            className="h-11 px-6 border border-[#303030] text-[#A0A0A0] hover:text-[#F5F5F5] hover:border-[#505050] rounded-[10px] text-[14px] bg-transparent cursor-pointer transition-colors">
+            className="h-11 px-6 rounded-[10px] text-[14px] bg-transparent cursor-pointer transition-colors"
+            style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
             Повторить изучение
           </button>
           <Link href={`/openings/${id}`}
-            className="h-11 px-6 border border-[#303030] text-[#A0A0A0] hover:text-[#F5F5F5] rounded-[10px] text-[14px] no-underline flex items-center transition-colors">
+            className="h-11 px-6 rounded-[10px] text-[14px] no-underline flex items-center transition-colors"
+            style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
             К дебюту
           </Link>
         </div>
@@ -283,19 +286,20 @@ export default function StudyPage({ params }: Props) {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
         <Link href={`/openings/${id}`}
-          className="inline-flex items-center gap-2 text-[13px] text-[#A0A0A0] hover:text-[#F5F5F5] no-underline">
+          className="inline-flex items-center gap-2 text-[13px] no-underline"
+          style={{ color: 'var(--muted)' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
           {opening.name}
         </Link>
         <div className="flex items-center gap-3 text-[13px]">
-          <span className="text-[#A0A0A0]">Учёба</span>
-          <span className="w-px h-4 bg-[#262626]" />
-          <span className="text-[#F5F5F5] font-semibold">
+          <span style={{ color: 'var(--muted)' }}>Учёба</span>
+          <span className="w-px h-4" style={{ background: 'var(--hairline)' }} />
+          <span className="font-semibold" style={{ color: 'var(--ivory)' }}>
             {studiedLineIds.size} / {allLines.length}
           </span>
-          <span className="text-[#707070]">изучено</span>
+          <span style={{ color: 'var(--muted)' }}>изучено</span>
         </div>
       </div>
 
@@ -303,9 +307,9 @@ export default function StudyPage({ params }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-[200px_1fr_260px] gap-4 items-start">
 
         {/* LEFT — line list */}
-        <div className="bg-[#0D0D0D] border border-[#262626] rounded-[12px] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#1E1E1E]">
-            <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#707070]">
+        <div className="rounded-[12px] overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--hairline)' }}>
+          <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--hairline)' }}>
+            <span className="text-[11px] font-semibold tracking-[0.12em] uppercase" style={{ color: 'var(--muted)' }}>
               Линии · {allLines.length}
             </span>
           </div>
@@ -319,10 +323,13 @@ export default function StudyPage({ params }: Props) {
               }).join(' ');
               return (
                 <button key={line.id} onClick={() => resetBoard(i)}
-                  className={`text-left px-4 py-3 border-b border-[#1A1A1A] last:border-0 transition-colors cursor-pointer w-full
-                    ${isActive ? 'bg-[#1A1A1A]' : 'bg-transparent hover:bg-[#0A0A0A]'}`}>
+                  className="text-left px-4 py-3 transition-colors cursor-pointer w-full"
+                  style={{
+                    background: isActive ? 'var(--surface2, #1A1A1A)' : 'transparent',
+                    borderBottom: '1px solid var(--hairline)',
+                  }}>
                   <div className="flex items-center gap-2 mb-[2px]">
-                    <span className="text-[11px] text-[#505050] font-mono">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="text-[11px] font-mono" style={{ color: 'var(--muted)' }}>{String(i + 1).padStart(2, '0')}</span>
                     {isStudied && (
                       <span className="w-4 h-4 rounded-full bg-white flex items-center justify-center shrink-0">
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#050505" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -331,7 +338,7 @@ export default function StudyPage({ params }: Props) {
                       </span>
                     )}
                   </div>
-                  <div className={`text-[12px] font-mono truncate ${isActive ? 'text-[#F5F5F5]' : 'text-[#707070]'}`}>
+                  <div className="text-[12px] font-mono truncate" style={{ color: isActive ? 'var(--ivory)' : 'var(--muted)' }}>
                     {firstMoves}
                   </div>
                 </button>
@@ -343,17 +350,17 @@ export default function StudyPage({ params }: Props) {
         {/* CENTER — board + controls */}
         <div className="flex flex-col items-center gap-3">
           {/* Progress */}
-          <div className="w-full flex items-center justify-between text-[13px] text-[#707070]">
+          <div className="w-full flex items-center justify-between text-[13px]" style={{ color: 'var(--muted)' }}>
             <span>
-              Линия <span className="text-[#F5F5F5] font-semibold">{currentLineIndex + 1}</span> из {allLines.length}
+              Линия <span className="font-semibold" style={{ color: 'var(--ivory)' }}>{currentLineIndex + 1}</span> из {allLines.length}
             </span>
             <span>
-              Ход <span className="text-[#F5F5F5] font-semibold">{currentMoveIndex}</span> из {currentLine?.moves.length ?? 0}
+              Ход <span className="font-semibold" style={{ color: 'var(--ivory)' }}>{currentMoveIndex}</span> из {currentLine?.moves.length ?? 0}
             </span>
           </div>
 
           {/* Board */}
-          <div className="w-full max-w-[560px] aspect-square rounded-[12px] overflow-hidden border border-[#262626]">
+          <div className="w-full max-w-[560px] aspect-square rounded-[12px] overflow-hidden" style={{ border: '1px solid var(--hairline)' }}>
             <Chessboard
               options={{
                 position: fen,
@@ -370,16 +377,16 @@ export default function StudyPage({ params }: Props) {
           {/* Nav buttons */}
           <div className="flex items-center gap-3 flex-wrap justify-center">
             <button onClick={handlePrev} disabled={currentMoveIndex === 0}
-              className="h-9 px-4 border border-[#303030] text-[#A0A0A0] hover:text-[#F5F5F5] hover:border-[#505050] rounded-[8px] text-[13px] bg-transparent cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+              className="h-9 px-4 rounded-[8px] text-[13px] bg-transparent cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
               ← Назад
             </button>
 
             <button onClick={() => setAutoPlay(v => !v)}
-              className={`h-9 px-4 border rounded-[8px] text-[13px] cursor-pointer transition-colors ${
-                autoPlay
-                  ? 'border-white text-white bg-transparent'
-                  : 'border-[#303030] text-[#A0A0A0] bg-transparent hover:border-[#505050]'
-              }`}>
+              className="h-9 px-4 rounded-[8px] text-[13px] cursor-pointer transition-colors bg-transparent"
+              style={autoPlay
+                ? { border: '1px solid var(--ivory)', color: 'var(--ivory)' }
+                : { border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
               {autoPlay ? '⏸ Авто' : '▶ Авто'}
             </button>
 
@@ -396,21 +403,23 @@ export default function StudyPage({ params }: Props) {
             )}
 
             <button onClick={() => setFlipped(f => !f)} title="F — перевернуть доску"
-              className="h-9 w-9 flex items-center justify-center border border-[#303030] text-[#505050] hover:text-[#A0A0A0] hover:border-[#505050] rounded-[8px] bg-transparent cursor-pointer transition-colors">
+              className="h-9 w-9 flex items-center justify-center rounded-[8px] bg-transparent cursor-pointer transition-colors"
+              style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
               </svg>
             </button>
 
             <button onClick={() => setHelpOpen(true)} title="? — клавиши"
-              className="h-9 w-9 flex items-center justify-center border border-[#303030] text-[#505050] hover:text-[#A0A0A0] hover:border-[#505050] rounded-[8px] bg-transparent cursor-pointer transition-colors text-[13px] font-semibold">
+              className="h-9 w-9 flex items-center justify-center rounded-[8px] bg-transparent cursor-pointer transition-colors text-[13px] font-semibold"
+              style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
               ?
             </button>
 
             <button
               onClick={() => setShowDeviation(true)}
               disabled={!deviationAvailable}
-              style={{ height: 36, padding: '0 12px', border: '1px solid #303030', background: 'transparent', color: deviationAvailable ? 'rgba(220,80,60,0.9)' : '#505050', fontSize: 11, fontFamily: 'inherit', cursor: deviationAvailable ? 'pointer' : 'default', letterSpacing: '0.08em', opacity: deviationAvailable ? 1 : 0.4, borderRadius: 8 }}
+              style={{ height: 36, padding: '0 12px', border: '1px solid var(--hairline)', background: 'transparent', color: deviationAvailable ? 'rgba(220,80,60,0.9)' : 'var(--muted)', fontSize: 11, fontFamily: 'inherit', cursor: deviationAvailable ? 'pointer' : 'default', letterSpacing: '0.08em', opacity: deviationAvailable ? 1 : 0.4, borderRadius: 8 }}
             >
               ОТКЛ
             </button>
@@ -418,27 +427,28 @@ export default function StudyPage({ params }: Props) {
 
           {/* Deviation stats */}
           {devStats && devStats.total > 0 && (
-            <div style={{ fontSize: 11, color: '#707070', letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.08em' }}>
               Отклонения: {devStats.ok} / {devStats.total}
             </div>
           )}
 
           {lineDone && (
             <button onClick={() => resetBoard(currentLineIndex)}
-              className="text-[13px] text-[#707070] hover:text-[#A0A0A0] bg-transparent border-0 cursor-pointer transition-colors">
+              className="text-[13px] bg-transparent border-0 cursor-pointer transition-colors"
+              style={{ color: 'var(--muted)' }}>
               Повторить линию
             </button>
           )}
         </div>
 
         {/* RIGHT — current line moves */}
-        <div className="bg-[#0D0D0D] border border-[#262626] rounded-[12px] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#1E1E1E] flex items-center justify-between">
-            <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[#707070]">
+        <div className="rounded-[12px] overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--hairline)' }}>
+          <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--hairline)' }}>
+            <span className="text-[11px] font-semibold tracking-[0.12em] uppercase" style={{ color: 'var(--muted)' }}>
               Ходы линии {currentLineIndex + 1}
             </span>
             {lineDone && (
-              <span className="text-[11px] text-[#A0A0A0] font-semibold">Изучено ✓</span>
+              <span className="text-[11px] font-semibold" style={{ color: 'var(--muted)' }}>Изучено ✓</span>
             )}
           </div>
           <div className="px-4 py-4 flex flex-col gap-[3px] max-h-[500px] overflow-y-auto">
@@ -453,15 +463,21 @@ export default function StudyPage({ params }: Props) {
                 const isLastB = bIdx === currentMoveIndex - 1;
                 return (
                   <div key={pairIdx} className="grid grid-cols-[22px_1fr_1fr] gap-x-2 items-center">
-                    <span className="text-[12px] text-[#505050] text-right">{pairIdx + 1}.</span>
-                    <span className={`text-[13px] font-mono px-1 py-[1px] rounded transition-colors
-                      ${wIdx < currentMoveIndex ? 'text-[#F5F5F5]' : 'text-[#404040]'}
-                      ${isLastW ? 'bg-[#2A2A2A]' : ''}`}>
+                    <span className="text-[12px] text-right" style={{ color: 'var(--muted)' }}>{pairIdx + 1}.</span>
+                    <span
+                      className="text-[13px] font-mono px-1 py-[1px] rounded transition-colors"
+                      style={{
+                        color: wIdx < currentMoveIndex ? 'var(--ivory)' : 'var(--muted)',
+                        background: isLastW ? 'var(--surface2, #2A2A2A)' : undefined,
+                      }}>
                       {wMove?.san ?? ''}
                     </span>
-                    <span className={`text-[13px] font-mono px-1 py-[1px] rounded transition-colors
-                      ${bIdx < currentMoveIndex ? 'text-[#F5F5F5]' : 'text-[#404040]'}
-                      ${isLastB ? 'bg-[#2A2A2A]' : ''}`}>
+                    <span
+                      className="text-[13px] font-mono px-1 py-[1px] rounded transition-colors"
+                      style={{
+                        color: bIdx < currentMoveIndex ? 'var(--ivory)' : 'var(--muted)',
+                        background: isLastB ? 'var(--surface2, #2A2A2A)' : undefined,
+                      }}>
                       {bMove?.san ?? ''}
                     </span>
                   </div>
@@ -473,7 +489,7 @@ export default function StudyPage({ params }: Props) {
           {/* Progress bar for this line */}
           {currentLine && currentLine.moves.length > 0 && (
             <div className="px-4 pb-4">
-              <div className="h-[3px] w-full bg-[#1E1E1E] rounded-full overflow-hidden">
+              <div className="h-[3px] w-full rounded-full overflow-hidden" style={{ background: 'var(--surface2, #1E1E1E)' }}>
                 <div
                   className="h-full bg-white rounded-full transition-all duration-300"
                   style={{ width: `${(currentMoveIndex / currentLine.moves.length) * 100}%` }}
@@ -483,9 +499,9 @@ export default function StudyPage({ params }: Props) {
           )}
 
           {/* Study progress summary */}
-          <div className="px-4 py-3 border-t border-[#1E1E1E] flex items-center justify-between">
-            <span className="text-[12px] text-[#707070]">Изучено линий</span>
-            <span className="text-[13px] font-semibold text-[#F5F5F5]">
+          <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: '1px solid var(--hairline)' }}>
+            <span className="text-[12px]" style={{ color: 'var(--muted)' }}>Изучено линий</span>
+            <span className="text-[13px] font-semibold" style={{ color: 'var(--ivory)' }}>
               {studiedLineIds.size} / {allLines.length}
             </span>
           </div>

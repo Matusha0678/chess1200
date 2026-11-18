@@ -931,16 +931,18 @@ function PlayContent() {
           <span style={{ fontSize: 13, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{presetLabel} · {level}</span>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
-          {LEVEL_PRESETS.map((_, i) => (
-            <button key={i} onClick={() => { setPresetIdx(i); setLevel(LEVEL_PRESETS[i].skill); updateUrl(pendingColor, LEVEL_PRESETS[i].skill, mode); }}
+          {LEVEL_PRESETS.map((p, i) => (
+            <button key={i} onClick={() => { setPresetIdx(i); setLevel(p.skill); updateUrl(pendingColor, p.skill, mode); }}
               style={{
-                flex: 1, height: 32, cursor: 'pointer', fontFamily: 'inherit',
+                flex: 1, height: 32, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
+                fontWeight: presetIdx === i ? 700 : 400,
+                color: presetIdx === i ? '#fff' : 'var(--muted)',
                 background: presetIdx === i ? 'var(--accent)' : 'transparent',
                 border: `1px solid ${presetIdx === i ? 'var(--accent)' : 'var(--hairline)'}`,
                 borderRadius: 'var(--radius-btn)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 4px',
               }}
-              aria-label={LEVEL_PRESETS[i].label}
-            />
+            >{p.label}</button>
           ))}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>

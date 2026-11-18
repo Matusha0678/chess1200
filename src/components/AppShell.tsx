@@ -82,10 +82,8 @@ function SidebarItems({ onNav }: { onNav?: () => void }) {
   );
 
   // collapsed state: set of group labels that are collapsed
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
-
-  // On mount: load from localStorage; ensure active group is open
-  useEffect(() => {
+  // Lazy initializer reads localStorage so no setState-in-effect is needed on mount
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     try {
       const stored = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? '[]') as string[];
       const set = new Set(stored);
@@ -93,9 +91,11 @@ function SidebarItems({ onNav }: { onNav?: () => void }) {
       if (activeGroupIdx >= 0 && NAV_GROUPS[activeGroupIdx].label) {
         set.delete(NAV_GROUPS[activeGroupIdx].label!);
       }
-      setCollapsed(set);
-    } catch { /* ignore */ }
-  }, [activeGroupIdx]);
+      return set;
+    } catch {
+      return new Set();
+    }
+  });
 
   function toggleGroup(label: string) {
     setCollapsed(prev => {

@@ -182,6 +182,7 @@ export default function RandomOpeningPage() {
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isProcessingRef = useRef(false);
+  const [isProcessingState, setIsProcessingState] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Store for "same line again" replay
@@ -311,6 +312,7 @@ export default function RandomOpeningPage() {
             // ignore invalid move from engine
           }
           isProcessingRef.current = false;
+          setIsProcessingState(false);
         }, 350);
       });
     },
@@ -343,12 +345,14 @@ export default function RandomOpeningPage() {
       if (m.color === color) return false;
 
       isProcessingRef.current = true;
+      setIsProcessingState(true);
       setTimeout(() => {
         chessRef.current.move({ from: m.from, to: m.to });
         setFen(chessRef.current.fen());
         const nextIdx = index + 1;
         setMoveIndex(nextIdx);
         isProcessingRef.current = false;
+        setIsProcessingState(false);
 
         if (nextIdx >= line.length) {
           handleLineDone();
@@ -369,6 +373,7 @@ export default function RandomOpeningPage() {
 
       chessRef.current = new Chess();
       isProcessingRef.current = false;
+      setIsProcessingState(false);
       stopAnalysis();
 
       savedLineRef.current = { line: moves, opening, lineIdx };
@@ -395,12 +400,14 @@ export default function RandomOpeningPage() {
 
       if (color === 'b' && moves.length > 0 && moves[0].color === 'w') {
         isProcessingRef.current = true;
+        setIsProcessingState(true);
         setTimeout(() => {
           const m = moves[0];
           chessRef.current.move({ from: m.from, to: m.to });
           setFen(chessRef.current.fen());
           setMoveIndex(1);
           isProcessingRef.current = false;
+          setIsProcessingState(false);
         }, 500);
       }
     },
@@ -450,6 +457,7 @@ export default function RandomOpeningPage() {
 
       if (sourceSquare === expected.from && targetSquare === expected.to) {
         isProcessingRef.current = true;
+        setIsProcessingState(true);
 
         chessRef.current.move({ from: sourceSquare, to: targetSquare });
         const nextIdx = moveIndex + 1;
@@ -466,6 +474,7 @@ export default function RandomOpeningPage() {
 
           if (nextIdx >= currentLine.length) {
             isProcessingRef.current = false;
+            setIsProcessingState(false);
             handleLineDone();
             return;
           }
@@ -475,6 +484,7 @@ export default function RandomOpeningPage() {
             autoTrainerMove(nextIdx, currentLine, playerColor);
           } else {
             isProcessingRef.current = false;
+            setIsProcessingState(false);
           }
         }, 280);
 
@@ -482,6 +492,7 @@ export default function RandomOpeningPage() {
       } else {
         // Wrong move
         isProcessingRef.current = true;
+        setIsProcessingState(true);
 
         setSquareStyles({
           [sourceSquare]: { background: 'rgba(211, 107, 107, 0.4)' },
@@ -495,6 +506,7 @@ export default function RandomOpeningPage() {
         setTimeout(() => {
           setSquareStyles({});
           isProcessingRef.current = false;
+          setIsProcessingState(false);
         }, 900);
 
         return false;
@@ -525,12 +537,14 @@ export default function RandomOpeningPage() {
         }
 
         isProcessingRef.current = true;
+        setIsProcessingState(true);
         const newFen = chessRef.current.fen();
         setFen(newFen);
 
         if (chessRef.current.isGameOver()) {
           handleGameOverState(playerColor);
           isProcessingRef.current = false;
+          setIsProcessingState(false);
           return true;
         }
 
@@ -563,6 +577,7 @@ export default function RandomOpeningPage() {
     const currentFen = chessRef.current.fen();
     if (chessRef.current.turn() !== playerColor) {
       isProcessingRef.current = true;
+      setIsProcessingState(true);
       requestStockfishMove(currentFen, playerColor);
     } else if (showAnalysisRef.current && sfReady) {
       startAnalysis(currentFen, handleAnalysisInfo);
@@ -655,7 +670,7 @@ export default function RandomOpeningPage() {
 
   const isPlayerTurn =
     phase === 'playing' &&
-    !isProcessingRef.current &&
+    !isProcessingState &&
     moveIndex < currentLine.length &&
     currentLine[moveIndex]?.color === playerColor;
 
