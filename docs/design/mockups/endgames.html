@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Эндшпили — макет</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@700&display=swap">
+<style>
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:14px 12px;display:flex;flex-direction:column}
+.item{height:40px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:15px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:16px 12px 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.grp .ico{width:14px;height:14px}
+.side .bottom{margin-top:auto;color:var(--faint)}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.muted{color:var(--muted)} .faint{color:var(--faint)} .ok{color:var(--accent)} .warn{color:var(--warn)} .bad{color:var(--danger)}
+
+/* LEFT */
+.left{width:280px;height:854px;display:flex;flex-direction:column;flex:none}
+.left .hd{padding:20px 20px 12px;display:flex;justify-content:space-between;align-items:baseline}
+.h2{font-size:19px;font-weight:700}
+.pbar6{height:6px;border-radius:3px;background:#3A3835;overflow:hidden;margin:0 20px 14px}
+.pbar6 i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.lab{margin:18px 20px 8px;font-size:13px;color:var(--muted)}
+.secs{padding:0 10px;display:flex;flex-direction:column;gap:2px}
+.sec{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:10px;height:54px;padding:0 10px;border-radius:10px;position:relative}
+.sec .pic{width:32px;height:32px;border-radius:8px;background:#3A3835;display:grid;place-items:center;color:#D9D6D2}
+.sec .pic img{width:26px;height:26px}
+.sec .t{font-size:14px;color:#E6E3DE;font-weight:500;line-height:1.2;white-space:nowrap}
+.sec .mini{height:4px;border-radius:2px;background:#3D3B38;overflow:hidden;margin-top:6px}
+.sec .mini i{display:block;height:100%;background:var(--accent)}
+.sec .c{font-size:13px;color:var(--faint)}
+.sec.on{background:var(--row)}
+.sec.on::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--accent)}
+.sec.on .t{color:var(--text);font-weight:600}
+.seg{display:grid;margin:0 20px;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.seg div{height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);font-weight:500}
+.seg .on{background:#45423E;color:var(--text);font-weight:600}
+.seg4 div{font-size:13px}
+.next{margin-top:auto;padding:16px 20px 20px;border-top:1px solid var(--hair)}
+.next .l{font-size:13px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.next .box{display:grid;grid-template-columns:84px 1fr;gap:12px;align-items:center;margin-bottom:12px}
+.next .box .t{font-size:15px;font-weight:600;line-height:1.25}
+.next .box .m{font-size:13px;color:var(--muted);margin-top:4px}
+.btn1{height:46px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:inline-flex;align-items:center;justify-content:center;gap:9px;font-size:15px;font-weight:600;color:#E8E5E0;padding:0 16px}
+.btn2 .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+
+/* MAIN */
+.right{flex:1;height:854px;display:flex;flex-direction:column;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:flex-end;padding:4px 2px 18px}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.sub{font-size:15px;color:var(--muted);margin-top:6px}
+.grid{flex:1;overflow:hidden;display:grid;grid-template-columns:repeat(5,255px);grid-auto-rows:max-content;gap:16px;align-content:start}
+.gh{grid-column:1/-1;display:flex;align-items:center;gap:12px;height:28px;margin-top:2px}
+.gh b{font-size:17px;font-weight:700}
+.gh span{font-size:14px;color:var(--muted)}
+.gh hr{flex:1;border:0;height:1px;background:var(--hair2)}
+.eg{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r-card);overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.22);position:relative}
+.eg.nextc{border-color:rgba(129,182,76,.6);box-shadow:0 0 0 1px rgba(129,182,76,.35),0 2px 10px rgba(0,0,0,.22)}
+.eg.hov{transform:translateY(-3px);border-color:var(--hair2);box-shadow:0 10px 24px rgba(0,0,0,.4)}
+.bd{position:relative;width:100%;aspect-ratio:1/1}
+.bd .sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr)}
+.bd .sq{position:relative}
+.bd .sq img{position:absolute;inset:0;width:100%;height:100%}
+.pill{position:absolute;left:10px;top:10px;height:26px;border-radius:7px;padding:0 9px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
+.pill.next{background:var(--accent);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.done{position:absolute;right:10px;top:10px;width:28px;height:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+.scrim{position:absolute;inset:0;background:rgba(24,23,22,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;text-align:center}
+.scrim p{font-size:15px;color:#F1EFEC;line-height:1.45}
+.play{width:54px;height:54px;border-radius:27px;background:var(--accent);box-shadow:0 4px 0 var(--accent-press);display:grid;place-items:center;color:#fff}
+.play .ico{width:24px;height:24px;margin-left:3px}
+.eb{padding:12px 14px 14px}
+.eb .t{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:13px;font-weight:600;white-space:nowrap}
+.meta .sep{color:var(--faint);font-weight:400}
+.meta .goal{display:inline-flex;align-items:center;gap:5px;color:#DCD8D3}
+.meta .goal img{width:17px;height:17px}
+.chip{height:26px;border-radius:7px;padding:0 8px;display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;background:var(--surface2);border:1px solid var(--hair2);color:#DCD8D3}
+.chip img{width:16px;height:16px}
+.d1{color:#9BCB6A} .d2{color:#F4B45C} .d3{color:#F08277}
+.st{margin-left:auto;font-size:13px;font-weight:500}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+
+<aside class="side" id="side"></aside>
+
+<main class="main">
+  <!-- LEFT -->
+  <section class="card left" data-ui="eg-left">
+    <div class="hd"><div class="h2">Эндшпили</div><div class="muted num" style="font-size:14px">7 из 26 решено</div></div>
+    <div class="pbar6"><i style="width:27%"></i></div>
+    <div class="stats">
+      <div class="stat"><b class="num ok">7</b><span>решено</span></div>
+      <div class="stat"><b class="num warn">4</b><span>в работе</span></div>
+      <div class="stat"><b class="num">15</b><span>новых</span></div>
+    </div>
+    <div class="lab">Разделы</div>
+    <div class="secs" id="secs" data-ui="eg-sections"></div>
+    <div class="lab">Сложность</div>
+    <div class="seg seg4" style="grid-template-columns:repeat(4,1fr)"><div class="on">Любая</div><div>Легко</div><div>Средне</div><div>Сложно</div></div>
+    <div class="lab">Показать</div>
+    <div class="seg" style="grid-template-columns:1fr 1fr 1fr"><div class="on">Все</div><div>Новые</div><div>Решённые</div></div>
+    <div class="next" data-ui="eg-next">
+      <div class="l"><i class="ico" data-i="target" style="width:15px;height:15px"></i>Следующая позиция</div>
+      <div class="box"><div id="nextBoard"></div><div><div class="t" id="nextT"></div><div class="m" id="nextM"></div></div></div>
+      <div class="btn1"><i class="ico" data-i="play" style="width:18px;height:18px"></i>Играть <span class="k">Enter</span></div>
+    </div>
+  </section>
+
+  <!-- MAIN -->
+  <section class="right">
+    <div class="top">
+      <div><div class="title tight" id="title">Все позиции</div><div class="sub" id="sub">26 позиций · от простых до теоретических · играешь против Stockfish</div></div>
+      <div class="btn2"><i class="ico" data-i="shuffle"></i>Случайная позиция <span class="k">R</span></div>
+    </div>
+    <div class="grid" id="grid" data-ui="eg-grid"></div>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script>
+const H = location.hash === '#h';
+const ROOK = location.hash === '#rook';
+const ico = (n, s = '') => `<i class="ico" data-i="${n}" style="${s}"></i>`;
+
+const nav = [
+  ['calendar', 'Сегодня'],
+  ['#', 'Учиться'], ['layers', 'Дебюты'], ['book-open', 'Курсы'], ['flag', 'Ловушки'], ['lightbulb', 'Идеи позиций'],
+  ['#', 'Тренироваться'], ['circle-alert', 'Ошибки'], ['triangle-alert', 'Проверка угроз'], ['grid-3x3', 'Эндшпили', 1], ['shield', 'Жертвы'], ['search', 'Угадай дебют'], ['circle-play', 'Играть'],
+  ['#', 'Партии'], ['message-square', 'Мои партии'], ['star', 'Мастера'],
+];
+document.getElementById('side').innerHTML = nav.map(([i, t, a]) => i === '#'
+  ? `<div class="grp">${t}${ico('chevron-down')}</div>`
+  : `<div class="item${a ? ' active' : ''}">${ico(i)}${t}</div>`).join('')
+  + `<div class="item bottom">${ico('panel-left-close')}Свернуть меню</div>`;
+
+// id, fen, goal, difficulty, category, title, idea, status
+const E = [
+  ['kp-01', '8/4P3/4K3/8/8/8/8/5k2 w', 'win', 1, 'kp', 'Пешка на 7-й', 'Пешка на 7-й, король на 6-й. Одним ходом пешку в ферзи.', 'ok:9'],
+  ['kp-02', '8/8/8/8/8/8/4P3/4K1k1 w', 'win', 1, 'kp', 'Король ведёт пешку', 'Выведи короля на e3–e4–e5, сопровождая пешку к превращению.', 'ok:22'],
+  ['kp-05', '8/8/5K2/5P2/8/5k2/8/8 w', 'win', 2, 'kp', 'Король на 6-й', 'Король на 6-й горизонтали — ключевое поле занято. Поддержи пешку.', 'ok:15'],
+  ['kp-06', '8/8/8/4K3/8/4P3/8/4k3 w', 'win', 2, 'kp', 'Король впереди пешки', 'Король далеко впереди пешки. Держи оппозицию и веди пешку.', 'ok:18'],
+  ['kp-07', '8/8/8/8/8/8/3P4/3K1k2 w', 'win', 2, 'kp', 'Марш к ключевому полю', 'Марш на ключевое поле перед пешкой определяет победу.', 'try:2'],
+  ['kp-08', '8/8/8/8/8/8/5P2/5K1k w', 'win', 2, 'kp', 'Ключевые поля f3–f4', 'Захвати ключевые поля f3–f4 и веди пешку при поддержке короля.', 'new'],
+  ['kp-09', '8/8/8/8/4k3/4P3/4K3/8 b', 'draw', 2, 'kp', 'Оппозиция в защите', 'Чёрный король перед пешкой — классическая ничья. Держи оппозицию.', 'try:1'],
+  ['kp-11', '8/8/8/8/1P6/8/8/1K3k2 w', 'win', 2, 'kp', 'Ключевое поле b5', 'Король опередил — веди к ключевому полю b5, пешка следует за ним.', 'new'],
+  ['kp-12', '8/8/8/3K4/8/3P4/8/3k4 w', 'win', 2, 'kp', 'Оппозиция и поля d5–e5', 'Король опередил чёрного. Оппозиция и ключевые поля d5–e5.', 'new'],
+  ['kp-10', '8/8/8/8/8/k7/p7/K7 b', 'draw', 3, 'kp', 'Ладейная пешка — ничья', 'Ладейная пешка заблокирована: любой ход короля даёт белым взять пешку.', 'new'],
+  ['re-01', '8/8/8/8/4k3/8/8/4KR2 w', 'win', 1, 're', 'Мат ладьёй', 'Ладья и король матуют одинокого короля: оттесняй к краю.', 'ok:17'],
+  ['re-02', '8/8/8/8/8/8/3P4/3RK2k w', 'win', 1, 're', 'Ладья отрезает короля', 'Ладья отрезает короля по горизонтали. Пешка свободно продвигается.', 'new'],
+  ['re-07', '8/8/8/8/8/P7/R7/K6k w', 'win', 1, 're', 'Ладья позади пешки', 'Ладья позади проходной пешки — классический принцип Нимцовича.', 'ok:24'],
+  ['re-06', '8/8/8/8/3R4/8/3P4/3K3k w', 'win', 2, 're', 'Отрезание по горизонтали', 'Ладья по горизонтали отрезает вражеского короля. Пешка проходит без помех.', 'new'],
+  ['re-09', '8/8/8/8/8/8/P7/1R1K3k w', 'win', 2, 're', 'Ладья на 2-й линии', 'Ладья на второй линии поддерживает пешку. Марш к превращению.', 'new'],
+  ['re-10', '8/8/8/8/3k4/8/3P4/3K1R2 w', 'win', 2, 're', 'Король отрезан', 'Ладья по горизонтали отрезает вражеского короля. Пешка решает партию.', 'new'],
+  ['re-03', '1K1k4/1P6/8/8/8/8/r7/4R3 w', 'win', 3, 're', 'Позиция Лусены', 'Позиция Лусены: «строй мост» ладьёй, чтобы прикрыть короля от шахов.', 'try:3'],
+  ['re-04', '2k5/2P5/2K5/8/8/8/8/R7 w', 'win', 3, 're', 'Укрытие от шахов', 'Ладья на первой горизонтали, пешка рвётся в ферзи. Маневр для укрытия.', 'new'],
+  ['re-05', '8/8/r7/6k1/4P3/4K3/8/4R3 b', 'draw', 3, 're', 'Метод Филидора', 'Метод Филидора: ладья на 6-й горизонтали, после Ke5 — на 1-ю для шахов.', 'new'],
+];
+const SECS = [
+  ['all', 'Все позиции', null, 26, 7, 'layout-grid'],
+  ['kp', 'Король и пешка', 'wP', 10, 4],
+  ['re', 'Ладейные', 'wR', 9, 2],
+  ['lp', 'Лёгкие фигуры', 'wN', 1, 0],
+  ['qp', 'Ферзь против пешки', 'wQ', 6, 1],
+];
+const SUB = {
+  all: '26 позиций · от простых до теоретических · играешь против Stockfish',
+  re: '9 позиций · мат ладьёй, Лусена, Филидор, отрезание короля',
+};
+const active = ROOK ? 're' : 'all';
+document.getElementById('secs').innerHTML = SECS.map(([k, t, pc, n, done, ic]) => `
+  <div class="sec${k === active ? ' on' : ''}">
+    <div class="pic">${pc ? `<img src="pieces/${pc}.svg">` : ico(ic)}</div>
+    <div><div class="t">${t}</div><div class="mini"><i style="width:${Math.round(done / n * 100)}%"></i></div></div>
+    <div class="c num">${done} / ${n}</div>
+  </div>`).join('');
+
+const files = 'abcdefgh';
+function board(fen, flip) {
+  const grid = {};
+  fen.split(' ')[0].split('/').forEach((row, ri) => { let f = 0; for (const ch of row) { if (/\d/.test(ch)) f += +ch; else { grid[files[f] + (8 - ri)] = ch; f++; } } });
+  let h = '';
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const file = flip ? 7 - c : c, rank = flip ? r + 1 : 8 - r;
+    const sq = files[file] + rank;
+    const light = (file + rank) % 2 === 1;
+    const p = grid[sq];
+    h += `<div class="sq" style="background:var(--${light ? 'light' : 'dark'})">${p ? `<img src="pieces/${p === p.toUpperCase() ? 'w' : 'b'}${p.toUpperCase()}.svg">` : ''}</div>`;
+  }
+  return `<div class="sqs">${h}</div>`;
+}
+const CHECK = '<svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="11.5" fill="#81B64C"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const DIFF = { 1: ['Легко', 'd1'], 2: ['Средне', 'd2'], 3: ['Сложно', 'd3'] };
+const plural = (n, a, b, c) => n % 10 === 1 && n % 100 !== 11 ? a : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c);
+function card([id, fen, goal, d, cat, t, idea, st]) {
+  const side = fen.split(' ')[1];
+  const [s, v] = st.split(':');
+  const status = s === 'ok' ? `<span class="st ok">${v} ${plural(+v, 'ход', 'хода', 'ходов')}</span>`
+    : s === 'try' ? `<span class="st warn">${v} ${plural(+v, 'попытка', 'попытки', 'попыток')}</span>`
+    : `<span class="st faint">Новая</span>`;
+  const isNext = id === 'kp-07', hov = H && id === 'kp-08';
+  return `<div class="eg${isNext ? ' nextc' : ''}${hov ? ' hov' : ''}" data-ui="eg-card" data-status="${s === 'ok' ? 'solved' : s === 'try' ? 'tried' : 'new'}"${isNext ? ' data-next="true"' : ''}>
+    <div class="bd" data-ui="eg-board">${board(fen, side === 'b')}
+      ${isNext ? `<div class="pill next">${ico('target', 'width:14px;height:14px')}Следующая</div>` : ''}
+      ${s === 'ok' ? `<div class="done">${CHECK}</div>` : ''}
+      ${hov ? `<div class="scrim"><p>${idea}</p><div class="play">${ico('play')}</div></div>` : ''}
+    </div>
+    <div class="eb">
+      <div class="t" data-ui="eg-card-title">${t}</div>
+      <div class="meta">
+        <span class="${DIFF[d][1]}">${DIFF[d][0]}</span><span class="sep">·</span>
+        <span class="goal"><img src="pieces/${side}K.svg">${goal === 'win' ? 'Выиграть' : 'Ничья'}</span>
+        ${status}
+      </div>
+    </div>
+  </div>`;
+}
+const gh = (t, done, n) => `<div class="gh"><b>${t}</b><span class="num">${done} из ${n} решено</span><hr></div>`;
+let g = '';
+if (ROOK) {
+  document.getElementById('title').textContent = 'Ладейные';
+  document.getElementById('sub').textContent = SUB.re;
+  g = E.filter(e => e[4] === 're').map(card).join('');
+} else {
+  g = gh('Король и пешка', 4, 10) + E.filter(e => e[4] === 'kp').map(card).join('')
+    + gh('Ладейные', 2, 9) + E.filter(e => e[4] === 're').map(card).join('');
+}
+document.getElementById('grid').innerHTML = g;
+
+const nx = E.find(e => e[0] === 'kp-07');
+document.getElementById('nextBoard').innerHTML = `<div class="bd" style="width:84px;height:84px;border-radius:8px;overflow:hidden">${board(nx[1], false)}</div>`;
+document.getElementById('nextT').textContent = nx[5];
+document.getElementById('nextM').textContent = 'Король и пешка · Средне · 2 попытки';
+
+document.querySelectorAll('[data-i]').forEach(el => {
+  const u = window.ICONS && ICONS[el.dataset.i];
+  if (u) el.style.setProperty('--i', `url("${u}")`);
+});
+</script>
+</body>
+</html>

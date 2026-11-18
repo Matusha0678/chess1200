@@ -17,8 +17,10 @@ import { FeedbackCard } from '@/components/ui/FeedbackCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { MoveChip } from '@/components/ui/MoveChip';
 import { Kbd } from '@/components/ui/Kbd';
+import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { prepareSacPositions } from '@/lib/sac-prepare';
 import type { PrepProgress as SacPrepProgress } from '@/lib/sac-prepare';
+import { fenAfterSac, lineSan, lineOutcome as sacTextLineOutcome } from '@/lib/sac-text';
 import { createBrowserEngine } from '@/lib/engine';
 import type { Engine } from '@/lib/engine';
 
@@ -67,6 +69,16 @@ const PIECE_ACC: Record<string, string> = {
   p: 'пешку', n: 'коня', b: 'слона', r: 'ладью', q: 'ферзя', k: 'короля',
 };
 
+// Возвращает тип взятой фигуры на клетке to в позиции fen (или null).
+function capturedPieceType(fen: string, sacUci: string): string | null {
+  try {
+    const ch = new Chess(fen);
+    const to = sacUci.slice(2, 4) as Square;
+    const piece = ch.get(to);
+    return piece ? piece.type : null;
+  } catch { return null; }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function uciToSan(fen: string, uci: string): string {
@@ -94,15 +106,18 @@ function formatEta(seconds: number): string {
 
 // ── Phrase builder (LOGIC.md 1.10) ───────────────────────────────────────────
 
-function buildPhrase(pos: SacPosition, san: string): string {
+function buildPhrase(pos: SacPosition, san: string, afterSacFen: string | null): string {
   const { kind, pattern, sac_type, mate_in, mate_forced, piece, is_decoy } = pos;
 
   if (kind === 'fake') {
-    const defSan = (() => {
+    const defUci = (() => {
       if (pos.defenses && pos.defenses.length > 0) return pos.defenses[0].move;
       if (pos.pv) return pos.pv.split(' ')[0];
-      return 'лучший ход';
+      return null;
     })();
+    const defSan = defUci && afterSacFen
+      ? uciToSan(afterSacFen, defUci)
+      : (defUci ?? 'лучший ход');
 
     if (!is_decoy) {
       return `${san} — соперник берёт ${PIECE_ACC[piece ?? 'n'] ?? 'фигуру'} и спокойно защищается: ${defSan}.`;
@@ -119,7 +134,10 @@ function buildPhrase(pos: SacPosition, san: string): string {
       return `${san} — жертва ведёт к мату за ${mate_in} ходов.`;
     }
     if (mate_in) {
-      const defSan = pos.defenses?.[0]?.move ?? pos.pv?.split(' ')[0] ?? 'лучший ход';
+      const defUci = pos.defenses?.[0]?.move ?? pos.pv?.split(' ')[0] ?? null;
+      const defSan = defUci && afterSacFen
+        ? uciToSan(afterSacFen, defUci)
+        : (defUci ?? 'лучший ход');
       return `${san} — если взять ${PIECE_ACC[piece ?? 'n'] ?? 'фигуру'}, мат за ${mate_in} ходов. Лучшая защита — ${defSan}.`;
     }
     return `${san} — жертва ведёт к матовой атаке.`;
@@ -137,12 +155,22 @@ function buildPhrase(pos: SacPosition, san: string): string {
   return `${san} — за ${PIECE_ACC[piece ?? 'n'] ?? 'фигуру'} ты получаешь инициативу.`;
 }
 
-function buildGaveGot(pos: SacPosition): { gave: string; got: string; gotBad: boolean } {
-  const { kind, sac_type, piece, material_given, king_attack } = pos;
+function buildGaveGot(
+  pos: SacPosition,
+  capturedType: string | null,
+  acceptedPvArr: string[] | null,
+): { gave: string; got: string; gotBad: boolean } {
+  const { kind, sac_type, piece, king_attack } = pos;
   const pieceAcc = PIECE_ACC[piece ?? 'n'] ?? 'фигуру';
-  const mg = material_given ?? 0;
 
-  const gave = `${pieceAcc} (${mg} ${mg === 1 ? 'пешка' : mg < 5 ? 'пешки' : 'пешек'})`;
+  // «Отдал»: если взятие — «{фигуру} за {взятую}», без скобок.
+  let gave: string;
+  if (capturedType) {
+    const capturedAcc = PIECE_ACC[capturedType] ?? 'фигуру';
+    gave = `${pieceAcc} за ${capturedAcc}`;
+  } else {
+    gave = pieceAcc;
+  }
 
   let got = '';
   let gotBad = false;
@@ -153,7 +181,15 @@ function buildGaveGot(pos: SacPosition): { gave: string; got: string; gotBad: bo
   } else if (sac_type === 'mate') {
     got = pos.mate_forced ? 'мат' : 'мат (если взять)';
   } else if (sac_type === 'combination') {
-    got = 'материал с прибылью';
+    // По lineOutcome с accepted_pv, maxPlies = 8
+    if (acceptedPvArr && acceptedPvArr.length > 0) {
+      const outcome = sacTextLineOutcome(pos.fen, pos.move, acceptedPvArr, null, null, 8);
+      if (outcome === 'выигрыш ферзя') got = 'ферзя';
+      else if (outcome.startsWith('выигрыш материала')) got = outcome.replace('выигрыш ', '');
+      else got = 'материал назад';
+    } else {
+      got = 'материал назад';
+    }
   } else if (king_attack) {
     got = 'атаку на короля';
   } else {
@@ -211,6 +247,7 @@ function wp(cp: number): number {
 
 function SacPageInner() {
   const { S } = useTrainerGeometry();
+  const { animationMs } = useBoardTheme();
   const searchParams = useSearchParams();
   const demoKey = searchParams.get('demo') as 'works' | 'fails' | null;
   const isDemo = demoKey === 'works' || demoKey === 'fails';
@@ -221,10 +258,15 @@ function SacPageInner() {
 
   const [current, setCurrent]         = useState<SacPosition | null>(null);
   const [answered, setAnswered]       = useState<{ answer: 'sac' | 'calm'; ok: boolean } | null>(null);
-  const [sacMoveApplied, setSacMoveApplied] = useState(false);
+  const [revealed, setRevealed]       = useState(false);
 
   type Preview = null | { kind: 'line'; idx: number } | { kind: 'nosac' };
   const [preview, setPreview] = useState<Preview>(null);
+
+  type Step = { line: number; ply: number; playing: boolean } | null;
+  const [step, setStep] = useState<Step>(null);
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // History: completed positions with their answers
   const [history, setHistory] = useState<Array<{ pos: SacPosition; answer: 'sac' | 'calm'; ok: boolean }>>([]);
@@ -258,6 +300,40 @@ function SacPageInner() {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      // Step navigation
+      if (step !== null && current && answered) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          stopPlay();
+          setStep(null);
+          setPreview(null);
+          (document.activeElement as HTMLElement | null)?.blur();
+          return;
+        }
+        const def = current.defenses?.[step.line];
+        const pvArr = def ? (Array.isArray(def.pv) ? def.pv : (def.pv as string).split(' ')) : [];
+        const maxPly = Math.min(pvArr.length, 4) - 1;
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          stopPlay();
+          if (step.ply < maxPly) setStep({ line: step.line, ply: step.ply + 1, playing: false });
+          return;
+        }
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          stopPlay();
+          if (step.ply === 0) {
+            setStep(null);
+            setPreview(null);
+            (document.activeElement as HTMLElement | null)?.blur();
+          } else {
+            setStep({ line: step.line, ply: step.ply - 1, playing: false });
+          }
+          return;
+        }
+      }
+
       if ((e.key === '1' || e.key === 'j' || e.key === 'J') && !answered && current && !preparing) {
         e.preventDefault();
         void handleAnswer('sac');
@@ -274,7 +350,7 @@ function SacPageInner() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answered, current, preparing, positions]);
+  }, [answered, current, preparing, positions, step]);
 
   async function loadData() {
     if (isDemo && demoKey) {
@@ -293,7 +369,8 @@ function SacPageInner() {
       setPositions([p]);
       setCurrent(p);
       setAnswered(null);
-      setSacMoveApplied(false);
+      setRevealed(false);
+      setStep(null);
       setLoading(false);
       return;
     }
@@ -352,19 +429,58 @@ function SacPageInner() {
     }
   }
 
+  function stopPlay() {
+    if (playTimerRef.current) clearTimeout(playTimerRef.current);
+    playTimerRef.current = null;
+  }
+
+  function startPlay(line: number, pv: string[]) {
+    stopPlay();
+    const maxPly = Math.min(pv.length, 4) - 1;
+    setStep({ line, ply: 0, playing: true });
+    setPreview(null);
+    function advance(curPly: number) {
+      if (curPly >= maxPly) {
+        setStep({ line, ply: curPly, playing: false });
+        return;
+      }
+      playTimerRef.current = setTimeout(() => {
+        const next = curPly + 1;
+        setStep({ line, ply: next, playing: next < maxPly });
+        advance(next);
+      }, 900);
+    }
+    advance(0);
+  }
+
   function pickRandom(pool: SacPosition[]) {
     if (!pool.length) return;
+    stopPlay();
     const idx = Math.floor(Math.random() * pool.length);
     setCurrent(pool[idx]);
     setAnswered(null);
-    setSacMoveApplied(false);
+    setRevealed(false);
+    setStep(null);
+    setPreview(null);
+    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
   }
 
   async function handleAnswer(answer: 'sac' | 'calm') {
     if (!current || answered) return;
+    stopPlay();
     const ok = answer === 'sac' ? current.kind === 'real' : current.kind === 'fake';
+    // Always play the sac move on the board
+    setRevealed(false);
+    setStep(null);
+    setPreview(null);
     setAnswered({ answer, ok });
-    if (answer === 'sac') setSacMoveApplied(true);
+
+    // After animation completes, reveal overlays
+    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    const delay = (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+      ? 0
+      : animationMs + 50;
+    revealTimerRef.current = setTimeout(() => setRevealed(true), delay);
 
     setHistory(h => [...h, { pos: current, answer, ok }]);
     setStats(s => ({
@@ -454,6 +570,47 @@ function SacPageInner() {
     return Math.max(0, perGame * (prepProgress.gamesTotal - prepProgress.gamesChecked));
   })();
 
+  // ── Computed values ─────────────────────────────────────────────────────────
+  const afterSacFen = current ? fenAfterSac(current.fen, current.move) : null;
+
+  // displayFen:
+  //   - step active: position after sac + first (ply+1) moves from def.pv
+  //   - nosac hover: pre-sac fen
+  //   - answered: post-sac fen
+  //   - question: pre-sac fen
+  const displayFen = (() => {
+    if (!current) return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    if (answered && step !== null) {
+      // Play sac then pv[0..ply]
+      const def = current.defenses?.[step.line];
+      const pvArr = def ? (Array.isArray(def.pv) ? def.pv : (def.pv as string).split(' ')) : [];
+      const sliced = pvArr.slice(0, step.ply + 1);
+      let curFen = afterSacFen ?? current.fen;
+      for (const uci of sliced) {
+        if (!uci || uci.length < 4) break;
+        try {
+          const ch = new Chess(curFen);
+          ch.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: (uci[4] ?? 'q') as 'q' | 'r' | 'b' | 'n' });
+          curFen = ch.fen();
+        } catch { break; }
+      }
+      return curFen;
+    }
+    if (answered && preview?.kind === 'nosac') return current.fen;
+    if (answered) return afterSacFen ?? current.fen;
+    return current.fen;
+  })();
+
+  // lastMove for step mode
+  const stepLastMove: { from: Square; to: Square } | null = (() => {
+    if (!current || step === null || !answered) return null;
+    const def = current.defenses?.[step.line];
+    const pvArr = def ? (Array.isArray(def.pv) ? def.pv : (def.pv as string).split(' ')) : [];
+    const uci = pvArr[step.ply];
+    if (!uci || uci.length < 4) return null;
+    return { from: uci.slice(0, 2) as Square, to: uci.slice(2, 4) as Square };
+  })();
+
   // ── Board arrows, tints, rings, badges ─────────────────────────────────────
   const sacTints: Partial<Record<Square, string>> = {};
   const sacRings: Partial<Record<Square, string>> = {};
@@ -470,23 +627,18 @@ function SacPageInner() {
     sacRings[to]   = '#F0A43A';
   }
 
-  if (current && answered) {
+  if (current && answered && revealed && step === null) {
     const from = current.move.slice(0, 2) as Square;
     const to   = current.move.slice(2, 4) as Square;
     const works = current.kind === 'real';
 
     if (preview?.kind === 'nosac') {
-      sacTints[from] = works ? 'rgba(38,194,163,.45)' : 'rgba(224,87,74,.40)';
-      sacTints[to]   = works ? 'rgba(38,194,163,.55)' : 'rgba(224,87,74,.50)';
-      if (works) sacBadges[to] = 'brilliant';
-      else {
-        const wpB = wp(current.eval_before ?? 0);
-        const wpA = wp(current.eval_after ?? 0);
-        sacBadges[to] = wpB - wpA >= 0.20 ? 'blunder' : 'mistake';
-      }
-      const bns = current.best_no_sac;
-      if (bns && /^[a-h][1-8][a-h][1-8]/.test(bns)) {
-        sacArrows.push({ from: bns.slice(0, 2) as Square, to: bns.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best' });
+      // Show only best arrow, no tints, no badges (pre-sac position)
+      const bnsRaw = current.best_no_sac;
+      const bns = bnsRaw ? displayBestNoSac(current.fen, bnsRaw) : null;
+      // need UCI for the arrow — if bnsRaw is UCI use it, else try to get from SAN
+      if (bnsRaw && /^[a-h][1-8][a-h][1-8]/.test(bnsRaw)) {
+        sacArrows.push({ from: bnsRaw.slice(0, 2) as Square, to: bnsRaw.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best' });
       } else if (bns) {
         try {
           const ch = new Chess(current.fen);
@@ -522,7 +674,7 @@ function SacPageInner() {
         });
       }
     } else {
-      // Normal answered state
+      // Normal answered state (not hovering)
       sacTints[from] = works ? 'rgba(38,194,163,.45)' : 'rgba(224,87,74,.40)';
       sacTints[to]   = works ? 'rgba(38,194,163,.55)' : 'rgba(224,87,74,.50)';
       sacCheckSquare = detectCheckSquare(current.fen, current.move);
@@ -531,16 +683,21 @@ function SacPageInner() {
         sacBadges[to] = 'brilliant';
         if (current.accepted_pv) {
           const pvMoves = current.accepted_pv.split(' ').filter(Boolean);
-          [pvMoves[1], pvMoves[3]].forEach((uci, idx) => {
-            if (!uci || uci.length < 4) return;
+          // pv[0] = opp capture (line-opp, label 1), pv[1] = my move (plan, label 2)
+          const lineOppUci = pvMoves[0];
+          const planUci    = pvMoves[1];
+          if (lineOppUci && lineOppUci.length >= 4) {
             sacArrows.push({
-              from: uci.slice(0, 2) as Square, to: uci.slice(2, 4) as Square,
-              color: '#4A90E2', style: 'solid',
-              opacity: idx === 0 ? 0.7 : 0.55,
-              label: String(idx + 2),
-              role: 'plan',
+              from: lineOppUci.slice(0, 2) as Square, to: lineOppUci.slice(2, 4) as Square,
+              color: '#E0574A', style: 'solid', opacity: 0.85, label: '1', role: 'line-opp',
             });
-          });
+          }
+          if (planUci && planUci.length >= 4) {
+            sacArrows.push({
+              from: planUci.slice(0, 2) as Square, to: planUci.slice(2, 4) as Square,
+              color: '#4A90E2', style: 'solid', opacity: 0.7, label: '2', role: 'plan',
+            });
+          }
         }
       } else {
         const wpB = wp(current.eval_before ?? 0);
@@ -560,19 +717,22 @@ function SacPageInner() {
     }
   }
 
-  // displayFen: for nosac preview show pre-sac fen; otherwise show post-sac if answered
-  const displayFen = (() => {
-    if (!current) return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-    if (answered && preview?.kind === 'nosac') return current.fen;
-    if (sacMoveApplied) {
-      try {
-        const ch = new Chess(current.fen);
-        ch.move({ from: current.move.slice(0, 2), to: current.move.slice(2, 4), promotion: current.move[4] || 'q' });
-        return ch.fen();
-      } catch { /* noop */ }
-    }
-    return current.fen;
-  })();
+  // Check square when step active
+  if (current && answered && step !== null && stepLastMove) {
+    // detect check in the displayFen position
+    try {
+      const ch = new Chess(displayFen);
+      if (ch.inCheck()) {
+        for (const row of ch.board()) {
+          for (const cell of row) {
+            if (cell?.type === 'k' && cell.color === ch.turn()) {
+              sacCheckSquare = cell.square as Square;
+            }
+          }
+        }
+      }
+    } catch { /* noop */ }
+  }
 
   // ── EvalBar: use cp from eval_after ────────────────────────────────────────
   const evalCp = answered && current ? current.eval_after : null;
@@ -670,7 +830,7 @@ function SacPageInner() {
         return (
           <div
             key={p.id}
-            onClick={() => { setCurrent(p); setAnswered(null); setSacMoveApplied(false); }}
+            onClick={() => { setCurrent(p); setAnswered(null); setRevealed(false); setStep(null); setPreview(null); if (revealTimerRef.current) clearTimeout(revealTimerRef.current); }}
             style={{
               display: 'grid',
               gridTemplateColumns: '26px 1fr auto',
@@ -712,7 +872,7 @@ function SacPageInner() {
   const sessionPanel = (
     <SessionPanel
       title="Сессия"
-      rightNote={positions.length > 0 ? `позиций нет` : undefined}
+      rightNote={positions.length > 0 ? `осталось ${positions.filter(p => !history.find(h => h.pos.id === p.id)).length}` : undefined}
       stats={[
         { value: correctPct != null ? correctPct : 0, label: 'верных %', color: '#81B64C' },
         { value: stats.missedReal, label: 'пропустил', color: '#F4B45C' },
@@ -782,6 +942,7 @@ function SacPageInner() {
       size={S}
       interactive={false}
       dimmed={!current}
+      lastMove={stepLastMove ?? undefined}
       tints={sacTints as Partial<Record<Square, string>>}
       rings={sacRings as Partial<Record<Square, string>>}
       badges={sacBadges as Partial<Record<Square, BadgeKind>>}
@@ -961,116 +1122,274 @@ function SacPageInner() {
         )}
 
         {/* Answer state */}
-        {answered && current && (
-          <>
-            <div data-ui="sac-feedback" data-result={current.kind === 'real' ? 'works' : 'fails'} style={{ marginBottom: 16 }}>
-              <FeedbackCard
-                variant={answered.ok ? 'success' : 'danger'}
-                title={
-                  current.kind === 'real' ? 'Верно! Жертва работает' :
-                  answered.answer === 'sac' ? 'Неверно — жертва не работает' :
-                  'Верно — жертва не работает'
-                }
-              >
-                {buildPhrase(current, sacSan)}
-              </FeedbackCard>
-            </div>
+        {answered && current && (() => {
+          const works = current.kind === 'real';
+          const title =
+            answered.answer === 'sac'
+              ? (works ? 'Верно! Жертва работает' : 'Неверно — жертва не работает')
+              : (works ? 'Неверно — жертва работает' : 'Верно — жертва не работает');
 
-            {/* Eval pair */}
-            {(current.eval_after != null || current.eval_no_sac != null) && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                <div
-                  data-ui="sac-eval-no"
-                  onMouseEnter={() => setPreview({ kind: 'nosac' })}
-                  onFocus={() => setPreview({ kind: 'nosac' })}
-                  onMouseLeave={() => setPreview(null)}
-                  onBlur={() => setPreview(null)}
-                  tabIndex={0}
-                  style={{
-                    background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)',
-                    cursor: 'default', outline: 'none',
-                    ...(preview?.kind === 'nosac' ? { background: 'rgba(74,144,226,.12)', border: '1px solid rgba(74,144,226,.5)' } : {}),
-                  }}
+          // SAN for best_no_sac
+          const bnsRaw = current.best_no_sac;
+          const bnsSan = bnsRaw ? displayBestNoSac(current.fen, bnsRaw) : null;
+
+          // Defense lines in SAN
+          const sacFenForLines = afterSacFen ?? current.fen;
+
+          // accepted_pv array
+          const acceptedPvArr = current.accepted_pv ? current.accepted_pv.split(' ').filter(Boolean) : null;
+
+          // captured piece type
+          const capturedType = capturedPieceType(current.fen, current.move);
+
+          const { gave, got, gotBad } = buildGaveGot(current, capturedType, acceptedPvArr);
+
+          return (
+            <>
+              <div data-ui="sac-feedback" data-result={works ? 'works' : 'fails'} style={{ marginBottom: 16 }}>
+                <FeedbackCard
+                  variant={answered.ok ? 'success' : 'danger'}
+                  title={title}
                 >
-                  <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
-                    без жертвы {current.best_no_sac ? `(${current.best_no_sac})` : ''}
-                  </span>
-                  <b style={{ fontSize: 20, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
-                    {current.eval_no_sac != null ? cpToEvalStr(current.eval_no_sac) : '—'}
-                  </b>
-                </div>
-                <div
-                  data-ui="sac-eval-after"
-                  style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}
-                >
-                  <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
-                    после {sacSan}
-                  </span>
-                  <b style={{ fontSize: 20, color: answered.ok ? '#81B64C' : '#E0574A', fontVariantNumeric: 'tabular-nums' }}>
-                    {current.eval_after != null ? cpToEvalStr(current.eval_after) : '—'}
-                  </b>
-                </div>
+                  {buildPhrase(current, sacSan, afterSacFen)}
+                </FeedbackCard>
               </div>
-            )}
 
-            {/* Defenses ("если ...") */}
-            {current.defenses && current.defenses.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
-                {current.defenses.slice(0, 2).map((def, i) => (
+              {/* Eval pair */}
+              {(current.eval_after != null || current.eval_no_sac != null) && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
                   <div
-                    key={i}
-                    data-ui="sac-line"
-                    onMouseEnter={() => setPreview({ kind: 'line', idx: i })}
-                    onFocus={() => setPreview({ kind: 'line', idx: i })}
-                    onMouseLeave={() => setPreview(null)}
-                    onBlur={() => setPreview(null)}
+                    data-ui="sac-eval-no"
+                    onMouseEnter={() => { if (step === null) setPreview({ kind: 'nosac' }); }}
+                    onFocus={() => { if (step === null) setPreview({ kind: 'nosac' }); }}
+                    onMouseLeave={() => { if (step === null) setPreview(null); }}
+                    onBlur={() => { if (step === null) setPreview(null); }}
                     tabIndex={0}
                     style={{
-                      display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13,
-                      padding: '6px 8px', borderRadius: 8, cursor: 'default', outline: 'none',
-                      ...(preview?.kind === 'line' && preview.idx === i
-                        ? { background: 'rgba(74,144,226,.12)', border: '1px solid rgba(74,144,226,.5)' }
-                        : { border: '1px solid transparent' }),
+                      background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)',
+                      cursor: 'default', outline: 'none',
+                      ...(preview?.kind === 'nosac' ? { background: 'rgba(74,144,226,.12)', border: '1px solid rgba(74,144,226,.5)' } : {}),
                     }}
                   >
-                    <span style={{ color: 'var(--muted)', flexShrink: 0, marginTop: 1 }}>если</span>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {(Array.isArray(def.pv) ? def.pv.slice(0, 4) : (def.pv as string).split(' ').slice(0, 4)).map((uci, j) => (
-                        <span key={j} style={{ padding: '2px 8px', borderRadius: 6, background: 'var(--surface-2)', border: '1px solid var(--hairline)', fontSize: 13, color: 'var(--ivory)' }}>
-                          {uciToSan(answered && current && sacMoveApplied ? displayFen : current.fen, uci) || uci}
-                        </span>
-                      ))}
-                      {def.outcome && (
-                        <span style={{ color: 'var(--muted)', fontSize: 13, alignSelf: 'center' }}>— {def.outcome}</span>
-                      )}
-                    </div>
+                    <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
+                      без жертвы{bnsSan ? ` (${bnsSan})` : ''}
+                    </span>
+                    <b style={{ fontSize: 20, color: works ? 'var(--ivory)' : '#81B64C', fontVariantNumeric: 'tabular-nums' }}>
+                      {current.eval_no_sac != null ? cpToEvalStr(current.eval_no_sac) : '—'}
+                    </b>
                   </div>
-                ))}
-                <div style={{ fontSize: 13, color: 'var(--faint, var(--muted))', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                  <span>↖</span>
-                  <span>Наведи на вариант или оценку — покажу на доске</span>
+                  <div
+                    data-ui="sac-eval-after"
+                    style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}
+                  >
+                    <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
+                      после {sacSan}
+                    </span>
+                    <b style={{ fontSize: 20, color: works ? '#81B64C' : '#F08277', fontVariantNumeric: 'tabular-nums' }}>
+                      {current.eval_after != null ? cpToEvalStr(current.eval_after) : '—'}
+                    </b>
+                  </div>
+                </div>
+              )}
+
+              {/* Defenses ("если ...") */}
+              {current.defenses && current.defenses.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+                  {current.defenses.slice(0, 2).map((def, i) => {
+                    const pvArr = Array.isArray(def.pv) ? def.pv : (def.pv as string).split(' ');
+                    const sanMoves = lineSan(sacFenForLines, pvArr.slice(0, 4));
+                    const outcome = sacTextLineOutcome(current.fen, current.move, pvArr, def.cp, def.mate);
+                    const isActive = step?.line === i;
+                    const isHovered = step === null && preview?.kind === 'line' && preview.idx === i;
+                    return (
+                      <div
+                        key={i}
+                        data-ui="sac-line"
+                        onMouseEnter={() => { if (step === null) setPreview({ kind: 'line', idx: i }); }}
+                        onFocus={() => { if (step === null) setPreview({ kind: 'line', idx: i }); }}
+                        onMouseLeave={() => { if (step === null) setPreview(null); }}
+                        onBlur={() => { if (step === null) setPreview(null); }}
+                        tabIndex={0}
+                        style={{
+                          display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13,
+                          padding: '6px 8px', borderRadius: 8, cursor: 'default', outline: 'none',
+                          ...((isActive || isHovered)
+                            ? { background: 'rgba(74,144,226,.12)', border: '1px solid rgba(74,144,226,.5)' }
+                            : { border: '1px solid transparent' }),
+                        }}
+                      >
+                        {/* ▶ play button */}
+                        {(() => {
+                          const pvArr2 = current.defenses?.[i] ? (Array.isArray(current.defenses[i].pv) ? current.defenses[i].pv as string[] : (current.defenses[i].pv as string).split(' ')) : [];
+                          const isPlaying = step?.line === i && step.playing;
+                          const isDone = step?.line === i && !step.playing && step.ply === Math.min(pvArr2.length, 4) - 1;
+                          const isActive = step?.line === i;
+                          return (
+                            <button
+                              data-ui="sac-line-play"
+                              data-line={i}
+                              onMouseDown={e => e.preventDefault()}
+                              onClick={e => {
+                                e.stopPropagation();
+                                if (isPlaying) {
+                                  stopPlay();
+                                  setStep({ line: i, ply: step!.ply, playing: false });
+                                } else if (isDone || (isActive && !isPlaying)) {
+                                  startPlay(i, pvArr2);
+                                } else {
+                                  startPlay(i, pvArr2);
+                                }
+                                setPreview(null);
+                              }}
+                              style={{
+                                width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 11, fontFamily: 'inherit',
+                                background: isPlaying ? 'rgba(74,144,226,.85)' : 'var(--surface-2)',
+                                border: `1px solid ${isPlaying ? 'rgba(74,144,226,.85)' : 'var(--hairline-2, var(--hairline))'}`,
+                                color: isPlaying ? '#fff' : 'var(--ivory)',
+                              }}
+                            >
+                              {isPlaying ? '❚❚' : isDone ? '↻' : '▶'}
+                            </button>
+                          );
+                        })()}
+                        <span
+                          style={{ color: 'var(--muted)', flexShrink: 0, marginTop: 1, cursor: 'default' }}
+                          onClick={() => {
+                            const pvArr2 = current.defenses?.[i] ? (Array.isArray(current.defenses[i].pv) ? current.defenses[i].pv as string[] : (current.defenses[i].pv as string).split(' ')) : [];
+                            startPlay(i, pvArr2);
+                            setPreview(null);
+                          }}
+                        >если</span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {sanMoves.map((san, j) => {
+                            const isStepActive = step?.line === i && step.ply === j;
+                            return (
+                              <button
+                                key={j}
+                                data-ui="sac-line-move"
+                                data-line={i}
+                                data-ply={j}
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => {
+                                  stopPlay();
+                                  if (isStepActive) {
+                                    setStep(null);
+                                    setPreview(null);
+                                    (document.activeElement as HTMLElement | null)?.blur();
+                                  } else {
+                                    setStep({ line: i, ply: j, playing: false });
+                                    setPreview(null);
+                                  }
+                                }}
+                                style={{
+                                  padding: '2px 8px', borderRadius: 6, fontSize: 13, cursor: 'pointer',
+                                  fontFamily: 'inherit', fontWeight: isStepActive ? 600 : 400,
+                                  color: isStepActive ? '#fff' : 'var(--ivory)',
+                                  background: isStepActive ? 'rgba(74,144,226,.28)' : 'var(--surface-2)',
+                                  border: isStepActive ? '1px solid rgba(74,144,226,.75)' : '1px solid var(--hairline)',
+                                }}
+                              >
+                                {san}
+                              </button>
+                            );
+                          })}
+                          <span
+                            style={{ color: 'var(--muted)', fontSize: 13, alignSelf: 'center', cursor: 'default' }}
+                            onClick={() => {
+                              const pvArr2 = current.defenses?.[i] ? (Array.isArray(current.defenses[i].pv) ? current.defenses[i].pv as string[] : (current.defenses[i].pv as string).split(' ')) : [];
+                              startPlay(i, pvArr2);
+                              setPreview(null);
+                            }}
+                          >— {outcome}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {step !== null ? (
+                    <div data-ui="sac-step" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--ivory)', marginTop: 2 }}>
+                      <button
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => {
+                          stopPlay();
+                          if (step.ply === 0) { setStep(null); setPreview(null); (document.activeElement as HTMLElement | null)?.blur(); }
+                          else setStep({ line: step.line, ply: step.ply - 1, playing: false });
+                        }}
+                        style={{ width: 32, height: 28, borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--hairline)', cursor: 'pointer', fontSize: 14, color: 'var(--ivory)', flexShrink: 0 }}
+                      >‹</button>
+                      {/* Middle ▶/⏸/↻ button */}
+                      {(() => {
+                        const def = current.defenses?.[step.line];
+                        const pvArr = def ? (Array.isArray(def.pv) ? def.pv as string[] : (def.pv as string).split(' ')) : [];
+                        const maxPly = Math.min(pvArr.length, 4) - 1;
+                        const isPlaying = step.playing;
+                        const isDone = !step.playing && step.ply === maxPly;
+                        return (
+                          <button
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => {
+                              if (isPlaying) {
+                                stopPlay();
+                                setStep({ line: step.line, ply: step.ply, playing: false });
+                              } else {
+                                startPlay(step.line, pvArr);
+                              }
+                            }}
+                            style={{
+                              width: 32, height: 28, borderRadius: 8, cursor: 'pointer', fontSize: 13, flexShrink: 0,
+                              background: 'rgba(74,144,226,.85)', border: '1px solid rgba(74,144,226,.85)', color: '#fff',
+                            }}
+                          >
+                            {isPlaying ? '❚❚' : isDone ? '↻' : '▶'}
+                          </button>
+                        );
+                      })()}
+                      <button
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => {
+                          stopPlay();
+                          const def = current.defenses?.[step.line];
+                          const pvArr = def ? (Array.isArray(def.pv) ? def.pv : (def.pv as string).split(' ')) : [];
+                          const maxPly = Math.min(pvArr.length, 4) - 1;
+                          if (step.ply < maxPly) setStep({ line: step.line, ply: step.ply + 1, playing: false });
+                        }}
+                        style={{ width: 32, height: 28, borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--hairline)', cursor: 'pointer', fontSize: 14, color: 'var(--ivory)', flexShrink: 0 }}
+                      >›</button>
+                      {(() => {
+                        const def = current.defenses?.[step.line];
+                        const pvArr = def ? (Array.isArray(def.pv) ? def.pv : (def.pv as string).split(' ')) : [];
+                        const n = Math.min(pvArr.length, 4);
+                        return <span style={{ fontWeight: 600 }}>Ход {step.ply + 1} из {n}</span>;
+                      })()}
+                      <span style={{ marginLeft: 'auto', display: 'flex', gap: 4, alignItems: 'center', color: 'var(--muted)' }}>
+                        <Kbd>←</Kbd><Kbd>→</Kbd><span>листать</span>
+                        <span style={{ marginLeft: 4 }}><Kbd>Esc</Kbd><span> к ответу</span></span>
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 13, color: 'var(--faint, var(--muted))', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                      <span>↖</span>
+                      <span>Наведи — стрелки на доске. Нажми на вариант — проиграю его.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Gave / Got */}
+              <div data-ui="sac-gave-got" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
+                  <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600 }}>Отдал</span>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>{gave}</span>
+                </div>
+                <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
+                  <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600 }}>Получил</span>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: gotBad ? '#E0574A' : 'var(--ivory)' }}>{got}</span>
                 </div>
               </div>
-            )}
-
-            {/* Gave / Got */}
-            {(() => {
-              const { gave, got, gotBad } = buildGaveGot(current);
-              return (
-                <div data-ui="sac-gave-got" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                  <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
-                    <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600 }}>Отдал</span>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>{gave}</span>
-                  </div>
-                  <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
-                    <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600 }}>Получил</span>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: gotBad ? '#E0574A' : 'var(--ivory)' }}>{got}</span>
-                  </div>
-                </div>
-              );
-            })()}
-          </>
-        )}
+            </>
+          );
+        })()}
       </div>
 
       {/* Footer: actions */}

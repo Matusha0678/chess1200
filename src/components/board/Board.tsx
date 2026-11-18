@@ -24,7 +24,7 @@ export interface BoardArrow {
   style?: 'solid' | 'dashed';
   opacity?: number;
   label?: string;
-  role?: 'offer' | 'plan' | 'threat' | 'fork' | 'best' | 'line-opp' | 'line-me';
+  role?: 'offer' | 'plan' | 'threat' | 'fork' | 'best' | 'line-opp' | 'line-me' | 'played';
 }
 
 const ROLE_CIRCLE: Record<string, string> = {
@@ -278,6 +278,7 @@ function BadgeLayer({ badges, S, orientation }: {
             key={sq}
             data-ui="board-badge"
             data-kind={kind}
+            data-square={sq}
             style={{
               position: 'absolute',
               left,
@@ -479,7 +480,7 @@ export function Board({
   }
 
   return (
-    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }} data-board-fen={resolvedFen}>
       <Chessboard
         key={`${boardThemeId}-${pieceStyleId}-${orientation}`}
         options={{

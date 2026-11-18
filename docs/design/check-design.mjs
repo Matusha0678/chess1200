@@ -3,11 +3,17 @@
 // Версия 2: + проверка структуры (метки data-ui), левая колонка видна, правая панель на всю ширину,
 //           запрещённые старые элементы.
 // Версия 3: + ответы на демо-позициях (pages/BOARD-EXPLAIN.md): значки, стрелки, наведение, тексты.
+// Версия 3.1: + страницы-каталоги без большой доски (/endgames, pages/endgames/ENDGAMES.md); флаг --no-answers.
+// Версия 3.2: + /play в проверке структуры (pages/play/PLAY.md).
+// Версия 3.3: «Жертвы» — ответ (pages/sac/FIX-ANSWER.md): оба ответа «1» и «2», позиция после жертвы на доске,
+//             значок на фигуре жертвующей стороны, 4 заголовка, ходы только в SAN, просмотр варианта по ходам.
+// Версия 3.4: + проигрывание варианта по кнопке ▶ (ходы идут по очереди, а не прыжком в конец).
 //
 // Запуск (dev-сервер должен работать):
 //   node docs/design/check-design.mjs                                  # http://localhost:3001, все тренажёры + ответы
 //   node docs/design/check-design.mjs http://localhost:3001 /mistakes /threats /sac
 //   node docs/design/check-design.mjs --answers-only                   # только ответы (быстро)
+//   node docs/design/check-design.mjs http://localhost:3001 /endgames --no-answers   # одна страница, без ответов
 //
 // Скриншоты: docs/design/shots/<окно>/<страница>.png
 // Код выхода: 0 — всё хорошо, 1 — есть ошибки.
@@ -18,10 +24,11 @@ import path from 'node:path';
 
 const rawArgs = process.argv.slice(2);
 const ANSWERS_ONLY = rawArgs.includes('--answers-only');
-const args = rawArgs.filter(a => a !== '--answers-only');
+const NO_ANSWERS = rawArgs.includes('--no-answers');
+const args = rawArgs.filter(a => a !== '--answers-only' && a !== '--no-answers');
 const base = args[0] && /^(https?|file):/.test(args[0]) ? args.shift().replace(/\/$/, '') : 'http://localhost:3001';
 const PAGES = args.length ? args : [
-  '/mistakes', '/threats', '/sac', '/endgames', '/guess-opening', '/traps',
+  '/mistakes', '/threats', '/sac', '/play', '/endgames', '/guess-opening', '/traps',
   '/plans', '/evaluate', '/warmup', '/openings/random',
 ];
 const SIZES = [
@@ -30,11 +37,12 @@ const SIZES = [
 ];
 
 // Страницы, у которых проверяется структура (метки data-ui). Остальные — только техника.
-const STRUCTURE = ['/mistakes', '/threats', '/sac'];
+const STRUCTURE = ['/mistakes', '/threats', '/sac', '/play'];
 const COMMON_UI = ['player-top', 'player-bottom', 'panel', 'panel-header', 'panel-title', 'panel-actions'];
 const SESSION_UI = ['session', 'session-stats', 'session-list'];
 // «a|b» — достаточно любой из меток (разные состояния страницы)
 const PAGE_UI = {
+  '/play': ['play-moves', 'play-coach|play-review'],
   '/threats': ['threat-task|threat-card', 'threat-rules|threat-marks', 'threat-marked|threat-defense'],
   '/sac': [
     'sac-offer|sac-feedback|sac-empty|sac-prep-progress',
@@ -44,9 +52,21 @@ const PAGE_UI = {
 };
 // Старые элементы, которых быть не должно
 const FORBIDDEN = {
+  '/play': ['Оценка · выкл', 'Оценка · вкл', 'Начать заново', 'Играть с позиции', 'Главные потери', 'Выбери фору'],
   '/threats': ['XP заработано', '← Сегодня'],
   '/sac': ['← Мастера', 'В стиле Таля', 'Следующая позиция', 'Подготовить позиции →'],
 };
+
+// v3.1: каталоги без большой доски. Ключ — путь страницы (совпадает и с «/endgames.html» для макета).
+const LIST_PAGES = {
+  '/endgames': {
+    ui: ['eg-left', 'eg-sections', 'eg-next', 'eg-grid', 'eg-card', 'eg-board', 'eg-card-title'],
+    minCols: { 1920: 5, 1440: 3 }, minBoard: 230,
+    forbidden: ['Любая сложность', 'Отыгрывай типовые позиции'],
+    titleNotIn: ['Король и пешка', 'Ладейные', 'Лёгкие фигуры', 'Ферзь против пешки'],
+  },
+};
+const listKeyOf = pp => Object.keys(LIST_PAGES).find(k => pp === k || pp.startsWith(k + '.'));
 
 // v3: ответы на демо-позициях (BOARD-EXPLAIN.md). Роли стрелок — data-role у [data-ui="board-arrow"].
 const SAC_FORBIDDEN_ANSWER = ['Правильно!', 'Оценка до', 'Оценка после', 'реальная жертва', 'ложная жертва', 'Компенсация достаточна'];
@@ -54,30 +74,66 @@ const clickSquare = async (page, sq) => {
   const id = await page.getAttribute('[id$="-board"]', 'id');
   await page.click(`[id="${id.slice(0, -'-board'.length)}-square-${sq}"]`);
 };
-const ANSWER_FLOWS = [
-  { url: '/sac?demo=works', demo: 'works', name: 'sac_demo_works', wait: 'sac-feedback',
-    answer: async page => { await page.keyboard.press('1'); },
+// Демо-позиции (BOARD-EXPLAIN.md, раздел 4): расстановка до и после жертвы Bxh7+ (белые жертвуют, клетка h7)
+const SAC_POS = {
+  works: {
+    before: 'r1bq1rk1/pppnbppp/2n1p3/3pP3/3P3P/2NB1N2/PPP2PP1/R1BQK2R',
+    after: 'r1bq1rk1/pppnbppB/2n1p3/3pP3/3P3P/2N2N2/PPP2PP1/R1BQK2R',
+    step00: 'r1bq1r2/pppnbppk/2n1p3/3pP3/3P3P/2N2N2/PPP2PP1/R1BQK2R',     // + Kxh7
+    step01: 'r1bq1r2/pppnbppk/2n1p3/3pP1N1/3P3P/2N5/PPP2PP1/R1BQK2R',   // + Ng5+
+    step02: 'r1bq1r2/pppnbpp1/2n1p1k1/3pP1N1/3P3P/2N5/PPP2PP1/R1BQK2R', // + Kg6
+    step03: 'r1bq1r2/pppnbpp1/2n1p1k1/3pP1NP/3P4/2N5/PPP2PP1/R1BQK2R',  // + h5+
+  },
+  fails: {
+    before: 'r1bq1rk1/ppp1bppp/2n1pn2/3p4/3P4/2NBPN2/PPP2PPP/R1BQK2R',
+    after: 'r1bq1rk1/ppp1bppB/2n1pn2/3p4/3P4/2N1PN2/PPP2PPP/R1BQK2R',
+  },
+};
+const SAC_TITLES = {
+  'works:1': 'Верно! Жертва работает', 'works:2': 'Неверно — жертва работает',
+  'fails:1': 'Неверно — жертва не работает', 'fails:2': 'Верно — жертва не работает',
+};
+const sacFlow = (demo, key) => {
+  const works = demo === 'works';
+  const title = SAC_TITLES[`${demo}:${key}`];
+  const wrongTitles = Object.values(SAC_TITLES).filter(t => t !== title);
+  return {
+    url: `/sac?demo=${demo}`, demo, key, name: `sac_demo_${demo}_${key}`, wait: 'sac-feedback',
+    answer: async page => { await page.keyboard.press(key); },
     expect: {
-      badges: ['brilliant'], roles: { plan: 1 }, check: true,
+      fen: SAC_POS[demo].after, badgeOn: { sq: 'h7', color: 'w' }, noUci: true,
+      badges: [works ? 'brilliant' : 'blunder|mistake'],
+      roles: works ? { 'line-opp': 1, plan: 1 } : { threat: 1 },
+      labels: works ? ['1', '2'] : [],
+      check: true,
       ui: ['eval-bar', 'sac-feedback', 'sac-gave-got', 'sac-eval-no', 'sac-eval-after', 'sac-line'],
-      text: { 'sac-gave-got': ['Отдал', 'Получил'], 'sac-eval-no': ['без жертвы'], 'sac-eval-after': ['после'] },
-      result: { 'sac-feedback': 'works' },
+      text: works
+        ? { 'sac-feedback': [title], 'sac-gave-got': ['Отдал', 'Получил', 'слона за пешку'], 'sac-eval-no': ['без жертвы', 'Rh3'], 'sac-eval-after': ['после', 'Bxh7+'], 'sac-line': ['Kxh7', 'Ng5+', 'Kg6', 'h5+'] }
+        : { 'sac-feedback': [title], 'sac-gave-got': ['Отдал', 'Получил', 'ничего'], 'sac-eval-no': ['без жертвы', 'O-O'], 'sac-line': ['Nxh7', 'h4', 'Bb4', 'Ng5'] },
+      textNot: { 'sac-feedback': wrongTitles, 'sac-gave-got': ['пешки)', 'пешек)'] },
+      result: { 'sac-feedback': works ? 'works' : 'fails' },
     },
     forbidden: SAC_FORBIDDEN_ANSWER,
     hover: [
-      { sel: '[data-ui="sac-line"]', shot: 'line', roles: { 'line-opp|line-me': 2 }, labels: ['1', '2'] },
-      { sel: '[data-ui="sac-eval-no"]', shot: 'nosac', roles: { best: 1 } },
-    ] },
-  { url: '/sac?demo=fails', demo: 'fails', name: 'sac_demo_fails', wait: 'sac-feedback',
-    answer: async page => { await page.keyboard.press('1'); },
-    expect: {
-      badges: ['blunder|mistake'], roles: { threat: 1 }, check: true,
-      ui: ['eval-bar', 'sac-feedback', 'sac-gave-got', 'sac-eval-no', 'sac-eval-after', 'sac-line'],
-      text: { 'sac-gave-got': ['Отдал', 'Получил', 'ничего'] },
-      result: { 'sac-feedback': 'fails' },
-    },
-    forbidden: SAC_FORBIDDEN_ANSWER,
-    hover: [{ sel: '[data-ui="sac-eval-no"]', shot: 'nosac', roles: { best: 1 } }] },
+      ...(works ? [{ sel: '[data-ui="sac-line"]', shot: 'line', roles: { 'line-opp|line-me': 2 }, labels: ['1', '2'], fen: SAC_POS[demo].after }] : []),
+      { sel: '[data-ui="sac-eval-no"]', shot: 'nosac', roles: { best: 1 }, fen: SAC_POS[demo].before, noBadges: true },
+    ],
+    // просмотр варианта по ходам (FIX-ANSWER.md, раздел 4) — только в одном прогоне
+    steps: works && key === '1' ? [
+      { click: '[data-ui="sac-line-move"][data-line="0"][data-ply="1"]', shot: 'step', fen: SAC_POS.works.step01, ui: ['sac-step'], text: { 'sac-step': ['2'] }, noBadges: true, maxArrows: 0 },
+      { key: 'ArrowRight', fen: SAC_POS.works.step02, ui: ['sac-step'], noBadges: true },
+      { key: 'Escape', fen: SAC_POS.works.after, badges: ['brilliant'], badgeOn: { sq: 'h7', color: 'w' }, roles: { 'line-opp': 1, plan: 1 }, noUi: ['sac-step'] },
+    ] : [],
+    // проигрывание варианта (FIX-ANSWER.md, раздел 5): ходы по очереди, ~900 мс между ходами
+    play: works && key === '1' ? {
+      click: '[data-ui="sac-line-play"][data-line="0"]',
+      seq: [SAC_POS.works.step00, SAC_POS.works.step01, SAC_POS.works.step02, SAC_POS.works.step03],
+      after: SAC_POS.works.after,
+    } : null,
+  };
+};
+const ANSWER_FLOWS = [
+  sacFlow('works', '1'), sacFlow('works', '2'), sacFlow('fails', '1'), sacFlow('fails', '2'),
   { url: '/threats?demo=fork', demo: 'fork', name: 'threats_demo_fork', wait: 'threat-card',
     answer: async page => { await clickSquare(page, 'c7'); await clickSquare(page, 'f3'); await page.keyboard.press('Enter'); },
     expect: {
@@ -103,6 +159,8 @@ async function readOverlay(page) {
     return {
       arrows: [...document.querySelectorAll('[data-ui="board-arrow"]')].map(a => ({ role: a.getAttribute('data-role') || '', label: a.getAttribute('data-label') || '' })),
       badges: [...document.querySelectorAll('[data-ui="board-badge"]')].map(b => b.getAttribute('data-kind') || ''),
+      badgeSq: [...document.querySelectorAll('[data-ui="board-badge"]')].map(b => b.getAttribute('data-square')),
+      fen: document.querySelector('[data-board-fen]')?.getAttribute('data-board-fen') ?? null,
       rings: sqs.filter(d => /inset/.test(d.style?.boxShadow || '') && /4px/.test(d.style?.boxShadow || '')).length,
       check: sqs.some(d => /radial-gradient/.test(d.style?.background || '') && /232, ?64, ?52|e84034/i.test(d.style?.background || '')),
       ui, res,
@@ -126,6 +184,33 @@ function checkOverlay(o, ex, errors, pre) {
     for (const w of words) if (k in o.ui && !o.ui[k].includes(w)) errors.push(`${pre}в data-ui="${k}" нет текста «${w}» — метка не на том блоке?`);
   }
   for (const [k, v] of Object.entries(ex.result || {})) if (k in o.res && o.res[k] !== v) errors.push(`${pre}data-ui="${k}": data-result="${o.res[k]}", нужно "${v}"`);
+  // v3.3
+  for (const [k, words] of Object.entries(ex.textNot || {})) {
+    for (const w of words) if (k in o.ui && o.ui[k].includes(w)) errors.push(`${pre}в data-ui="${k}" лишний текст «${w}»`);
+  }
+  for (const k of (ex.noUi || [])) if (k in o.ui) errors.push(`${pre}блок data-ui="${k}" должен исчезнуть`);
+  if (ex.maxArrows != null && o.arrows.length > ex.maxArrows) errors.push(`${pre}стрелок ${o.arrows.length}, нужно ≤ ${ex.maxArrows}`);
+  const placement = o.fen ? o.fen.split(' ')[0] : null;
+  if (ex.fen || ex.badgeOn) {
+    if (o.fen == null) errors.push(`${pre}у доски нет атрибута data-board-fen (FIX-ANSWER.md, раздел 6)`);
+    else if (ex.fen && placement !== ex.fen) errors.push(`${pre}на доске не та позиция: ${placement}, нужно ${ex.fen}`);
+  }
+  if (ex.noBadges && o.badges.length) errors.push(`${pre}на доске лишние значки: ${o.badges.join(', ')}`);
+  if (ex.badgeOn) {
+    if (o.badgeSq.some(x => x == null)) errors.push(`${pre}у значка нет атрибута data-square (FIX-ANSWER.md, раздел 6)`);
+    else if (!o.badgeSq.includes(ex.badgeOn.sq)) errors.push(`${pre}значок на клетке ${o.badgeSq.join(', ') || '—'}, нужно на ${ex.badgeOn.sq} (клетка «куда» жертвы)`);
+    else if (placement) {
+      const rows = placement.split('/'); const f = 'abcdefgh'.indexOf(ex.badgeOn.sq[0]); const r = 8 - Number(ex.badgeOn.sq[1]);
+      let col = 0, piece = null;
+      for (const ch of rows[r] || '') { if (/\d/.test(ch)) col += +ch; else { if (col === f) piece = ch; col++; } }
+      const color = piece ? (piece === piece.toUpperCase() ? 'w' : 'b') : null;
+      if (color !== ex.badgeOn.color) errors.push(`${pre}под значком на ${ex.badgeOn.sq} ${piece ? 'чужая фигура' : 'пусто'} — значок должен стоять на фигуре, которая пожертвовала (ход сыгран на доске)`);
+    }
+  }
+  if (ex.noUci) {
+    const m = o.panelText.match(/(^|[^a-z0-9])([a-h][1-8][a-h][1-8][qrbn]?)(?![a-z0-9])/);
+    if (m) errors.push(`${pre}в панели ход в формате UCI «${m[2]}» — нужен SAN (FIX-ANSWER.md, раздел 3)`);
+  }
 }
 
 const OUT = path.resolve('docs/design/shots');
@@ -206,6 +291,13 @@ try {
           res.colors = uniq.length ? `${uniq[0].c} / ${uniq[uniq.length - 1].c}` : '';
         }
 
+        res.eg = [...document.querySelectorAll('[data-ui="eg-card"]')].map(c => {
+          const r = c.getBoundingClientRect();
+          const b = c.querySelector('[data-ui="eg-board"]');
+          const br = b ? b.getBoundingClientRect() : null;
+          return { top: r.top, w: r.width, bw: br ? br.width : 0, bh: br ? br.height : 0, title: (c.querySelector('[data-ui="eg-card-title"]')?.textContent || '').trim() };
+        });
+        res.egGridRight = document.querySelector('[data-ui="eg-grid"]')?.getBoundingClientRect().right || 0;
         const bad = [];
         const skip = el => el.closest('[id$="-board"], .app-topbar, .app-sidebar, .app-bottom-bar, .app-sidebar-overlay, [data-allow-small]');
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -228,7 +320,29 @@ try {
       });
 
       // ── Техника ────────────────────────────────────────────────────────────
-      if (!m.hasBoard) {
+      const listKey = listKeyOf(pathOf(p));
+      if (listKey) {
+        const L = LIST_PAGES[listKey];
+        const missing = L.ui.filter(k => !m.ui[k]);
+        if (missing.length) errors.push(`нет блоков (data-ui): ${missing.join(', ')}`);
+        if (m.eg.length) {
+          const row1 = m.eg.filter(c => Math.abs(c.top - m.eg[0].top) < 3).length;
+          const need = L.minCols[size.w] || 3;
+          if (row1 < need) errors.push(`в первом ряду ${row1} карточек, нужно ≥ ${need}`);
+          const notSquare = m.eg.filter(c => Math.abs(c.bw - c.bh) > 1).length;
+          if (notSquare) errors.push(`доски в карточках не квадратные: ${notSquare} шт.`);
+          const small = m.eg.filter(c => c.bw < L.minBoard).length;
+          if (small) errors.push(`доски в карточках меньше ${L.minBoard}px: ${small} шт.`);
+          const badTitles = m.eg.filter(c => L.titleNotIn.includes(c.title)).length;
+          if (badTitles) errors.push(`у ${badTitles} карточек заголовок — название раздела, нужны свои названия (ENDGAMES.md, раздел 4)`);
+        }
+        if (m.ui['eg-left']) {
+          const w = Math.round(m.ui['eg-left'].w);
+          if (w < 270 || w > 290) errors.push(`левая колонка ${w}px, нужно 280`);
+        }
+        if (size.w === 1920 && m.egGridRight && m.egGridRight < size.w - 26) errors.push(`справа пустое место ${Math.round(size.w - m.egGridRight)}px — сетка не на всю ширину`);
+        for (const t of L.forbidden) if (m.text.includes(t)) errors.push(`старый элемент на странице: «${t}»`);
+      } else if (!m.hasBoard) {
         errors.push('нет доски ([id$="-board"]) — страница не переведена на Board?');
       } else {
         if (m.squareCount !== 64) errors.push(`клеток ${m.squareCount}, нужно 64`);
@@ -250,7 +364,7 @@ try {
       if (m.badText.length) errors.push(`мелкий текст или капс (${m.badText.length}): ${m.badText.slice(0, 6).join('; ')}`);
 
       // ── Структура (только для STRUCTURE) ───────────────────────────────────
-      const pp = pathOf(p);
+      const pp = pathOf(p).replace(/\.html$/, '');
       if (STRUCTURE.includes(pp)) {
         const need = [...COMMON_UI, ...(size.needSession ? SESSION_UI : []), ...(PAGE_UI[pp] || [])];
         const missing = need.filter(spec => !spec.split('|').some(n => m.ui[n]));
@@ -286,8 +400,8 @@ try {
   // ── v3: ответы на демо-позициях и объяснения на доске ───────────────────
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 950 } });
   const page = await ctx.newPage();
-  for (const flow of ANSWER_FLOWS) {
-    const label = `1920×950 ${flow.url} → ответ`;
+  for (const flow of (NO_ANSWERS ? [] : ANSWER_FLOWS)) {
+    const label = `1920×950 ${flow.url} → ответ${flow.key ? ` «${flow.key}»` : ''}`;
     const errors = [];
     try {
       await page.goto(base + flow.url, { waitUntil: 'networkidle', timeout: 30000 }).catch(() => page.goto(base + flow.url, { waitUntil: 'load', timeout: 30000 }));
@@ -300,7 +414,7 @@ try {
         await flow.answer(page);
         const ok = await page.waitForSelector(`[data-ui="${flow.wait}"]`, { timeout: 10000 }).then(() => true).catch(() => false);
         if (!ok) errors.push(`после ответа не появился блок data-ui="${flow.wait}"`);
-        await page.waitForTimeout(700);
+        await page.waitForTimeout(900);
         const o = await readOverlay(page);
         checkOverlay(o, flow.expect, errors, '');
         for (const t of (flow.forbidden || [])) if (o.panelText.includes(t)) errors.push(`старый текст в ответе: «${t}»`);
@@ -318,7 +432,55 @@ try {
           await page.mouse.move(4, 4);
           await page.waitForTimeout(400);
           const ob = await readOverlay(page);
-          checkOverlay(ob, { roles: flow.expect.roles }, errors, `после ухода мыши с ${h.sel} доска не вернулась: `);
+          checkOverlay(ob, { roles: flow.expect.roles, fen: flow.expect.fen }, errors, `после ухода мыши с ${h.sel} доска не вернулась: `);
+        }
+        for (const st of (flow.steps || [])) {
+          const what = st.click ? `клика по ${st.click}` : `клавиши ${st.key}`;
+          if (st.click) {
+            const el = await page.$(st.click);
+            if (!el) { errors.push(`нет кнопки хода ${st.click} (FIX-ANSWER.md, раздел 4)`); break; }
+            await el.click();
+          } else {
+            await page.mouse.move(4, 4);
+            await page.keyboard.press(st.key);
+          }
+          await page.waitForTimeout(700);
+          const os = await readOverlay(page);
+          checkOverlay(os, st, errors, `после ${what}: `);
+          if (st.shot) await page.screenshot({ path: path.join(dir, `${flow.name}_${st.shot}.png`) });
+        }
+        if (flow.play) {
+          const btn = await page.$(flow.play.click);
+          if (!btn) errors.push(`нет кнопки ▶ ${flow.play.click} (FIX-ANSWER.md, раздел 5)`);
+          else {
+            await btn.click();
+            const t0 = Date.now(), seen = []; let stepBar = false;
+            while (Date.now() - t0 < 5000) {
+              const r = await page.evaluate(() => ({
+                fen: document.querySelector('[data-board-fen]')?.getAttribute('data-board-fen') || '',
+                bar: !!document.querySelector('[data-ui="sac-step"]'),
+              }));
+              const pl = r.fen.split(' ')[0];
+              if (!seen.length || seen[seen.length - 1].pl !== pl) seen.push({ pl, t: Date.now() - t0 });
+              stepBar = stepBar || r.bar;
+              await page.waitForTimeout(80);
+            }
+            const idx = flow.play.seq.map(pl => seen.findIndex(x => x.pl === pl));
+            const missing = idx.map((v, i) => v < 0 ? i + 1 : 0).filter(Boolean);
+            if (missing.length) errors.push(`после ▶ на доске не было позиций после ходов ${missing.join(', ')} — вариант должен проигрываться по ходу (видели ${seen.length} позиций)`);
+            else if (idx.some((v, i) => i && v < idx[i - 1])) errors.push('после ▶ ходы шли не по порядку');
+            else {
+              const span = seen[idx[idx.length - 1]].t - seen[idx[0]].t;
+              if (span < 1500) errors.push(`после ▶ вариант проигран за ${span} мс — слишком быстро, нужно ~900 мс на ход`);
+            }
+            if (!stepBar) errors.push('во время проигрывания нет строки data-ui="sac-step"');
+            await page.screenshot({ path: path.join(dir, `${flow.name}_play_end.png`) });
+            await page.mouse.move(4, 4);
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(600);
+            const oe = await readOverlay(page);
+            checkOverlay(oe, { fen: flow.play.after, noUi: ['sac-step'] }, errors, 'после Esc в конце проигрывания: ');
+          }
         }
       }
     } catch (e) {
@@ -338,7 +500,7 @@ for (const [w, map] of Object.entries(colorsBySize)) {
 }
 
 let fails = 0;
-console.log('\nПроверка дизайна тренажёров (v3)\n');
+console.log('\nПроверка дизайна тренажёров (v3.4)\n');
 for (const r of report) {
   if (r.errors.length) {
     fails++;
