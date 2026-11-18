@@ -491,10 +491,10 @@ export default function GameViewerPage({ params }: Props) {
     if (uci) arrows.push({ startSquare: uci.from, endSquare: uci.to, color: 'rgba(80,200,80,0.80)' });
   }
 
-  // Icon size relative to cell
-  const iconSize = Math.max(22, Math.round(boardPx / 8 * 0.38));
+  // ~45% of cell width, min 26px — clearly visible above the piece
+  const iconSize = Math.max(26, Math.round(boardPx / 8 * 0.45));
 
-  // squareRenderer: highlight from/to + ClassIcon on to
+  // squareRenderer: highlight from/to + ClassIcon centered above the piece
   const squareRenderer: SquareRenderer = ({ square, children }) => {
     const isFrom = selectedMove?.from === square;
     const isTo   = selectedMove?.to   === square;
@@ -512,17 +512,23 @@ export default function GameViewerPage({ params }: Props) {
             aria-hidden="true"
             style={{
               position: 'absolute', inset: 0, pointerEvents: 'none',
-              background: color ? `${color}59` : 'rgba(100,180,100,0.35)',
+              background: color ? `${color}55` : 'rgba(100,180,100,0.35)',
             }}
           />
         )}
-        {/* ClassIcon on to-square, top-right */}
+        {/* ClassIcon: centered horizontally, sits at the top of the square
+            so it floats visually above the piece head */}
         {isTo && cls && (
           <div
             aria-hidden="true"
             style={{
-              position: 'absolute', top: 2, right: 2,
-              zIndex: 10, pointerEvents: 'none',
+              position: 'absolute',
+              top: 2,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 10,
+              pointerEvents: 'none',
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
             }}
           >
             <ClassIcon cls={cls} size={iconSize} />
