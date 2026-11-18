@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { Chess } from 'chess.js';
@@ -222,7 +222,7 @@ const BLITZ_SECONDS = 60;
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function ThreatsPage() {
+function ThreatsPageInner() {
   const router = useRouter();
   const { S } = useTrainerGeometry();
   const searchParams = useSearchParams();
@@ -1393,4 +1393,8 @@ export default function ThreatsPage() {
       panelAttrs={isDemo && demoKey ? { 'data-demo': demoKey } : undefined}
     />
   );
+}
+
+export default function ThreatsPage() {
+  return <Suspense><ThreatsPageInner /></Suspense>;
 }
