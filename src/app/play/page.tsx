@@ -56,6 +56,7 @@ interface KeyMistake {
   san: string;
   moveNum: number;
   drop: number;
+  dropLabel: string;
   cls: MoveClass;
   fenBefore: string;
   fenAfter: string;
@@ -110,12 +111,9 @@ function uciToSan(fen: string, uci: string): string {
   } catch { return uci; }
 }
 
-function cpToWhite(cp: number, mate: number | null, turn: PlayerColor): number {
-  if (mate !== null) {
-    const mateW = turn === 'w' ? mate : -mate;
-    return mateW > 0 ? 9900 : -9900;
-  }
-  return turn === 'w' ? cp : -cp;
+function lineToWhiteCp(l: { cp: number | null; mate: number | null }): number {
+  if (l.mate !== null) return l.mate > 0 ? 9900 : -9900;
+  return l.cp ?? 0;
 }
 
 function evalBarPct(cpWhite: number): number {
@@ -436,20 +434,23 @@ function PlayContent() {
           try {
             const lines = await engine.analyse(mv.fenBefore, { depth: 14 });
             if (lines[0]) {
-              const t = new Chess(mv.fenBefore).turn() as PlayerColor;
-              mv.evalBefore = cpToWhite(lines[0].cp ?? 0, lines[0].mate, t);
+              mv.evalBefore = lineToWhiteCp(lines[0]);
               if (!mv.bestMove) mv.bestMove = lines[0].move;
             }
           } catch { /* ignore */ }
         }
         if (mv.evalAfter === undefined) {
-          try {
-            const lines = await engine.analyse(mv.fenAfter, { depth: 14 });
-            if (lines[0]) {
-              const t = new Chess(mv.fenAfter).turn() as PlayerColor;
-              mv.evalAfter = cpToWhite(lines[0].cp ?? 0, lines[0].mate, t);
-            }
-          } catch { /* ignore */ }
+          const chessAfter = new Chess(mv.fenAfter);
+          if (chessAfter.isCheckmate()) {
+            mv.evalAfter = chessAfter.turn() === 'b' ? 9900 : -9900;
+          } else if (chessAfter.isDraw()) {
+            mv.evalAfter = 0;
+          } else {
+            try {
+              const lines = await engine.analyse(mv.fenAfter, { depth: 14 });
+              if (lines[0]) mv.evalAfter = lineToWhiteCp(lines[0]);
+            } catch { /* ignore */ }
+          }
         }
       }
     }
@@ -488,11 +489,22 @@ function PlayContent() {
       const cls = mv.cls ?? 'mistake';
       if (cls !== 'blunder' && cls !== 'mistake' && cls !== 'inaccuracy') continue;
       const bestMoveSan = mv.bestMove ? uciToSan(mv.fenBefore, mv.bestMove) : '';
+      let dropLabel: string;
+      if (pc === 'w') {
+        if ((mv.evalBefore ?? 0) >= 9000 && (mv.evalAfter ?? 0) < 9000) dropLabel = 'упустил мат';
+        else if ((mv.evalAfter ?? 0) <= -9000) dropLabel = 'мат';
+        else dropLabel = `-${Math.min(20, drop / 100).toFixed(1)}`;
+      } else {
+        if ((mv.evalBefore ?? 0) <= -9000 && (mv.evalAfter ?? 0) > -9000) dropLabel = 'упустил мат';
+        else if ((mv.evalAfter ?? 0) >= 9000) dropLabel = 'мат';
+        else dropLabel = `-${Math.min(20, drop / 100).toFixed(1)}`;
+      }
       mistakes.push({
         moveIdx: i,
         san: mv.san,
         moveNum: mi,
         drop,
+        dropLabel,
         cls,
         fenBefore: mv.fenBefore,
         fenAfter: mv.fenAfter,
@@ -579,24 +591,22 @@ function PlayContent() {
     if (!coachEngineReady.current || !coachEngineRef.current) return;
     const engine = coachEngineRef.current;
     try {
-      const [beforeLines, afterLines] = await Promise.all([
-        engine.analyse(fenBefore, { depth: 12, multipv: 2 }),
-        engine.analyse(fenAfter, { depth: 12 }),
-      ]);
-      const tBefore = new Chess(fenBefore).turn() as PlayerColor;
-      const evalBefore = beforeLines[0]
-        ? cpToWhite(beforeLines[0].cp ?? 0, beforeLines[0].mate, tBefore)
-        : 0;
-      const tAfter = new Chess(fenAfter).turn() as PlayerColor;
-      const evalAfter = afterLines[0]
-        ? cpToWhite(afterLines[0].cp ?? 0, afterLines[0].mate, tAfter)
-        : 0;
-
+      const beforeLines = await engine.analyse(fenBefore, { depth: 12, multipv: 2 });
+      const evalBefore = beforeLines[0] ? lineToWhiteCp(beforeLines[0]) : 0;
+      const evalSecondBest = beforeLines[1] ? lineToWhiteCp(beforeLines[1]) : undefined;
       const bestMoveUci = beforeLines[0]?.move ?? '';
       const bestMoveSan = bestMoveUci ? uciToSan(fenBefore, bestMoveUci) : '';
-      const evalSecondBest = beforeLines[1]
-        ? cpToWhite(beforeLines[1].cp ?? 0, beforeLines[1].mate, tBefore)
-        : undefined;
+
+      const chessAfter = new Chess(fenAfter);
+      let evalAfter: number;
+      if (chessAfter.isCheckmate()) {
+        evalAfter = chessAfter.turn() === 'b' ? 9900 : -9900;
+      } else if (chessAfter.isDraw()) {
+        evalAfter = 0;
+      } else {
+        const afterLines = await engine.analyse(fenAfter, { depth: 12 });
+        evalAfter = afterLines[0] ? lineToWhiteCp(afterLines[0]) : 0;
+      }
 
       const phase = plyNum < 20 ? 'opening' : plyNum < 60 ? 'middlegame' : 'endgame';
       const cls = classifyMove({
@@ -609,7 +619,6 @@ function PlayContent() {
         phase,
       });
 
-      // Update the matching move record in the history
       const updated = moveHistoryRef.current.map(r =>
         r.uci === uci && r.fenBefore === fenBefore
           ? { ...r, evalBefore, evalAfter, bestMove: bestMoveUci, cls }
@@ -618,11 +627,11 @@ function PlayContent() {
       moveHistoryRef.current = updated;
       setMoveHistory(updated);
 
-      setEvalCpWhite(evalBefore);
+      setEvalCpWhite(evalAfter);
 
-      const myMoveCount = moveHistoryRef.current.filter(r => r.side === pc && r.fenBefore <= fenBefore).length;
+      const moveNum = Number(fenBefore.split(' ')[5]);
       const info: CoachInfo = {
-        cls, san, moveNum: myMoveCount, evalBefore, evalAfter, bestMoveSan, bestMoveUci,
+        cls, san, moveNum, evalBefore, evalAfter, bestMoveSan, bestMoveUci,
       };
       setCoach(info);
     } catch { /* ignore */ }
@@ -808,9 +817,7 @@ function PlayContent() {
       badges[myLastMove.uci.slice(2, 4) as Square] = coach.cls as BadgeKind;
     }
   }
-  if (gamePhase === 'review' && shownMistake) {
-    badges[shownMistake.uci.slice(2, 4) as Square] = shownMistake.cls as BadgeKind;
-  }
+  // No badge on board in review — icon shows only in the panel mistake row
 
   // Captured pieces
   const myCaptures = capturedPieces(fen, activeColor);
@@ -924,19 +931,16 @@ function PlayContent() {
           <span style={{ fontSize: 13, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{presetLabel} · {level}</span>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
-          {LEVEL_PRESETS.map((p, i) => (
-            <button key={i} onClick={() => { setPresetIdx(i); setLevel(p.skill); updateUrl(pendingColor, p.skill, mode); }}
+          {LEVEL_PRESETS.map((_, i) => (
+            <button key={i} onClick={() => { setPresetIdx(i); setLevel(LEVEL_PRESETS[i].skill); updateUrl(pendingColor, LEVEL_PRESETS[i].skill, mode); }}
               style={{
-                flex: 1, height: 32, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+                flex: 1, height: 32, cursor: 'pointer', fontFamily: 'inherit',
                 background: presetIdx === i ? 'var(--accent)' : 'transparent',
-                color: presetIdx === i ? '#fff' : 'var(--muted)',
                 border: `1px solid ${presetIdx === i ? 'var(--accent)' : 'var(--hairline)'}`,
                 borderRadius: 'var(--radius-btn)',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 2px',
               }}
-            >
-              {p.label}
-            </button>
+              aria-label={LEVEL_PRESETS[i].label}
+            />
           ))}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
@@ -1113,7 +1117,12 @@ function PlayContent() {
           <span style={chipStyle}>{activeColor === 'w' ? '♙ Белые' : '♟ Чёрные'}</span>
           <span style={chipStyle}>Уровень {level} · {presetLabel.toLowerCase()}</span>
           {gamePhase === 'review' && resultInfo && <span style={{ ...chipStyle, color: resultInfo.color }}>{resultInfo.reason}</span>}
-          {showEvalBar && evalCpWhite !== null && <span style={chipStyle}>{formatEval(evalCpWhite)}</span>}
+          {showEvalBar && (gamePhase === 'review' && resultInfo
+            ? <span style={chipStyle}>
+                {resultInfo.title === 'Ничья' ? '½–½' : resultInfo.title === 'Победа!' ? (activeColor === 'w' ? '1–0' : '0–1') : (activeColor === 'w' ? '0–1' : '1–0')}
+              </span>
+            : evalCpWhite !== null && <span style={chipStyle}>{formatEval(evalCpWhite)}</span>
+          )}
         </div>
       </div>
 
@@ -1190,7 +1199,7 @@ function PlayContent() {
                           {km.bestMoveSan && <span style={{ fontSize: 13, color: 'var(--muted)', marginLeft: 6 }}>· лучше {km.bestMoveSan}</span>}
                         </div>
                         <span style={{ fontSize: 14, color: '#E59A8F', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                          -{(km.drop / 100).toFixed(1)}
+                          {km.dropLabel}
                         </span>
                       </div>
                     ))}

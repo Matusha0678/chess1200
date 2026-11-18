@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Дебюты в партиях — макет</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@700&display=swap">
+<style>
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A; --plan:#4A90E2;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:14px 12px;display:flex;flex-direction:column}
+.item{height:40px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:15px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:16px 12px 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.grp .ico{width:14px;height:14px}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+/* left */
+.left{width:280px;height:854px;display:flex;flex-direction:column}
+.left .hd{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:baseline}
+.h2{font-size:19px;font-weight:700}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.segctl{display:grid;grid-template-columns:repeat(3,1fr);margin:14px 20px 0;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.segctl div{height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--muted);font-weight:500}
+.segctl div img{width:18px;height:18px}
+.segctl .on{background:#45423E;color:var(--text);font-weight:600}
+.seg2{grid-template-columns:1fr 1fr;margin-top:8px}
+.qlabel{margin:16px 20px 6px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.secs{padding:0 10px;display:flex;flex-direction:column;gap:2px}
+.srow{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:10px;height:54px;padding:0 10px;border-radius:10px;position:relative}
+.srow .ic{width:32px;height:32px;border-radius:8px;background:#3A3835;display:grid;place-items:center;color:var(--muted)}
+.srow .ic img{width:24px;height:24px}
+.srow .nm{font-size:14px;color:#E4E1DC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow .pb{height:4px;border-radius:2px;background:#3A3835;margin-top:6px;overflow:hidden}
+.srow .pb i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.srow .ct{font-size:13px;color:var(--muted)}
+.srow.on{background:var(--row)}
+.srow.on::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--accent)}
+.leftbot{margin-top:auto;padding:14px 20px 20px;border-top:1px solid var(--hair)}
+.leftbot .t{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.leftbot .t .ico{width:15px;height:15px}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#E8E5E0}
+.btn2 .ico{width:16px;height:16px}
+/* board */
+.bcol{width:806px;height:854px;display:flex;flex-direction:column;gap:8px}
+.pbar{height:32px;display:flex;align-items:center;justify-content:space-between;padding-left:32px}
+.who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.ava{width:28px;height:28px;border-radius:6px;background:#4A4744;display:grid;place-items:center}
+.ava img{width:22px;height:22px}
+.tag{font-size:13px;font-weight:500;color:var(--muted)}
+.pnote{font-size:13px;color:var(--muted)}
+.pnote b{color:var(--text);font-weight:600}
+.brow{display:flex;gap:8px;height:774px}
+.gutter{width:24px}
+.board{width:774px;height:774px;position:relative}
+.sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden}
+.sq{position:relative}
+.sq .hl{position:absolute;inset:0}
+.sq img{position:absolute;inset:0;width:100%;height:100%}
+.co{position:absolute;font-size:13px;font-weight:600;line-height:1}
+.co.r{left:5px;top:5px}.co.f{right:6px;bottom:4px}
+.over{position:absolute;inset:0;pointer-events:none}
+/* right */
+.right{flex:1;height:854px;display:flex;flex-direction:column;min-width:0}
+.rp-h{padding:20px 24px 14px}
+.crumbs{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:12px;line-height:1.15}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:500;color:#DCD8D3}
+.chip img{width:16px;height:16px}
+.rb{flex:1;overflow:hidden;padding:0 24px;display:flex;flex-direction:column;gap:16px}
+.sec h4{font-size:13px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:6px}
+.sec h4 span{font-weight:500;color:var(--faint)}
+.item2{border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;border:1px solid transparent}
+.item2 .bi{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800;margin-top:1px}
+.item2 .bi .ico{width:15px;height:15px}
+.item2 .t1{font-size:15px;font-weight:600;color:var(--text)}
+.item2 .t1 .mv{font-weight:700}
+.item2 .t2{font-size:13px;color:var(--muted);margin-top:2px}
+.item2 .rt{font-size:13px;color:var(--muted);white-space:nowrap;margin-top:2px}
+.item2 .rt.bad{color:#F08277}
+.item2.on{background:var(--row);border-color:var(--hair2)}
+.games{margin:8px 0 2px;display:flex;flex-direction:column;gap:4px}
+.games a{display:flex;align-items:center;gap:8px;font-size:13px;color:#D9D6D2;text-decoration:none}
+.games a .ico{width:13px;height:13px;color:var(--faint)}
+.games a .r{color:#F08277}.games a .d{color:var(--muted)}.games a .w{color:var(--accent)}
+.expl{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.expl .eh{font-size:13px;color:var(--muted)}
+.erow{display:grid;grid-template-columns:22px 52px 1fr 84px 28px;align-items:center;gap:8px;font-size:13px;color:#D9D6D2}
+.erow .n{width:20px;height:20px;border-radius:10px;background:#5E8C35;color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center}
+.erow .n.b2{background:#4E6E33}
+.erow b{font-size:14px;color:var(--text)}
+.erow .bar{height:6px;border-radius:3px;background:#3A3835;overflow:hidden}
+.erow .bar i{display:block;height:100%;background:var(--accent);border-radius:3px;opacity:.85}
+.erow .pl{width:26px;height:24px;border-radius:7px;background:var(--surface2);border:1px solid var(--hair2);display:grid;place-items:center;color:var(--text)}
+.erow .pl .ico{width:13px;height:13px}
+.act{padding:16px 24px 20px;border-top:1px solid var(--hair)}
+.btn1{height:52px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.btn1 .ico{width:18px;height:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.ins{margin-top:12px;border-radius:10px;background:rgba(240,164,58,.08);border:1px solid rgba(240,164,58,.28);padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#E6E3DE}
+.ins .ico{width:18px;height:18px;color:#F4B45C;margin-top:1px}
+.ins b{font-weight:600}
+.ins b.m{white-space:nowrap}
+.hole .dv{display:none} body:not(.hole) .ho{display:none}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+<aside class="side" id="side"></aside>
+
+<main class="main">
+  <!-- LEFT -->
+  <section class="card left" data-ui="session">
+    <div class="hd"><div class="h2">Дебюты</div><div class="muted num" style="font-size:14px">7 партий</div></div>
+    <div class="stats" data-ui="session-stats" id="lstats">
+      <div class="stat"><b class="num" style="color:var(--accent)">2</b><span>по линии</span></div>
+      <div class="stat"><b class="num" style="color:#F08277">3</b><span>отклонился</span></div>
+      <div class="stat"><b class="num" style="color:var(--warn)">2</b><span>дыры</span></div>
+    </div>
+    <div class="segctl" id="lcolor"><div>Белыми</div><div>Чёрными</div><div class="on">Все</div></div>
+    <div class="segctl seg2"><div>30 дней</div><div class="on">Всё время</div></div>
+    <div class="qlabel"><span>Мои дебюты</span><span class="num">2</span></div>
+    <div class="secs" data-ui="session-list" id="lopen">
+      <div class="srow on" data-ui="rep-opening"><div class="ic"><i class="ico" data-i="layout-grid"></i></div><div><div class="nm">Все дебюты</div><div class="pb"><i style="width:29%"></i></div></div><div class="ct num">2 / 7</div></div>
+      <div class="srow" data-ui="rep-opening"><div class="ic"><img src="pieces/wK.svg"></div><div><div class="nm">Шотландская партия</div><div class="pb"><i style="width:20%"></i></div></div><div class="ct num">1 / 5</div></div>
+      <div class="srow" data-ui="rep-opening"><div class="ic"><img src="pieces/bK.svg"></div><div><div class="nm">Гамбит Стаффорда</div><div class="pb"><i style="width:100%"></i></div></div><div class="ct num">1 / 1</div></div>
+    </div>
+    <div class="leftbot" id="lbot">
+      <div class="t"><i class="ico" data-i="book-check"></i>Проверено 7 партий</div>
+      <div class="btn2"><i class="ico" data-i="repeat"></i>Проверить заново</div>
+    </div>
+  </section>
+
+  <!-- BOARD -->
+  <section class="bcol">
+    <div class="pbar" data-ui="player-top">
+      <div class="who"><div class="ava"><img src="pieces/bP.svg"></div>Чёрные <span class="tag">соперник</span></div>
+      <div class="pnote" id="posNote"><span class="dv">после <b>4...Bc5</b> · ход белых</span><span class="ho">после <b>4...Qh4</b> · ход белых</span></div>
+    </div>
+    <div class="brow">
+      <div class="gutter"></div>
+      <div class="board" id="board"><div class="sqs" id="sqs"></div><div class="over" id="over"></div></div>
+    </div>
+    <div class="pbar" data-ui="player-bottom">
+      <div class="who"><div class="ava"><img src="pieces/wP.svg"></div>Белые <span class="tag">· ты</span></div>
+      <div class="pnote">Шотландская партия</div>
+    </div>
+  </section>
+
+  <!-- RIGHT -->
+  <section class="card right" data-ui="panel">
+    <div class="rp-h" data-ui="panel-header">
+      <div class="crumbs"><span>Партии · Дебюты</span><span class="num">7 партий</span></div>
+      <div class="title tight" data-ui="panel-title">Все дебюты</div>
+      <div class="chips"><div class="chip">Белые и чёрные</div><div class="chip">Всё время</div></div>
+      <div class="ins" data-ui="rep-insight" id="ins"><i class="ico" data-i="lightbulb"></i><div><b>Главное:</b> в «Шотландской партии» ты 2 раза из 5 сыграл <b class="m">5. Nf5</b> вместо <b class="m">5. Nxc6</b> — обе партии проиграны.</div></div>
+    </div>
+
+    <div class="rb">
+      <div class="sec" data-ui="rep-deviations" id="secDev">
+        <h4>Где ты отходишь от своих линий <span>3 партии</span></h4>
+        <div class="item2 dvsel" data-ui="rep-dev" id="dev1">
+          <div class="bi" style="background:#F4B45C">?!</div>
+          <div>
+            <div class="t1"><span class="mv">5. Nf5</span> вместо <span class="mv">5. Nxc6</span></div>
+            <div class="t2">Шотландская партия · 2 раза · неточность (−6%)</div>
+            <div class="games dv" id="devGames">
+              <a><i class="ico" data-i="external-link"></i>vs Ivan_88 · 12 ноя · <span class="r">поражение</span></a>
+              <a><i class="ico" data-i="external-link"></i>vs petr_k · 10 ноя · <span class="r">поражение</span></a>
+            </div>
+          </div>
+          <div class="rt bad">2 пораж.</div>
+        </div>
+        <div class="item2" data-ui="rep-dev">
+          <div class="bi" style="background:#5E8C35"><i class="ico" data-i="check"></i></div>
+          <div><div class="t1"><span class="mv">5. Be3</span> вместо <span class="mv">5. Nxc6</span></div><div class="t2">Шотландская партия · 1 раз · ход нормальный</div></div>
+          <div class="rt">ничья</div>
+        </div>
+      </div>
+
+      <div class="sec" data-ui="rep-holes" id="secHole">
+        <h4>Где соперник уходит из твоих линий <span>2 партии</span></h4>
+        <div class="item2" data-ui="rep-hole" id="hole1">
+          <div class="bi" style="background:#C98424"><i class="ico" data-i="book-x"></i></div>
+          <div>
+            <div class="t1"><span class="mv">4...Qh4</span> — нет в твоих линиях</div>
+            <div class="t2">Шотландская партия · 1 партия · после 4. Nxd4</div>
+            <div class="expl ho" data-ui="rep-explorer">
+              <div class="eh">Что здесь играют на Lichess, 1200–2000 · доля партий · очки белых</div>
+              <div class="erow"><span class="n">1</span><b>Nc3</b><span class="bar"><i style="width:61%"></i></span><span class="num">61% · 53%</span><span class="pl"><i class="ico" data-i="plus"></i></span></div>
+              <div class="erow"><span class="n b2">2</span><b>Nb5</b><span class="bar"><i style="width:22%"></i></span><span class="num">22% · 49%</span><span class="pl"><i class="ico" data-i="plus"></i></span></div>
+              <div class="erow"><span class="n b2" style="background:#3A3835;color:var(--muted)">3</span><b>Nf3</b><span class="bar"><i style="width:9%"></i></span><span class="num">9% · 50%</span><span class="pl"><i class="ico" data-i="plus"></i></span></div>
+            </div>
+          </div>
+          <div class="rt">победа</div>
+        </div>
+        <div class="item2" data-ui="rep-nolines">
+          <div class="bi" style="background:#4A4744"><img src="pieces/bK.svg" style="width:20px;height:20px"></div>
+          <div><div class="t1">Нет линий против <span class="mv">1. d4</span></div><div class="t2">чёрными · 1 партия · создай дебют в «Дебютах»</div></div>
+          <div class="rt bad">пораж.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="act" data-ui="panel-actions">
+      <div class="dv">
+        <div class="btn1" data-ui="rep-repeat"><i class="ico" data-i="git-branch"></i>Повторить линию <span class="k">Enter</span></div>
+        <div class="two"><div class="btn2"><i class="ico" data-i="circle-alert"></i>В тренажёр ошибок</div><div class="btn2"><i class="ico" data-i="external-link"></i>Открыть партию</div></div>
+      </div>
+      <div class="ho">
+        <div class="btn1" data-ui="rep-add"><i class="ico" data-i="plus"></i>Добавить 5. Nc3 в «Шотландская партия»</div>
+        <div class="two" style="grid-template-columns:1fr"><div class="btn2"><i class="ico" data-i="external-link"></i>Открыть партию</div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script>
+const HOLE = location.hash === '#hole';
+if (HOLE) document.body.classList.add('hole');
+const ico = (n, s = '') => `<i class="ico" data-i="${n}" style="${s}"></i>`;
+const nav = [
+  ['calendar','Сегодня'],
+  ['#','Учиться'],['layers','Дебюты'],['book-open','Курсы'],['flag','Ловушки'],['lightbulb','Идеи позиций'],
+  ['#','Тренироваться'],['circle-alert','Ошибки'],['triangle-alert','Проверка угроз'],['grid-3x3','Эндшпили'],['shield','Жертвы'],['search','Угадай дебют'],['circle-play','Играть'],
+  ['#','Партии'],['message-square','Мои партии'],['book-check','Дебюты в партиях',1],['star','Мастера'],
+];
+document.getElementById('side').innerHTML = nav.map(([i,t,a]) => i==='#'
+  ? `<div class="grp">${t}${ico('chevron-down')}</div>`
+  : `<div class="item${a?' active':''}">${ico(i)}${t}</div>`).join('');
+
+// выбранная строка
+document.getElementById(HOLE ? 'hole1' : 'dev1').classList.add('on');
+
+// ── доска (белые снизу) ──
+const fenDev  = 'r1bqk1nr/pppp1ppp/2n5/2b5/3NP3/8/PPP2PPP/RNBQKB1R';   // после 4...Bc5
+const fenHole = 'r1b1kbnr/pppp1ppp/2n5/8/3NP2q/8/PPP2PPP/RNBQKB1R';    // после 4...Qh4
+const fen = HOLE ? fenHole : fenDev;
+const files = 'abcdefgh', S = 774 / 8;
+const grid = {};
+fen.split('/').forEach((row, ri) => { let f = 0; for (const ch of row) { if (/\d/.test(ch)) f += +ch; else { grid[files[f] + (8 - ri)] = ch; f++; } } });
+const ctr = sq => [ (files.indexOf(sq[0]) + .5) * S, (8 - +sq[1] + .5) * S ];
+const tint = HOLE ? { d8: 'rgba(247,214,74,.26)', h4: 'rgba(247,214,74,.35)' } : { f8: 'rgba(247,214,74,.26)', c5: 'rgba(247,214,74,.35)' };
+let html = '';
+for (let row = 0; row < 8; row++) for (let col = 0; col < 8; col++) {
+  const sq = files[col] + (8 - row), isLight = (col + row) % 2 === 0;
+  let inner = tint[sq] ? `<div class="hl" style="background:${tint[sq]}"></div>` : '';
+  const p = grid[sq];
+  if (p) inner += `<img src="pieces/${p === p.toUpperCase() ? 'w' : 'b'}${p.toUpperCase()}.svg">`;
+  const coColor = isLight ? 'var(--dark)' : 'var(--light)';
+  if (col === 0) inner += `<span class="co r" style="color:${coColor}">${8 - row}</span>`;
+  if (row === 7) inner += `<span class="co f" style="color:${coColor}">${files[col]}</span>`;
+  html += `<div class="sq" style="background:${isLight ? 'var(--light)' : 'var(--dark)'}">${inner}</div>`;
+}
+document.getElementById('sqs').innerHTML = html;
+function arrow(a, b, color, op = .85) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const start = 18, end = L - 14, head = 34, sw = 9, hw = 22;
+  const P = (t, o) => [(x1 + ux * t + px * o).toFixed(1), (y1 + uy * t + py * o).toFixed(1)].join(',');
+  return `<polygon points="${[P(start, -sw), P(end - head, -sw), P(end - head, -hw), P(end, 0), P(end - head, hw), P(end - head, sw), P(start, sw)].join(' ')}" fill="${color}" opacity="${op}"/>`;
+}
+function dashed(a, b, color, op = .95) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const s = 30, e = L - 18, hl = 26, hw = 16, ex = x1 + ux * e, ey = y1 + uy * e;
+  const head = [[ex, ey], [ex - ux * hl + px * hw, ey - uy * hl + py * hw], [ex - ux * hl - px * hw, ey - uy * hl - py * hw]].map(p => p.map(v => v.toFixed(1)).join(',')).join(' ');
+  return `<line x1="${(x1 + ux * s).toFixed(1)}" y1="${(y1 + uy * s).toFixed(1)}" x2="${(ex - ux * hl).toFixed(1)}" y2="${(ey - uy * hl).toFixed(1)}" stroke="${color}" stroke-width="9" stroke-dasharray="16 11" stroke-linecap="round" opacity="${op}"/><polygon points="${head}" fill="${color}" opacity="${op}"/>`;
+}
+function numTag(a, b, n, color, t = .5) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b), x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t;
+  return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15" fill="${color}"/><text x="${x.toFixed(1)}" y="${(y + 5.5).toFixed(1)}" text-anchor="middle" font-family="Inter" font-weight="800" font-size="16" fill="#fff">${n}</text>`;
+}
+let over = `<svg width="774" height="774" style="position:absolute;inset:0">`;
+if (HOLE) over += dashed('b1', 'c3', '#81B64C') + dashed('d4', 'b5', '#81B64C', .55) + numTag('b1', 'c3', 1, '#5E8C35', .5) + numTag('d4', 'b5', 2, '#4E6E33', .55);
+else over += arrow('d4', 'f5', '#E0574A', .85) + dashed('d4', 'c6', '#81B64C');
+over += `</svg>`;
+document.getElementById('over').innerHTML = over;
+
+document.querySelectorAll('[data-i]').forEach(el => {
+  const u = window.ICONS && ICONS[el.dataset.i];
+  if (u) el.style.setProperty('--i', `url("${u}")`);
+});
+</script>
+</body>
+</html>

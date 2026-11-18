@@ -223,6 +223,30 @@ html, body {
   --st-b0:    #2C2415; --st-b1:    #362E1D; --st-b2:    #403826;
   --st-b3:    #4A422F; --st-b4:    #544C38;
 }
+[data-site-theme="teal"] {
+  --bg: #020B0C; --surface: #061517; --row-hover: #081819;
+  --hairline: #1A3E42; --track: #142E32; --header-bg: rgba(2,11,12,0.92);
+  --st-bg:    #020B0C; --st-card:  #061517; --st-panel: #071818;
+  --st-h1:    #0D1E20; --st-h2:    #0F2224; --st-h3:    #132728;
+  --st-b0:    #142E32; --st-b1:    #1A3E42; --st-b2:    #20484E;
+  --st-b3:    #26535A; --st-b4:    #2C5E66;
+}
+[data-site-theme="wine"] {
+  --bg: #09020A; --surface: #120413; --row-hover: #140616;
+  --hairline: #3A1840; --track: #2C1232; --header-bg: rgba(9,2,10,0.92);
+  --st-bg:    #09020A; --st-card:  #120413; --st-panel: #130515;
+  --st-h1:    #1A0A1E; --st-h2:    #1D0D22; --st-h3:    #221226;
+  --st-b0:    #2C1232; --st-b1:    #3A1840; --st-b2:    #48204E;
+  --st-b3:    #56285E; --st-b4:    #64306E;
+}
+[data-site-theme="jade"] {
+  --bg: #030809; --surface: #071314; --row-hover: #091515;
+  --hairline: #183630; --track: #122B25; --header-bg: rgba(3,8,9,0.92);
+  --st-bg:    #030809; --st-card:  #071314; --st-panel: #081514;
+  --st-h1:    #0D1D1A; --st-h2:    #0F201D; --st-h3:    #132522;
+  --st-b0:    #182B25; --st-b1:    #1E3630; --st-b2:    #24413B;
+  --st-b3:    #2A4C46; --st-b4:    #305751;
+}
 [data-site-theme="light"] {
   --bg: #F8F8F8; --surface: #FFFFFF; --row-hover: #F0F0F0;
   --ivory: #111111; --ink: #F8F8F8; --ink-2: #555555;

@@ -40,8 +40,9 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'ПАРТИИ',
     items: [
-      { label: 'Мои партии', href: '/games',   icon: 'games'   },
-      { label: 'Мастера',    href: '/masters', icon: 'masters' },
+      { label: 'Мои партии',        href: '/games',      icon: 'games'      },
+      { label: 'Дебюты в партиях', href: '/repertoire', icon: 'repertoire' },
+      { label: 'Мастера',          href: '/masters',    icon: 'masters'    },
     ],
   },
 ];

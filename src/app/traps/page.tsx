@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Chessboard } from 'react-chessboard';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useStockfish } from '@/hooks/useStockfish';
@@ -10,20 +9,7 @@ import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
 import type { CourseLessonMove } from '@/types/courses';
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const BOARD_SIZE = 160;
-
-const HEADING: React.CSSProperties = {
-  fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
-};
-const SECTION_HEADER: React.CSSProperties = {
-  borderTop: '2px solid var(--ivory)',
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  minHeight: 48,
-};
-const LABEL: React.CSSProperties = {
-  margin: 0, fontSize: 13, fontWeight: 600,
-  color: 'var(--ivory)',
-};
+const BOARD_SIZE = 140;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -372,8 +358,8 @@ export default function TrapsPage() {
 
       {/* Traps section */}
       <section>
-        <div style={SECTION_HEADER}>
-          <h2 style={LABEL}>ЛОВУШКИ</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--hairline)', marginBottom: 2 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>ЛОВУШКИ</span>
           <span style={{ fontSize: 13, color: 'var(--muted)' }}>{filtered.length}</span>
         </div>
 
@@ -391,20 +377,21 @@ export default function TrapsPage() {
                 <div
                   key={trap.trap_key}
                   style={{
-                    display: 'flex', gap: 20, padding: '20px',
+                    display: 'flex', gap: 20, padding: '16px',
                     border: '1px solid var(--hairline)',
                     background: 'var(--surface)',
+                    borderRadius: 'var(--radius-card)',
                     flexWrap: 'wrap',
                   }}
                 >
                   {/* Board */}
-                  <div style={{ flexShrink: 0 }}>
-                    <Chessboard options={{
-                      position: trap.puzzle_fen,
-                      boardOrientation,
-                      allowDragging: false,
-                      boardStyle: { width: BOARD_SIZE, height: BOARD_SIZE },
-                    }} />
+                  <div style={{ flexShrink: 0, borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
+                    <Board
+                      fen={trap.puzzle_fen}
+                      orientation={boardOrientation}
+                      size={BOARD_SIZE}
+                      interactive={false}
+                    />
                   </div>
 
                   {/* Info */}
@@ -431,48 +418,48 @@ export default function TrapsPage() {
                     <div>
                       {isRevealed ? (
                         <div style={{
-                          padding: '8px 14px',
-                          border: '1px solid var(--hairline)',
-                          background: 'rgba(242,239,231,0.05)',
-                          fontSize: 14, fontWeight: 600, color: 'var(--ivory)',
+                          display: 'inline-flex', alignItems: 'center', gap: 8,
+                          padding: '7px 14px',
+                          border: '1px solid var(--accent)',
+                          borderRadius: 'var(--radius-btn)',
+                          background: 'rgba(129,182,76,0.08)',
+                          fontSize: 15, fontWeight: 700, color: 'var(--accent)',
                           fontFamily: 'monospace', letterSpacing: '0.05em',
                         }}>
                           {trap.trap_move_san}
                         </div>
                       ) : (
                         <button
+                          className="ui-btn ui-btn-outline ui-btn-sm"
                           onClick={() => setRevealed(prev => new Set(prev).add(trap.trap_key))}
-                          style={{
-                            height: 34, padding: '0 16px',
-                            background: 'transparent',
-                            border: '1px solid var(--control)',
-                            color: 'var(--muted)', fontSize: 13,
-                            fontFamily: 'inherit', cursor: 'pointer',
-                          }}
                         >
-                          Найти ход →
+                          Показать ход
                         </button>
                       )}
                     </div>
 
                     {/* Hit counters */}
-                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--muted)' }}>
-                        Заманил: <span style={{ color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{hits.caught}</span>
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      {[
+                        { label: 'Заманил', type: 'caught' as const, count: hits.caught },
+                        { label: 'Попался', type: 'caught_self' as const, count: hits.caught_self },
+                      ].map(({ label, type, count }) => (
                         <button
-                          onClick={() => void addHit(trap.trap_key, 'caught')}
-                          style={{ width: 22, height: 22, border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', cursor: 'pointer', fontSize: 14, lineHeight: 1, fontFamily: 'inherit' }}
-                          title="Заманил соперника"
-                        >+</button>
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--muted)' }}>
-                        Попался: <span style={{ color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{hits.caught_self}</span>
-                        <button
-                          onClick={() => void addHit(trap.trap_key, 'caught_self')}
-                          style={{ width: 22, height: 22, border: '1px solid var(--hairline)', background: 'transparent', color: 'var(--muted)', cursor: 'pointer', fontSize: 14, lineHeight: 1, fontFamily: 'inherit' }}
-                          title="Сам попался"
-                        >+</button>
-                      </span>
+                          key={type}
+                          onClick={() => void addHit(trap.trap_key, type)}
+                          style={{
+                            height: 30, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6,
+                            border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn)',
+                            background: 'transparent', color: 'var(--muted)', cursor: 'pointer',
+                            fontSize: 13, fontFamily: 'inherit',
+                          }}
+                          title={type === 'caught' ? 'Заманил соперника' : 'Сам попался'}
+                        >
+                          {label}
+                          <span style={{ color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{count}</span>
+                          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
+                        </button>
+                      ))}
                     </div>
 
                     {/* Course link */}

@@ -1,4 +1,5 @@
 // src/lib/demo-positions.ts — демо-позиции для проверки вида (BOARD-EXPLAIN.md, раздел 4)
+import { Chess } from 'chess.js';
 
 export const DEMO_SAC = {
   works: {
@@ -33,6 +34,76 @@ export const DEMO_SAC = {
     opening: 'Система Колле',
     game_id: null, ply: null, version: 2, source: null,
   },
+} as const;
+
+// ── DEMO_REPERTOIRE ───────────────────────────────────────────────────────────
+
+function mkLine(id: string, opening_id: string, sans: string) {
+  const ch = new Chess();
+  const moves: Array<{ san: string; from: string; to: string; fen: string; color: 'w' | 'b' }> = [];
+  for (const s of sans.split(' ')) {
+    const r = ch.move(s);
+    moves.push({ san: r.san, from: r.from, to: r.to, fen: ch.fen(), color: r.color as 'w' | 'b' });
+  }
+  return { id, opening_id, moves };
+}
+
+export const DEMO_OPENINGS = [
+  { id: 'op-scotch',   name: 'Шотландская партия', color: 'white' as const },
+  { id: 'op-stafford', name: 'Гамбит Стаффорда',   color: 'black' as const },
+];
+
+export const DEMO_LINES = [
+  mkLine('l-sc-1', 'op-scotch',   'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Bc5 Nxc6 Qf6 Qd2 dxc6 Nc3'),
+  mkLine('l-sc-2', 'op-scotch',   'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Nf6 Nxc6 bxc6 e5 Qe7 Qe2 Nd5 c4'),
+  mkLine('l-st-1', 'op-stafford', 'e4 e5 Nf3 Nf6 Nxe5 Nc6 Nxc6 dxc6 d3 Bc5 Be2 h5'),
+];
+
+export const DEMO_GAMES = [
+  { id: 'g1', color: 'w' as const, result: 'loss' as const, opp: 'Ivan_88',  date: '2026-11-12', moves: 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Bc5 Nf5 d5 Nxg7+ Kf8 Nh5 Qh4' },
+  { id: 'g2', color: 'w' as const, result: 'loss' as const, opp: 'petr_k',   date: '2026-11-10', moves: 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Bc5 Nf5 g6 Ng3 Nf6' },
+  { id: 'g3', color: 'w' as const, result: 'draw' as const, opp: 'Mira2010', date: '2026-11-08', moves: 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Bc5 Be3 Qf6 c3 Nge7' },
+  { id: 'g4', color: 'w' as const, result: 'win'  as const, opp: 'kostya',   date: '2026-11-07', moves: 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Qh4 Nc3 Bb4 Be2' },
+  { id: 'g5', color: 'w' as const, result: 'win'  as const, opp: 'Alex_K',   date: '2026-11-05', moves: 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Nf6 Nxc6 bxc6 e5 Qe7 Qe2 Nd5 c4 Nb6 Nd2' },
+  { id: 'g6', color: 'b' as const, result: 'loss' as const, opp: 'd4_only',  date: '2026-11-04', moves: 'd4 d5 c4 e6 Nc3 Nf6' },
+  { id: 'g7', color: 'b' as const, result: 'win'  as const, opp: 'Sasha',    date: '2026-11-03', moves: 'e4 e5 Nf3 Nf6 Nxe5 Nc6 Nxc6 dxc6 d3 Bc5 Be2 h5 Nc3 Ng4' },
+];
+
+// Оценки для deviation-ходов в демо
+export const DEMO_ANALYSIS: Record<string, { cls: string; loss: number }> = {
+  g1: { cls: 'inaccuracy', loss: 0.064 },
+  g2: { cls: 'inaccuracy', loss: 0.064 },
+  g3: { cls: 'good',       loss: 0.01  },
+};
+
+// Ответы Lichess Opening Explorer для демо (ключ = posKey после хода)
+export const DEMO_LICHESS: Record<string, { total: number; moves: Array<{ san: string; uci: string; share: number; score: number }> }> = {
+  // после 4...Qh4 (позиция: белые ходят)
+  'r1b1kbnr/pppp1ppp/2n5/8/3NP2q/8/PPP2PPP/RNBQKB1R w KQkq': {
+    total: 100,
+    moves: [
+      { san: 'Nc3', uci: 'b1c3', share: 0.61, score: 0.53 },
+      { san: 'Nb5', uci: 'd4b5', share: 0.22, score: 0.49 },
+      { san: 'Nf3', uci: 'd4f3', share: 0.09, score: 0.50 },
+    ],
+  },
+  // после 1.d4 (позиция: чёрные ходят)
+  'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq': {
+    total: 100,
+    moves: [
+      { san: 'd5',  uci: 'd7d5', share: 0.48, score: 0.47 },
+      { san: 'Nf6', uci: 'g8f6', share: 0.39, score: 0.48 },
+      { san: 'e6',  uci: 'e7e6', share: 0.06, score: 0.46 },
+    ],
+  },
+};
+
+export const DEMO_REPERTOIRE = {
+  openings: DEMO_OPENINGS,
+  lines:    DEMO_LINES,
+  games:    DEMO_GAMES,
+  analysis: DEMO_ANALYSIS,
+  lichess:  DEMO_LICHESS,
 } as const;
 
 export const DEMO_THREAT = {

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import {
   fetchArchives, fetchMonthGames, parseGame, computeStats,
@@ -194,6 +195,7 @@ interface Filters {
   timeClass: string;
   result: '' | 'win' | 'draw' | 'loss';
   eco: string;
+  rep: '' | 'deviation';
 }
 
 function FilterBar({
@@ -245,9 +247,16 @@ function FilterBar({
         {ecoOptions.slice(0, 50).map(e => <option key={e} value={e} />)}
       </datalist>
 
-      {(filters.color || filters.timeClass || filters.result || filters.eco) && (
+      <button
+        onClick={() => onChange({ ...filters, rep: filters.rep === 'deviation' ? '' : 'deviation' })}
+        style={{ height: 36, padding: '0 12px', fontSize: 13, background: filters.rep === 'deviation' ? 'var(--accent)' : 'var(--surface)', color: filters.rep === 'deviation' ? '#fff' : 'var(--ivory)', border: '1px solid var(--hairline)', cursor: 'pointer', borderRadius: 4 }}
+      >
+        📖 Отошёл от линии
+      </button>
+
+      {(filters.color || filters.timeClass || filters.result || filters.eco || filters.rep) && (
         <button
-          onClick={() => onChange({ color: '', timeClass: '', result: '', eco: '' })}
+          onClick={() => onChange({ color: '', timeClass: '', result: '', eco: '', rep: '' })}
           style={{ fontSize: 12, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px' }}
         >
           × Сбросить
@@ -271,7 +280,29 @@ function AccLabel({ g }: { g: Game }) {
   return <span style={{ fontSize: 12, color, fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{Math.round(myAcc)}%</span>;
 }
 
-function GameRow({ g }: { g: Game }) {
+const REP_STATUS_COLOR: Record<string, string> = {
+  in_line: 'var(--accent)', deviation: '#F08277', hole: '#F0A43A',
+};
+const REP_STATUS_TITLE: Record<string, string> = {
+  in_line: 'По линии', deviation: 'Отошёл от линии', hole: 'Дыра в линиях',
+};
+
+function RepMark({ status }: { status: string | null }) {
+  if (!status || !REP_STATUS_COLOR[status]) return null;
+  return (
+    <span
+      data-ui="rep-mark"
+      title={REP_STATUS_TITLE[status] ?? ''}
+      style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 6, flexShrink: 0 }}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={REP_STATUS_COLOR[status]} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+    </span>
+  );
+}
+
+function GameRow({ g, repStatus }: { g: Game; repStatus: string | null }) {
   return (
     <a
       href={`/games/${g.id}`}
@@ -290,11 +321,12 @@ function GameRow({ g }: { g: Game }) {
       <span style={{ fontSize: 16, lineHeight: 1 }}>
         {g.color === 'white' ? '♙' : '♟'}
       </span>
-      <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
         {g.opp_name}
         {g.rating_opp != null && (
           <span style={{ color: 'var(--muted)', marginLeft: 6 }}>{g.rating_opp}</span>
         )}
+        <RepMark status={repStatus} />
       </span>
       <span style={{ fontSize: 13, fontWeight: 600, color: RESULT_COLOR[g.result] }}>
         {RESULT_LABEL[g.result]}
@@ -324,14 +356,18 @@ interface SyncProgress {
 const PAGE_SIZE = 60;
 const SYNC_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
-export default function GamesPage() {
+function GamesPageInner() {
+  const searchParams = useSearchParams();
+  const initRep = searchParams.get('rep') === 'deviation' ? 'deviation' : '';
+
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [games, setGames] = useState<Game[]>([]);
+  const [repStatuses, setRepStatuses] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
   const [syncDone, setSyncDone] = useState<{ added: number; errors: number } | null>(null);
-  const [filters, setFilters] = useState<Filters>({ color: '', timeClass: '', result: '', eco: '' });
+  const [filters, setFilters] = useState<Filters>({ color: '', timeClass: '', result: '', eco: '', rep: initRep as '' | 'deviation' });
   const [page, setPage] = useState(1);
   const [editingUser, setEditingUser] = useState(false);
   const [userInput, setUserInput] = useState('');
@@ -342,12 +378,14 @@ export default function GamesPage() {
   // so the React Compiler's set-state-in-effect rule does not fire.
 
   async function loadData() {
-    const [{ data: stateData }, { data: gamesData }] = await Promise.all([
+    const [{ data: stateData }, { data: gamesData }, { data: goData }] = await Promise.all([
       supabase.from('games_sync_state').select('*').eq('id', 1).single(),
       supabase.from('games').select('*').order('played_at', { ascending: false }),
+      supabase.from('game_openings').select('game_id, status'),
     ]);
     if (stateData) setSyncState(stateData as SyncState);
     if (gamesData) setGames(gamesData as Game[]);
+    if (goData) setRepStatuses(new Map((goData as Array<{ game_id: string; status: string }>).map(r => [r.game_id, r.status])));
     setLoading(false);
   }
 
@@ -461,6 +499,7 @@ export default function GamesPage() {
     if (filters.timeClass && g.time_class !== filters.timeClass) return false;
     if (filters.result && g.result !== filters.result) return false;
     if (filters.eco && !g.eco_name.toLowerCase().includes(filters.eco.toLowerCase())) return false;
+    if (filters.rep === 'deviation' && repStatuses.get(g.id) !== 'deviation') return false;
     return true;
   });
 
@@ -580,7 +619,7 @@ export default function GamesPage() {
             {paged.length === 0 ? (
               <p style={{ fontSize: 14, color: 'var(--muted)', padding: '24px 0' }}>Нет партий по фильтру.</p>
             ) : (
-              paged.map(g => <GameRow key={g.id} g={g} />)
+              paged.map(g => <GameRow key={g.id} g={g} repStatus={repStatuses.get(g.id) ?? null} />)
             )}
 
             {hasMore && (
@@ -597,5 +636,13 @@ export default function GamesPage() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function GamesPage() {
+  return (
+    <Suspense>
+      <GamesPageInner />
+    </Suspense>
   );
 }
