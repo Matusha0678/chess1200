@@ -24,7 +24,7 @@ export interface BoardArrow {
   style?: 'solid' | 'dashed';
   opacity?: number;
   label?: string;
-  role?: 'offer' | 'plan' | 'threat' | 'fork' | 'best' | 'line-opp' | 'line-me' | 'played';
+  role?: 'offer' | 'plan' | 'threat' | 'fork' | 'best' | 'line-opp' | 'line-me' | 'played' | 'note';
 }
 
 const ROLE_CIRCLE: Record<string, string> = {

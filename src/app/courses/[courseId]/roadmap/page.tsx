@@ -45,7 +45,7 @@ function LessonCard({ node, courseId }: { node: LessonNode; courseId: string }) 
   const isActive = status === 'active';
 
   const href = `/courses/${courseId}/${lesson.id}`;
-  const practiceHref = `/courses/${courseId}/${lesson.id}/practice`;
+  const practiceHref = `/courses/${courseId}/${lesson.id}?mode=play`;
 
   return (
     <div style={{
