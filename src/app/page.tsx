@@ -53,7 +53,7 @@ const WEEK_THEMES: WeekTheme[] = [
     reason: '',
     trainers: [
       { label: 'Экзамен дебюта',    href: '/openings' },
-      { label: 'Угадай дебют',      href: '/guess-opening' },
+      { label: 'Дебютный спринт',   href: '/sprint' },
       { label: 'Дебюты',            href: '/openings' },
     ],
   },
@@ -182,12 +182,12 @@ function buildPlan(counts: DayCounts): Task[] {
     });
   }
   tasks.push({
-    key: 'guess',
-    label: 'Угадай дебют',
+    key: 'sprint',
+    label: 'Дебютный спринт',
     count: counts.guessedToday ? 1 : 0,
-    href: '/guess-opening',
-    hint: counts.guessedToday ? 'Сегодня уже сыграно' : 'Ежедневная игра — 1 раунд в день',
-    cta: counts.guessedToday ? 'Тренировка' : 'Играть',
+    href: '/sprint',
+    hint: counts.guessedToday ? 'Сегодня уже сыграно' : 'Позиции из твоих линий на время',
+    cta: counts.guessedToday ? 'Повторить' : 'Старт',
     done: counts.guessedToday,
   });
   if (tasks.length < 3) {
