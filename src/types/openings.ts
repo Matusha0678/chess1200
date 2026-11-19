@@ -20,6 +20,8 @@ export interface OpeningLine {
   id: string;
   opening_id: string;
   line_index: number;
+  badge?: string | null;
+  line_class?: string | null;
   moves: ChessMove[];
   created_at: string;
 }

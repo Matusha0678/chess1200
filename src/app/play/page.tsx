@@ -244,6 +244,7 @@ function PlayContent() {
 
   // Eval
   const [evalCpWhite, setEvalCpWhite] = useState<number | null>(null);
+  const [isEvalAnalyzing, setIsEvalAnalyzing] = useState(false);
 
   // Coach
   const [coach, setCoach] = useState<CoachInfo | null>(null);
@@ -268,7 +269,7 @@ function PlayContent() {
   const coachEngineRef = useRef<(Engine & { quit(): void }) | null>(null);
   const coachEngineReady = useRef(false);
 
-  const { getBestMove, setSkillLevel, isReady: sfReady, startAnalysis, stopAnalysis } = useStockfish();
+  const { getBestMove, getEval, setSkillLevel, isReady: sfReady, stopAnalysis } = useStockfish();
   const { S } = useTrainerGeometry();
 
   // ── Init ──────────────────────────────────────────────────────────────────
@@ -535,6 +536,7 @@ function PlayContent() {
 
   const handleGameOver = useCallback((startFen: string, surrenderedNow: boolean, history: MoveRecord[], pc: PlayerColor, md: PlayMode, lvl: number) => {
     stopAnalysis();
+    setIsEvalAnalyzing(false);
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
     setHintArrow(null);
     setResultInfo(getResultTitle(chessRef.current, pc, surrenderedNow));
@@ -573,10 +575,18 @@ function PlayContent() {
               return;
             }
             if (showEvalBar) {
-              startAnalysis(newFen, (info) => {
-                const t = chess.turn() as PlayerColor;
-                const cpW = info.cp !== undefined ? (t === 'w' ? info.cp : -info.cp) : 0;
+              setIsEvalAnalyzing(true);
+              getEval(newFen, 16, (result) => {
+                const sideToMove = newFen.split(' ')[1] ?? 'w';
+                let cpW: number;
+                if (result.mate !== undefined) {
+                  const absVal = result.mate > 0 ? 9900 : -9900;
+                  cpW = sideToMove === 'b' ? -absVal : absVal;
+                } else {
+                  cpW = result.cp !== undefined ? (sideToMove === 'w' ? result.cp : -result.cp) : 0;
+                }
                 setEvalCpWhite(cpW);
+                setIsEvalAnalyzing(false);
               });
             }
           }
@@ -585,7 +595,7 @@ function PlayContent() {
         setIsProcessing(false);
       }, 300);
     });
-  }, [getBestMove, handleGameOver, showEvalBar, startAnalysis]);
+  }, [getBestMove, getEval, handleGameOver, showEvalBar]);
 
   // ── Classify my move via coach engine ─────────────────────────────────────
 
@@ -682,6 +692,7 @@ function PlayContent() {
     }
 
     if (showBadges || showEvalBar) {
+      if (showEvalBar) setIsEvalAnalyzing(true);
       void evaluateMyMove(fenBefore, newFen, mv.san, uci, plyNum, activeColor);
     }
 
@@ -1093,7 +1104,9 @@ function PlayContent() {
     }}>
       <div style={{
         position: 'absolute', left: 0, right: 0, bottom: 0,
-        background: '#EDEBE7', height: `${evalPct}%`, transition: 'height 0.5s ease',
+        background: isEvalAnalyzing ? 'rgba(237,235,231,0.35)' : '#EDEBE7',
+        height: `${evalPct}%`,
+        transition: isEvalAnalyzing ? 'none' : 'height 0.5s ease, background 0.3s ease',
       }} />
     </div>
   );
