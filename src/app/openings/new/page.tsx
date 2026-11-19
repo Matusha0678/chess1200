@@ -33,6 +33,7 @@ export default function NewOpeningPage() {
   const [previewInfo, setPreviewInfo] = useState<{ count: number; gameCount: number } | null>(null);
   const [lineType, setLineType] = useState<LineType | null>(null);
   const [lineEmoji, setLineEmoji] = useState('');
+  const [lineMeta, setLineMeta] = useState<import('@/lib/pgn-tree').LineMeta[]>([]);
   const parseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handlePgnChange(value: string) {
@@ -45,15 +46,18 @@ export default function NewOpeningPage() {
 
     if (!value.trim()) {
       setPreviewInfo(null);
+      setLineMeta([]);
       return;
     }
 
     parseTimeoutRef.current = setTimeout(() => {
       try {
-        const { lines, gameCount } = extractAllLines(value);
+        const { lines, gameCount, meta } = extractAllLines(value);
         setPreviewInfo({ count: lines.length, gameCount });
+        setLineMeta(meta);
       } catch {
         setPreviewInfo({ count: 0, gameCount: 0 });
+        setLineMeta([]);
       }
     }, 400);
   }
@@ -72,9 +76,11 @@ export default function NewOpeningPage() {
     }
 
     let lines: ChessMove[][];
+    let freshMeta: import('@/lib/pgn-tree').LineMeta[] = [];
     try {
       const result = extractAllLines(pgn);
       lines = result.lines;
+      freshMeta = result.meta;
     } catch {
       setError('Не удалось разобрать PGN. Проверь формат.');
       return;
@@ -109,13 +115,13 @@ export default function NewOpeningPage() {
         return;
       }
 
-      // Insert all lines
+      // Insert all lines with per-line meta from PGN headers / heuristic
       const lineRows = lines.map((moves, index) => ({
         opening_id: opening.id,
         line_index: index,
         moves: moves,
-        line_type: lineType ?? null,
-        line_emoji: lineEmoji.trim() || null,
+        badge: (freshMeta[index]?.badge ?? lineEmoji.trim()) || null,
+        line_class: freshMeta[index]?.line_class ?? (lineType ?? null),
       }));
 
       const { error: linesError } = await supabase

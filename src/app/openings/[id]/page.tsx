@@ -230,6 +230,7 @@ export default function OpeningDetailPage({ params }: Props) {
   const [editClass, setEditClass] = useState<string | null>(null);
   const [addLineBadge, setAddLineBadge] = useState<string | null>(null);
   const [addLineClass, setAddLineClass] = useState<string | null>(null);
+  const [addLineMeta, setAddLineMeta] = useState<import('@/lib/pgn-tree').LineMeta[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -347,10 +348,12 @@ export default function OpeningDetailPage({ params }: Props) {
 
     parseTimeoutRef.current = setTimeout(() => {
       try {
-        const { lines } = extractAllLines(value);
+        const { lines, meta } = extractAllLines(value);
         setAddLineCount(lines.length);
+        setAddLineMeta(meta);
       } catch {
         setAddLineCount(0);
+        setAddLineMeta([]);
       }
     }, 400);
   }
@@ -361,9 +364,11 @@ export default function OpeningDetailPage({ params }: Props) {
     setAddLineSuccess(false);
 
     let newMoveLines;
+    let freshMeta: import('@/lib/pgn-tree').LineMeta[] = [];
     try {
       const result = extractAllLines(addLinePgn);
       newMoveLines = result.lines;
+      freshMeta = result.meta;
     } catch {
       setAddLineError('Не удалось разобрать PGN. Проверь формат.');
       return;
@@ -384,8 +389,8 @@ export default function OpeningDetailPage({ params }: Props) {
       opening_id: opening.id,
       line_index: maxIndex + 1 + i,
       moves,
-      badge: addLineBadge,
-      line_class: addLineClass,
+      badge: freshMeta[i]?.badge ?? addLineBadge ?? null,
+      line_class: freshMeta[i]?.line_class ?? addLineClass ?? null,
     }));
 
     const { error: insertError } = await supabase
@@ -407,6 +412,7 @@ export default function OpeningDetailPage({ params }: Props) {
     setAddLineSuccess(true);
     setAddLinePgn('');
     setAddLineCount(null);
+    setAddLineMeta([]);
     setShowAddLine(false);
 
     await load();
@@ -844,6 +850,18 @@ export default function OpeningDetailPage({ params }: Props) {
                             <path d="M20 6L9 17l-5-5" />
                           </svg>
                           Найдено {addLineCount} {pluralVariations(addLineCount)}
+                          {addLineMeta.length > 0 && (() => {
+                            const sharp = addLineMeta.filter(m => m.line_class === 'sharp').length;
+                            const rare = addLineMeta.filter(m => m.line_class === 'rare').length;
+                            const common = addLineMeta.filter(m => m.line_class === 'common').length;
+                            const parts = [];
+                            if (sharp) parts.push(`${sharp} острых`);
+                            if (rare) parts.push(`${rare} редких`);
+                            if (common) parts.push(`${common} частых`);
+                            return parts.length > 0 ? (
+                              <span className="text-[#505050] font-normal ml-1">— {parts.join(', ')}</span>
+                            ) : null;
+                          })()}
                         </>
                       ) : (
                         <>
