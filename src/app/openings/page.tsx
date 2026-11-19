@@ -34,6 +34,7 @@ interface CatalogOpening {
   color: 'white' | 'black' | 'both';
   totalLines: number;
   mastered: number;
+  learning: number;
   due: number;
   newLines: number;
   cardFen: string;
@@ -126,7 +127,7 @@ export default function OpeningsPage() {
           : 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
         return {
           id: op.id, name: op.name, color: op.color as 'white' | 'black' | 'both',
-          totalLines: ls.length, mastered: counts.mastered, due: counts.due, newLines: counts.new,
+          totalLines: ls.length, mastered: counts.mastered, learning: counts.learning, due: counts.due, newLines: counts.new,
           cardFen,
         };
       });
@@ -151,6 +152,7 @@ export default function OpeningsPage() {
 
   const totalDue = openings.reduce((s, o) => s + o.due, 0);
   const totalMastered = openings.reduce((s, o) => s + o.mastered, 0);
+  const totalLearning = openings.reduce((s, o) => s + o.learning, 0);
   const totalNew = openings.reduce((s, o) => s + o.newLines, 0);
   const totalLines = openings.reduce((s, o) => s + o.totalLines, 0);
 
@@ -193,16 +195,18 @@ export default function OpeningsPage() {
               <span style={{ fontSize: 19, fontWeight: 700, color: 'var(--ivory)' }}>Дебюты</span>
               <span style={{ fontSize: 13, color: 'var(--muted)' }}>{totalMastered} из {totalLines} освоено</span>
             </div>
-            <div style={{ height: 6, background: 'var(--hairline)', borderRadius: 3, overflow: 'hidden', marginBottom: 14 }}>
-              <div style={{ height: '100%', width: totalLines > 0 ? `${(totalMastered / totalLines) * 100}%` : '0%', background: 'var(--accent)', borderRadius: 3, transition: 'width 0.3s' }} />
+            <div style={{ height: 6, background: 'var(--hairline)', borderRadius: 3, overflow: 'hidden', marginBottom: 14, display: 'flex' }}>
+              <div style={{ height: '100%', width: totalLines > 0 ? `${(totalMastered / totalLines) * 100}%` : '0%', background: '#81B64C', transition: 'width 0.3s' }} />
+              <div style={{ height: '100%', width: totalLines > 0 ? `${(totalLearning / totalLines) * 100}%` : '0%', background: '#B088D8', transition: 'width 0.3s' }} />
             </div>
 
             {/* Stats */}
-            <div data-ui="op-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 14 }}>
+            <div data-ui="op-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6, marginBottom: 14 }}>
               {[
-                { v: totalDue,     label: 'повторить', color: '#E8A23A' },
+                { v: totalDue,      label: 'повторить', color: '#E8A23A' },
                 { v: totalMastered, label: 'освоено',   color: '#81B64C' },
-                { v: totalNew,     label: 'новых',     color: '#8FB4DA' },
+                { v: totalLearning, label: 'изучаю',    color: '#B088D8' },
+                { v: totalNew,      label: 'новых',     color: '#8FB4DA' },
               ].map(item => (
                 <div key={item.label} style={{ textAlign: 'center', padding: '8px 4px', background: 'rgba(0,0,0,0.2)', borderRadius: 6 }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: item.color }}>{item.v}</div>
@@ -484,16 +488,24 @@ function OpeningCard({ op, isHovered, onHover, isDemo }: {
           <span>·</span>
           <span>{op.totalLines} {op.totalLines === 1 ? 'линия' : op.totalLines <= 4 ? 'линии' : 'линий'}</span>
         </div>
-        {/* Progress bar */}
-        <div style={{ height: 5, background: 'var(--hairline)', borderRadius: 3, overflow: 'hidden', marginBottom: 4 }}>
+        {/* Progress bar — mastered (green) + learning (purple) */}
+        <div style={{ height: 5, background: 'var(--hairline)', borderRadius: 3, overflow: 'hidden', marginBottom: 4, display: 'flex' }}>
           <div style={{
             height: '100%',
             width: op.totalLines > 0 ? `${(op.mastered / op.totalLines) * 100}%` : '0%',
-            background: '#81B64C', borderRadius: 3, transition: 'width 0.3s',
+            background: '#81B64C', transition: 'width 0.3s',
+          }} />
+          <div style={{
+            height: '100%',
+            width: op.totalLines > 0 ? `${(op.learning / op.totalLines) * 100}%` : '0%',
+            background: '#B088D8', transition: 'width 0.3s',
           }} />
         </div>
-        <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-          освоено {op.mastered}/{op.totalLines}
+        <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+          {op.mastered > 0 && <>освоено {op.mastered}/{op.totalLines}</>}
+          {op.mastered > 0 && op.learning > 0 && <> · </>}
+          {op.learning > 0 && <span style={{ color: '#B088D8' }}>изучаю {op.learning}</span>}
+          {op.mastered === 0 && op.learning === 0 && <>освоено 0/{op.totalLines}</>}
         </div>
       </div>
     </Link>

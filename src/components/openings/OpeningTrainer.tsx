@@ -746,7 +746,7 @@ export function OpeningTrainer({
         <LineList
           openingName={opening.name}
           openingColor={opening.color}
-          counts={{ mastered: counts.mastered, due: counts.due, new: counts.new }}
+          counts={{ mastered: counts.mastered, due: counts.due, new: counts.new, learning: counts.learning }}
           mode={mode}
           lines={lineRows}
           groups={groups}

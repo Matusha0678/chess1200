@@ -18,7 +18,7 @@ export interface LineRow {
 interface LineListProps {
   openingName: string;
   openingColor: 'white' | 'black' | 'both';
-  counts: { mastered: number; due: number; new: number };
+  counts: { mastered: number; due: number; new: number; learning: number };
   mode: 'review' | 'learn' | 'exam' | 'hard' | 'free';
   lines: LineRow[];
   groups: Array<{ label: string; ids: string[] }> | null;
@@ -266,6 +266,7 @@ export function LineList({
       header={header}
       stats={[
         { value: counts.mastered, label: 'освоено', color: '#81B64C' },
+        { value: counts.learning, label: 'изучаю', color: '#B088D8' },
         { value: counts.due,      label: 'повторить', color: '#E8A23A' },
         { value: counts.new,      label: 'новых', color: '#8FB4DA' },
       ]}

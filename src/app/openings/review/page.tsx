@@ -27,7 +27,6 @@ function ReviewAllPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [opening, setOpening] = useState<OpeningRow | null>(null);
   const [lines, setLines] = useState<LineItem[]>([]);
-  const [saveStatus, setSaveStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [hardRows] = useState<HardRow[]>([]);
   const [gameDevs] = useState<Array<{
     lineId: string; ply: number; played_uci: string; opp: string; date: string; result: 'win' | 'loss' | 'draw'; daysAgo: number;
@@ -163,15 +162,7 @@ function ReviewAllPageInner() {
       { line_id: lineId, ...row },
       { onConflict: 'line_id' },
     );
-    if (upErr) {
-      console.error('line_progress upsert failed:', upErr.message);
-      setSaveStatus({ ok: false, msg: upErr.message });
-    } else {
-      const { data: verify } = await supabase
-        .from('line_progress').select('mastery').eq('line_id', lineId).maybeSingle();
-      const dbMastery = (verify as { mastery: number } | null)?.mastery;
-      setSaveStatus({ ok: dbMastery != null, msg: dbMastery != null ? `в БД mastery=${dbMastery}` : 'строка не найдена в БД!' });
-    }
+    if (upErr) console.error('line_progress upsert failed:', upErr.message);
 
     const openingId = lines.find(l => l.id === lineId)?.opening_id;
     if (openingId) {
@@ -202,30 +193,16 @@ function ReviewAllPageInner() {
   };
 
   return (
-    <>
-      {saveStatus && (
-        <div style={{
-          position: 'fixed', bottom: 16, right: 16, zIndex: 9999,
-          padding: '8px 14px', borderRadius: 6, fontSize: 13,
-          background: saveStatus.ok ? '#1a2e10' : '#2e1010',
-          border: `1px solid ${saveStatus.ok ? '#81B64C' : '#E05757'}`,
-          color: saveStatus.ok ? '#81B64C' : '#E05757',
-          pointerEvents: 'none',
-        }}>
-          {saveStatus.ok ? `✓ сохранено (${saveStatus.msg})` : `✗ ошибка: ${saveStatus.msg}`}
-        </div>
-      )}
-      <OpeningTrainer
-        opening={opening}
-        lines={lines}
-        hardRows={hardRows}
-        gameDevs={gameDevs}
-        initialMode="review"
-        isDemo={isDemo}
-        onUpdateProgress={handleUpdateProgress}
-        data-demo={isDemo ? 'openings' : undefined}
-      />
-    </>
+    <OpeningTrainer
+      opening={opening}
+      lines={lines}
+      hardRows={hardRows}
+      gameDevs={gameDevs}
+      initialMode="review"
+      isDemo={isDemo}
+      onUpdateProgress={handleUpdateProgress}
+      data-demo={isDemo ? 'openings' : undefined}
+    />
   );
 }
 
