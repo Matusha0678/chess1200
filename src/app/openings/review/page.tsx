@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { OpeningTrainer } from '@/components/openings/OpeningTrainer';
@@ -18,7 +18,7 @@ interface LineItem {
   badge: string | null; line_class: string | null;
 }
 
-export default function ReviewAllPage() {
+function ReviewAllPageInner() {
   const searchParams = useSearchParams();
   const isDemo = searchParams.get('demo') === '1';
 
@@ -148,5 +148,17 @@ export default function ReviewAllPage() {
       isDemo={isDemo}
       data-demo={isDemo ? 'openings' : undefined}
     />
+  );
+}
+
+export default function ReviewAllPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 56px)', color: 'var(--muted)', fontSize: 15 }}>
+        Загрузка…
+      </div>
+    }>
+      <ReviewAllPageInner />
+    </Suspense>
   );
 }
