@@ -36,7 +36,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'Эндшпили',         href: '/endgames',      icon: 'endgames'  },
       { label: 'Дожми партию',     href: '/convert',       icon: 'target'    },
       { label: 'Жертвы',           href: '/sac',           icon: 'sac'       },
-      { label: 'Угадай дебют',     href: '/guess-opening', icon: 'guess'     },
+      { label: 'Дебютный спринт',  href: '/sprint',        icon: 'sprint'    },
       { label: 'Играть',           href: '/play',          icon: 'play'      },
     ],
   },
