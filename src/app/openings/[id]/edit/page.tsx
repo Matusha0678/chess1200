@@ -463,12 +463,9 @@ export default function EditOpeningPage({ params }: Props) {
               </div>
 
               <div className="flex flex-col gap-[10px]">
-                <div className="flex items-center justify-between">
-                  <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
-                    Новый PGN
-                  </label>
-                  <PgnCheatsheet />
-                </div>
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                  Новый PGN
+                </label>
                 <textarea
                   value={replacePgn}
                   onChange={(e) => handleReplacePgnChange(e.target.value)}
@@ -502,6 +499,7 @@ export default function EditOpeningPage({ params }: Props) {
                   </div>
                 )}
               </div>
+              <PgnCheatsheet />
 
               {/* Type + emoji */}
               <div className="flex flex-col gap-[8px]">
@@ -579,12 +577,9 @@ export default function EditOpeningPage({ params }: Props) {
 
             <form onSubmit={handleAddLines} className="flex flex-col gap-5">
               <div className="flex flex-col gap-[10px]">
-                <div className="flex items-center justify-between">
-                  <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
-                    PGN для добавления
-                  </label>
-                  <PgnCheatsheet />
-                </div>
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                  PGN для добавления
+                </label>
                 <textarea
                   value={addPgn}
                   onChange={(e) => handleAddPgnChange(e.target.value)}
@@ -618,6 +613,7 @@ export default function EditOpeningPage({ params }: Props) {
                   </div>
                 )}
               </div>
+              <PgnCheatsheet />
 
               {/* Type + emoji */}
               <div className="flex flex-col gap-[8px]">

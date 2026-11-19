@@ -36,79 +36,70 @@ export default function PgnCheatsheet() {
   }
 
   return (
-    <div className="flex flex-col gap-0">
+    <div className="flex flex-col gap-2">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="self-start flex items-center gap-[6px] text-[11px] font-bold tracking-[0.12em] uppercase text-[#404040] hover:text-[#808080] transition-colors cursor-pointer bg-transparent border-none p-0"
+        className="self-start flex items-center gap-2 h-7 border border-[#303030] rounded-full px-3 text-[12px] text-[#A0A0A0] hover:border-[#505050] hover:text-[#E5E5E5] transition-colors cursor-pointer bg-transparent"
       >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+        </svg>
+        Шпаргалка для ИИ
         <svg
           width="10" height="10" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-          className={`transition-transform ${open ? 'rotate-90' : ''}`}
+          className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           aria-hidden="true"
         >
-          <path d="M9 18l6-6-6-6" />
+          <path d="M6 9l6 6 6-6" />
         </svg>
-        Шпаргалка для ИИ
       </button>
 
       {open && (
-        <div className="mt-3 border border-[#1E1E1E] rounded-[8px] overflow-hidden">
-          {/* Format reference */}
-          <div className="px-4 py-3 bg-[#080808] border-b border-[#1E1E1E]">
-            <p className="m-0 text-[11px] font-bold tracking-[0.12em] uppercase text-[#404040] mb-2">Формат</p>
-            <table className="w-full border-collapse text-[12px]">
-              <tbody>
-                <tr>
-                  <td className="pr-4 py-[3px] text-[#383838] whitespace-nowrap align-top">Одна линия</td>
-                  <td className="py-[3px] font-mono text-[#606060]">1. e4 e5 2. Nf3 Nc6 3. Bb5 *</td>
-                </tr>
-                <tr>
-                  <td className="pr-4 py-[3px] text-[#383838] whitespace-nowrap align-top">Вариация</td>
-                  <td className="py-[3px] font-mono text-[#606060]">2. Nf3 (2. d4 d5) 2... Nc6</td>
-                </tr>
-                <tr>
-                  <td className="pr-4 py-[3px] text-[#383838] whitespace-nowrap align-top">Вложено</td>
-                  <td className="py-[3px] font-mono text-[#606060]">(2. d4 d5 (2... Nf6 3. e5))</td>
-                </tr>
-                <tr>
-                  <td className="pr-4 py-[3px] text-[#383838] whitespace-nowrap align-top">Комментарий</td>
-                  <td className="py-[3px] font-mono text-[#606060]">&#123;будет проигнорирован&#125;</td>
-                </tr>
-                <tr>
-                  <td className="pr-4 py-[3px] text-[#383838] whitespace-nowrap align-top">Несколько партий</td>
-                  <td className="py-[3px] font-mono text-[#606060]">просто вставь подряд</td>
-                </tr>
-              </tbody>
-            </table>
+        <div className="border border-[#262626] rounded-[10px] overflow-hidden text-[12px]">
+          {/* Format table */}
+          <div className="px-4 py-3 bg-[#0A0A0A] border-b border-[#1E1E1E]">
+            <p className="m-0 text-[10px] font-bold tracking-[0.14em] uppercase text-[#505050] mb-[10px]">Формат PGN</p>
+            <div className="flex flex-col gap-[6px]">
+              {[
+                ['Одна линия', '1. e4 e5 2. Nf3 Nc6 *'],
+                ['Вариация', '2. Nf3 (2. d4 d5) 2... Nc6'],
+                ['Вложенная', '(2. d4 d5 (2... Nf6 3. e5))'],
+                ['Комментарий', '{текст} — проигнорируется'],
+                ['Несколько партий', 'просто вставь подряд'],
+              ].map(([label, example]) => (
+                <div key={label} className="flex gap-3 items-baseline">
+                  <span className="text-[#404040] shrink-0 w-[110px]">{label}</span>
+                  <span className="font-mono text-[#606060] break-all">{example}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Copyable prompt */}
-          <div className="px-4 py-3 bg-[#060606]">
+          <div className="px-4 py-3 bg-[#070707]">
             <div className="flex items-center justify-between mb-2">
-              <p className="m-0 text-[11px] font-bold tracking-[0.12em] uppercase text-[#404040]">
-                Готовый промпт
-              </p>
+              <p className="m-0 text-[10px] font-bold tracking-[0.14em] uppercase text-[#505050]">Готовый промпт для ИИ</p>
               <button
                 type="button"
                 onClick={handleCopy}
-                className={`flex items-center gap-[5px] h-6 rounded-[4px] px-3 text-[11px] font-semibold transition-all border cursor-pointer ${
+                className={`flex items-center gap-[5px] h-6 rounded-full px-3 text-[11px] font-semibold transition-all border cursor-pointer ${
                   copied
                     ? 'bg-[#1E1E1E] border-[#505050] text-[#D0D0D0]'
-                    : 'bg-transparent border-[#2A2A2A] text-[#505050] hover:border-[#404040] hover:text-[#A0A0A0]'
+                    : 'bg-transparent border-[#303030] text-[#707070] hover:border-[#505050] hover:text-[#D0D0D0]'
                 }`}
               >
                 {copied ? (
                   <>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
                     Скопировано
                   </>
                 ) : (
                   <>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                     </svg>
@@ -117,7 +108,7 @@ export default function PgnCheatsheet() {
                 )}
               </button>
             </div>
-            <pre className="m-0 text-[11px] font-mono text-[#404040] leading-[1.65] whitespace-pre-wrap break-words select-all">
+            <pre className="m-0 text-[11px] font-mono text-[#505050] leading-[1.65] whitespace-pre-wrap break-words select-all">
               {PROMPT}
             </pre>
           </div>

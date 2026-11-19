@@ -223,12 +223,9 @@ export default function NewOpeningPage() {
 
             {/* PGN */}
             <div className="flex flex-col gap-[10px]">
-              <div className="flex items-center justify-between">
-                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
-                  PGN
-                </label>
-                <PgnCheatsheet />
-              </div>
+              <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                PGN
+              </label>
               <textarea
                 value={pgn}
                 onChange={(e) => handlePgnChange(e.target.value)}
@@ -237,6 +234,7 @@ export default function NewOpeningPage() {
                 required
                 className="min-h-[200px] bg-[#050505] border border-[#262626] rounded-[12px] px-4 py-3 text-[14px] text-[#F5F5F5] placeholder-[#4A4540] outline-none focus:border-[#FFFFFF] transition-colors font-mono resize-y leading-[1.6]"
               />
+              <PgnCheatsheet />
               {previewInfo !== null && (
                 <div
                   className={`flex items-center gap-2 text-[14px] font-medium px-4 py-[10px] rounded-[10px] border ${
