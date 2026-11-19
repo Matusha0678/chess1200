@@ -5,7 +5,7 @@ import type { LichessPuzzleRaw } from '@/lib/lichess-puzzles';
 // One request at a time
 let busy = false;
 
-const SAFE_ANGLE = /^[a-zA-Z0-9]+$/;
+const SAFE_ANGLE = /^[A-Za-z0-9_-]+$/;
 
 export async function GET(req: Request) {
   const token = process.env.LICHESS_TOKEN;
