@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { extractLinesFromPgn } from '@/lib/pgn-tree';
 import type { Opening } from '@/types/openings';
+import PgnCheatsheet from '@/components/PgnCheatsheet';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -462,9 +463,12 @@ export default function EditOpeningPage({ params }: Props) {
               </div>
 
               <div className="flex flex-col gap-[10px]">
-                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
-                  Новый PGN
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                    Новый PGN
+                  </label>
+                  <PgnCheatsheet />
+                </div>
                 <textarea
                   value={replacePgn}
                   onChange={(e) => handleReplacePgnChange(e.target.value)}
@@ -575,9 +579,12 @@ export default function EditOpeningPage({ params }: Props) {
 
             <form onSubmit={handleAddLines} className="flex flex-col gap-5">
               <div className="flex flex-col gap-[10px]">
-                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
-                  PGN для добавления
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                    PGN для добавления
+                  </label>
+                  <PgnCheatsheet />
+                </div>
                 <textarea
                   value={addPgn}
                   onChange={(e) => handleAddPgnChange(e.target.value)}

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { extractAllLines } from '@/lib/pgn-tree';
 import type { ChessMove } from '@/types/openings';
+import PgnCheatsheet from '@/components/PgnCheatsheet';
 
 type ColorChoice = 'white' | 'black' | 'both';
 type LineType = 'common' | 'sharp' | 'rare';
@@ -222,9 +223,12 @@ export default function NewOpeningPage() {
 
             {/* PGN */}
             <div className="flex flex-col gap-[10px]">
-              <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
-                PGN
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                  PGN
+                </label>
+                <PgnCheatsheet />
+              </div>
               <textarea
                 value={pgn}
                 onChange={(e) => handlePgnChange(e.target.value)}
