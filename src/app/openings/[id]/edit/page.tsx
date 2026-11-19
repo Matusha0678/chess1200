@@ -12,6 +12,13 @@ interface Props {
 }
 
 type ColorChoice = 'white' | 'black' | 'both';
+type LineType = 'common' | 'sharp' | 'rare';
+
+const LINE_TYPE_OPTIONS: { value: LineType; label: string }[] = [
+  { value: 'common', label: 'Частая' },
+  { value: 'sharp', label: 'Острая' },
+  { value: 'rare', label: 'Редкая' },
+];
 
 const colorOptions: { value: ColorChoice; label: string; icon: string }[] = [
   { value: 'white', label: 'За белых', icon: '♙' },
@@ -45,6 +52,8 @@ export default function EditOpeningPage({ params }: Props) {
   const [replacingLines, setReplacingLines] = useState(false);
   const [replaceSuccess, setReplaceSuccess] = useState(false);
   const [replaceError, setReplaceError] = useState<string | null>(null);
+  const [replaceLineType, setReplaceLineType] = useState<LineType | null>(null);
+  const [replaceLineEmoji, setReplaceLineEmoji] = useState('');
   const replaceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Section 3: add variations
@@ -53,6 +62,8 @@ export default function EditOpeningPage({ params }: Props) {
   const [addingLines, setAddingLines] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [addLineType, setAddLineType] = useState<LineType | null>(null);
+  const [addLineEmoji, setAddLineEmoji] = useState('');
   const addTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -173,6 +184,8 @@ export default function EditOpeningPage({ params }: Props) {
       opening_id: id,
       line_index: i,
       moves,
+      line_type: replaceLineType ?? null,
+      line_emoji: replaceLineEmoji.trim() || null,
     }));
 
     const { error: insertError } = await supabase
@@ -195,6 +208,8 @@ export default function EditOpeningPage({ params }: Props) {
     setReplaceSuccess(true);
     setReplacePgn('');
     setReplaceCount(null);
+    setReplaceLineType(null);
+    setReplaceLineEmoji('');
 
     // Update local opening state
     setOpening((prev) => prev ? { ...prev, total_lines: newLines.length } : prev);
@@ -263,6 +278,8 @@ export default function EditOpeningPage({ params }: Props) {
       opening_id: id,
       line_index: maxIndex + 1 + i,
       moves,
+      line_type: addLineType ?? null,
+      line_emoji: addLineEmoji.trim() || null,
     }));
 
     const { error: insertError } = await supabase
@@ -285,6 +302,8 @@ export default function EditOpeningPage({ params }: Props) {
     setAddSuccess(true);
     setAddPgn('');
     setAddCount(null);
+    setAddLineType(null);
+    setAddLineEmoji('');
 
     setOpening((prev) =>
       prev ? { ...prev, total_lines: currentTotal + newLines.length } : prev
@@ -480,6 +499,39 @@ export default function EditOpeningPage({ params }: Props) {
                 )}
               </div>
 
+              {/* Type + emoji */}
+              <div className="flex flex-col gap-[8px]">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                  Тип линий{' '}
+                  <span className="text-[#404040] font-normal normal-case tracking-normal">— необязательно</span>
+                </label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {LINE_TYPE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setReplaceLineType(replaceLineType === opt.value ? null : opt.value)}
+                      className={`h-8 rounded-full px-4 text-[13px] transition-all border cursor-pointer ${
+                        replaceLineType === opt.value
+                          ? 'bg-[#1E1E1E] border-[#505050] text-[#FFFFFF]'
+                          : 'border-[#222222] text-[#505050] bg-transparent hover:border-[#404040] hover:text-[#D0D0D0]'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <div className="w-px h-5 bg-[#262626] mx-1" />
+                  <input
+                    type="text"
+                    value={replaceLineEmoji}
+                    onChange={(e) => setReplaceLineEmoji(e.target.value.slice(0, 4))}
+                    placeholder="✨"
+                    title="Смайлик для этих линий"
+                    className="w-12 h-8 bg-[#050505] border border-[#262626] rounded-[8px] px-2 text-[18px] text-center outline-none focus:border-[#FFFFFF] transition-colors"
+                  />
+                </div>
+              </div>
+
               {replaceError && (
                 <div className="flex items-center gap-2 text-[14px] text-[#A0A0A0] bg-[#1A1A1A] border border-[#404040] rounded-[12px] px-5 py-3">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -558,6 +610,39 @@ export default function EditOpeningPage({ params }: Props) {
                     )}
                   </div>
                 )}
+              </div>
+
+              {/* Type + emoji */}
+              <div className="flex flex-col gap-[8px]">
+                <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                  Тип линий{' '}
+                  <span className="text-[#404040] font-normal normal-case tracking-normal">— необязательно</span>
+                </label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {LINE_TYPE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setAddLineType(addLineType === opt.value ? null : opt.value)}
+                      className={`h-8 rounded-full px-4 text-[13px] transition-all border cursor-pointer ${
+                        addLineType === opt.value
+                          ? 'bg-[#1E1E1E] border-[#505050] text-[#FFFFFF]'
+                          : 'border-[#222222] text-[#505050] bg-transparent hover:border-[#404040] hover:text-[#D0D0D0]'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <div className="w-px h-5 bg-[#262626] mx-1" />
+                  <input
+                    type="text"
+                    value={addLineEmoji}
+                    onChange={(e) => setAddLineEmoji(e.target.value.slice(0, 4))}
+                    placeholder="✨"
+                    title="Смайлик для этих линий"
+                    className="w-12 h-8 bg-[#050505] border border-[#262626] rounded-[8px] px-2 text-[18px] text-center outline-none focus:border-[#FFFFFF] transition-colors"
+                  />
+                </div>
               </div>
 
               {addError && (

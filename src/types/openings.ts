@@ -21,6 +21,8 @@ export interface OpeningLine {
   opening_id: string;
   line_index: number;
   moves: ChessMove[];
+  line_type?: 'common' | 'sharp' | 'rare' | null;
+  line_emoji?: string | null;
   created_at: string;
 }
 

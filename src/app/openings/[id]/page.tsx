@@ -7,6 +7,20 @@ import { supabase } from '@/lib/supabase';
 import { extractAllLines } from '@/lib/pgn-tree';
 import type { Opening, OpeningLine, LineProgress } from '@/types/openings';
 
+type LineType = 'common' | 'sharp' | 'rare';
+
+const LINE_TYPE_OPTIONS: { value: LineType; label: string }[] = [
+  { value: 'common', label: 'Частая' },
+  { value: 'sharp', label: 'Острая' },
+  { value: 'rare', label: 'Редкая' },
+];
+
+const LINE_TYPE_LABEL: Record<LineType, string> = {
+  common: 'частая',
+  sharp: 'острая',
+  rare: 'редкая',
+};
+
 interface LineWithProgress extends OpeningLine {
   line_progress: LineProgress[];
 }
@@ -211,6 +225,8 @@ export default function OpeningDetailPage({ params }: Props) {
   const [addingLine, setAddingLine] = useState(false);
   const [addLineError, setAddLineError] = useState<string | null>(null);
   const [addLineSuccess, setAddLineSuccess] = useState(false);
+  const [addLineType, setAddLineType] = useState<LineType | null>(null);
+  const [addLineEmoji, setAddLineEmoji] = useState('');
   const parseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [exportFlash, setExportFlash] = useState(false);
   const [bestExam, setBestExam] = useState<{ perfect: number; total: number; pct: number } | null>(null);
@@ -349,6 +365,8 @@ export default function OpeningDetailPage({ params }: Props) {
       opening_id: opening.id,
       line_index: maxIndex + 1 + i,
       moves,
+      line_type: addLineType ?? null,
+      line_emoji: addLineEmoji.trim() || null,
     }));
 
     const { error: insertError } = await supabase
@@ -370,6 +388,8 @@ export default function OpeningDetailPage({ params }: Props) {
     setAddLineSuccess(true);
     setAddLinePgn('');
     setAddLineCount(null);
+    setAddLineType(null);
+    setAddLineEmoji('');
     setShowAddLine(false);
 
     await load();
@@ -619,6 +639,9 @@ export default function OpeningDetailPage({ params }: Props) {
                     {/* Move text + mastery */}
                     <div className="flex-1 min-w-0">
                       <p className="m-0 text-[13px] font-mono text-[#707070] leading-[1.7] break-words">
+                        {line.line_emoji && (
+                          <span className="mr-[6px] not-italic">{line.line_emoji}</span>
+                        )}
                         {abbreviateMoves(line)}
                       </p>
                       <div className="flex items-center gap-3 mt-[6px]">
@@ -626,6 +649,11 @@ export default function OpeningDetailPage({ params }: Props) {
                           {masteryDots(mastery)}
                         </div>
                         <span className="text-[11px] text-[#383838] tabular-nums">{moveCount} ходов</span>
+                        {line.line_type && (
+                          <span className="text-[10px] text-[#404040] border border-[#1E1E1E] rounded-[3px] px-[5px] py-[1px]">
+                            {LINE_TYPE_LABEL[line.line_type]}
+                          </span>
+                        )}
                         {isDue && (
                           <span className="flex items-center gap-[4px]">
                             <span className="w-[4px] h-[4px] rounded-full bg-white" />
@@ -725,6 +753,39 @@ export default function OpeningDetailPage({ params }: Props) {
                       )}
                     </div>
                   )}
+                </div>
+
+                {/* Type + emoji */}
+                <div className="flex flex-col gap-[8px]">
+                  <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">
+                    Тип линий{' '}
+                    <span className="text-[#383838] font-normal normal-case tracking-normal">— необязательно</span>
+                  </label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {LINE_TYPE_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setAddLineType(addLineType === opt.value ? null : opt.value)}
+                        className={`h-8 rounded-full px-4 text-[13px] transition-all border cursor-pointer ${
+                          addLineType === opt.value
+                            ? 'bg-[#1E1E1E] border-[#505050] text-[#FFFFFF]'
+                            : 'border-[#222222] text-[#505050] bg-transparent hover:border-[#404040] hover:text-[#D0D0D0]'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                    <div className="w-px h-5 bg-[#262626] mx-1" />
+                    <input
+                      type="text"
+                      value={addLineEmoji}
+                      onChange={(e) => setAddLineEmoji(e.target.value.slice(0, 4))}
+                      placeholder="✨"
+                      title="Смайлик для этих линий"
+                      className="w-12 h-8 bg-[#080808] border border-[#222222] rounded-[8px] px-2 text-[18px] text-center outline-none focus:border-[#505050] transition-colors"
+                    />
+                  </div>
                 </div>
 
                 {addLineError && (
