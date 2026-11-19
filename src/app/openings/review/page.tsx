@@ -167,7 +167,10 @@ function ReviewAllPageInner() {
       console.error('line_progress upsert failed:', upErr.message);
       setSaveStatus({ ok: false, msg: upErr.message });
     } else {
-      setSaveStatus({ ok: true, msg: `mastery ${row.mastery}` });
+      const { data: verify } = await supabase
+        .from('line_progress').select('mastery').eq('line_id', lineId).maybeSingle();
+      const dbMastery = (verify as { mastery: number } | null)?.mastery;
+      setSaveStatus({ ok: dbMastery != null, msg: dbMastery != null ? `в БД mastery=${dbMastery}` : 'строка не найдена в БД!' });
     }
 
     const openingId = lines.find(l => l.id === lineId)?.opening_id;
