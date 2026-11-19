@@ -860,7 +860,7 @@ function RepertoirePage() {
       { line_id: lineId, next_review: new Date().toISOString() },
       { onConflict: 'line_id' }
     );
-    router.push(`/openings/${openingId}/practice?line=${lineId}`);
+    router.push(`/openings/${openingId}?mode=review&line=${lineId}`);
   }
 
   async function handleAddToMistakes() {
