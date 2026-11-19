@@ -819,11 +819,15 @@ export default function OpeningDetailPage({ params }: Props) {
                   <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">
                     PGN
                   </label>
+                  <p className="m-0 text-[12px] text-[#404040] leading-[1.6]">
+                    Вставь ходы в формате PGN. Вариации в скобках разбиваются на отдельные линии.<br />
+                    <span className="text-[#2E2E2E] font-mono">1. e4 e5 2. Nf3 (2. f4 exf4) 2... Nc6</span>
+                  </p>
                   <textarea
                     value={addLinePgn}
                     onChange={(e) => handleAddLinePgnChange(e.target.value)}
                     rows={7}
-                    placeholder="Вставь PGN вариаций..."
+                    placeholder={"1. e4 e5 2. Nf3 Nc6 3. Bb5\n\nили с вариациями:\n1. d4 d5 2. c4 (2. Nf3 Nf6) 2... dxc4"}
                     className="bg-[#080808] border border-[#222222] rounded-[10px] px-4 py-3 text-[13px] text-[#E0E0E0] placeholder-[#383838] outline-none focus:border-[#505050] transition-colors font-mono resize-y leading-[1.7]"
                   />
                   {addLineCount !== null && (

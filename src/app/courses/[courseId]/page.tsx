@@ -251,6 +251,9 @@ export default function CourseOverviewPage({ params }: Props) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <Link href={`/courses/${courseId}/roadmap`} className="ui-btn" style={{ textDecoration: 'none', background: 'var(--accent)', color: '#fff', border: 'none' }}>
+            Дорожная карта
+          </Link>
           <Link href={`/courses/${courseId}/cheatsheet`} className="ui-btn ui-btn-outline" style={{ textDecoration: 'none' }}>
             Шпаргалка
           </Link>
