@@ -51,7 +51,14 @@ interface Props {
   initialMode: TrainerMode;
   initialLineId?: string | null;
   isDemo: boolean;
-  onUpdateProgress?: (lineId: string, perf: boolean) => void;
+  onUpdateProgress?: (
+    lineId: string,
+    perfect: boolean,
+    row: { mastery: number; next_review: string; correct_count: number; incorrect_count: number; last_practiced: string },
+    masteryAfter: number,
+    xp: number,
+    mistakePlies: number[],
+  ) => void | Promise<void>;
   'data-demo'?: string;
 }
 
@@ -280,7 +287,8 @@ export function OpeningTrainer({
       l.id === currentLineId ? { ...l, prog: { ...applied.row, correct_count: applied.row.correct_count, incorrect_count: applied.row.incorrect_count } } : l,
     ));
 
-    onUpdateProgress?.(currentLineId, res.perfect);
+    const mistakePlies = runResult.mistakes.filter(m => m.kind === 'wrong').map(m => m.ply);
+    void onUpdateProgress?.(currentLineId, res.perfect, applied.row, applied.masteryAfter, applied.xp, mistakePlies);
   }, [currentLineId, getLine, mode, learnPhase, onUpdateProgress]);
 
   // ── Advance to next line ──────────────────────────────────────────────────

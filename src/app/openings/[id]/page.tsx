@@ -208,22 +208,43 @@ export default function OpeningTrainerPage({ params }: Props) {
 
   if (!opening) return null;
 
-  const handleUpdateProgress = isDemo ? undefined : async (lineId: string, perfect: boolean) => {
-    const line = lines.find(l => l.id === lineId);
-    if (!line) return;
-    const { applyResult: ar } = await import('@/lib/opening-trainer');
-    const applied = ar(line.prog, perfect, Date.now());
-    await supabase.from('line_progress').upsert({
-      line_id: lineId, ...applied.row,
-    }, { onConflict: 'line_id' });
-    await supabase.from('opening_practice_log').insert({
+  const handleUpdateProgress = isDemo ? undefined : async (
+    lineId: string,
+    perfect: boolean,
+    row: { mastery: number; next_review: string; correct_count: number; incorrect_count: number; last_practiced: string },
+    masteryAfter: number,
+    xp: number,
+    mistakePlies: number[],
+  ) => {
+    const { error: upErr } = await supabase.from('line_progress').upsert(
+      { line_id: lineId, ...row },
+      { onConflict: 'line_id' },
+    );
+    if (upErr) console.error('line_progress upsert failed:', upErr.message);
+
+    void supabase.from('opening_practice_log').insert({
       opening_id: id, line_id: lineId,
-      practiced_at: new Date().toISOString(),
-      correct: perfect, mastery_after: applied.masteryAfter,
+      practiced_at: row.last_practiced,
+      correct: perfect, mastery_after: masteryAfter,
     });
-    if (perfect) {
-      void supabase.rpc('increment_xp', { amount: applied.xp });
+
+    for (const ply of mistakePlies) {
+      const { data: existing } = await supabase
+        .from('line_move_progress')
+        .select('id, incorrect_count')
+        .eq('line_id', lineId).eq('move_index', ply).maybeSingle();
+      if (existing) {
+        const r = existing as { id: string; incorrect_count: number };
+        void supabase.from('line_move_progress')
+          .update({ incorrect_count: r.incorrect_count + 1, last_missed_at: row.last_practiced })
+          .eq('id', r.id);
+      } else {
+        void supabase.from('line_move_progress')
+          .insert({ line_id: lineId, move_index: ply, incorrect_count: 1, last_missed_at: row.last_practiced });
+      }
     }
+
+    if (xp > 0) void supabase.rpc('increment_xp', { amount: xp });
   };
 
   return (

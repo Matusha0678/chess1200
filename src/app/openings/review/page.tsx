@@ -13,6 +13,7 @@ import { getDemoTrainer, DEMO_SCOTCH, DEMO_GAME_DEV, DEMO_MOVE_ROWS } from '@/li
 interface OpeningRow { id: string; name: string; color: 'white' | 'black' | 'both'; }
 interface LineItem {
   id: string; index: number; moves: ChessMove[];
+  opening_id: string;
   prog: { mastery: number; next_review: string; correct_count: number; incorrect_count: number } | null;
   badge: string | null; line_class: string | null;
   opening_color: 'white' | 'black' | 'both';
@@ -38,6 +39,7 @@ function ReviewAllPageInner() {
       ...trainer.lines.map(l => ({
         id: l.id, index: l.index,
         moves: toMoves(l.sans),
+        opening_id: 'demo-opening-black',
         prog: l.prog ? {
           mastery: l.prog.mastery, next_review: l.prog.next_review,
           correct_count: l.prog.correct_count, incorrect_count: l.prog.incorrect_count,
@@ -48,6 +50,7 @@ function ReviewAllPageInner() {
       ...DEMO_SCOTCH.lines.map(l => ({
         id: l.id, index: l.index,
         moves: toMoves(l.sans),
+        opening_id: 'demo-opening-white',
         prog: l.prog ? {
           mastery: l.prog.mastery, next_review: l.prog.next_review,
           correct_count: l.prog.correct_count, incorrect_count: l.prog.incorrect_count,
@@ -103,6 +106,7 @@ function ReviewAllPageInner() {
 
       const allLines: LineItem[] = rows.map(r => ({
         id: r.id, index: r.line_index,
+        opening_id: r.opening_id,
         moves: Array.isArray(r.moves) ? r.moves as ChessMove[] : toMoves((r.moves as string) ?? ''),
         prog: progMap.get(r.id) ?? null,
         badge: r.badge, line_class: r.line_class,
@@ -146,6 +150,48 @@ function ReviewAllPageInner() {
   }
   if (!opening) return null;
 
+  const handleUpdateProgress = isDemo ? undefined : async (
+    lineId: string,
+    perfect: boolean,
+    row: { mastery: number; next_review: string; correct_count: number; incorrect_count: number; last_practiced: string },
+    masteryAfter: number,
+    xp: number,
+    mistakePlies: number[],
+  ) => {
+    const { error: upErr } = await supabase.from('line_progress').upsert(
+      { line_id: lineId, ...row },
+      { onConflict: 'line_id' },
+    );
+    if (upErr) console.error('line_progress upsert failed:', upErr.message);
+
+    const openingId = lines.find(l => l.id === lineId)?.opening_id;
+    if (openingId) {
+      void supabase.from('opening_practice_log').insert({
+        opening_id: openingId, line_id: lineId,
+        practiced_at: row.last_practiced,
+        correct: perfect, mastery_after: masteryAfter,
+      });
+    }
+
+    for (const ply of mistakePlies) {
+      const { data: existing } = await supabase
+        .from('line_move_progress')
+        .select('id, incorrect_count')
+        .eq('line_id', lineId).eq('move_index', ply).maybeSingle();
+      if (existing) {
+        const r = existing as { id: string; incorrect_count: number };
+        void supabase.from('line_move_progress')
+          .update({ incorrect_count: r.incorrect_count + 1, last_missed_at: row.last_practiced })
+          .eq('id', r.id);
+      } else {
+        void supabase.from('line_move_progress')
+          .insert({ line_id: lineId, move_index: ply, incorrect_count: 1, last_missed_at: row.last_practiced });
+      }
+    }
+
+    if (xp > 0) void supabase.rpc('increment_xp', { amount: xp });
+  };
+
   return (
     <OpeningTrainer
       opening={opening}
@@ -154,6 +200,7 @@ function ReviewAllPageInner() {
       gameDevs={gameDevs}
       initialMode="review"
       isDemo={isDemo}
+      onUpdateProgress={handleUpdateProgress}
       data-demo={isDemo ? 'openings' : undefined}
     />
   );
