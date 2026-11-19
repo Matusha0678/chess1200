@@ -589,8 +589,8 @@ function ThreatsPageInner() {
     const optional = new Set(pos.optional_targets);
 
     for (const sq of marked) {
-      if (targets.has(sq)) rings[sq] = '#81B64C';
-      else if (!optional.has(sq)) rings[sq] = '#E0574A';
+      if (targets.has(sq)) rings[sq] = 'var(--accent)';
+      else if (!optional.has(sq)) rings[sq] = 'var(--c-bad)';
     }
     for (const sq of targets) {
       if (!marked.has(sq as Square)) rings[sq as Square] = '#F0A43A';
@@ -631,7 +631,7 @@ function ThreatsPageInner() {
           const isOpp = idx % 2 === 0;
           arrows.push({
             from: uci.slice(0, 2) as Square, to: uci.slice(2, 4) as Square,
-            color: isOpp ? '#E0574A' : '#4A90E2', style: 'solid', opacity: 0.85,
+            color: isOpp ? 'var(--c-bad)' : 'color-mix(in srgb, var(--accent) 45%, var(--muted))', style: 'solid', opacity: 0.85,
             label: String(idx + 1), role: isOpp ? 'line-opp' : 'line-me',
           });
         });
@@ -640,7 +640,7 @@ function ThreatsPageInner() {
         arrows.push({
           from: pos.threat_uci.slice(0, 2) as Square,
           to: pos.threat_uci.slice(2, 4) as Square,
-          color: '#E0574A',
+          color: 'var(--c-bad)',
           style: 'solid',
           opacity: 0.85,
           role: 'threat',
@@ -745,9 +745,9 @@ function ThreatsPageInner() {
   };
   const getResultColor = (r: typeof posHistory[0]['result']): string => {
     switch (r) {
-      case 'correct': case 'none_correct': return '#81B64C';
+      case 'correct': case 'none_correct': return 'var(--accent)';
       case 'partial': return '#F4B45C';
-      default: return '#E0574A';
+      default: return 'var(--c-bad)';
     }
   };
 
@@ -774,9 +774,9 @@ function ThreatsPageInner() {
             }}
           >
             {isCur && (
-              <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: '#81B64C' }} />
+              <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: 'var(--accent)' }} />
             )}
-            <div style={{ display: 'grid', placeItems: 'center', fontSize: 13, color: isCur ? '#81B64C' : 'var(--control)', fontWeight: isCur ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ display: 'grid', placeItems: 'center', fontSize: 13, color: isCur ? 'var(--accent)' : 'var(--control)', fontWeight: isCur ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
               {isDone ? (
                 <span style={{ color: getResultColor(done.result), fontSize: 15 }}>{getResultIcon(done.result)}</span>
               ) : <span>{i + 1}</span>}
@@ -803,8 +803,8 @@ function ThreatsPageInner() {
       title="Сессия"
       rightNote={positions.length > 0 ? `осталось ${Math.max(0, positions.length - posIdx)}` : undefined}
       stats={[
-        { value: score.found, label: 'нашёл', color: '#81B64C' },
-        { value: score.missed, label: 'пропустил', color: '#E0574A' },
+        { value: score.found, label: 'нашёл', color: 'var(--accent)' },
+        { value: score.missed, label: 'пропустил', color: 'var(--c-bad)' },
         { value: score.falseAlarms, label: 'лишних', color: '#F4B45C' },
       ]}
       controls={blitzToggle}
@@ -855,7 +855,7 @@ function ThreatsPageInner() {
                     }
                   </div>
                   {prepError && (
-                    <div style={{ fontSize: 13, color: '#E0574A', lineHeight: 1.4, marginTop: 8 }}>{prepError}</div>
+                    <div style={{ fontSize: 13, color: 'var(--c-bad)', lineHeight: 1.4, marginTop: 8 }}>{prepError}</div>
                   )}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -880,11 +880,11 @@ function ThreatsPageInner() {
                 Нет отметок
               </div>
             </div>
-            <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'stretch' }}>
               {!preparing ? (
                 <button
                   onClick={handlePrepare}
-                  style={{ height: 52, fontSize: 16, fontWeight: 700, background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}
+                  style={{ height: 52, fontSize: 16, fontWeight: 700, background: 'var(--accent)', color: 'var(--accent-contrast, #fff)', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', maxWidth: 420, alignSelf: 'flex-start', minWidth: 240, padding: '0 20px' }}
                 >
                   Подготовить позиции
                 </button>
@@ -896,16 +896,16 @@ function ThreatsPageInner() {
                   </div>
                   <ProgressBar value={prepProgress?.gamesChecked ?? 0} max={Math.max(1, prepProgress?.gamesTotal ?? 1)} height={6} />
                   {prepError && (
-                    <div style={{ fontSize: 13, color: '#E0574A', lineHeight: 1.4 }}>{prepError}</div>
+                    <div style={{ fontSize: 13, color: 'var(--c-bad, #E0574A)', lineHeight: 1.4 }}>{prepError}</div>
                   )}
-                  <button onClick={stopPrepare} style={{ height: 44, fontSize: 14, fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}>
+                  <button onClick={stopPrepare} style={{ height: 44, fontSize: 14, fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', maxWidth: 420, alignSelf: 'flex-start', minWidth: 240, padding: '0 20px' }}>
                     Стоп
                   </button>
                 </div>
               )}
               <button
                 onClick={() => router.push('/games/analyze')}
-                style={{ height: 44, fontSize: 15, fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit' }}
+                style={{ height: 44, fontSize: 15, fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--hairline-2)', color: 'var(--ivory)', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', maxWidth: 420, alignSelf: 'flex-start', minWidth: 240, padding: '0 20px' }}
               >
                 Анализ партий
               </button>
@@ -963,8 +963,8 @@ function ThreatsPageInner() {
             <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px' }}>
               <div data-ui="threat-task" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, marginBottom: 20 }}>
                 {[
-                  { label: 'Найдено', value: score.found, color: '#81B64C' },
-                  { label: 'Пропущено', value: score.missed, color: '#E0574A' },
+                  { label: 'Найдено', value: score.found, color: 'var(--accent)' },
+                  { label: 'Пропущено', value: score.missed, color: 'var(--c-bad)' },
                   { label: 'Ложных', value: score.falseAlarms, color: '#F4B45C' },
                   { label: 'XP', value: `+${score.xp}`, color: 'var(--ivory)' },
                 ].map(({ label, value, color }) => (
@@ -979,10 +979,10 @@ function ThreatsPageInner() {
               </div>
               <div data-ui="threat-marked" style={{ fontSize: 13, color: 'var(--muted)', minHeight: 20 }}>{'\xa0'}</div>
             </div>
-            <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
+            <div data-ui="panel-actions" style={{ padding: '20px 24px', borderTop: '1px solid var(--hairline)', flexShrink: 0, display: 'flex' }}>
               <button
                 onClick={handleRestart}
-                style={{ height: 52, fontSize: 18, fontWeight: 700, background: '#81B64C', boxShadow: '0 4px 0 #5E8C35', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', width: '100%' }}
+                style={{ height: 52, fontSize: 18, fontWeight: 700, background: 'var(--accent)', boxShadow: 'var(--shadow-btn, var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4)))', color: 'var(--accent-contrast, #fff)', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit', maxWidth: 420, minWidth: 240, padding: '0 24px' }}
               >
                 Начать заново
               </button>
@@ -1047,9 +1047,9 @@ function ThreatsPageInner() {
         {blitzMode && phase === 'marking' && (
           <>
             <div style={{ width: 80, height: 3, background: 'var(--track)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: timeLeft < 10 ? '#E0574A' : 'var(--ivory)', width: `${(timeLeft / BLITZ_SECONDS) * 100}%`, transition: 'width 1s linear' }} />
+              <div style={{ height: '100%', background: timeLeft < 10 ? 'var(--c-bad)' : 'var(--ivory)', width: `${(timeLeft / BLITZ_SECONDS) * 100}%`, transition: 'width 1s linear' }} />
             </div>
-            <span data-allow-small style={{ fontSize: 13, color: timeLeft < 10 ? '#E0574A' : 'var(--muted)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+            <span data-allow-small style={{ fontSize: 13, color: timeLeft < 10 ? 'var(--c-bad)' : 'var(--muted)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
               {timeLeft}с
             </span>
           </>
@@ -1075,7 +1075,7 @@ function ThreatsPageInner() {
                 {posIdx + 1} / {positions.length}
               </span>
               {score.xp > 0 && (
-                <span style={{ fontSize: 13, padding: '2px 8px', borderRadius: 20, background: 'rgba(129,182,76,.12)', border: '1px solid rgba(129,182,76,.3)', color: '#81B64C' }}>
+                <span style={{ fontSize: 13, padding: '2px 8px', borderRadius: 20, background: 'rgba(129,182,76,.12)', border: '1px solid rgba(129,182,76,.3)', color: 'var(--accent)' }}>
                   +{score.xp} XP
                 </span>
               )}
@@ -1255,7 +1255,7 @@ function ThreatsPageInner() {
                         background: cls === 'found' ? 'rgba(129,182,76,.2)' : cls === 'missed' ? 'rgba(240,164,58,.2)' : 'rgba(224,87,74,.2)',
                         display: 'grid', placeItems: 'center',
                         fontSize: 13, fontWeight: 700,
-                        color: cls === 'found' ? '#81B64C' : cls === 'missed' ? '#F4B45C' : '#E0574A',
+                        color: cls === 'found' ? 'var(--accent)' : cls === 'missed' ? '#F4B45C' : 'var(--c-bad)',
                       }}>
                         {cls === 'found' ? '✓' : cls === 'missed' ? '!' : '✕'}
                       </div>
@@ -1316,7 +1316,7 @@ function ThreatsPageInner() {
                 onClick={() => void reveal()}
                 style={{
                   flex: 1, height: 52, fontSize: 18, fontWeight: 700,
-                  background: '#81B64C', boxShadow: '0 4px 0 #5E8C35',
+                  background: 'var(--accent)', boxShadow: 'var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4))',
                   color: '#fff', border: 'none', cursor: 'pointer',
                   borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
@@ -1363,7 +1363,7 @@ function ThreatsPageInner() {
               onClick={nextPosition}
               style={{
                 height: 52, fontSize: 18, fontWeight: 700,
-                background: '#81B64C', boxShadow: '0 4px 0 #5E8C35',
+                background: 'var(--accent)', boxShadow: 'var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4))',
                 color: '#fff', border: 'none', cursor: 'pointer',
                 borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
@@ -1383,7 +1383,7 @@ function ThreatsPageInner() {
             onClick={nextPosition}
             style={{
               height: 52, fontSize: 18, fontWeight: 700,
-              background: '#81B64C', boxShadow: '0 4px 0 #5E8C35',
+              background: 'var(--accent)', boxShadow: 'var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4))',
               color: '#fff', border: 'none', cursor: 'pointer',
               borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,

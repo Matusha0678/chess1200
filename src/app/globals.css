@@ -40,11 +40,13 @@
   --st-t4:    #505050;
 
   /* Shape/shadow tokens (default = Газетный: sharp, no shadow) */
-  --accent:       #81B64C;
-  --radius-card:  0px;
-  --radius-btn:   0px;
-  --shadow-card:  none;
-  --shadow-btn:   none;
+  --accent:         #81B64C;
+  --accent-contrast:#FFFFFF;
+  --accent-soft:    color-mix(in srgb, var(--accent) 15%, transparent);
+  --radius-card:    0px;
+  --radius-btn:     0px;
+  --shadow-card:    none;
+  --shadow-btn:     none;
 
   /* ── Новые токены тренажёров (газетный fallback) ──────────────────────── */
   --surface-2:    #1C1B1A;
@@ -287,6 +289,86 @@ html, body {
   --st-b0:    #4A2410; --st-b1:    #5E2E15; --st-b2:    #72381A;
   --st-b3:    #86421F; --st-b4:    #9A4C24;
 }
+[data-site-theme="dracula"] {
+  --bg: #0B0812; --surface: #140A1E; --row-hover: #180E24;
+  --hairline: #3A2A58; --track: #2A1E42; --header-bg: rgba(11,8,18,0.92);
+  --st-bg: #0B0812; --st-card: #140A1E; --st-panel: #130A1D;
+  --st-h1: #1A1028; --st-h2: #1E1430; --st-h3: #241838;
+  --st-b0: #2A1E42; --st-b1: #3A2A58; --st-b2: #4A366E;
+  --st-b3: #5A4284; --st-b4: #6A4E9A;
+}
+[data-site-theme="tokyo"] {
+  --bg: #07081A; --surface: #0E1030; --row-hover: #10123A;
+  --hairline: #2A2E68; --track: #1E224A; --header-bg: rgba(7,8,26,0.92);
+  --st-bg: #07081A; --st-card: #0E1030; --st-panel: #0D1030;
+  --st-h1: #141638; --st-h2: #181A40; --st-h3: #1C1E48;
+  --st-b0: #1E224A; --st-b1: #2A2E68; --st-b2: #363A86;
+  --st-b3: #4246A4; --st-b4: #4E52C2;
+}
+[data-site-theme="monokai"] {
+  --bg: #0F0C08; --surface: #1A1510; --row-hover: #1F1912;
+  --hairline: #4A3820; --track: #382A18; --header-bg: rgba(15,12,8,0.92);
+  --st-bg: #0F0C08; --st-card: #1A1510; --st-panel: #1C1612;
+  --st-h1: #241E18; --st-h2: #2A221C; --st-h3: #302820;
+  --st-b0: #382A18; --st-b1: #4A3820; --st-b2: #5C4628;
+  --st-b3: #6E5430; --st-b4: #806238;
+}
+[data-site-theme="matrix"] {
+  --bg: #020604; --surface: #06110A; --row-hover: #08140C;
+  --hairline: #103A1C; --track: #0A2A14; --header-bg: rgba(2,6,4,0.94);
+  --st-bg: #020604; --st-card: #06110A; --st-panel: #07130B;
+  --st-h1: #0A1C10; --st-h2: #0C2214; --st-h3: #0E2818;
+  --st-b0: #103A1C; --st-b1: #184A24; --st-b2: #205A2C;
+  --st-b3: #286A34; --st-b4: #307A3C;
+}
+[data-site-theme="mint"] {
+  --bg: #050C0A; --surface: #0C1A16; --row-hover: #0E1E1A;
+  --hairline: #1E4A3C; --track: #163A2E; --header-bg: rgba(5,12,10,0.92);
+  --st-bg: #050C0A; --st-card: #0C1A16; --st-panel: #0D1C18;
+  --st-h1: #122620; --st-h2: #142C26; --st-h3: #18322C;
+  --st-b0: #1E4A3C; --st-b1: #265C4A; --st-b2: #2E6E58;
+  --st-b3: #368066; --st-b4: #3E9274;
+}
+[data-site-theme="peach"] {
+  --bg: #0E0604; --surface: #1A0C08; --row-hover: #1E0E0A;
+  --hairline: #4A2A20; --track: #381E14; --header-bg: rgba(14,6,4,0.92);
+  --st-bg: #0E0604; --st-card: #1A0C08; --st-panel: #1C0E0A;
+  --st-h1: #241612; --st-h2: #2A1A16; --st-h3: #301E1A;
+  --st-b0: #4A2A20; --st-b1: #5C3628; --st-b2: #6E4230;
+  --st-b3: #804E38; --st-b4: #925A40;
+}
+[data-site-theme="mocha"] {
+  --bg: #0A0603; --surface: #140B06; --row-hover: #180E08;
+  --hairline: #3A281C; --track: #2C1E14; --header-bg: rgba(10,6,3,0.92);
+  --st-bg: #0A0603; --st-card: #140B06; --st-panel: #160C08;
+  --st-h1: #1E140E; --st-h2: #221712; --st-h3: #281C16;
+  --st-b0: #3A281C; --st-b1: #4A3424; --st-b2: #5A402C;
+  --st-b3: #6A4C34; --st-b4: #7A583C;
+}
+[data-site-theme="arctic2"] {
+  --bg: #02090C; --surface: #061620; --row-hover: #081A26;
+  --hairline: #1A3A58; --track: #122E46; --header-bg: rgba(2,9,12,0.92);
+  --st-bg: #02090C; --st-card: #061620; --st-panel: #071722;
+  --st-h1: #0C2032; --st-h2: #0E243A; --st-h3: #122A42;
+  --st-b0: #1A3A58; --st-b1: #244A6E; --st-b2: #2E5A84;
+  --st-b3: #386A9A; --st-b4: #427AB0;
+}
+[data-site-theme="plum"] {
+  --bg: #09040C; --surface: #130818; --row-hover: #160A1C;
+  --hairline: #3A1A4A; --track: #2C1438; --header-bg: rgba(9,4,12,0.92);
+  --st-bg: #09040C; --st-card: #130818; --st-panel: #15091A;
+  --st-h1: #1C0E24; --st-h2: #20102A; --st-h3: #261430;
+  --st-b0: #3A1A4A; --st-b1: #4A225E; --st-b2: #5A2A72;
+  --st-b3: #6A3286; --st-b4: #7A3A9A;
+}
+[data-site-theme="steel"] {
+  --bg: #0A0C0F; --surface: #141820; --row-hover: #181C26;
+  --hairline: #2A3040; --track: #1E2432; --header-bg: rgba(10,12,15,0.92);
+  --st-bg: #0A0C0F; --st-card: #141820; --st-panel: #151922;
+  --st-h1: #1C2130; --st-h2: #202638; --st-h3: #252B40;
+  --st-b0: #2A3040; --st-b1: #363E52; --st-b2: #424C64;
+  --st-b3: #4E5A76; --st-b4: #5A6888;
+}
 
 /* ── Крем (тёплый светлый, сепия) ─────────────────────────────────────────── */
 [data-site-theme="cream"] {
@@ -301,7 +383,7 @@ html, body {
   --track:        #E8DFC8;
   --eyebrow-line: #C8BEA2;
   --control:      #A89A7A;
-  --card-hover:   #B86B30;
+  --card-hover:   #8A6A42;
   --board-border: rgba(140,100,40,0.25);
   --placeholder:  #B0A28A;
   --level-new:    #A89A7A;
@@ -395,6 +477,7 @@ html, body {
   --header-bg:    rgba(46,52,64,0.94);
 
   --accent:       #88C0D0;
+  --accent-contrast: #2E3440;
   --radius-card:  8px;
   --radius-btn:   6px;
   --shadow-card:  0 2px 8px rgba(0,0,0,0.25);
@@ -473,7 +556,7 @@ html, body {
   --track:        #3A2430;
   --eyebrow-line: #4A3040;
   --control:      #705268;
-  --card-hover:   #FF8A5C;
+  --card-hover:   #B88068;
   --board-border: rgba(255,180,120,0.2);
   --placeholder:  #806A78;
   --level-new:    #705268;
@@ -515,7 +598,7 @@ html, body {
   --track:        #F2E0CE;
   --eyebrow-line: #D8C2AC;
   --control:      #B89A82;
-  --card-hover:   #E06A3C;
+  --card-hover:   #A05020;
   --board-border: rgba(200,100,40,0.2);
   --placeholder:  #B89A82;
   --level-new:    #B89A82;
@@ -567,6 +650,7 @@ html, body {
   --header-bg:    rgba(26,26,26,0.94);
 
   --accent:       #F0F0F0;
+  --accent-contrast: #1A1A1A;
   --radius-card:  6px;
   --radius-btn:   4px;
   --shadow-card:  none;
@@ -632,19 +716,672 @@ html, body {
   --c-brill:      #1EA38A;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   ПАСХАЛКИ / FUN THEMES
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Halloween ─────────────────────────────────────────────────────────── */
+[data-site-theme="halloween"] {
+  --bg:           #120806;
+  --surface:      #1C0D08;
+  --row-hover:    rgba(255,140,40,0.06);
+  --ivory:        #FFE8CC;
+  --ink:          #120806;
+  --ink-2:        #9A6A48;
+  --muted:        #C89878;
+  --hairline:     rgba(255,140,40,0.14);
+  --track:        #2E1810;
+  --eyebrow-line: #4A2A1C;
+  --control:      #7A5238;
+  --card-hover:   #FF7A1F;
+  --board-border: rgba(255,140,40,0.26);
+  --placeholder:  #7A5238;
+  --level-new:    #7A5238;
+  --level-top:    #FFE8CC;
+  --header-bg:    rgba(18,8,6,0.94);
+
+  --accent:          #FF7A1F;
+  --accent-contrast: #120806;
+  --radius-card:     10px;
+  --radius-btn:      8px;
+  --shadow-card:     0 4px 14px rgba(255,120,30,0.14);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.5);
+
+  --st-bg:    #120806; --st-card:  #1C0D08; --st-panel: #180A07;
+  --st-h1:    #22120A; --st-h2:    #28160D; --st-h3:    #2E1A10;
+  --st-b0:    #38220E; --st-b1:    #4A2A14; --st-b2:    #5C321A;
+  --st-b3:    #6E3A20; --st-b4:    #804226;
+  --st-text:  #FFE8CC; --st-t2:    #C89878; --st-t3:    #9A6A48; --st-t4:    #7A5238;
+
+  --surface-2:    #211007;
+  --row:          #261309;
+  --hairline-2:   rgba(255,140,40,0.18);
+  --faint:        #7A5238;
+  --accent-press: #D45812;
+  --c-bad:        #E05A3A;
+  --c-warn:       #F0A040;
+  --c-mark:       #A040E0;
+  --c-plan:       #A040E0;
+  --c-brill:      #FFD040;
+}
+
+/* ── Новый год ─────────────────────────────────────────────────────────── */
+[data-site-theme="newyear"] {
+  --bg:           #040F17;
+  --surface:      #0A1A26;
+  --row-hover:    rgba(200,220,255,0.04);
+  --ivory:        #F2F8FF;
+  --ink:          #040F17;
+  --ink-2:        #6A8098;
+  --muted:        #A4BCD4;
+  --hairline:     rgba(200,220,255,0.12);
+  --track:        #122238;
+  --eyebrow-line: #243852;
+  --control:      #4E6A86;
+  --card-hover:   #D4A84E;
+  --board-border: rgba(200,220,255,0.22);
+  --placeholder:  #5A7090;
+  --level-new:    #4E6A86;
+  --level-top:    #F2F8FF;
+  --header-bg:    rgba(4,15,23,0.94);
+
+  --accent:          #E54848;
+  --accent-contrast: #FFFFFF;
+  --radius-card:     12px;
+  --radius-btn:      10px;
+  --shadow-card:     0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.5);
+
+  --st-bg:    #040F17; --st-card:  #0A1A26; --st-panel: #08161F;
+  --st-h1:    #0F2030; --st-h2:    #122438; --st-h3:    #162A42;
+  --st-b0:    #1A324E; --st-b1:    #223E5E; --st-b2:    #2A4A6E;
+  --st-b3:    #32567E; --st-b4:    #3A628E;
+  --st-text:  #F2F8FF; --st-t2:    #A4BCD4; --st-t3:    #6A8098; --st-t4:    #4E6A86;
+
+  --surface-2:    #0E1E2C;
+  --row:          #142638;
+  --hairline-2:   rgba(200,220,255,0.16);
+  --faint:        #4E6A86;
+  --accent-press: #B82A2A;
+  --c-bad:        #E54848;
+  --c-warn:       #D4A84E;
+  --c-mark:       #4E9CDB;
+  --c-plan:       #4E9CDB;
+  --c-brill:      #4EC878;
+}
+
+/* ── Alien ──────────────────────────────────────────────────────────────── */
+[data-site-theme="alien"] {
+  --bg:           #050A05;
+  --surface:      #0A160A;
+  --row-hover:    rgba(60,255,100,0.04);
+  --ivory:        #D8FFDC;
+  --ink:          #050A05;
+  --ink-2:        #508060;
+  --muted:        #8EC89A;
+  --hairline:     rgba(60,255,100,0.14);
+  --track:        #122A18;
+  --eyebrow-line: #1E4228;
+  --control:      #406A4E;
+  --card-hover:   #39FF14;
+  --board-border: rgba(60,255,100,0.28);
+  --placeholder:  #406A4E;
+  --level-new:    #406A4E;
+  --level-top:    #D8FFDC;
+  --header-bg:    rgba(5,10,5,0.94);
+
+  --accent:          #39FF14;
+  --accent-contrast: #050A05;
+  --radius-card:     4px;
+  --radius-btn:      3px;
+  --shadow-card:     0 0 14px rgba(57,255,20,0.14);
+  --shadow-btn:      0 0 8px rgba(57,255,20,0.3);
+
+  --st-bg:    #050A05; --st-card:  #0A160A; --st-panel: #08120A;
+  --st-h1:    #0E1C10; --st-h2:    #122214; --st-h3:    #162A18;
+  --st-b0:    #1C381E; --st-b1:    #244A28; --st-b2:    #2C5C32;
+  --st-b3:    #346E3C; --st-b4:    #3C8046;
+  --st-text:  #D8FFDC; --st-t2:    #8EC89A; --st-t3:    #508060; --st-t4:    #406A4E;
+
+  --surface-2:    #0C1A0E;
+  --row:          #102412;
+  --hairline-2:   rgba(60,255,100,0.2);
+  --faint:        #406A4E;
+  --accent-press: #2ACE0E;
+  --c-bad:        #FF4A8A;
+  --c-warn:       #FFE040;
+  --c-mark:       #40B4FF;
+  --c-plan:       #40B4FF;
+  --c-brill:      #40FFE0;
+}
+
+/* ── Cyberpunk ──────────────────────────────────────────────────────────── */
+[data-site-theme="cyber"] {
+  --bg:           #08051A;
+  --surface:      #120828;
+  --row-hover:    rgba(255,60,200,0.06);
+  --ivory:        #F0E8FF;
+  --ink:          #08051A;
+  --ink-2:        #6050A0;
+  --muted:        #A898D4;
+  --hairline:     rgba(255,60,200,0.16);
+  --track:        #1E143A;
+  --eyebrow-line: #2E1E5A;
+  --control:      #4E3E80;
+  --card-hover:   #00F0FF;
+  --board-border: rgba(255,60,200,0.3);
+  --placeholder:  #5E4E8E;
+  --level-new:    #4E3E80;
+  --level-top:    #F0E8FF;
+  --header-bg:    rgba(8,5,26,0.94);
+
+  --accent:          #FF2EC8;
+  --accent-contrast: #08051A;
+  --radius-card:     6px;
+  --radius-btn:      4px;
+  --shadow-card:     0 0 20px rgba(255,46,200,0.16), 0 0 40px rgba(0,240,255,0.08);
+  --shadow-btn:      0 0 10px rgba(255,46,200,0.35);
+
+  --st-bg:    #08051A; --st-card:  #120828; --st-panel: #0F0724;
+  --st-h1:    #1A0E34; --st-h2:    #1E1240; --st-h3:    #241848;
+  --st-b0:    #2E1E5A; --st-b1:    #3C2A70; --st-b2:    #4A3886;
+  --st-b3:    #58469C; --st-b4:    #6654B2;
+  --st-text:  #F0E8FF; --st-t2:    #A898D4; --st-t3:    #6050A0; --st-t4:    #4E3E80;
+
+  --surface-2:    #160A2E;
+  --row:          #1A0E36;
+  --hairline-2:   rgba(255,60,200,0.22);
+  --faint:        #4E3E80;
+  --accent-press: #D020A0;
+  --c-bad:        #FF4060;
+  --c-warn:       #FFC040;
+  --c-mark:       #00F0FF;
+  --c-plan:       #00F0FF;
+  --c-brill:      #B4FF40;
+}
+
+/* ── Easter (пастель, яйца и зайцы) ─────────────────────────────────────── */
+[data-site-theme="easter"] {
+  --bg:           #FFF7EC;
+  --surface:      #FFFFFF;
+  --row-hover:    rgba(255,120,160,0.05);
+  --ivory:        #4A2E26;
+  --ink:          #FFF7EC;
+  --ink-2:        #A88482;
+  --muted:        #8E6A62;
+  --hairline:     rgba(255,120,160,0.16);
+  --track:        #F5E4DC;
+  --eyebrow-line: #E8CAC2;
+  --control:      #C8A098;
+  --card-hover:   #FF8AB4;
+  --board-border: rgba(255,120,160,0.24);
+  --placeholder:  #C8A098;
+  --level-new:    #C8A098;
+  --level-top:    #4A2E26;
+  --header-bg:    rgba(255,247,236,0.94);
+
+  --accent:          #FF8AB4;
+  --accent-contrast: #4A2E26;
+  --radius-card:     14px;
+  --radius-btn:      12px;
+  --shadow-card:     0 3px 10px rgba(255,140,180,0.12);
+  --shadow-btn:      0 2px 4px rgba(255,140,180,0.16);
+
+  --st-bg:    #FFF7EC; --st-card:  #FFFFFF; --st-panel: #FDEEE4;
+  --st-h1:    #FCE8DC; --st-h2:    #F8DFD0; --st-h3:    #F4D4C2;
+  --st-b0:    #F0C8B2; --st-b1:    #E8B8A0; --st-b2:    #E0A890;
+  --st-b3:    #D89880; --st-b4:    #D08870;
+  --st-text:  #4A2E26; --st-t2:    #8E6A62; --st-t3:    #A88482; --st-t4:    #C8A098;
+
+  --surface-2:    #FDF2E6;
+  --row:          #FBE8DA;
+  --hairline-2:   rgba(255,120,160,0.2);
+  --faint:        #C8A098;
+  --accent-press: #E66A96;
+  --c-bad:        #E54A5A;
+  --c-warn:       #F0A040;
+  --c-mark:       #A8B4FF;
+  --c-plan:       #A8B4FF;
+  --c-brill:      #80E8C0;
+}
+
+/* ── Robot (хром и шестерни) ────────────────────────────────────────────── */
+[data-site-theme="robot"] {
+  --bg:           #0E1217;
+  --surface:      #181E25;
+  --row-hover:    rgba(100,200,255,0.04);
+  --ivory:        #DCE5EF;
+  --ink:          #0E1217;
+  --ink-2:        #5A6A7C;
+  --muted:        #8898AA;
+  --hairline:     rgba(100,200,255,0.12);
+  --track:        #202832;
+  --eyebrow-line: #38424E;
+  --control:      #4E5A6E;
+  --card-hover:   #4FC3F7;
+  --board-border: rgba(100,200,255,0.24);
+  --placeholder:  #5A6A7C;
+  --level-new:    #4E5A6E;
+  --level-top:    #DCE5EF;
+  --header-bg:    rgba(14,18,23,0.94);
+
+  --accent:          #4FC3F7;
+  --accent-contrast: #0E1217;
+  --radius-card:     4px;
+  --radius-btn:      3px;
+  --shadow-card:     0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.6);
+
+  --st-bg:    #0E1217; --st-card:  #181E25; --st-panel: #14191F;
+  --st-h1:    #1A2029; --st-h2:    #1E242D; --st-h3:    #222934;
+  --st-b0:    #28303C; --st-b1:    #343E4D; --st-b2:    #404C5E;
+  --st-b3:    #4C5A6F; --st-b4:    #586880;
+  --st-text:  #DCE5EF; --st-t2:    #8898AA; --st-t3:    #5A6A7C; --st-t4:    #4E5A6E;
+
+  --surface-2:    #1C222A;
+  --row:          #202832;
+  --hairline-2:   rgba(100,200,255,0.18);
+  --faint:        #5A6A7C;
+  --accent-press: #2BA8E0;
+  --c-bad:        #FF5A5A;
+  --c-warn:       #FFC040;
+  --c-mark:       #4FC3F7;
+  --c-plan:       #4FC3F7;
+  --c-brill:      #80FFDA;
+}
+
+/* ── Valentine (сердца и розы) ──────────────────────────────────────────── */
+[data-site-theme="valentine"] {
+  --bg:           #140608;
+  --surface:      #230A10;
+  --row-hover:    rgba(255,120,160,0.06);
+  --ivory:        #FFE4EC;
+  --ink:          #140608;
+  --ink-2:        #8A5868;
+  --muted:        #C89AA8;
+  --hairline:     rgba(255,120,160,0.14);
+  --track:        #2E1218;
+  --eyebrow-line: #4A1E28;
+  --control:      #6E3A48;
+  --card-hover:   #FF5A8A;
+  --board-border: rgba(255,120,160,0.26);
+  --placeholder:  #7A4858;
+  --level-new:    #6E3A48;
+  --level-top:    #FFE4EC;
+  --header-bg:    rgba(20,6,8,0.94);
+
+  --accent:          #FF5A8A;
+  --accent-contrast: #140608;
+  --radius-card:     16px;
+  --radius-btn:      14px;
+  --shadow-card:     0 4px 16px rgba(255,90,138,0.14);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.5);
+
+  --st-bg:    #140608; --st-card:  #230A10; --st-panel: #1D080C;
+  --st-h1:    #280E14; --st-h2:    #2E1218; --st-h3:    #34161E;
+  --st-b0:    #401C28; --st-b1:    #522432; --st-b2:    #622C3C;
+  --st-b3:    #723446; --st-b4:    #823C50;
+  --st-text:  #FFE4EC; --st-t2:    #C89AA8; --st-t3:    #8A5868; --st-t4:    #6E3A48;
+
+  --surface-2:    #280C12;
+  --row:          #2E1218;
+  --hairline-2:   rgba(255,120,160,0.18);
+  --faint:        #6E3A48;
+  --accent-press: #D04070;
+  --c-bad:        #FF4060;
+  --c-warn:       #FFB040;
+  --c-mark:       #FFB0D0;
+  --c-plan:       #FFB0D0;
+  --c-brill:      #FFD040;
+}
+
+/* ── Sakura (пастель и лепестки) ────────────────────────────────────────── */
+[data-site-theme="sakura"] {
+  --bg:           #FFF4F3;
+  --surface:      #FFFFFF;
+  --row-hover:    rgba(255,120,180,0.05);
+  --ivory:        #4A2634;
+  --ink:          #FFF4F3;
+  --ink-2:        #A86A80;
+  --muted:        #8E5268;
+  --hairline:     rgba(255,120,180,0.14);
+  --track:        #FBE2EA;
+  --eyebrow-line: #F2C8D6;
+  --control:      #D0A0B2;
+  --card-hover:   #FFB7CE;
+  --board-border: rgba(255,120,180,0.22);
+  --placeholder:  #C890A2;
+  --level-new:    #D0A0B2;
+  --level-top:    #4A2634;
+  --header-bg:    rgba(255,244,243,0.94);
+
+  --accent:          #FFB7CE;
+  --accent-contrast: #4A2634;
+  --radius-card:     14px;
+  --radius-btn:      12px;
+  --shadow-card:     0 3px 10px rgba(255,160,200,0.12);
+  --shadow-btn:      0 2px 4px rgba(255,160,200,0.16);
+
+  --st-bg: #FFF4F3; --st-card: #FFFFFF; --st-panel: #FEE8EC;
+  --st-h1: #FCDAE2; --st-h2: #F8CCD6; --st-h3: #F4C0CC;
+  --st-b0: #EEB0C0; --st-b1: #E6A0B2; --st-b2: #DE90A4;
+  --st-b3: #D68096; --st-b4: #CE7088;
+  --st-text: #4A2634; --st-t2: #8E5268; --st-t3: #A86A80; --st-t4: #C890A2;
+
+  --surface-2: #FCEBEE;
+  --row: #FADFE6;
+  --hairline-2: rgba(255,120,180,0.2);
+  --faint: #C890A2;
+  --accent-press: #E890B0;
+  --c-bad: #E54A5A;
+  --c-warn: #F0A040;
+  --c-mark: #A8B4FF;
+  --c-plan: #A8B4FF;
+  --c-brill: #80E8C0;
+}
+
+/* ── Autumn (янтарь и листопад) ─────────────────────────────────────────── */
+[data-site-theme="autumn"] {
+  --bg:           #180C04;
+  --surface:      #241406;
+  --row-hover:    rgba(232,138,60,0.05);
+  --ivory:        #FFE4C0;
+  --ink:          #180C04;
+  --ink-2:        #8A6038;
+  --muted:        #B88850;
+  --hairline:     rgba(232,138,60,0.14);
+  --track:        #2E1A08;
+  --eyebrow-line: #4A2C14;
+  --control:      #6A4624;
+  --card-hover:   #E88A3C;
+  --board-border: rgba(232,138,60,0.26);
+  --placeholder:  #6A4624;
+  --level-new:    #6A4624;
+  --level-top:    #FFE4C0;
+  --header-bg:    rgba(24,12,4,0.94);
+
+  --accent:          #E88A3C;
+  --accent-contrast: #180C04;
+  --radius-card:     10px;
+  --radius-btn:      8px;
+  --shadow-card:     0 4px 14px rgba(232,138,60,0.14);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.5);
+
+  --st-bg: #180C04; --st-card: #241406; --st-panel: #1E1005;
+  --st-h1: #281808; --st-h2: #2E1C0A; --st-h3: #34200E;
+  --st-b0: #3E2812; --st-b1: #4E321A; --st-b2: #5E3C22;
+  --st-b3: #6E462A; --st-b4: #7E5032;
+  --st-text: #FFE4C0; --st-t2: #B88850; --st-t3: #8A6038; --st-t4: #6A4624;
+
+  --surface-2: #281604;
+  --row: #2E1A08;
+  --hairline-2: rgba(232,138,60,0.18);
+  --faint: #6A4624;
+  --accent-press: #C47028;
+  --c-bad: #E5584A;
+  --c-warn: #E88A3C;
+  --c-mark: #80B4E0;
+  --c-plan: #80B4E0;
+  --c-brill: #80D080;
+}
+
+/* ── Galaxy (космос и туманность) ───────────────────────────────────────── */
+[data-site-theme="galaxy"] {
+  --bg:           #0A0520;
+  --surface:      #140A2E;
+  --row-hover:    rgba(180,138,255,0.06);
+  --ivory:        #EDE4FF;
+  --ink:          #0A0520;
+  --ink-2:        #5A4880;
+  --muted:        #9080C8;
+  --hairline:     rgba(180,138,255,0.14);
+  --track:        #1E1442;
+  --eyebrow-line: #2E2058;
+  --control:      #463680;
+  --card-hover:   #B48AFF;
+  --board-border: rgba(180,138,255,0.28);
+  --placeholder:  #5A4880;
+  --level-new:    #463680;
+  --level-top:    #EDE4FF;
+  --header-bg:    rgba(10,5,32,0.94);
+
+  --accent:          #B48AFF;
+  --accent-contrast: #0A0520;
+  --radius-card:     12px;
+  --radius-btn:      10px;
+  --shadow-card:     0 4px 20px rgba(180,138,255,0.14), 0 0 40px rgba(100,80,200,0.06);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.5);
+
+  --st-bg: #0A0520; --st-card: #140A2E; --st-panel: #10082A;
+  --st-h1: #1C1038; --st-h2: #221440; --st-h3: #28184A;
+  --st-b0: #322066; --z: #; --st-b1: #42307E; --st-b2: #524096;
+  --st-b3: #6250AE; --st-b4: #7260C6;
+  --st-text: #EDE4FF; --st-t2: #9080C8; --st-t3: #5A4880; --st-t4: #463680;
+
+  --surface-2: #180C34;
+  --row: #1C1038;
+  --hairline-2: rgba(180,138,255,0.2);
+  --faint: #463680;
+  --accent-press: #9868E6;
+  --c-bad: #FF5A8A;
+  --c-warn: #FFC048;
+  --c-mark: #88C0FF;
+  --c-plan: #88C0FF;
+  --c-brill: #80FFD0;
+}
+
+/* ── Abyss (глубина, пузыри) ────────────────────────────────────────────── */
+[data-site-theme="abyss"] {
+  --bg:           #04141A;
+  --surface:      #0A2530;
+  --row-hover:    rgba(64,208,224,0.06);
+  --ivory:        #D0F0F8;
+  --ink:          #04141A;
+  --ink-2:        #40707E;
+  --muted:        #6098AA;
+  --hairline:     rgba(64,208,224,0.16);
+  --track:        #0E3042;
+  --eyebrow-line: #184658;
+  --control:      #2E5E70;
+  --card-hover:   #40D0E0;
+  --board-border: rgba(64,208,224,0.28);
+  --placeholder:  #40707E;
+  --level-new:    #2E5E70;
+  --level-top:    #D0F0F8;
+  --header-bg:    rgba(4,20,26,0.94);
+
+  --accent:          #40D0E0;
+  --accent-contrast: #04141A;
+  --radius-card:     14px;
+  --radius-btn:      12px;
+  --shadow-card:     0 4px 18px rgba(64,208,224,0.12);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.6);
+
+  --st-bg: #04141A; --st-card: #0A2530; --z: #; --st-panel: #082028;
+  --st-h1: #0E2C3A; --st-h2: #103244; --st-h3: #143A4E;
+  --st-b0: #184658; --st-b1: #22586E; --st-b2: #2C6A84;
+  --st-b3: #367C9A; --st-b4: #408EB0;
+  --st-text: #D0F0F8; --st-t2: #6098AA; --st-t3: #40707E; --st-t4: #2E5E70;
+
+  --surface-2: #0C2A36;
+  --row: #0E3042;
+  --hairline-2: rgba(64,208,224,0.2);
+  --faint: #2E5E70;
+  --accent-press: #28A8B8;
+  --c-bad: #FF6060;
+  --c-warn: #FFC048;
+  --c-mark: #80E0FF;
+  --c-plan: #80E0FF;
+  --c-brill: #40FFC0;
+}
+
+/* ── Dragon (пламя и угли) ──────────────────────────────────────────────── */
+[data-site-theme="dragon"] {
+  --bg:           #180608;
+  --surface:      #260A0C;
+  --row-hover:    rgba(255,112,48,0.06);
+  --ivory:        #FFE4C8;
+  --ink:          #180608;
+  --ink-2:        #8A4A2E;
+  --muted:        #C88868;
+  --hairline:     rgba(255,112,48,0.16);
+  --track:        #321010;
+  --eyebrow-line: #4E1A18;
+  --control:      #6E3620;
+  --card-hover:   #FF7030;
+  --board-border: rgba(255,112,48,0.28);
+  --placeholder:  #8A4A2E;
+  --level-new:    #6E3620;
+  --level-top:    #FFE4C8;
+  --header-bg:    rgba(24,6,8,0.96);
+
+  --accent:          #FF7030;
+  --accent-contrast: #180608;
+  --radius-card:     8px;
+  --radius-btn:      6px;
+  --shadow-card:     0 4px 18px rgba(255,80,20,0.18), 0 0 30px rgba(255,120,40,0.08);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.6);
+
+  --st-bg: #180608; --st-card: #260A0C; --st-panel: #1E0608;
+  --st-h1: #2C0E10; --st-h2: #321014; --st-h3: #381418;
+  --st-b0: #4A1E1C; --st-b1: #5E2820; --st-b2: #723224;
+  --st-b3: #863C28; --st-b4: #9A462C;
+  --st-text: #FFE4C8; --st-t2: #C88868; --st-t3: #8A4A2E; --st-t4: #6E3620;
+
+  --surface-2: #2A0A0C;
+  --row: #321010;
+  --hairline-2: rgba(255,112,48,0.22);
+  --faint: #6E3620;
+  --accent-press: #D04820;
+  --c-bad: #FF4040;
+  --c-warn: #FFB048;
+  --c-mark: #88C0FF;
+  --c-plan: #88C0FF;
+  --c-brill: #FFE040;
+}
+
+/* ── Xeno / Alien Ridley (биомех и кислотная слизь) ─────────────────────── */
+[data-site-theme="xeno"] {
+  --bg:           #060805;
+  --surface:      #0D1008;
+  --row-hover:    rgba(191,232,48,0.04);
+  --ivory:        #E8F0C0;
+  --ink:          #060805;
+  --ink-2:        #4A5020;
+  --muted:        #8A9A48;
+  --hairline:     rgba(191,232,48,0.1);
+  --track:        #141A08;
+  --eyebrow-line: #28320E;
+  --control:      #3A4414;
+  --card-hover:   #BFE830;
+  --board-border: rgba(191,232,48,0.24);
+  --placeholder:  #4A5020;
+  --level-new:    #3A4414;
+  --level-top:    #E8F0C0;
+  --header-bg:    rgba(6,8,5,0.96);
+
+  --accent:          #BFE830;
+  --accent-contrast: #060805;
+  --radius-card:     4px;
+  --radius-btn:      3px;
+  --shadow-card:     0 4px 16px rgba(0,0,0,0.6), inset 0 0 20px rgba(191,232,48,0.04);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.7);
+
+  --st-bg:    #060805; --st-card:  #0D1008; --st-panel: #0A0D06;
+  --st-h1:    #10140A; --st-h2:    #141A0C; --st-h3:    #181E10;
+  --st-b0:    #202812; --st-b1:    #2C3418; --st-b2:    #38421E;
+  --st-b3:    #445024; --st-b4:    #505E2A;
+  --st-text:  #E8F0C0; --st-t2:    #8A9A48; --st-t3:    #4A5020; --st-t4:    #3A4414;
+
+  --surface-2:    #10140A;
+  --row:          #141A0C;
+  --hairline-2:   rgba(191,232,48,0.16);
+  --faint:        #4A5020;
+  --accent-press: #9BC420;
+  --c-bad:        #E54040;
+  --c-warn:       #FFB000;
+  --c-mark:       #80D0E0;
+  --c-plan:       #80D0E0;
+  --c-brill:      #40FFA0;
+}
+
+/* ── Pirate (череп и золото) ────────────────────────────────────────────── */
+[data-site-theme="pirate"] {
+  --bg:           #060A14;
+  --surface:      #0E1626;
+  --row-hover:    rgba(212,166,72,0.05);
+  --ivory:        #F0E6D0;
+  --ink:          #060A14;
+  --ink-2:        #6A5A3E;
+  --muted:        #A89668;
+  --hairline:     rgba(212,166,72,0.14);
+  --track:        #16223C;
+  --eyebrow-line: #24324C;
+  --control:      #3E4A66;
+  --card-hover:   #D4A648;
+  --board-border: rgba(212,166,72,0.26);
+  --placeholder:  #58567A;
+  --level-new:    #3E4A66;
+  --level-top:    #F0E6D0;
+  --header-bg:    rgba(6,10,20,0.94);
+
+  --accent:          #D4A648;
+  --accent-contrast: #060A14;
+  --radius-card:     8px;
+  --radius-btn:      6px;
+  --shadow-card:     0 4px 14px rgba(0,0,0,0.5);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.6);
+
+  --st-bg:    #060A14; --st-card:  #0E1626; --st-panel: #0A121E;
+  --st-h1:    #121C30; --st-h2:    #162238; --st-h3:    #1A2840;
+  --st-b0:    #22304C; --st-b1:    #2E3E60; --st-b2:    #3A4C74;
+  --st-b3:    #465A88; --st-b4:    #52689C;
+  --st-text:  #F0E6D0; --st-t2:    #A89668; --st-t3:    #6A5A3E; --st-t4:    #3E4A66;
+
+  --surface-2:    #121C30;
+  --row:          #162238;
+  --hairline-2:   rgba(212,166,72,0.18);
+  --faint:        #3E4A66;
+  --accent-press: #B88B30;
+  --c-bad:        #E05040;
+  --c-warn:       #D4A648;
+  --c-mark:       #4FC3F7;
+  --c-plan:       #4FC3F7;
+  --c-brill:      #5CD88A;
+}
+
 [data-site-theme="light"] {
   --bg: #F8F8F8; --surface: #FFFFFF; --row-hover: #F0F0F0;
   --ivory: #111111; --ink: #F8F8F8; --ink-2: #555555;
-  --muted: #666666; --hairline: #E0E0E0; --track: #EBEBEB;
+  --muted: #555555; --hairline: #D4D4D4; --track: #EBEBEB;
   --eyebrow-line: #BBBBBB; --control: #AAAAAA;
   --card-hover: #777777; --board-border: #CCCCCC;
-  --placeholder: #BBBBBB; --level-new: #AAAAAA; --level-top: #111111;
+  --placeholder: #999999; --level-new: #AAAAAA; --level-top: #111111;
   --header-bg: rgba(248,248,248,0.92);
   --st-bg:    #F8F8F8; --st-card:  #FFFFFF; --st-panel: #F2F2F2;
   --st-h1:    #EDEDED; --st-h2:    #EBEBEB; --st-h3:    #E5E5E5;
   --st-b0:    #E0E0E0; --st-b1:    #D0D0D0; --st-b2:    #C0C0C0;
   --st-b3:    #B0B0B0; --st-b4:    #A0A0A0;
-  --st-text:  #111111; --st-t2:    #555555; --st-t3:    #888888; --st-t4:    #999999;
+  --st-text:  #111111; --st-t2:    #444444; --st-t3:    #666666; --st-t4:    #888888;
+
+  /* Trainer tokens — газетный light (острые углы, без теней) */
+  --accent:          #466B2A;
+  --accent-contrast: #FFFFFF;
+  --accent-soft:     color-mix(in srgb, var(--accent) 15%, transparent);
+  --radius-card:     0px;
+  --radius-btn:      0px;
+  --shadow-card:     none;
+  --shadow-btn:      none;
+  --surface-2:       #F0F0F0;
+  --row:             #ECECEC;
+  --hairline-2:      #D4D4D4;
+  --faint:           #6A6A6A;
+  --accent-press:    #345521;
+  --c-bad:           #C4432E;
+  --c-warn:          #B46F0F;
+  --c-mark:          #2563B6;
+  --c-plan:          #2563B6;
+  --c-brill:         #0E8F74;
 }
 
 /* ── Legacy Tailwind arbitrary-value mappings (old components) ────────────── */
@@ -759,23 +1496,25 @@ html, body {
 [data-site-theme="soft-light"] {
   --bg:           #F3F3F1;
   --surface:      #FFFFFF;
-  --row-hover:    rgba(0,0,0,0.03);
-  --ivory:        #262522;
+  --row-hover:    rgba(0,0,0,0.04);
+  --ivory:        #1E1D1A;
   --ink:          #F3F3F1;
-  --ink-2:        #888;
-  --muted:        #767675;
-  --hairline:     rgba(0,0,0,0.08);
-  --track:        #E0E0DC;
-  --eyebrow-line: #CCCCCA;
-  --control:      #AAAAAA;
-  --card-hover:   #81B64C;
-  --board-border: rgba(0,0,0,0.12);
-  --placeholder:  #BBBBBB;
-  --level-new:    #AAAAAA;
-  --level-top:    #262522;
+  --ink-2:        #666666;
+  --muted:        #555553;
+  --hairline:     rgba(0,0,0,0.14);
+  --track:        #D8D8D4;
+  --eyebrow-line: #BBBBB8;
+  --control:      #8E8E8A;
+  --card-hover:   #5E8C35;
+  --board-border: rgba(0,0,0,0.16);
+  --placeholder:  #9A9A96;
+  --level-new:    #8E8E8A;
+  --level-top:    #1E1D1A;
   --header-bg:    rgba(243,243,241,0.95);
 
-  --accent:       #81B64C;
+  --accent:          #5E8C35;
+  --accent-contrast: #FFFFFF;
+  --accent-soft:     color-mix(in srgb, var(--accent) 15%, transparent);
   --radius-card:  12px;
   --radius-btn:   10px;
   --shadow-card:  0 2px 8px rgba(0,0,0,0.08);
@@ -785,19 +1524,19 @@ html, body {
   --st-h1:    #EBEBEA; --st-h2:    #E5E5E3; --st-h3:    #DEDED9;
   --st-b0:    #E0E0DC; --st-b1:    #D0D0CC; --st-b2:    #BBBBB8;
   --st-b3:    #AAAAAA; --st-b4:    #999999;
-  --st-text:  #262522; --st-t2:    #666666; --st-t3:    #888888; --st-t4:    #AAAAAA;
+  --st-text:  #1E1D1A; --st-t2:    #444444; --st-t3:    #666666; --st-t4:    #888888;
 
   /* ── Новые токены тренажёров ───────────────────────────────────────────── */
-  --surface-2:    #F5F5F3;
-  --row:          #ECEBE7;
-  --hairline-2:   rgba(0,0,0,.12);
-  --faint:        #9A968F;
-  --accent-press: #5E8C35;
-  --c-bad:        #E0574A;
-  --c-warn:       #F0A43A;
-  --c-mark:       #4A90E2;
-  --c-plan:       #4A90E2;
-  --c-brill:      #26C2A3;
+  --surface-2:    #EDEDEA;
+  --row:          #E5E5E1;
+  --hairline-2:   rgba(0,0,0,.18);
+  --faint:        #6E6E6A;
+  --accent-press: #456620;
+  --c-bad:        #C4432E;
+  --c-warn:       #B46F0F;
+  --c-mark:       #2563B6;
+  --c-plan:       #2563B6;
+  --c-brill:      #0E8F74;
 }
 
 /* ── Soft theme – shared overrides ──────────────────────────────────────── */
@@ -1295,7 +2034,7 @@ html, body {
 .ui-btn-sm { height: 34px; padding: 0 14px; font-size: 13px; }
 .ui-btn-lg { height: 48px; padding: 0 24px; font-size: 15px; }
 
-.ui-btn-primary { background: var(--accent); color: #FFFFFF; border-color: var(--accent); box-shadow: var(--shadow-btn); }
+.ui-btn-primary { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); box-shadow: var(--shadow-btn); }
 .ui-btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
 
 .ui-btn-outline { background: transparent; color: var(--ivory); border-color: var(--hairline); }
@@ -1492,7 +2231,7 @@ html, body {
   white-space: nowrap;
 }
 .move-btn:hover { background: var(--row-hover); }
-.move-btn-active { background: var(--accent); color: #FFFFFF; }
+.move-btn-active { background: var(--accent); color: var(--accent-contrast); }
 .move-btn-active:hover { background: var(--accent); }
 
 /* ── Score pills (for guess-the-move history) ───────────────────────────── */
@@ -1626,9 +2365,9 @@ html, body {
 .ui-segment:hover { color: var(--ivory); }
 .ui-segment-active {
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--accent-contrast);
 }
-.ui-segment-active:hover { color: #FFFFFF; }
+.ui-segment-active:hover { color: var(--accent-contrast); }
 
 /* Number/text field in prepare-style forms */
 .ui-input {
@@ -1662,3 +2401,351 @@ html, body {
 }
 .ui-textarea:focus { border-color: var(--card-hover); }
 .ui-textarea::placeholder { color: var(--placeholder); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ПАСХАЛКИ — декорации на фоне
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.theme-decor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  contain: strict;
+}
+
+.theme-decor-item {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+  box-sizing: border-box;
+}
+
+/* ─────────── Halloween: тёплые дымки, медленно проходят через экран ─────────── */
+@keyframes decor-fog-pass {
+  0%   { transform: translateX(-120vw) scale(0.9); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(120vw)  scale(1.1); opacity: 0; }
+}
+[data-site-theme="halloween"] .theme-decor-item {
+  background: radial-gradient(circle,
+    rgba(255,120,30,0.26),
+    rgba(255,80,20,0.08) 50%,
+    transparent 72%);
+  border-radius: 50%;
+  filter: blur(18px);
+  animation: decor-fog-pass linear infinite;
+  mix-blend-mode: screen;
+}
+
+/* ─────────── Новый год: настоящий снег (тонкие точки) ─────────── */
+@keyframes decor-snow-fall {
+  0%   { transform: translateY(-20vh) translateX(0);    opacity: 0; }
+  10%  { opacity: 0.9; }
+  50%  { transform: translateY(45vh)  translateX(16px); }
+  90%  { opacity: 0.9; }
+  100% { transform: translateY(115vh) translateX(-10px); opacity: 0; }
+}
+[data-site-theme="newyear"] .theme-decor-item {
+  background: rgba(255,255,255,0.95);
+  border-radius: 50%;
+  box-shadow: 0 0 3px rgba(255,255,255,0.7), 0 0 8px rgba(200,220,255,0.4);
+  animation: decor-snow-fall linear infinite;
+}
+
+/* ─────────── Easter: пастельное боке ─────────── */
+@keyframes decor-bokeh-float {
+  0%, 100% { transform: translate(-18px, 0)    scale(0.95); opacity: 0.55; }
+  50%      { transform: translate(24px, -22px) scale(1.1);  opacity: 1; }
+}
+[data-site-theme="easter"] .theme-decor-item {
+  background: radial-gradient(circle,
+    rgba(255,180,220,0.42),
+    rgba(255,180,220,0.1) 55%,
+    transparent 72%);
+  border-radius: 50%;
+  filter: blur(22px);
+  animation: decor-bokeh-float ease-in-out infinite;
+}
+[data-site-theme="easter"] .theme-decor-item:nth-child(3n) {
+  background: radial-gradient(circle,
+    rgba(180,220,255,0.38),
+    rgba(180,220,255,0.08) 55%,
+    transparent 72%);
+}
+[data-site-theme="easter"] .theme-decor-item:nth-child(3n+1) {
+  background: radial-gradient(circle,
+    rgba(200,255,200,0.32),
+    rgba(200,255,200,0.08) 55%,
+    transparent 72%);
+}
+
+/* ─────────── Valentine: искры поднимаются вверх ─────────── */
+@keyframes decor-spark-rise {
+  0%   { transform: translateY(105vh) translateX(0)    scale(0.5); opacity: 0; }
+  12%  { opacity: 1; }
+  50%  { transform: translateY(50vh)  translateX(10px) scale(1); }
+  88%  { opacity: 0.8; }
+  100% { transform: translateY(-10vh) translateX(-8px) scale(1.2); opacity: 0; }
+}
+[data-site-theme="valentine"] .theme-decor-item {
+  background: rgba(255,160,200,0.95);
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(255,120,160,0.9), 0 0 10px rgba(255,80,130,0.5);
+  animation: decor-spark-rise linear infinite;
+}
+
+/* ─────────── Sakura: падающие лепестки (CSS-shape) ─────────── */
+@keyframes decor-petal-fall {
+  0%   { transform: translateY(-20vh) translateX(0)     rotate(-30deg); opacity: 0; }
+  10%  { opacity: 0.85; }
+  25%  { transform: translateY(20vh)  translateX(28px)  rotate(60deg); }
+  50%  { transform: translateY(55vh)  translateX(-36px) rotate(-60deg); }
+  75%  { transform: translateY(80vh)  translateX(36px)  rotate(60deg); }
+  90%  { opacity: 0.85; }
+  100% { transform: translateY(115vh) translateX(-18px) rotate(-30deg); opacity: 0; }
+}
+[data-site-theme="sakura"] .theme-decor-item {
+  background: radial-gradient(ellipse at center,
+    rgba(255,170,205,0.95),
+    rgba(255,140,190,0.6) 55%,
+    rgba(255,120,180,0.1));
+  border-radius: 50% 10% 50% 10%;
+  filter: drop-shadow(0 1px 3px rgba(255,160,200,0.4));
+  animation: decor-petal-fall linear infinite;
+}
+
+/* ─────────── Autumn: амбровые мошки ─────────── */
+@keyframes decor-mote-drift {
+  0%   { transform: translateY(-15vh) translateX(0)     rotate(0deg);   opacity: 0; }
+  10%  { opacity: 0.8; }
+  50%  { transform: translateY(50vh)  translateX(24px)  rotate(180deg); }
+  90%  { opacity: 0.8; }
+  100% { transform: translateY(115vh) translateX(-24px) rotate(360deg); opacity: 0; }
+}
+[data-site-theme="autumn"] .theme-decor-item {
+  background: radial-gradient(circle,
+    rgba(255,190,100,0.9),
+    rgba(232,138,60,0.5) 55%,
+    transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(232,138,60,0.6);
+  animation: decor-mote-drift linear infinite;
+}
+
+/* ─────────── Galaxy: звёздное поле (мерцание) ─────────── */
+@keyframes decor-star-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.7); }
+  40%, 60% { opacity: 0.95; transform: scale(1.1); }
+}
+[data-site-theme="galaxy"] .theme-decor-item {
+  background: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 0 2px rgba(255,255,255,0.7), 0 0 8px rgba(180,138,255,0.5);
+  animation: decor-star-twinkle ease-in-out infinite;
+}
+[data-site-theme="galaxy"] .theme-decor-item:nth-child(5n) {
+  box-shadow: 0 0 2px rgba(255,255,255,0.8), 0 0 10px rgba(255,120,200,0.6);
+}
+[data-site-theme="galaxy"] .theme-decor-item:nth-child(7n) {
+  background: #E0D0FF;
+  box-shadow: 0 0 2px rgba(224,208,255,0.9), 0 0 10px rgba(180,138,255,0.7);
+}
+
+/* ─────────── Abyss: настоящие пузыри ─────────── */
+@keyframes decor-bubble-rise {
+  0%   { transform: translateY(105vh) translateX(0)     scale(0.6); opacity: 0; }
+  10%  { opacity: 0.7; }
+  50%  { transform: translateY(50vh)  translateX(12px)  scale(1); }
+  90%  { opacity: 0.5; }
+  100% { transform: translateY(-15vh) translateX(-10px) scale(1.2); opacity: 0; }
+}
+[data-site-theme="abyss"] .theme-decor-item {
+  background: radial-gradient(circle at 35% 30%,
+    rgba(255,255,255,0.3),
+    rgba(100,220,240,0.1) 40%,
+    transparent 72%);
+  border: 1px solid rgba(100,220,240,0.4);
+  border-radius: 50%;
+  box-shadow: inset 0 0 6px rgba(255,255,255,0.12);
+  animation: decor-bubble-rise linear infinite;
+}
+
+/* ─────────── Dragon: угли поднимаются и мерцают ─────────── */
+@keyframes decor-ember-rise {
+  0%   { transform: translateY(105vh) translateX(0)     scale(0.4); opacity: 0; }
+  15%  { opacity: 1; }
+  50%  { transform: translateY(50vh)  translateX(18px)  scale(1); }
+  85%  { opacity: 0.5; }
+  100% { transform: translateY(-5vh)  translateX(-12px) scale(0.3); opacity: 0; }
+}
+@keyframes decor-ember-flicker {
+  0%, 100% { box-shadow: 0 0 4px rgba(255,120,40,0.85), 0 0 10px rgba(255,140,40,0.5); }
+  50%      { box-shadow: 0 0 10px rgba(255,200,60,1),  0 0 22px rgba(255,160,40,0.75); }
+}
+[data-site-theme="dragon"] .theme-decor-item {
+  background: radial-gradient(circle,
+    rgba(255,220,100,0.95),
+    rgba(255,120,40,0.7) 50%,
+    transparent);
+  border-radius: 50%;
+  animation: decor-ember-rise linear infinite, decor-ember-flicker 1.4s ease-in-out infinite;
+}
+
+/* Hide decorations for reduced-motion users */
+@media (prefers-reduced-motion: reduce) {
+  .theme-decor-item { animation: none !important; opacity: 0 !important; }
+}
+
+/* Fun themes: push shell above decorations */
+[data-site-theme="halloween"] .app-topbar,
+[data-site-theme="newyear"] .app-topbar,
+[data-site-theme="alien"] .app-topbar,
+[data-site-theme="cyber"] .app-topbar,
+[data-site-theme="easter"] .app-topbar,
+[data-site-theme="robot"] .app-topbar,
+[data-site-theme="valentine"] .app-topbar,
+[data-site-theme="pirate"] .app-topbar,
+[data-site-theme="xeno"] .app-topbar,
+[data-site-theme="sakura"] .app-topbar,
+[data-site-theme="autumn"] .app-topbar,
+[data-site-theme="galaxy"] .app-topbar,
+[data-site-theme="abyss"] .app-topbar,
+[data-site-theme="dragon"] .app-topbar,
+[data-site-theme="halloween"] .app-shell,
+[data-site-theme="newyear"] .app-shell,
+[data-site-theme="alien"] .app-shell,
+[data-site-theme="cyber"] .app-shell,
+[data-site-theme="easter"] .app-shell,
+[data-site-theme="robot"] .app-shell,
+[data-site-theme="valentine"] .app-shell,
+[data-site-theme="pirate"] .app-shell,
+[data-site-theme="xeno"] .app-shell,
+[data-site-theme="sakura"] .app-shell,
+[data-site-theme="autumn"] .app-shell,
+[data-site-theme="galaxy"] .app-shell,
+[data-site-theme="abyss"] .app-shell,
+[data-site-theme="dragon"] .app-shell {
+  position: relative;
+  z-index: 1;
+}
+
+/* Robot: тонкая сетка на фоне (как плата) */
+[data-site-theme="robot"] .app-main {
+  background-image:
+    linear-gradient(rgba(79,195,247,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,195,247,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: center center;
+}
+
+/* Pirate: тёплый золотой винетт сверху */
+[data-site-theme="pirate"] .app-main {
+  background-image:
+    radial-gradient(ellipse at top, rgba(212,166,72,0.06) 0%, transparent 60%);
+}
+
+/* Easter: мягкие пастельные пятна */
+[data-site-theme="easter"] .app-main {
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(255,180,200,0.18) 0%, transparent 40%),
+    radial-gradient(circle at 85% 75%, rgba(180,220,255,0.14) 0%, transparent 42%);
+}
+
+/* Valentine: радиальный розовый свет сверху */
+[data-site-theme="valentine"] .app-main {
+  background-image:
+    radial-gradient(ellipse at top, rgba(255,90,138,0.08) 0%, transparent 60%);
+}
+
+/* Sakura: мягкое розовое свечение сверху */
+[data-site-theme="sakura"] .app-main {
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(255,160,200,0.14) 0%, transparent 40%),
+    radial-gradient(ellipse at 85% 80%, rgba(200,180,255,0.12) 0%, transparent 42%);
+}
+
+/* Autumn: тёплое свечение как от камина */
+[data-site-theme="autumn"] .app-main {
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(232,138,60,0.06) 0%, transparent 50%);
+}
+
+/* Galaxy: туманность на фоне */
+[data-site-theme="galaxy"] .app-main {
+  background-image:
+    radial-gradient(ellipse at 20% 30%, rgba(180,138,255,0.09) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 70%, rgba(80,180,255,0.07) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 50%, rgba(255,120,200,0.05) 0%, transparent 50%);
+}
+
+/* Abyss: градиент глубины сверху вниз */
+[data-site-theme="abyss"] .app-main {
+  background-image:
+    linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.5) 100%),
+    radial-gradient(ellipse at 50% 100%, rgba(64,208,224,0.06) 0%, transparent 60%);
+}
+
+/* Dragon: пламенный винетт снизу */
+[data-site-theme="dragon"] .app-main {
+  background-image:
+    radial-gradient(ellipse at 50% 100%, rgba(255,80,20,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(255,160,40,0.06) 0%, transparent 35%);
+}
+
+/* Xeno: биомех-свечение + медленные сканлайны поверх всего */
+[data-site-theme="xeno"] .app-main {
+  background-image:
+    radial-gradient(ellipse at 15% 25%, rgba(191,232,48,0.06) 0%, transparent 42%),
+    radial-gradient(ellipse at 85% 75%, rgba(191,232,48,0.05) 0%, transparent 45%);
+}
+[data-site-theme="xeno"] .app-main::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 3px,
+    rgba(191,232,48,0.025) 3px 5px
+  );
+  z-index: 2;
+  mix-blend-mode: screen;
+}
+
+/* Cyber: add a subtle animated grid behind cards for extra flair */
+[data-site-theme="cyber"] .app-main {
+  background-image:
+    linear-gradient(rgba(255,46,200,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,240,255,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center center;
+}
+
+/* Alien: scanlines over the whole app */
+[data-site-theme="alien"] .app-main::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    rgba(57,255,20,0.025) 2px 4px
+  );
+  z-index: 2;
+}
+
+/* Opening trainer: per-line delete button appears on row hover / focus */
+[data-ui="op-line"]:hover .op-line-del-btn,
+[data-ui="op-line"]:focus-within .op-line-del-btn,
+.op-line-del-btn:focus-visible {
+  opacity: 1 !important;
+}
+.op-line-del-btn:hover {
+  color: var(--ivory) !important;
+  background: rgba(216,100,100,0.15) !important;
+  border-radius: 4px;
+}

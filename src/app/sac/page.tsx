@@ -638,12 +638,12 @@ function SacPageInner() {
       const bns = bnsRaw ? displayBestNoSac(current.fen, bnsRaw) : null;
       // need UCI for the arrow — if bnsRaw is UCI use it, else try to get from SAN
       if (bnsRaw && /^[a-h][1-8][a-h][1-8]/.test(bnsRaw)) {
-        sacArrows.push({ from: bnsRaw.slice(0, 2) as Square, to: bnsRaw.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best' });
+        sacArrows.push({ from: bnsRaw.slice(0, 2) as Square, to: bnsRaw.slice(2, 4) as Square, color: 'var(--accent)', style: 'dashed', role: 'best' });
       } else if (bns) {
         try {
           const ch = new Chess(current.fen);
           const mv = ch.move(bns);
-          if (mv) sacArrows.push({ from: mv.from as Square, to: mv.to as Square, color: '#81B64C', style: 'dashed', role: 'best' });
+          if (mv) sacArrows.push({ from: mv.from as Square, to: mv.to as Square, color: 'var(--accent)', style: 'dashed', role: 'best' });
         } catch { /* noop */ }
       }
     } else if (preview?.kind === 'line') {
@@ -665,7 +665,7 @@ function SacPageInner() {
           sacArrows.push({
             from: uci.slice(0, 2) as Square,
             to:   uci.slice(2, 4) as Square,
-            color: isOpp ? '#E0574A' : '#4A90E2',
+            color: isOpp ? 'var(--c-bad)' : 'color-mix(in srgb, var(--accent) 45%, var(--muted))',
             style: 'solid',
             opacity: 0.85,
             label: String(idx + 1),
@@ -689,13 +689,13 @@ function SacPageInner() {
           if (lineOppUci && lineOppUci.length >= 4) {
             sacArrows.push({
               from: lineOppUci.slice(0, 2) as Square, to: lineOppUci.slice(2, 4) as Square,
-              color: '#E0574A', style: 'solid', opacity: 0.85, label: '1', role: 'line-opp',
+              color: 'var(--c-bad)', style: 'solid', opacity: 0.85, label: '1', role: 'line-opp',
             });
           }
           if (planUci && planUci.length >= 4) {
             sacArrows.push({
               from: planUci.slice(0, 2) as Square, to: planUci.slice(2, 4) as Square,
-              color: '#4A90E2', style: 'solid', opacity: 0.7, label: '2', role: 'plan',
+              color: 'color-mix(in srgb, var(--accent) 45%, var(--muted))', style: 'solid', opacity: 0.7, label: '2', role: 'plan',
             });
           }
         }
@@ -709,7 +709,7 @@ function SacPageInner() {
           if (refuteUci && refuteUci.length >= 4) {
             sacArrows.push({
               from: refuteUci.slice(0, 2) as Square, to: refuteUci.slice(2, 4) as Square,
-              color: '#E0574A', style: 'solid', opacity: 0.85, role: 'threat',
+              color: 'var(--c-bad)', style: 'solid', opacity: 0.85, role: 'threat',
             });
           }
         }
@@ -786,7 +786,7 @@ function SacPageInner() {
         </div>
       )}
       {prepError && (
-        <div style={{ fontSize: 13, color: '#E0574A', lineHeight: 1.4 }}>{prepError}</div>
+        <div style={{ fontSize: 13, color: 'var(--c-bad)', lineHeight: 1.4 }}>{prepError}</div>
       )}
       <button
         onClick={preparing ? stopPrepare : handlePrepare}
@@ -846,11 +846,11 @@ function SacPageInner() {
             }}
           >
             {isCur && (
-              <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: '#81B64C' }} />
+              <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: 'var(--accent)' }} />
             )}
-            <div style={{ display: 'grid', placeItems: 'center', fontSize: 13, color: isCur ? '#81B64C' : 'var(--control)', fontWeight: isCur ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ display: 'grid', placeItems: 'center', fontSize: 13, color: isCur ? 'var(--accent)' : 'var(--control)', fontWeight: isCur ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
               {done
-                ? <span style={{ fontSize: 14, color: done.ok ? '#81B64C' : '#E0574A' }}>{done.ok ? '✓' : '✗'}</span>
+                ? <span style={{ fontSize: 14, color: done.ok ? 'var(--accent)' : 'var(--c-bad)' }}>{done.ok ? '✓' : '✗'}</span>
                 : <span>{i + 1}</span>
               }
             </div>
@@ -874,9 +874,9 @@ function SacPageInner() {
       title="Сессия"
       rightNote={positions.length > 0 ? `осталось ${positions.filter(p => !history.find(h => h.pos.id === p.id)).length}` : undefined}
       stats={[
-        { value: correctPct != null ? correctPct : 0, label: 'верных %', color: '#81B64C' },
+        { value: correctPct != null ? correctPct : 0, label: 'верных %', color: 'var(--accent)' },
         { value: stats.missedReal, label: 'пропустил', color: '#F4B45C' },
-        { value: stats.wrongFake, label: 'ложная', color: '#E0574A' },
+        { value: stats.wrongFake, label: 'ложная', color: 'var(--c-bad)' },
       ]}
       controls={filterToggle}
       prepBlock={prepBlock}
@@ -987,7 +987,7 @@ function SacPageInner() {
                   fontSize: 13, padding: '3px 10px', borderRadius: 20,
                   background: answered.ok ? 'rgba(129,182,76,.12)' : 'rgba(224,87,74,.12)',
                   border: `1px solid ${answered.ok ? 'rgba(129,182,76,.4)' : 'rgba(224,87,74,.4)'}`,
-                  color: answered.ok ? '#81B64C' : '#F08277',
+                  color: answered.ok ? 'var(--accent)' : '#F08277',
                 }}>
                   {answered.ok ? 'Верно' : 'Неверно'}
                 </span>
@@ -1000,7 +1000,7 @@ function SacPageInner() {
                   {buildChipText(current)}
                 </span>
                 {answered.ok && (
-                  <span style={{ fontSize: 13, padding: '3px 10px', borderRadius: 20, background: 'rgba(129,182,76,.12)', border: '1px solid rgba(129,182,76,.4)', color: '#81B64C' }}>
+                  <span style={{ fontSize: 13, padding: '3px 10px', borderRadius: 20, background: 'rgba(129,182,76,.12)', border: '1px solid rgba(129,182,76,.4)', color: 'var(--accent)' }}>
                     +20 XP
                   </span>
                 )}
@@ -1045,7 +1045,7 @@ function SacPageInner() {
               </div>
             )}
             {prepError && (
-              <div style={{ fontSize: 13, color: '#E0574A', lineHeight: 1.4 }}>{prepError}</div>
+              <div style={{ fontSize: 13, color: 'var(--c-bad)', lineHeight: 1.4 }}>{prepError}</div>
             )}
           </div>
         )}
@@ -1072,8 +1072,8 @@ function SacPageInner() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
               {[
                 { label: 'найдено', value: prepProgress.found, color: 'var(--ivory)' },
-                { label: 'работают', value: prepProgress.works, color: '#81B64C' },
-                { label: 'не работают', value: prepProgress.fails, color: '#E0574A' },
+                { label: 'работают', value: prepProgress.works, color: 'var(--accent)' },
+                { label: 'не работают', value: prepProgress.fails, color: 'var(--c-bad)' },
               ].map(({ label, value, color }) => (
                 <div key={label} style={{ padding: '10px 12px', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card)', textAlign: 'center' }}>
                   <b style={{ display: 'block', fontSize: 20, color, fontVariantNumeric: 'tabular-nums' }}>{value}</b>
@@ -1174,7 +1174,7 @@ function SacPageInner() {
                     <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
                       без жертвы{bnsSan ? ` (${bnsSan})` : ''}
                     </span>
-                    <b style={{ fontSize: 20, color: works ? 'var(--ivory)' : '#81B64C', fontVariantNumeric: 'tabular-nums' }}>
+                    <b style={{ fontSize: 20, color: works ? 'var(--ivory)' : 'var(--accent)', fontVariantNumeric: 'tabular-nums' }}>
                       {current.eval_no_sac != null ? cpToEvalStr(current.eval_no_sac) : '—'}
                     </b>
                   </div>
@@ -1185,7 +1185,7 @@ function SacPageInner() {
                     <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>
                       после {sacSan}
                     </span>
-                    <b style={{ fontSize: 20, color: works ? '#81B64C' : '#F08277', fontVariantNumeric: 'tabular-nums' }}>
+                    <b style={{ fontSize: 20, color: works ? 'var(--accent)' : '#F08277', fontVariantNumeric: 'tabular-nums' }}>
                       {current.eval_after != null ? cpToEvalStr(current.eval_after) : '—'}
                     </b>
                   </div>
@@ -1384,7 +1384,7 @@ function SacPageInner() {
                 </div>
                 <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--hairline-2)' }}>
                   <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600 }}>Получил</span>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: gotBad ? '#E0574A' : 'var(--ivory)' }}>{got}</span>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: gotBad ? 'var(--c-bad)' : 'var(--ivory)' }}>{got}</span>
                 </div>
               </div>
             </>
@@ -1401,10 +1401,10 @@ function SacPageInner() {
                 onClick={() => void handleAnswer('sac')}
                 style={{
                   flex: 1, height: 64, fontSize: 17, fontWeight: 700,
-                  background: 'rgba(240,164,58,.14)',
-                  border: '1px solid rgba(240,164,58,.55)',
-                  color: '#F4B45C',
-                  boxShadow: '0 4px 0 rgba(240,164,58,.25)',
+                  background: 'color-mix(in srgb, var(--c-warn) 14%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--c-warn) 55%, transparent)',
+                  color: 'var(--c-warn)',
+                  boxShadow: '0 4px 0 color-mix(in srgb, var(--c-warn) 25%, transparent)',
                   cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
@@ -1418,7 +1418,7 @@ function SacPageInner() {
                   flex: 1, height: 64, fontSize: 17, fontWeight: 700,
                   background: 'var(--surface-2)',
                   border: '1px solid var(--hairline-2)',
-                  color: '#E8E5E0',
+                  color: 'var(--ivory)',
                   boxShadow: '0 4px 0 rgba(0,0,0,.25)',
                   cursor: 'pointer', borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -1440,7 +1440,7 @@ function SacPageInner() {
               onClick={() => pickRandom(positions)}
               style={{
                 height: 52, fontSize: 18, fontWeight: 700,
-                background: '#81B64C', boxShadow: '0 4px 0 #5E8C35',
+                background: 'var(--accent)', boxShadow: 'var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4))',
                 color: '#fff', border: 'none', cursor: 'pointer',
                 borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
@@ -1502,7 +1502,7 @@ function SacPageInner() {
             onClick={startSolving}
             style={{
               height: 52, fontSize: 16, fontWeight: 700,
-              background: '#81B64C', boxShadow: '0 4px 0 #5E8C35',
+              background: 'var(--accent)', boxShadow: 'var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4))',
               color: '#fff', border: 'none', cursor: 'pointer',
               borderRadius: 'var(--radius-btn)', fontFamily: 'inherit',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,

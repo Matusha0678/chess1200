@@ -569,7 +569,7 @@ function CatalogUI({
             {/* Stats grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 2 }}>
               <div style={{ textAlign: 'center', padding: '8px 4px', background: 'var(--surface-2)', borderRadius: 'var(--radius-card, 0px)' }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#81B64C' }}>{totalSolved}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>{totalSolved}</div>
                 <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>решено</div>
               </div>
               <div style={{ textAlign: 'center', padding: '8px 4px', background: 'var(--surface-2)', borderRadius: 'var(--radius-card, 0px)' }}>
@@ -953,7 +953,7 @@ function EgCard({
   let statusColor = '';
   if (egStatus === 'solved' && progress?.bestMoves != null) {
     statusText = pluralMoves(progress.bestMoves);
-    statusColor = '#81B64C';
+    statusColor = 'var(--accent)';
   } else if (egStatus === 'tried' && progress) {
     statusText = pluralTries(progress.tries);
     statusColor = '#F4B45C';
@@ -1009,7 +1009,7 @@ function EgCard({
             gap: 6,
             fontSize: 13,
             fontWeight: 700,
-            background: '#81B64C',
+            background: 'var(--accent)',
             color: '#fff',
             boxShadow: '0 2px 6px rgba(0,0,0,.35)',
             zIndex: 2,
@@ -1025,7 +1025,7 @@ function EgCard({
         {egStatus === 'solved' && (
           <div style={{ position: 'absolute', right: 10, top: 10, zIndex: 2 }}>
             <svg width="28" height="28" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="11.5" fill="#81B64C" />
+              <circle cx="12" cy="12" r="11.5" fill="currentColor" />
               <path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
@@ -1046,13 +1046,13 @@ function EgCard({
             textAlign: 'center',
             zIndex: 3,
           }}>
-            <p style={{ fontSize: 15, color: '#F1EFEC', lineHeight: 1.45, margin: 0 }}>{eg.idea}</p>
+            <p style={{ fontSize: 15, color: 'var(--ivory)', lineHeight: 1.45, margin: 0 }}>{eg.idea}</p>
             <div style={{
               width: 54,
               height: 54,
               borderRadius: 27,
-              background: '#81B64C',
-              boxShadow: '0 4px 0 #5E8C35',
+              background: 'var(--accent)',
+              boxShadow: 'var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4))',
               display: 'grid',
               placeItems: 'center',
               color: '#fff',
@@ -1072,9 +1072,12 @@ function EgCard({
           style={{
             fontSize: 15,
             fontWeight: 600,
-            whiteSpace: 'nowrap',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            lineHeight: 1.3,
+            minHeight: '2.6em',
             color: 'var(--ivory)',
           }}
         >
@@ -1083,7 +1086,7 @@ function EgCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>
           <span style={{ color: DIFF_COLOR[eg.difficulty] }}>{DIFF_LABEL[eg.difficulty]}</span>
           <span style={{ color: 'var(--muted)', fontWeight: 400 }}>·</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#DCD8D3' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--ivory)' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`${pieceBaseUrl ?? FALLBACK_PIECES_URL}/${side}K.svg`} style={{ width: 17, height: 17 }} alt="" />
             {eg.goal === 'win' ? 'Выиграть' : 'Ничья'}

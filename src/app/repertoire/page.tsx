@@ -118,11 +118,11 @@ function clsLabel(cls: string | null, loss: number | null): string {
 }
 
 function clsBadge(cls: string | null, loss: number | null): { bg: string; text: string } {
-  if (loss === null || loss === undefined) return { bg: '#5E8C35', text: '✓' };
-  if (loss >= 0.20) return { bg: '#E0574A', text: '??' };
+  if (loss === null || loss === undefined) return { bg: 'var(--accent-press)', text: '✓' };
+  if (loss >= 0.20) return { bg: 'var(--c-bad)', text: '??' };
   if (loss >= 0.10) return { bg: '#E07050', text: '?' };
   if (loss >= 0.05) return { bg: '#F4B45C', text: '?!' };
-  return { bg: '#5E8C35', text: '✓' };
+  return { bg: 'var(--accent-press)', text: '✓' };
 }
 
 function resultLabel(result: 'win' | 'draw' | 'loss'): string {
@@ -328,7 +328,7 @@ function PlayerBar({ label, bottom, boardOrientation, openingLabel }: PlayerBarP
   const parts = label.split(' · ');
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 600 }}>
-      <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--surface2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+      <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
         <span style={{ fontSize: 18 }}>{bottom ? (boardOrientation === 'white' ? '♙' : '♟') : (boardOrientation === 'white' ? '♟' : '♙')}</span>
       </div>
       <span>{parts[0]}</span>
@@ -678,13 +678,13 @@ function RepertoirePage() {
       boardLastMove = { from: selDevGroup.prevUci.slice(0, 2) as Square, to: selDevGroup.prevUci.slice(2, 4) as Square };
     }
     if (selDevGroup.playedUci) {
-      boardArrows.push({ from: selDevGroup.playedUci.slice(0, 2) as Square, to: selDevGroup.playedUci.slice(2, 4) as Square, color: '#E0574A', style: 'solid', role: 'played', opacity: 0.85 });
+      boardArrows.push({ from: selDevGroup.playedUci.slice(0, 2) as Square, to: selDevGroup.playedUci.slice(2, 4) as Square, color: 'var(--c-bad)', style: 'solid', role: 'played', opacity: 0.85 });
     }
     if (selDevGroup.expectedUci[0]) {
-      boardArrows.push({ from: selDevGroup.expectedUci[0].slice(0, 2) as Square, to: selDevGroup.expectedUci[0].slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best', opacity: 0.95 });
+      boardArrows.push({ from: selDevGroup.expectedUci[0].slice(0, 2) as Square, to: selDevGroup.expectedUci[0].slice(2, 4) as Square, color: 'var(--accent)', style: 'dashed', role: 'best', opacity: 0.95 });
     }
     if (selDevGroup.expectedUci[1]) {
-      boardArrows.push({ from: selDevGroup.expectedUci[1].slice(0, 2) as Square, to: selDevGroup.expectedUci[1].slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best', opacity: 0.55 });
+      boardArrows.push({ from: selDevGroup.expectedUci[1].slice(0, 2) as Square, to: selDevGroup.expectedUci[1].slice(2, 4) as Square, color: 'var(--accent)', style: 'dashed', role: 'best', opacity: 0.55 });
     }
     const opp = selDevGroup.color === 'w' ? 'Чёрные' : 'Белые';
     const me = selDevGroup.color === 'w' ? 'Белые' : 'Чёрные';
@@ -731,8 +731,8 @@ function RepertoirePage() {
       if (lData && lData.moves) {
         const mv0 = lData.moves[0];
         const mv1 = lData.moves[1];
-        if (mv0?.uci) boardArrows.push({ from: mv0.uci.slice(0, 2) as Square, to: mv0.uci.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best', opacity: 0.95, label: '1' });
-        if (mv1?.uci) boardArrows.push({ from: mv1.uci.slice(0, 2) as Square, to: mv1.uci.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best', opacity: 0.55, label: '2' });
+        if (mv0?.uci) boardArrows.push({ from: mv0.uci.slice(0, 2) as Square, to: mv0.uci.slice(2, 4) as Square, color: 'var(--accent)', style: 'dashed', role: 'best', opacity: 0.95, label: '1' });
+        if (mv1?.uci) boardArrows.push({ from: mv1.uci.slice(0, 2) as Square, to: mv1.uci.slice(2, 4) as Square, color: 'var(--accent)', style: 'dashed', role: 'best', opacity: 0.55, label: '2' });
       }
     }
 
@@ -754,8 +754,8 @@ function RepertoirePage() {
       if (lData && lData.moves) {
         const mv0 = lData.moves[0];
         const mv1 = lData.moves[1];
-        if (mv0?.uci) boardArrows.push({ from: mv0.uci.slice(0, 2) as Square, to: mv0.uci.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best', opacity: 0.95, label: '1' });
-        if (mv1?.uci) boardArrows.push({ from: mv1.uci.slice(0, 2) as Square, to: mv1.uci.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best', opacity: 0.55, label: '2' });
+        if (mv0?.uci) boardArrows.push({ from: mv0.uci.slice(0, 2) as Square, to: mv0.uci.slice(2, 4) as Square, color: 'var(--accent)', style: 'dashed', role: 'best', opacity: 0.95, label: '1' });
+        if (mv1?.uci) boardArrows.push({ from: mv1.uci.slice(0, 2) as Square, to: mv1.uci.slice(2, 4) as Square, color: 'var(--accent)', style: 'dashed', role: 'best', opacity: 0.55, label: '2' });
       }
     }
 
@@ -989,7 +989,7 @@ function RepertoirePage() {
           const isSel = selLichessMove?.uci === mv.uci;
           return (
             <div key={mv.uci} style={{ display: 'grid', gridTemplateColumns: '22px 52px 1fr 84px 28px', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--ivory)' }}>
-              <span style={{ width: 20, height: 20, borderRadius: 10, background: i === 0 ? '#5E8C35' : '#4E6E33', color: '#fff', fontWeight: 800, fontSize: 12, display: 'grid', placeItems: 'center', flexShrink: 0 }}>{i + 1}</span>
+              <span style={{ width: 20, height: 20, borderRadius: 10, background: i === 0 ? 'var(--accent-press)' : '#4E6E33', color: '#fff', fontWeight: 800, fontSize: 12, display: 'grid', placeItems: 'center', flexShrink: 0 }}>{i + 1}</span>
               <b style={{ fontSize: 14, color: 'var(--ivory)' }}>{mv.san}</b>
               <div style={{ height: 6, borderRadius: 3, background: '#3A3835', overflow: 'hidden' }}>
                 <div style={{ height: '100%', background: 'var(--accent)', borderRadius: 3, opacity: 0.85, width: `${Math.round(mv.share * 100)}%` }} />
@@ -997,7 +997,7 @@ function RepertoirePage() {
               <span style={{ fontVariantNumeric: 'tabular-nums' }}>{Math.round(mv.share * 100)}% · {Math.round(mv.score * 100)}%</span>
               <button
                 onClick={() => setSelLichessMove(isSel ? mv : mv)}
-                style={{ width: 26, height: 24, borderRadius: 7, background: isSel ? 'var(--accent)' : 'var(--surface2)', border: '1px solid var(--hairline)', display: 'grid', placeItems: 'center', color: 'var(--ivory)', cursor: 'pointer', flexShrink: 0 }}
+                style={{ width: 26, height: 24, borderRadius: 7, background: isSel ? 'var(--accent)' : 'var(--surface-2)', border: '1px solid var(--hairline)', display: 'grid', placeItems: 'center', color: 'var(--ivory)', cursor: 'pointer', flexShrink: 0 }}
               >
                 <IconPlus size={13} />
               </button>
@@ -1062,12 +1062,12 @@ function RepertoirePage() {
       </div>
 
       {/* Color filter */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', margin: '14px 20px 0', background: 'var(--surface2)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn)', padding: 3, gap: 3 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', margin: '14px 20px 0', background: 'var(--surface-2)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn)', padding: 3, gap: 3 }}>
         {(['white','black','all'] as const).map(c => (
           <div
             key={c}
             onClick={() => { setColorFilter(c); saveFilters(c, periodFilter); setSelected(null); }}
-            style={{ height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, fontWeight: c === colorFilter ? 600 : 500, color: c === colorFilter ? 'var(--ivory)' : 'var(--muted)', background: c === colorFilter ? 'var(--surface3,#45423E)' : 'transparent', cursor: 'pointer' }}
+            style={{ height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, fontWeight: c === colorFilter ? 600 : 500, color: c === colorFilter ? 'var(--ivory)' : 'var(--muted)', background: c === colorFilter ? 'var(--row, var(--surface-2))' : 'transparent', cursor: 'pointer' }}
           >
             {c === 'white' ? 'Белыми' : c === 'black' ? 'Чёрными' : 'Все'}
           </div>
@@ -1075,12 +1075,12 @@ function RepertoirePage() {
       </div>
 
       {/* Period filter */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', margin: '8px 20px 0', background: 'var(--surface2)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn)', padding: 3, gap: 3 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', margin: '8px 20px 0', background: 'var(--surface-2)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn)', padding: 3, gap: 3 }}>
         {(['30d','all'] as const).map(p => (
           <div
             key={p}
             onClick={() => { setPeriodFilter(p); saveFilters(colorFilter, p); setSelected(null); }}
-            style={{ height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: p === periodFilter ? 600 : 500, color: p === periodFilter ? 'var(--ivory)' : 'var(--muted)', background: p === periodFilter ? 'var(--surface3,#45423E)' : 'transparent', cursor: 'pointer' }}
+            style={{ height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: p === periodFilter ? 600 : 500, color: p === periodFilter ? 'var(--ivory)' : 'var(--muted)', background: p === periodFilter ? 'var(--row, var(--surface-2))' : 'transparent', cursor: 'pointer' }}
           >
             {p === '30d' ? '30 дней' : 'Всё время'}
           </div>
@@ -1098,10 +1098,10 @@ function RepertoirePage() {
         <div
           data-ui="rep-opening"
           onClick={() => { setSelOpeningId(null); setSelected(null); }}
-          style={{ display: 'grid', gridTemplateColumns: '32px 1fr auto', alignItems: 'center', gap: 10, height: 54, padding: '0 10px', borderRadius: 10, cursor: 'pointer', position: 'relative', background: selOpeningId === null ? 'var(--surface3,#373532)' : 'transparent' }}
+          style={{ display: 'grid', gridTemplateColumns: '32px 1fr auto', alignItems: 'center', gap: 10, height: 54, padding: '0 10px', borderRadius: 10, cursor: 'pointer', position: 'relative', background: selOpeningId === null ? 'var(--row, var(--surface-2))' : 'transparent' }}
         >
           {selOpeningId === null && <div style={{ position: 'absolute', left: 0, top: 12, bottom: 12, width: 3, borderRadius: 3, background: 'var(--accent)' }} />}
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface2)', display: 'grid', placeItems: 'center', color: 'var(--muted)' }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', color: 'var(--muted)' }}>
             <IconLayoutGrid size={16} />
           </div>
           <div>
@@ -1125,10 +1125,10 @@ function RepertoirePage() {
                 key={opId}
                 data-ui="rep-opening"
                 onClick={() => { setSelOpeningId(opId); setSelected(null); }}
-                style={{ display: 'grid', gridTemplateColumns: '32px 1fr auto', alignItems: 'center', gap: 10, height: 54, padding: '0 10px', borderRadius: 10, cursor: 'pointer', position: 'relative', background: isActive ? 'var(--surface3,#373532)' : 'transparent' }}
+                style={{ display: 'grid', gridTemplateColumns: '32px 1fr auto', alignItems: 'center', gap: 10, height: 54, padding: '0 10px', borderRadius: 10, cursor: 'pointer', position: 'relative', background: isActive ? 'var(--row, var(--surface-2))' : 'transparent' }}
               >
                 {isActive && <div style={{ position: 'absolute', left: 0, top: 12, bottom: 12, width: 3, borderRadius: 3, background: 'var(--accent)' }} />}
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface2)', display: 'grid', placeItems: 'center' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}>
                   <span style={{ fontSize: 20 }}>{op.color === 'black' ? '♟' : '♙'}</span>
                 </div>
                 <div>
@@ -1153,13 +1153,13 @@ function RepertoirePage() {
           }
         </div>
         {checking && (
-          <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 2, overflow: 'hidden', marginBottom: 10 }}>
+          <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden', marginBottom: 10 }}>
             <div style={{ height: '100%', background: 'var(--accent)', borderRadius: 2, width: checkTotal > 0 ? `${Math.round(checkDone / checkTotal * 100)}%` : '0%', transition: 'width 0.3s' }} />
           </div>
         )}
         <button
           onClick={handleRecheck}
-          style={{ width: '100%', height: 44, borderRadius: 'var(--radius-btn)', background: 'var(--surface2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', cursor: 'pointer' }}
+          style={{ width: '100%', height: 44, borderRadius: 'var(--radius-btn)', background: 'var(--surface-2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', cursor: 'pointer' }}
         >
           <IconRepeat size={16} />Проверить заново
         </button>
@@ -1206,10 +1206,10 @@ function RepertoirePage() {
           {selOpeningId ? (openingMap.get(selOpeningId) ?? 'Дебют') : 'Все дебюты'}
         </div>
         <div data-ui="rep-opening" style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-          <div style={{ height: 28, borderRadius: 8, background: 'var(--surface2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', fontSize: 13, fontWeight: 500, color: 'var(--ivory)' }}>
+          <div style={{ height: 28, borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', fontSize: 13, fontWeight: 500, color: 'var(--ivory)' }}>
             {colorFilter === 'all' ? 'Белые и чёрные' : colorFilter === 'white' ? 'Белыми' : 'Чёрными'}
           </div>
-          <div style={{ height: 28, borderRadius: 8, background: 'var(--surface2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', fontSize: 13, fontWeight: 500, color: 'var(--ivory)' }}>
+          <div style={{ height: 28, borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', fontSize: 13, fontWeight: 500, color: 'var(--ivory)' }}>
             {periodFilter === '30d' ? '30 дней' : 'Всё время'}
           </div>
         </div>
@@ -1246,7 +1246,7 @@ function RepertoirePage() {
                     key={grp.key}
                     data-ui="rep-dev"
                     onClick={() => setSelected({ type: 'dev', key: grp.key })}
-                    style={{ borderRadius: 10, padding: '10px 12px', display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: 10, alignItems: 'start', border: `1px solid ${isOn ? 'var(--hairline)' : 'transparent'}`, background: isOn ? 'var(--surface3,#373532)' : 'transparent', cursor: 'pointer', marginBottom: 4 }}
+                    style={{ borderRadius: 10, padding: '10px 12px', display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: 10, alignItems: 'start', border: `1px solid ${isOn ? 'var(--hairline)' : 'transparent'}`, background: isOn ? 'var(--row, var(--surface-2))' : 'transparent', cursor: 'pointer', marginBottom: 4 }}
                   >
                     <div style={{ width: 28, height: 28, borderRadius: 14, display: 'grid', placeItems: 'center', color: '#fff', fontSize: 13, fontWeight: 800, marginTop: 1, background: badge.bg, flexShrink: 0 }}>
                       {badge.text}
@@ -1305,7 +1305,7 @@ function RepertoirePage() {
                     key={hGrp.key}
                     data-ui="rep-hole"
                     onClick={() => setSelected({ type: 'hole', key: hGrp.key })}
-                    style={{ borderRadius: 10, padding: '10px 12px', display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: 10, alignItems: 'start', border: `1px solid ${isOn ? 'var(--hairline)' : 'transparent'}`, background: isOn ? 'var(--surface3,#373532)' : 'transparent', cursor: 'pointer', marginBottom: 4 }}
+                    style={{ borderRadius: 10, padding: '10px 12px', display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: 10, alignItems: 'start', border: `1px solid ${isOn ? 'var(--hairline)' : 'transparent'}`, background: isOn ? 'var(--row, var(--surface-2))' : 'transparent', cursor: 'pointer', marginBottom: 4 }}
                   >
                     <div style={{ width: 28, height: 28, borderRadius: 14, display: 'grid', placeItems: 'center', color: '#fff', marginTop: 1, background: '#C98424', flexShrink: 0 }}>
                       <IconBookX size={15} />
@@ -1335,7 +1335,7 @@ function RepertoirePage() {
                     key={nGrp.key}
                     data-ui="rep-nolines"
                     onClick={() => setSelected({ type: 'noline', key: nGrp.key })}
-                    style={{ borderRadius: 10, padding: '10px 12px', display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: 10, alignItems: 'start', border: `1px solid ${isOn ? 'var(--hairline)' : 'transparent'}`, background: isOn ? 'var(--surface3,#373532)' : 'transparent', cursor: 'pointer', marginBottom: 4 }}
+                    style={{ borderRadius: 10, padding: '10px 12px', display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: 10, alignItems: 'start', border: `1px solid ${isOn ? 'var(--hairline)' : 'transparent'}`, background: isOn ? 'var(--row, var(--surface-2))' : 'transparent', cursor: 'pointer', marginBottom: 4 }}
                   >
                     <div style={{ width: 28, height: 28, borderRadius: 14, display: 'grid', placeItems: 'center', marginTop: 1, background: '#4A4744', flexShrink: 0 }}>
                       <span style={{ fontSize: 20 }}>{nGrp.color === 'w' ? '♟' : '♙'}</span>
@@ -1365,7 +1365,7 @@ function RepertoirePage() {
             <button
               data-ui="rep-repeat"
               onClick={handleRepeatLine}
-              style={{ width: '100%', height: 52, borderRadius: 'var(--radius-btn)', background: 'var(--accent)', boxShadow: '0 4px 0 #5E8C35', color: '#fff', fontSize: 17, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer', border: 'none' }}
+              style={{ maxWidth: 420, width: '100%', height: 52, borderRadius: 'var(--radius-btn)', background: 'var(--accent)', boxShadow: 'var(--shadow-btn, var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4)))', color: 'var(--accent-contrast, #fff)', fontSize: 17, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer', border: 'none' }}
             >
               <IconGitBranch size={18} />
               Повторить линию
@@ -1374,13 +1374,13 @@ function RepertoirePage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
               <button
                 onClick={handleAddToMistakes}
-                style={{ height: 44, borderRadius: 'var(--radius-btn)', background: 'var(--surface2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', cursor: 'pointer' }}
+                style={{ height: 44, borderRadius: 'var(--radius-btn)', background: 'var(--surface-2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', cursor: 'pointer' }}
               >
                 <IconCircleAlert size={16} />В тренажёр ошибок
               </button>
               {selDevGroup.gameIds[0] && (
                 <Link href={`/games/${selDevGroup.gameIds[selDevGroup.gameIds.length - 1]}`}
-                  style={{ height: 44, borderRadius: 'var(--radius-btn)', background: 'var(--surface2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', textDecoration: 'none' }}
+                  style={{ height: 44, borderRadius: 'var(--radius-btn)', background: 'var(--surface-2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', textDecoration: 'none' }}
                 >
                   <IconExternalLink size={16} />Открыть партию
                 </Link>
@@ -1403,7 +1403,7 @@ function RepertoirePage() {
               <Link
                 data-ui="rep-add"
                 href="/openings/new"
-                style={{ width: '100%', height: 52, borderRadius: 'var(--radius-btn)', background: 'var(--accent)', boxShadow: '0 4px 0 #5E8C35', color: '#fff', fontSize: 17, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, textDecoration: 'none' }}
+                style={{ maxWidth: 420, width: '100%', height: 52, borderRadius: 'var(--radius-btn)', background: 'var(--accent)', boxShadow: 'var(--shadow-btn, var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4)))', color: 'var(--accent-contrast, #fff)', fontSize: 17, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, textDecoration: 'none' }}
               >
                 <IconPlus size={18} />
                 Создать дебют против {moveLabel(hGrp.moveNumber, hGrp.color, hGrp.played)}
@@ -1417,7 +1417,7 @@ function RepertoirePage() {
                 data-ui="rep-add"
                 onClick={handleAddLine}
                 disabled={!addMove}
-                style={{ width: '100%', height: 52, borderRadius: 'var(--radius-btn)', background: addMove ? 'var(--accent)' : 'var(--surface2)', boxShadow: addMove ? '0 4px 0 #5E8C35' : 'none', color: addMove ? '#fff' : 'var(--muted)', fontSize: 17, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: addMove ? 'pointer' : 'default', border: 'none' }}
+                style={{ maxWidth: 420, width: '100%', height: 52, borderRadius: 'var(--radius-btn)', background: addMove ? 'var(--accent)' : 'var(--surface-2)', boxShadow: addMove ? 'var(--shadow-btn, var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4)))' : 'none', color: addMove ? 'var(--accent-contrast, #fff)' : 'var(--muted)', fontSize: 17, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: addMove ? 'pointer' : 'default', border: 'none' }}
               >
                 <IconPlus size={18} />
                 {addMove
@@ -1428,7 +1428,7 @@ function RepertoirePage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginTop: 12 }}>
                 {hGrp.gameIds[0] && (
                   <Link href={`/games/${hGrp.gameIds[0]}`}
-                    style={{ height: 44, borderRadius: 'var(--radius-btn)', background: 'var(--surface2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', textDecoration: 'none' }}
+                    style={{ height: 44, borderRadius: 'var(--radius-btn)', background: 'var(--surface-2)', border: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', textDecoration: 'none' }}
                   >
                     <IconExternalLink size={16} />Открыть партию
                   </Link>

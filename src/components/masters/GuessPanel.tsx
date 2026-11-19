@@ -67,7 +67,7 @@ function Chip({ children, style }: { children: React.ReactNode; style?: React.CS
 }
 
 function PtsSquare({ pts }: { pts: 0 | 1 | 2 }) {
-  const bg = pts === 2 ? '#81B64C' : pts === 1 ? '#F0A43A' : '#E0574A';
+  const bg = pts === 2 ? 'var(--accent)' : pts === 1 ? '#F0A43A' : 'var(--c-bad)';
   return (
     <span style={{
       display: 'inline-block', width: 20, height: 20, lineHeight: '20px', textAlign: 'center',
@@ -191,10 +191,11 @@ export function GuessPanel({
               onClick={onStart}
               disabled={startDisabled}
               style={{
-                padding: '12px', fontSize: 15, fontWeight: 600,
+                padding: '12px 20px', fontSize: 15, fontWeight: 600,
                 background: startDisabled ? 'var(--hairline)' : 'var(--accent)',
-                color: startDisabled ? 'var(--muted)' : '#fff',
+                color: startDisabled ? 'var(--muted)' : 'var(--accent-contrast, #fff)',
                 border: 'none', borderRadius: 'var(--radius-btn, 6px)', cursor: startDisabled ? 'default' : 'pointer',
+                maxWidth: 420, alignSelf: 'flex-start', minWidth: 220,
               }}
             >
               {startLabel}
@@ -222,7 +223,7 @@ export function GuessPanel({
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
-                <span style={{ display: 'inline-block', width: 20, height: 20, background: '#81B64C', color: '#fff', textAlign: 'center', lineHeight: '20px', fontSize: 13, fontWeight: 700, borderRadius: 3 }}>2</span>
+                <span style={{ display: 'inline-block', width: 20, height: 20, background: 'var(--accent)', color: '#fff', textAlign: 'center', lineHeight: '20px', fontSize: 13, fontWeight: 700, borderRadius: 3 }}>2</span>
                 <span style={{ color: 'var(--muted)' }}>ход мастера или сильнее</span>
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
@@ -434,7 +435,7 @@ export function GuessPanel({
     })();
 
     const explanations = explain(item);
-    const verdictStyle = verdict === 'master' || verdict === 'better' ? '#81B64C' : verdict === 'engine' ? '#F0A43A' : '#E0574A';
+    const verdictStyle = verdict === 'master' || verdict === 'better' ? 'var(--accent)' : verdict === 'engine' ? '#F0A43A' : 'var(--c-bad)';
 
     return (
       <TaskPanel
@@ -573,7 +574,7 @@ export function GuessPanel({
                 <div style={{ fontSize: 13, color: 'var(--muted)' }}>как мастер</div>
               </div>
               <div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: newRecord ? '#81B64C' : 'var(--ivory)', lineHeight: 1 }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: newRecord ? 'var(--accent)' : 'var(--ivory)', lineHeight: 1 }}>
                   {newRecord ? 'Новый рекорд!' : (record ?? '—')}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--muted)' }}>рекорд</div>

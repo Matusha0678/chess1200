@@ -56,8 +56,8 @@ function getStatus(op: CatalogOpening): 'due' | 'new' | 'mastered' | 'learning' 
 }
 
 function statusBadge(op: CatalogOpening) {
-  if (op.due > 0) return { text: `Повторить · ${op.due}`, bg: '#E8A23A', color: '#fff' };
-  if (op.newLines > 0) return { text: `Новых · ${op.newLines}`, bg: '#3F5E7E', color: '#fff' };
+  if (op.due > 0) return { text: `Повторить · ${op.due}`, bg: 'var(--accent)', color: 'var(--accent-contrast)' };
+  if (op.newLines > 0) return { text: `Новых · ${op.newLines}`, bg: 'color-mix(in srgb, var(--accent) 32%, var(--surface))', color: 'var(--ivory)' };
   return null;
 }
 
@@ -196,17 +196,17 @@ export default function OpeningsPage() {
               <span style={{ fontSize: 13, color: 'var(--muted)' }}>{totalMastered} из {totalLines} освоено</span>
             </div>
             <div style={{ height: 6, background: 'var(--hairline)', borderRadius: 3, overflow: 'hidden', marginBottom: 14, display: 'flex' }}>
-              <div style={{ height: '100%', width: totalLines > 0 ? `${(totalMastered / totalLines) * 100}%` : '0%', background: '#81B64C', transition: 'width 0.3s' }} />
-              <div style={{ height: '100%', width: totalLines > 0 ? `${(totalLearning / totalLines) * 100}%` : '0%', background: '#B088D8', transition: 'width 0.3s' }} />
+              <div style={{ height: '100%', width: totalLines > 0 ? `${(totalMastered / totalLines) * 100}%` : '0%', background: 'var(--accent)', transition: 'width 0.3s' }} />
+              <div style={{ height: '100%', width: totalLines > 0 ? `${(totalLearning / totalLines) * 100}%` : '0%', background: 'color-mix(in srgb, var(--accent) 50%, var(--surface))', transition: 'width 0.3s' }} />
             </div>
 
             {/* Stats */}
             <div data-ui="op-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6, marginBottom: 14 }}>
               {[
-                { v: totalDue,      label: 'повторить', color: '#E8A23A' },
-                { v: totalMastered, label: 'освоено',   color: '#81B64C' },
-                { v: totalLearning, label: 'изучаю',    color: '#B088D8' },
-                { v: totalNew,      label: 'новых',     color: '#8FB4DA' },
+                { v: totalDue,      label: 'повторить', color: 'var(--accent)' },
+                { v: totalMastered, label: 'освоено',   color: 'var(--ivory)' },
+                { v: totalLearning, label: 'изучаю',    color: 'color-mix(in srgb, var(--accent) 65%, var(--ivory))' },
+                { v: totalNew,      label: 'новых',     color: 'var(--muted)' },
               ].map(item => (
                 <div key={item.label} style={{ textAlign: 'center', padding: '8px 4px', background: 'rgba(0,0,0,0.2)', borderRadius: 6 }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: item.color }}>{item.v}</div>
@@ -442,7 +442,7 @@ function OpeningCard({ op, isHovered, onHover, isDemo }: {
         {st === 'mastered' && (
           <div style={{ position: 'absolute', right: 10, top: 10, zIndex: 2 }}>
             <svg width="28" height="28" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="11.5" fill="#81B64C" />
+              <circle cx="12" cy="12" r="11.5" fill="currentColor" />
               <path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
@@ -460,11 +460,11 @@ function OpeningCard({ op, isHovered, onHover, isDemo }: {
               gap: 14, padding: 20, textAlign: 'center', zIndex: 3,
             }}
           >
-            <p style={{ fontSize: 14, color: '#F1EFEC', lineHeight: 1.45, margin: 0 }}>{ctaText(op)}</p>
+            <p style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.45, margin: 0 }}>{ctaText(op)}</p>
             <div style={{
               width: 48, height: 48, borderRadius: 24,
-              background: '#81B64C', boxShadow: '0 3px 0 #5E8C35',
-              display: 'grid', placeItems: 'center', color: '#fff',
+              background: 'var(--accent)', boxShadow: '0 3px 0 var(--accent-press)',
+              display: 'grid', placeItems: 'center', color: 'var(--accent-contrast)',
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 3 }}>
                 <polygon points="5,3 19,12 5,21" />
@@ -478,7 +478,9 @@ function OpeningCard({ op, isHovered, onHover, isDemo }: {
       <div style={{ padding: '12px 14px 14px' }}>
         <div data-ui="eg-card-title" style={{
           fontSize: 15, fontWeight: 600, color: 'var(--ivory)',
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 6,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden', lineHeight: 1.3, minHeight: '2.6em',
+          marginBottom: 6,
         }}>
           {op.name}
         </div>
@@ -493,18 +495,18 @@ function OpeningCard({ op, isHovered, onHover, isDemo }: {
           <div style={{
             height: '100%',
             width: op.totalLines > 0 ? `${(op.mastered / op.totalLines) * 100}%` : '0%',
-            background: '#81B64C', transition: 'width 0.3s',
+            background: 'var(--accent)', transition: 'width 0.3s',
           }} />
           <div style={{
             height: '100%',
             width: op.totalLines > 0 ? `${(op.learning / op.totalLines) * 100}%` : '0%',
-            background: '#B088D8', transition: 'width 0.3s',
+            background: 'color-mix(in srgb, var(--accent) 50%, var(--surface))', transition: 'width 0.3s',
           }} />
         </div>
         <div style={{ fontSize: 13, color: 'var(--muted)' }}>
           {op.mastered > 0 && <>освоено {op.mastered}/{op.totalLines}</>}
           {op.mastered > 0 && op.learning > 0 && <> · </>}
-          {op.learning > 0 && <span style={{ color: '#B088D8' }}>изучаю {op.learning}</span>}
+          {op.learning > 0 && <span style={{ color: 'color-mix(in srgb, var(--accent) 65%, var(--ivory))' }}>изучаю {op.learning}</span>}
           {op.mastered === 0 && op.learning === 0 && <>освоено 0/{op.totalLines}</>}
         </div>
       </div>
