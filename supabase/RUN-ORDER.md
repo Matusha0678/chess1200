@@ -42,3 +42,5 @@
 | 34-opening-trainer.sql | line_study, opening_practice_log — если их ещё нет (тренажёр дебютов) |
 | 34-pages2.sql | trap_progress, position_explorer, sprint_log, puzzles.opening_key — ловушки, идеи, спринт |
 | 36-lesson-notes-line.sql | lesson_notes.line_order — заметки к ходам по линиям урока |
+| 37-line-progress-rls.sql | RLS allow-all для line_progress и line_move_progress |
+| 38-masters-analysis.sql | master_games.analysis, guess_log.mode/skip/moments — «Угадай ход» |
