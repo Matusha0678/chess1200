@@ -11,7 +11,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import type { MistakeCard } from '@/lib/mistakes';
 import { TAG_LABEL } from '@/lib/mistakes';
-import { CLASS_LABEL, CLASS_COLOR, type MoveClass } from '@/lib/classify';
+import { CLASS_LABEL, CLASS_COLOR, explainMove, type MoveClass } from '@/lib/classify';
 import { ClassIcon } from '@/components/ClassIcon';
 import { checkGameFull, buildIndex, parsePgnMoves, repHash, type Opening, type OpeningLine, type CheckResult } from '@/lib/repertoire';
 
@@ -848,15 +848,21 @@ export default function GameViewerPage({ params }: Props) {
                   </span>
                 )}
               </div>
-              {/* Best move hint + eval */}
+              {/* Explanation */}
+              {selectedAnalysis?.classification && selectedAnalysis.eval_before != null && selectedAnalysis.eval_after != null && (
+                <div style={{ fontSize: 13, lineHeight: 1.4, color: 'var(--ivory)' }}>
+                  {explainMove({
+                    cls: selectedAnalysis.classification,
+                    playedSan: selectedMove.san,
+                    bestSan: selectedAnalysis.best_move ?? undefined,
+                    evalBefore: selectedAnalysis.eval_before,
+                    evalAfter: selectedAnalysis.eval_after,
+                    color: selectedMove.color as 'w' | 'b',
+                  })}
+                </div>
+              )}
+              {/* Eval delta */}
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-                {selectedAnalysis?.best_move &&
-                 selectedAnalysis.classification &&
-                 ERROR_CLASSES.has(selectedAnalysis.classification) && (
-                  <span style={{ fontSize: 13, color: 'var(--accent)' }}>
-                    Лучше было {selectedAnalysis.best_move}
-                  </span>
-                )}
                 <span style={{ fontSize: 12, color: 'var(--muted)', marginLeft: 'auto' }}>
                   {fmtEval(selectedAnalysis?.eval_before ?? null)}
                   {' → '}

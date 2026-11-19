@@ -289,7 +289,7 @@ export default function RandomOpeningPage() {
 
   const requestStockfishMove = useCallback(
     (currentFen: string, pc: 'w' | 'b') => {
-      getBestMove(currentFen, 12, (uciMove) => {
+      getBestMove(currentFen, 14, (uciMove) => {
         const from = uciMove.slice(0, 2) as `${'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h'}${'1' | '2' | '3' | '4' | '5' | '6' | '7' | '8'}`;
         const to = uciMove.slice(2, 4) as typeof from;
         const promotion = uciMove[4] as 'q' | 'r' | 'b' | 'n' | undefined;

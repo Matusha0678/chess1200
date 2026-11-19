@@ -222,7 +222,7 @@ export default function EvaluatePage() {
     if (!myEval || !fen) return;
     setAnalyzing(true);
     if (isReady) {
-      getEval(fen, 12, (result) => {
+      getEval(fen, 18, (result) => {
         const cp = result.cp ?? (result.mate ? (result.mate > 0 ? 9000 : -9000) : 0);
         const turn = fen.split(' ')[1];
         const cpFromWhite = turn === 'w' ? cp : -cp;

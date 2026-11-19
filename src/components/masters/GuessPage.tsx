@@ -162,7 +162,7 @@ export function GuessPage({
       if (stopAnalysisRef.current) break;
       const mv = moves[i];
 
-      const lines = await new Promise<MultiPVLine[]>(res => getMultiPV(mv.fen, 10, 3, res));
+      const lines = await new Promise<MultiPVLine[]>(res => getMultiPV(mv.fen, 14, 3, res));
       const top3: AnalysisEntry['top'] = lines.map(l => ({
         uci: l.move,
         cp: l.mate != null ? (l.mate > 0 ? 9900 : -9900) : (l.cp ?? 0),
@@ -178,7 +178,7 @@ export function GuessPage({
       if (inTop) {
         master_cp = inTop.cp;
       } else {
-        const evalAfter = await new Promise<{ cp?: number; mate?: number }>(res => getEval(mv.fenAfter, 10, r => res(r)));
+        const evalAfter = await new Promise<{ cp?: number; mate?: number }>(res => getEval(mv.fenAfter, 14, r => res(r)));
         const rawCp = evalAfter.mate != null ? (evalAfter.mate > 0 ? 9900 : -9900) : (evalAfter.cp ?? 0);
         master_cp = -rawCp; // from opponent's perspective → flip
       }
@@ -347,7 +347,7 @@ export function GuessPage({
         const ch2 = new Chess(fen);
         ch2.move({ from, to, promotion: 'q' });
         const fenAfterUser = ch2.fen();
-        getEval(fenAfterUser, 12, r => {
+        getEval(fenAfterUser, 16, r => {
           const rawCp = r.mate != null ? (r.mate > 0 ? 9900 : -9900) : (r.cp ?? 0);
           const userCpFromEngine = -rawCp; // flip from opponent's perspective
           setResultData(prev => prev ? { ...prev, userCpVal: userCpFromEngine } : prev);

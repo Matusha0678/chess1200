@@ -388,7 +388,7 @@ function TrapsPageInner() {
       // 'other' — check with Stockfish
       if (sfReady && activeTrap) {
         setAvoidResultText({ ok: true, text: 'Проверяем движком…' });
-        getEval(fenBefore(activeTrap.trap.moves, activeTrap.trap.mistakePly), 12, (res) => {
+        getEval(fenBefore(activeTrap.trap.moves, activeTrap.trap.mistakePly), 16, (res) => {
           const cp = res.cp != null ? res.cp / 100 : null;
           if (cp != null && Math.abs(cp) <= 0.8) {
             setAvoidResultText({ ok: true, text: `Можно и так. Чаще играют ${activeTrap.trap.safe[0] ?? 'из безопасных'}.` });

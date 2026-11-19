@@ -260,7 +260,7 @@ export function useStockfish() {
       isAnalyzingRef.current  = true;
       workerRef.current.postMessage('stop');
       workerRef.current.postMessage(`position fen ${fen}`);
-      workerRef.current.postMessage('go depth 18');
+      workerRef.current.postMessage('go depth 20');
     },
     [isReady],
   );

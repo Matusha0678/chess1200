@@ -60,6 +60,23 @@ export function classifyMove(input: ClassifyInput): MoveClass {
 
   const s = STRICTNESS[phase] ?? 1.0;
 
+  // ── 0. Position-context guards ────────────────────────────────────────────
+  // Mate-preserving: if mover's eval goes from winning-mate to still winning
+  // (both evals clearly winning for mover, |eval| ≥ 500 both before and after),
+  // the move cannot be worse than "good" — mover is still winning.
+  const moverCpBefore = color === 'w' ? evalBefore : -evalBefore;
+  const moverCpAfter  = color === 'w' ? evalAfter  : -evalAfter;
+  const stillCrushing = moverCpBefore >= 500 && moverCpAfter >= 500;
+
+  // Already-lost: if mover was already losing (mWpBefore < 0.10), can't blunder
+  // further. Cap classification to "inaccuracy" at worst.
+  const alreadyLost = mWpBefore < 0.10;
+
+  // Winning-position relaxation: if mover was clearly winning (≥0.90), small
+  // win-prob drops are expected (engine lines converge to narrow evals).
+  // Apply extra leniency ×2 to loss thresholds.
+  const winningRelax = mWpBefore >= 0.90 ? 2.0 : 1.0;
+
   // ── 1. Brilliant: best/excellent + real sacrifice + balanced position ─────
   if ((isEngineMove || loss <= 0.02) && hasRealSacrifice) {
     if (mWpBefore >= 0.45 && mWpBefore <= 0.90) return 'brilliant';
@@ -90,12 +107,22 @@ export function classifyMove(input: ClassifyInput): MoveClass {
     mWpAfter >= 0.40
   ) return 'miss';
 
-  // ── 5. Standard (with phase strictness) ──────────────────────────────────
-  if (isEngineMove || loss < 0.005 * s) return 'best';
-  if (loss <= 0.02 * s)                  return 'excellent';
-  if (loss <= 0.05 * s)                  return 'good';
-  if (loss <= 0.10 * s)                  return 'inaccuracy';
-  if (loss <= 0.20 * s)                  return 'mistake';
+  // ── 5. Standard (with phase strictness + position context) ───────────────
+  const eff = s * winningRelax;
+  if (isEngineMove || loss < 0.005 * eff) return 'best';
+  if (loss <= 0.02 * eff)                  return 'excellent';
+  if (loss <= 0.05 * eff)                  return 'good';
+
+  // Mate-preserving guard: still crushing → at worst "good".
+  if (stillCrushing) return 'good';
+
+  if (loss <= 0.10 * eff)                  return 'inaccuracy';
+
+  // Already-lost guard: losing position can only accumulate inaccuracies,
+  // not real blunders/mistakes (you can't blunder a lost game).
+  if (alreadyLost)                         return 'inaccuracy';
+
+  if (loss <= 0.20 * eff)                  return 'mistake';
   return 'blunder';
 }
 
@@ -140,3 +167,68 @@ export const CLASS_COLOR: Record<MoveClass, string> = {
   miss:       '#e06030',
   blunder:    '#d9534f',
 };
+
+// ── Explanations ──────────────────────────────────────────────────────────────
+
+export interface ExplainInput {
+  cls: MoveClass;
+  playedSan: string;
+  bestSan?: string;
+  evalBefore: number;   // centipawns, white POV
+  evalAfter:  number;   // centipawns, white POV
+  color: 'w' | 'b';
+}
+
+/** Describe centipawn delta as a Russian phrase from mover's perspective. */
+function describeMaterial(deltaCp: number): string {
+  const abs = Math.abs(deltaCp);
+  if (abs >= 900)  return 'в размере ферзя';
+  if (abs >= 500)  return 'в размере ладьи';
+  if (abs >= 300)  return 'в размере фигуры';
+  if (abs >= 100)  return 'в размере пешки';
+  return 'небольшое';
+}
+
+/**
+ * Short Russian one-sentence explanation of a move's quality.
+ * Does not depend on engine PV — synthesizes from class + eval delta.
+ */
+export function explainMove(input: ExplainInput): string {
+  const { cls, bestSan, evalBefore, evalAfter, color } = input;
+
+  // Mover's centipawn delta (positive = mover gained)
+  const moverBefore = color === 'w' ? evalBefore : -evalBefore;
+  const moverAfter  = color === 'w' ? evalAfter  : -evalAfter;
+  const delta = moverAfter - moverBefore; // negative = loss for mover
+  const magnitude = describeMaterial(delta);
+
+  const suggest = bestSan ? ` Лучше было ${bestSan}.` : '';
+
+  switch (cls) {
+    case 'brilliant':
+      return `Блестящий ход! Жертва с сильной компенсацией.`;
+    case 'great':
+      return `Отличный ход — единственный сохраняющий преимущество.`;
+    case 'best':
+      return `Лучший ход по мнению движка.`;
+    case 'excellent':
+      return `Очень хороший ход — позиция сохраняется.`;
+    case 'good':
+      return `Хороший ход — без потерь.`;
+    case 'book':
+      return `Теоретическое продолжение.`;
+    case 'miss':
+      return `Упустил шанс: соперник только что ошибся, но ход не ловит преимущество.${suggest}`;
+    case 'inaccuracy':
+      return `Неточность — теряешь часть преимущества (${magnitude}).${suggest}`;
+    case 'mistake':
+      return `Ошибка — отдаёшь преимущество${delta <= -200 ? ` ${magnitude}` : ''}.${suggest}`;
+    case 'blunder':
+      if (moverAfter <= -500 && moverBefore >= -100) {
+        return `Зевок — позиция стала проигранной${moverAfter <= -800 ? ' безнадёжно' : ''}.${suggest}`;
+      }
+      return `Зевок — потеря ${magnitude}.${suggest}`;
+    default:
+      return '';
+  }
+}

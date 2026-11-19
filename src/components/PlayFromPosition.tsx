@@ -219,7 +219,7 @@ export default function PlayFromPosition({
   // ── Stockfish move ────────────────────────────────────────────────────────────
 
   const requestStockfishMove = useCallback((currentFen: string, pc: 'w' | 'b') => {
-    getBestMove(currentFen, 12, (uciMove) => {
+    getBestMove(currentFen, 14, (uciMove) => {
       setTimeout(() => {
         try {
           const from = uciMove.slice(0, 2);
@@ -314,7 +314,7 @@ export default function PlayFromPosition({
   const handleHint = useCallback(() => {
     if (phase !== 'playing' || isProcessingRef.current || !sfReady) return;
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
-    getBestMove(chessRef.current.fen(), 10, (uciMove) => {
+    getBestMove(chessRef.current.fen(), 16, (uciMove) => {
       setHintArrow(uciMove);
       hintTimerRef.current = setTimeout(() => setHintArrow(null), 2500);
     });

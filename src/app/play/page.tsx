@@ -12,7 +12,7 @@ import type { BoardArrow, BadgeKind } from '@/components/board/Board';
 import { ClassIcon } from '@/components/ClassIcon';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
 import { CONVERT_POSITIONS } from '@/data/convert';
-import { classifyMove, computeAccuracy, CLASS_LABEL, CLASS_COLOR, winProb, type MoveClass } from '@/lib/classify';
+import { classifyMove, computeAccuracy, CLASS_LABEL, CLASS_COLOR, explainMove, winProb, type MoveClass } from '@/lib/classify';
 import { createBrowserEngine } from '@/lib/engine';
 import type { Engine } from '@/lib/engine';
 
@@ -49,6 +49,7 @@ interface CoachInfo {
   evalAfter: number;
   bestMoveSan: string;
   bestMoveUci: string;
+  color: 'w' | 'b';
 }
 
 interface KeyMistake {
@@ -547,7 +548,7 @@ function PlayContent() {
   // ── Stockfish move ────────────────────────────────────────────────────────
 
   const requestStockfishMove = useCallback((currentFen: string, pc: PlayerColor, startFen: string, md: PlayMode, lvl: number) => {
-    getBestMove(currentFen, 12, (uciMove) => {
+    getBestMove(currentFen, 14, (uciMove) => {
       setTimeout(() => {
         try {
           const chess = chessRef.current;
@@ -576,7 +577,7 @@ function PlayContent() {
             }
             if (showEvalBar) {
               setIsEvalAnalyzing(true);
-              getEval(newFen, 16, (result) => {
+              getEval(newFen, 18, (result) => {
                 const sideToMove = newFen.split(' ')[1] ?? 'w';
                 let cpW: number;
                 if (result.mate !== undefined) {
@@ -603,7 +604,7 @@ function PlayContent() {
     if (!coachEngineReady.current || !coachEngineRef.current) return;
     const engine = coachEngineRef.current;
     try {
-      const beforeLines = await engine.analyse(fenBefore, { depth: 12, multipv: 2 });
+      const beforeLines = await engine.analyse(fenBefore, { depth: 16, multipv: 2 });
       const evalBefore = beforeLines[0] ? lineToWhiteCp(beforeLines[0]) : 0;
       const evalSecondBest = beforeLines[1] ? lineToWhiteCp(beforeLines[1]) : undefined;
       const bestMoveUci = beforeLines[0]?.move ?? '';
@@ -616,7 +617,7 @@ function PlayContent() {
       } else if (chessAfter.isDraw()) {
         evalAfter = 0;
       } else {
-        const afterLines = await engine.analyse(fenAfter, { depth: 12 });
+        const afterLines = await engine.analyse(fenAfter, { depth: 16 });
         evalAfter = afterLines[0] ? lineToWhiteCp(afterLines[0]) : 0;
       }
 
@@ -641,7 +642,7 @@ function PlayContent() {
 
       const moveNum = Number(fenBefore.split(' ')[5]);
       const info: CoachInfo = {
-        cls, san, moveNum, evalBefore, evalAfter, bestMoveSan, bestMoveUci,
+        cls, san, moveNum, evalBefore, evalAfter, bestMoveSan, bestMoveUci, color: pc,
       };
       setCoach(info);
     } catch { /* ignore */ }
@@ -745,7 +746,7 @@ function PlayContent() {
   const handleHint = useCallback(() => {
     if (gamePhase !== 'playing' || isProcessingRef.current || !sfReady) return;
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
-    getBestMove(chessRef.current.fen(), 10, (uciMove) => {
+    getBestMove(chessRef.current.fen(), 16, (uciMove) => {
       setHintArrow(uciMove);
       hintTimerRef.current = setTimeout(() => setHintArrow(null), 3000);
     });
@@ -1172,9 +1173,17 @@ function PlayContent() {
                   </span>
                 </div>
                 <div style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.5 }}>
-                  {(['inaccuracy', 'mistake', 'blunder', 'miss'] as MoveClass[]).includes(coach.cls)
-                    ? `Лучше было ${coach.bestMoveSan || '…'} — оценка ${formatEval(coach.evalBefore)} вместо ${formatEval(coach.evalAfter)}.`
-                    : `${CLASS_LABEL[coach.cls]}. Так держать.`}
+                  {explainMove({
+                    cls: coach.cls,
+                    playedSan: coach.san,
+                    bestSan: coach.bestMoveSan || undefined,
+                    evalBefore: coach.evalBefore,
+                    evalAfter: coach.evalAfter,
+                    color: coach.color,
+                  })}
+                  <span style={{ marginLeft: 8, color: 'var(--faint)', fontVariantNumeric: 'tabular-nums' }}>
+                    {formatEval(coach.evalBefore)} → {formatEval(coach.evalAfter)}
+                  </span>
                 </div>
               </div>
             ) : (

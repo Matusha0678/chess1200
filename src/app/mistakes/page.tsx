@@ -158,7 +158,7 @@ export default function MistakesPage() {
     cardLinesRef.current = null;
     setSkillLevel(20);
     const sideToMove = currentCard.fen_before.split(' ')[1] ?? 'w';
-    getMultiPV(currentCard.fen_before, 14, 3, (lines) => {
+    getMultiPV(currentCard.fen_before, 18, 3, (lines) => {
       cardLinesRef.current = lines.map(l => {
         let evalWhite: number;
         if (l.mate !== undefined) {
