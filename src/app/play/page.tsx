@@ -244,6 +244,7 @@ function PlayContent() {
 
   // Eval
   const [evalCpWhite, setEvalCpWhite] = useState<number | null>(null);
+  const [isEvalAnalyzing, setIsEvalAnalyzing] = useState(false);
 
   // Coach
   const [coach, setCoach] = useState<CoachInfo | null>(null);
@@ -268,7 +269,7 @@ function PlayContent() {
   const coachEngineRef = useRef<(Engine & { quit(): void }) | null>(null);
   const coachEngineReady = useRef(false);
 
-  const { getBestMove, setSkillLevel, isReady: sfReady, startAnalysis, stopAnalysis } = useStockfish();
+  const { getBestMove, getEval, setSkillLevel, isReady: sfReady, stopAnalysis } = useStockfish();
   const { S } = useTrainerGeometry();
 
   // ── Init ──────────────────────────────────────────────────────────────────
@@ -535,10 +536,13 @@ function PlayContent() {
 
   const handleGameOver = useCallback((startFen: string, surrenderedNow: boolean, history: MoveRecord[], pc: PlayerColor, md: PlayMode, lvl: number) => {
     stopAnalysis();
+    setIsEvalAnalyzing(false);
+    if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+    setHintArrow(null);
     setResultInfo(getResultTitle(chessRef.current, pc, surrenderedNow));
     setGamePhase('review');
     runReviewAnalysis(startFen, surrenderedNow, history, pc, md, lvl);
-  }, [stopAnalysis, runReviewAnalysis]);
+  }, [stopAnalysis, hintTimerRef, runReviewAnalysis]);
 
   // ── Stockfish move ────────────────────────────────────────────────────────
 
@@ -571,10 +575,18 @@ function PlayContent() {
               return;
             }
             if (showEvalBar) {
-              startAnalysis(newFen, (info) => {
-                const t = chess.turn() as PlayerColor;
-                const cpW = info.cp !== undefined ? (t === 'w' ? info.cp : -info.cp) : 0;
+              setIsEvalAnalyzing(true);
+              getEval(newFen, 16, (result) => {
+                const sideToMove = newFen.split(' ')[1] ?? 'w';
+                let cpW: number;
+                if (result.mate !== undefined) {
+                  const absVal = result.mate > 0 ? 9900 : -9900;
+                  cpW = sideToMove === 'b' ? -absVal : absVal;
+                } else {
+                  cpW = result.cp !== undefined ? (sideToMove === 'w' ? result.cp : -result.cp) : 0;
+                }
                 setEvalCpWhite(cpW);
+                setIsEvalAnalyzing(false);
               });
             }
           }
@@ -583,7 +595,7 @@ function PlayContent() {
         setIsProcessing(false);
       }, 300);
     });
-  }, [getBestMove, handleGameOver, showEvalBar, startAnalysis]);
+  }, [getBestMove, getEval, handleGameOver, showEvalBar]);
 
   // ── Classify my move via coach engine ─────────────────────────────────────
 
@@ -626,8 +638,6 @@ function PlayContent() {
       );
       moveHistoryRef.current = updated;
       setMoveHistory(updated);
-
-      setEvalCpWhite(evalAfter);
 
       const moveNum = Number(fenBefore.split(' ')[5]);
       const info: CoachInfo = {
@@ -682,6 +692,7 @@ function PlayContent() {
     }
 
     if (showBadges || showEvalBar) {
+      if (showEvalBar) setIsEvalAnalyzing(true);
       void evaluateMyMove(fenBefore, newFen, mv.san, uci, plyNum, activeColor);
     }
 
@@ -798,10 +809,11 @@ function PlayContent() {
 
   // Arrows
   const arrows: BoardArrow[] = [];
-  if (hintArrow && hintArrow.length >= 4) {
+  if (hintArrow && hintArrow.length >= 4 && gamePhase === 'playing') {
     arrows.push({ from: hintArrow.slice(0, 2) as Square, to: hintArrow.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best' });
   }
-  const shownMistake = gamePhase === 'review' && selectedMistake !== null ? keyMistakes[selectedMistake] ?? null : null;
+  // Mistake arrows: only when viewing the mistake position (not while navigating history)
+  const shownMistake = gamePhase === 'review' && selectedMistake !== null && viewIdx === -1 ? keyMistakes[selectedMistake] ?? null : null;
   if (shownMistake) {
     arrows.push({ from: shownMistake.uci.slice(0, 2) as Square, to: shownMistake.uci.slice(2, 4) as Square, color: '#E0574A', role: 'played' });
     if (shownMistake.bestMoveUci.length >= 4) {
@@ -811,13 +823,16 @@ function PlayContent() {
 
   // Badges
   const badges: Partial<Record<Square, BadgeKind>> = {};
-  if (showBadges && coach && gamePhase === 'playing') {
-    const myLastMove = [...moveHistory].reverse().find(m => m.side === activeColor);
-    if (myLastMove) {
-      badges[myLastMove.uci.slice(2, 4) as Square] = coach.cls as BadgeKind;
+  if (showBadges) {
+    if (gamePhase === 'playing') {
+      const myLastMove = [...moveHistory].reverse().find(m => m.side === activeColor);
+      if (myLastMove?.cls) badges[myLastMove.uci.slice(2, 4) as Square] = myLastMove.cls as BadgeKind;
+    } else if (gamePhase === 'review' && viewIdx !== -1) {
+      // Show badge for the move being viewed in history
+      const mv = moveHistory[viewIdx];
+      if (mv?.cls && mv.side === activeColor) badges[mv.uci.slice(2, 4) as Square] = mv.cls as BadgeKind;
     }
   }
-  // No badge on board in review — icon shows only in the panel mistake row
 
   // Captured pieces
   const myCaptures = capturedPieces(fen, activeColor);
@@ -825,8 +840,21 @@ function PlayContent() {
 
   // Result info (set as state when game ends — no ref access during render)
 
-  // Eval bar pct
-  const evalPct = evalCpWhite !== null ? evalBarPct(evalCpWhite) : 50;
+  // Eval bar: in review mode, derive from move history to update on navigation
+  const evalCpForBar = (() => {
+    if (gamePhase === 'review') {
+      if (viewIdx !== -1) {
+        const ev = moveHistory[viewIdx]?.evalAfter;
+        if (ev !== undefined) return ev;
+      } else {
+        const prevIdx = shownMistake && shownMistake.moveIdx > 0 ? shownMistake.moveIdx - 1 : moveHistory.length - 1;
+        const ev = moveHistory[prevIdx]?.evalAfter;
+        if (ev !== undefined) return ev;
+      }
+    }
+    return evalCpWhite;
+  })();
+  const evalPct = evalCpForBar !== null ? evalBarPct(evalCpForBar) : 50;
 
   // Level label
   const presetLabel = LEVEL_PRESETS[presetIdx]?.label ?? 'Клубный';
@@ -942,7 +970,7 @@ function PlayContent() {
                 borderRadius: 'var(--radius-btn)',
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 4px',
               }}
-            >{p.label}</button>
+            >{p.skill}</button>
           ))}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
@@ -1076,7 +1104,9 @@ function PlayContent() {
     }}>
       <div style={{
         position: 'absolute', left: 0, right: 0, bottom: 0,
-        background: '#EDEBE7', height: `${evalPct}%`, transition: 'height 0.5s ease',
+        background: isEvalAnalyzing ? 'rgba(237,235,231,0.35)' : '#EDEBE7',
+        height: `${evalPct}%`,
+        transition: isEvalAnalyzing ? 'none' : 'height 0.5s ease, background 0.3s ease',
       }} />
     </div>
   );

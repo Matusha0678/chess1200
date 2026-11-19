@@ -9,6 +9,8 @@ export type PieceStyle = {
   id: string;
   name: string;
   baseUrl: string | null;
+  ext?: '.svg' | '.png';
+  lowercase?: boolean;
 };
 
 export type SiteTheme = {
@@ -55,6 +57,44 @@ export const PIECE_STYLES: PieceStyle[] = [
   { id: 'anarcandy',  name: 'Anarcandy', baseUrl: 'https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece/anarcandy' },
   { id: 'companion',  name: 'Companion', baseUrl: 'https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece/companion' },
   { id: 'fresca',     name: 'Fresca',    baseUrl: 'https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece/fresca' },
+  // ── chess.com ──────────────────────────────────────────────────────────────
+  { id: 'cc_3d_chesskid',  name: '3D ChessKid',  baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/3d_chesskid',  ext: '.png', lowercase: true },
+  { id: 'cc_3d_plastic',   name: '3D Plastic',   baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/3d_plastic',   ext: '.png', lowercase: true },
+  { id: 'cc_3d_staunton',  name: '3D Staunton',  baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/3d_staunton',  ext: '.png', lowercase: true },
+  { id: 'cc_3d_wood',      name: '3D Wood',      baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/3d_wood',      ext: '.png', lowercase: true },
+  { id: 'cc_8bit',         name: '8-Bit',        baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/8_bit',        ext: '.png', lowercase: true },
+  { id: 'cc_alpha',        name: 'Alpha (CC)',   baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/alpha',        ext: '.png', lowercase: true },
+  { id: 'cc_bases',        name: 'Bases',        baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/bases',        ext: '.png', lowercase: true },
+  { id: 'cc_book',         name: 'Book',         baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/book',         ext: '.png', lowercase: true },
+  { id: 'cc_bubblegum',    name: 'Bubblegum',    baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/bubblegum',    ext: '.png', lowercase: true },
+  { id: 'cc_cases',        name: 'Cases',        baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/cases',        ext: '.png', lowercase: true },
+  { id: 'cc_classic',      name: 'Classic (CC)', baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/classic',      ext: '.png', lowercase: true },
+  { id: 'cc_club',         name: 'Club',         baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/club',         ext: '.png', lowercase: true },
+  { id: 'cc_condal',       name: 'Condal',       baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/condal',       ext: '.png', lowercase: true },
+  { id: 'cc_dash',         name: 'Dash',         baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/dash',         ext: '.png', lowercase: true },
+  { id: 'cc_game_room',    name: 'Game Room',    baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/game_room',    ext: '.png', lowercase: true },
+  { id: 'cc_glass',        name: 'Glass',        baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/glass',        ext: '.png', lowercase: true },
+  { id: 'cc_gothic',       name: 'Gothic',       baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/gothic',       ext: '.png', lowercase: true },
+  { id: 'cc_graffiti',     name: 'Graffiti',     baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/graffiti',     ext: '.png', lowercase: true },
+  { id: 'cc_icy_sea',      name: 'Icy Sea',      baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/icy_sea',      ext: '.png', lowercase: true },
+  { id: 'cc_light',        name: 'Light (CC)',   baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/light',        ext: '.png', lowercase: true },
+  { id: 'cc_lolz',         name: 'Lolz',         baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/lolz',         ext: '.png', lowercase: true },
+  { id: 'cc_luca',         name: 'Luca',         baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/luca',         ext: '.png', lowercase: true },
+  { id: 'cc_marble',       name: 'Marble',       baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/marble',       ext: '.png', lowercase: true },
+  { id: 'cc_maya',         name: 'Maya',         baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/maya',         ext: '.png', lowercase: true },
+  { id: 'cc_metal',        name: 'Metal',        baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/metal',        ext: '.png', lowercase: true },
+  { id: 'cc_modern',       name: 'Modern',       baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/modern',       ext: '.png', lowercase: true },
+  { id: 'cc_nature',       name: 'Nature',       baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/nature',       ext: '.png', lowercase: true },
+  { id: 'cc_neo_wood',     name: 'Neo Wood',     baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/neo_wood',     ext: '.png', lowercase: true },
+  { id: 'cc_neon',         name: 'Neon',         baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/neon',         ext: '.png', lowercase: true },
+  { id: 'cc_newspaper',    name: 'Newspaper (CC)',baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/newspaper',    ext: '.png', lowercase: true },
+  { id: 'cc_ocean',        name: 'Ocean (CC)',   baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/ocean',        ext: '.png', lowercase: true },
+  { id: 'cc_sky',          name: 'Sky',          baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/sky',          ext: '.png', lowercase: true },
+  { id: 'cc_space',        name: 'Space',        baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/space',        ext: '.png', lowercase: true },
+  { id: 'cc_tigers',       name: 'Tigers',       baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/tigers',       ext: '.png', lowercase: true },
+  { id: 'cc_tournament',   name: 'Tournament',   baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/tournament',   ext: '.png', lowercase: true },
+  { id: 'cc_vintage',      name: 'Vintage',      baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/vintage',      ext: '.png', lowercase: true },
+  { id: 'cc_wood',         name: 'Wood (CC)',    baseUrl: 'https://cdn.jsdelivr.net/gh/GiorgioMegrelli/chess.com-boards-and-pieces/pieces/wood',         ext: '.png', lowercase: true },
 ];
 
 export const PIECE_KEYS = ['wP','wN','wB','wR','wQ','wK','bP','bN','bB','bR','bQ','bK'] as const;

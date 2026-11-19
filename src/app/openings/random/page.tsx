@@ -161,7 +161,7 @@ function LineNotationStrip({
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function RandomOpeningPage() {
-  const { boardTheme } = useBoardTheme();
+  const { boardTheme, customPieces } = useBoardTheme();
   const [phase, setPhase] = useState<GamePhase>('loading');
   const [allOpenings, setAllOpenings] = useState<OpeningWithLines[]>([]);
   const [selectedOpeningId, setSelectedOpeningId] = useState<string>('');
@@ -765,6 +765,7 @@ export default function RandomOpeningPage() {
                   arrows: showAnalysis && phase === 'free_play' ? uciToArrow(bestMoveArrow) : [],
                   allowDragging: isPlayerTurn || phase === 'free_play',
                   boardStyle: { borderRadius: '4px', width: '100%', height: '100%' },
+                  pieces: customPieces,
                   darkSquareStyle: { backgroundColor: boardTheme.dark },
                   lightSquareStyle: { backgroundColor: boardTheme.light },
                   showNotation: true,

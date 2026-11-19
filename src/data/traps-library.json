@@ -1,0 +1,256 @@
+[
+ {
+  "id": "stafford-bg5",
+  "name": "Стаффорд: «Ой, мой ферзь»",
+  "opening": "Гамбит Стаффорда",
+  "setter": "b",
+  "line": "e4 e5 Nf3 Nf6 Nxe5 Nc6 Nxc6 dxc6 d3 Bc5 Bg5",
+  "punish": "Nxe4 Bxd8 Bxf2+ Ke2 Bg4#",
+  "idea": "Белые нападают на ферзя 6.Bg5??, а чёрные отдают его: 6...Nxe4! 7.Bxd8 Bxf2+ 8.Ke2 Bg4# — мат.",
+  "result": "мат",
+  "safe": [
+   "Be2",
+   "h3",
+   "Qf3",
+   "f3"
+  ]
+ },
+ {
+  "id": "stafford-d3",
+  "name": "Стаффорд: 6.d3?? после 5.e5",
+  "opening": "Гамбит Стаффорда",
+  "setter": "b",
+  "line": "e4 e5 Nf3 Nf6 Nxe5 Nc6 Nxc6 dxc6 e5 Ne4 d3",
+  "punish": "Bc5 dxe4 Bxf2+ Ke2 Bg4+",
+  "idea": "Белые прогоняют коня 6.d3??, но 6...Bc5! — грозит 7...Bxf2+. Если 7.dxe4, то 7...Bxf2+ 8.Ke2 Bg4+ — и чёрные выигрывают ферзя.",
+  "result": "ферзь",
+  "safe": [
+   "d4",
+   "c3"
+  ]
+ },
+ {
+  "id": "blackburne",
+  "name": "Гамбит Блэкберна — Шиллинга",
+  "opening": "Итальянская партия",
+  "setter": "b",
+  "line": "e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7",
+  "punish": "Qxg2 Rf1 Qxe4+ Be2 Nf3#",
+  "idea": "После 3...Nd4 белые берут 4.Nxe5 и жадно бьют 5.Nxf7?? — а чёрные ставят мат: 5...Qxg2 6.Rf1 Qxe4+ 7.Be2 Nf3#.",
+  "result": "мат",
+  "safe": [
+   "O-O",
+   "Bxf7+"
+  ]
+ },
+ {
+  "id": "legal",
+  "name": "Мат Легаля",
+  "opening": "Защита Филидора",
+  "setter": "w",
+  "line": "e4 e5 Nf3 d6 Bc4 Bg4 Nc3 g6 Nxe5 Bxd1",
+  "punish": "Bxf7+ Ke7 Nd5#",
+  "idea": "Конь f3 «связан», но белые всё равно берут 5.Nxe5! Если чёрные забирают ферзя 5...Bxd1??, то 6.Bxf7+ Ke7 7.Nd5# — мат.",
+  "result": "мат",
+  "safe": [
+   "dxe5",
+   "Be6"
+  ]
+ },
+ {
+  "id": "scholar",
+  "name": "Детский мат",
+  "opening": "Королевская пешка",
+  "setter": "w",
+  "line": "e4 e5 Qh5 Nc6 Bc4 Nf6",
+  "punish": "Qxf7#",
+  "idea": "Ферзь h5 и слон c4 бьют в f7. Естественный ход 3...Nf6?? проигрывает сразу: 4.Qxf7#.",
+  "result": "мат",
+  "safe": [
+   "g6",
+   "Qe7",
+   "Qf6",
+   "Nh6"
+  ]
+ },
+ {
+  "id": "caro-nd6",
+  "name": "Каро-Канн: мат конём на d6",
+  "opening": "Защита Каро-Канн",
+  "setter": "w",
+  "line": "e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nd7 Qe2 Ngf6",
+  "punish": "Nd6#",
+  "idea": "5.Qe2 ставит ловушку: после 5...Ngf6?? — 6.Nd6#. Пешка e7 связана ферзём e2 и не может взять коня.",
+  "result": "мат",
+  "safe": [
+   "Ndf6",
+   "Qc7",
+   "e6",
+   "Qa5+"
+  ]
+ },
+ {
+  "id": "siberian",
+  "name": "Сибирская ловушка",
+  "opening": "Сицилианская: гамбит Морра",
+  "setter": "b",
+  "line": "e4 c5 d4 cxd4 c3 dxc3 Nxc3 Nc6 Nf3 e6 Bc4 Qc7 O-O Nf6 Qe2 Ng4 h3",
+  "punish": "Nd4 Nxd4 Qh2#",
+  "idea": "Белые гонят коня 9.h3??, а 9...Nd4! нападает на ферзя с угрозой Qh2#. На 10.Nxd4 — 10...Qh2#, иначе белые теряют ферзя.",
+  "result": "мат",
+  "safe": [
+   "Rd1",
+   "Nb5",
+   "g3",
+   "Nd5"
+  ]
+ },
+ {
+  "id": "petrov-nc6",
+  "name": "Русская партия: вскрытый шах",
+  "opening": "Русская партия",
+  "setter": "w",
+  "line": "e4 e5 Nf3 Nf6 Nxe5 Nxe4 Qe2 Nf6",
+  "punish": "Nc6+",
+  "idea": "После 3...Nxe4?! 4.Qe2 конь отступает 4...Nf6?? — и 5.Nc6+ вскрытым шахом выигрывает ферзя.",
+  "result": "ферзь",
+  "safe": [
+   "Qe7"
+  ]
+ },
+ {
+  "id": "fishing-pole",
+  "name": "Удочка",
+  "opening": "Испанская партия",
+  "setter": "b",
+  "line": "e4 e5 Nf3 Nc6 Bb5 Nf6 O-O Ng4 h3 h5 hxg4",
+  "punish": "hxg4 Nxe5 Qh4 f3 g3",
+  "idea": "Чёрные «закидывают удочку» 4...Ng4 и 5...h5. Взятие 6.hxg4? открывает линию h: 6...hxg4 7.Nxe5? Qh4 8.f3 g3 — мата не избежать.",
+  "result": "мат",
+  "safe": [
+   "c3",
+   "d4",
+   "d3",
+   "Ba4"
+  ]
+ },
+ {
+  "id": "noah",
+  "name": "Ноев ковчег",
+  "opening": "Испанская партия",
+  "setter": "b",
+  "line": "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 d6 d4 b5 Bb3 Nxd4 Nxd4 exd4 Qxd4",
+  "punish": "c5 Qd5 Be6 Qc6+ Bd7 Qd5 c4",
+  "idea": "Белые берут пешку ферзём 8.Qxd4??, а пешки ...c5 и ...c4 ловят слона b3.",
+  "result": "фигура",
+  "safe": [
+   "Bd5",
+   "a4",
+   "c3",
+   "O-O"
+  ]
+ },
+ {
+  "id": "mortimer",
+  "name": "Ловушка Мортимера",
+  "opening": "Испанская партия",
+  "setter": "b",
+  "line": "e4 e5 Nf3 Nc6 Bb5 Nf6 d3 Ne7 Nxe5",
+  "punish": "c6 Ba4 Qa5+ c3 Qxe5",
+  "idea": "Чёрные будто зевают пешку e5. После 5.Nxe5? c6! 6.Ba4 Qa5+ 7.c3 Qxe5 у чёрных лишняя фигура.",
+  "result": "фигура",
+  "safe": [
+   "Bc4",
+   "Nc3",
+   "d4",
+   "O-O"
+  ]
+ },
+ {
+  "id": "french-nxd4",
+  "name": "Французская: ловушка с Bb5+",
+  "opening": "Французская защита",
+  "setter": "w",
+  "line": "e4 e6 d4 d5 e5 c5 c3 Nc6 Nf3 Qb6 Bd3 cxd4 cxd4 Nxd4",
+  "punish": "Nxd4 Qxd4 Bb5+",
+  "idea": "Чёрные берут пешку 7...Nxd4??. После 8.Nxd4 Qxd4 9.Bb5+ слон уходит с линии d с шахом, и ферзь d1 забирает ферзя d4.",
+  "result": "ферзь",
+  "safe": [
+   "Bd7"
+  ]
+ },
+ {
+  "id": "elephant",
+  "name": "Ловушка «слон»",
+  "opening": "Ферзевый гамбит",
+  "setter": "b",
+  "line": "d4 d5 c4 e6 Nc3 Nf6 Bg5 Nbd7 cxd5 exd5 Nxd5",
+  "punish": "Nxd5 Bxd8 Bb4+ Qd2 Bxd2+ Kxd2 Kxd8",
+  "idea": "Белые думают, что конь f6 связан, и берут 6.Nxd5??, но 6...Nxd5! 7.Bxd8 Bb4+ 8.Qd2 Bxd2+ 9.Kxd2 Kxd8 — у чёрных лишняя фигура.",
+  "result": "фигура",
+  "safe": [
+   "e3",
+   "Nf3",
+   "Qc2",
+   "a3"
+  ]
+ },
+ {
+  "id": "lasker",
+  "name": "Ловушка Ласкера",
+  "opening": "Контргамбит Альбина",
+  "setter": "b",
+  "line": "d4 d5 c4 e5 dxe5 d4 e3 Bb4+ Bd2 dxe3 Bxb4",
+  "punish": "exf2+ Ke2 fxg1=N+",
+  "idea": "6.Bxb4?? — и 6...exf2+ 7.Ke2 fxg1=N+! Пешка превращается в коня с шахом, чёрные выигрывают.",
+  "result": "выигрыш",
+  "safe": [
+   "fxe3"
+  ]
+ },
+ {
+  "id": "englund",
+  "name": "Гамбит Энглунда",
+  "opening": "Гамбит Энглунда",
+  "setter": "b",
+  "line": "d4 e5 dxe5 Nc6 Nf3 Qe7 Bf4 Qb4+ Bd2 Qxb2 Bc3",
+  "punish": "Bb4 Qd2 Bxc3 Qxc3 Qc1#",
+  "idea": "Белые нападают на ферзя 6.Bc3??, но 6...Bb4! 7.Qd2 Bxc3 8.Qxc3 Qc1# — мат.",
+  "result": "мат",
+  "safe": [
+   "Nc3"
+  ]
+ },
+ {
+  "id": "kieninger",
+  "name": "Ловушка Кининджера",
+  "opening": "Будапештский гамбит",
+  "setter": "b",
+  "line": "d4 Nf6 c4 e5 dxe5 Ng4 Bf4 Nc6 Nf3 Bb4+ Nbd2 Qe7 a3 Ngxe5 axb4",
+  "punish": "Nd3#",
+  "idea": "Белые берут слона 8.axb4?? — и 8...Nd3#. Пешка e2 связана ферзём e7, спёртый мат.",
+  "result": "мат",
+  "safe": [
+   "Nxe5",
+   "Bxe5",
+   "e3",
+   "Qc2"
+  ]
+ },
+ {
+  "id": "qga-b5",
+  "name": "Ферзевый гамбит: не держи пешку c4",
+  "opening": "Принятый ферзевый гамбит",
+  "setter": "w",
+  "line": "d4 d5 c4 dxc4 e3 b5 a4 c6 axb5 cxb5",
+  "punish": "Qf3",
+  "idea": "Чёрные держат пешку c4 ходами ...b5 и ...c6. После 5...cxb5?? — 6.Qf3!, ладья a8 погибает.",
+  "result": "ладья",
+  "safe": [
+   "Bb7",
+   "e6",
+   "Nf6",
+   "a6"
+  ]
+ }
+]

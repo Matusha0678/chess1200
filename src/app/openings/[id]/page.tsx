@@ -6,21 +6,6 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { extractAllLines } from '@/lib/pgn-tree';
 import type { Opening, OpeningLine, LineProgress } from '@/types/openings';
-import PgnCheatsheet from '@/components/PgnCheatsheet';
-
-type LineType = 'common' | 'sharp' | 'rare';
-
-const LINE_TYPE_OPTIONS: { value: LineType; label: string }[] = [
-  { value: 'common', label: 'Частая' },
-  { value: 'sharp', label: 'Острая' },
-  { value: 'rare', label: 'Редкая' },
-];
-
-const LINE_TYPE_LABEL: Record<LineType, string> = {
-  common: 'частая',
-  sharp: 'острая',
-  rare: 'редкая',
-};
 
 interface LineWithProgress extends OpeningLine {
   line_progress: LineProgress[];
@@ -29,6 +14,16 @@ interface LineWithProgress extends OpeningLine {
 interface Props {
   params: Promise<{ id: string }>;
 }
+
+const LINE_CLASSES = [
+  { id: 'main',      label: 'Главная',      color: '#81B64C' },
+  { id: 'common',    label: 'Частая',       color: '#5096CC' },
+  { id: 'rare',      label: 'Редкая',       color: '#C98424' },
+  { id: 'very_rare', label: 'Очень редкая', color: '#A04040' },
+  { id: 'sharp',     label: 'Острая',       color: '#E0574A' },
+] as const;
+
+const BADGE_OPTIONS = ['⭐', '🔥', '⚡', '💡', '🎯', '📌', '⚠️', '🏆'];
 
 const COLOR_LABEL: Record<'white' | 'black' | 'both', string> = {
   white: 'Белые',
@@ -82,7 +77,7 @@ function ActionCard({
 
       <Link
         href={`/openings/${id}/practice`}
-        className="h-11 flex items-center justify-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-[10px] px-6 text-[15px] font-semibold transition-colors no-underline"
+        style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'var(--accent)', color: '#fff', borderRadius: 10, padding: '0 24px', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <polygon points="5 3 19 12 5 21 5 3" />
@@ -226,11 +221,15 @@ export default function OpeningDetailPage({ params }: Props) {
   const [addingLine, setAddingLine] = useState(false);
   const [addLineError, setAddLineError] = useState<string | null>(null);
   const [addLineSuccess, setAddLineSuccess] = useState(false);
-  const [addLineType, setAddLineType] = useState<LineType | null>(null);
-  const [addLineEmoji, setAddLineEmoji] = useState('');
   const parseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [exportFlash, setExportFlash] = useState(false);
   const [bestExam, setBestExam] = useState<{ perfect: number; total: number; pct: number } | null>(null);
+
+  const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [editBadge, setEditBadge] = useState<string | null>(null);
+  const [editClass, setEditClass] = useState<string | null>(null);
+  const [addLineBadge, setAddLineBadge] = useState<string | null>(null);
+  const [addLineClass, setAddLineClass] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -315,6 +314,25 @@ export default function OpeningDetailPage({ params }: Props) {
     await load();
   }
 
+  async function handleSaveLineMeta(lineId: string) {
+    const { error } = await supabase.from('opening_lines').update({
+      badge: editBadge,
+      line_class: editClass,
+    }).eq('id', lineId);
+    if (!error) {
+      setEditingLineId(null);
+      setLines(prev => prev.map(l =>
+        l.id === lineId ? { ...l, badge: editBadge ?? undefined, line_class: editClass ?? undefined } : l
+      ));
+    }
+  }
+
+  function startEditLine(line: LineWithProgress) {
+    setEditingLineId(line.id);
+    setEditBadge(line.badge ?? null);
+    setEditClass(line.line_class ?? null);
+  }
+
   function handleAddLinePgnChange(value: string) {
     setAddLinePgn(value);
     setAddLineError(null);
@@ -366,8 +384,8 @@ export default function OpeningDetailPage({ params }: Props) {
       opening_id: opening.id,
       line_index: maxIndex + 1 + i,
       moves,
-      line_type: addLineType ?? null,
-      line_emoji: addLineEmoji.trim() || null,
+      badge: addLineBadge,
+      line_class: addLineClass,
     }));
 
     const { error: insertError } = await supabase
@@ -389,8 +407,6 @@ export default function OpeningDetailPage({ params }: Props) {
     setAddLineSuccess(true);
     setAddLinePgn('');
     setAddLineCount(null);
-    setAddLineType(null);
-    setAddLineEmoji('');
     setShowAddLine(false);
 
     await load();
@@ -527,10 +543,9 @@ export default function OpeningDetailPage({ params }: Props) {
                   <span className="text-[12px] text-[#606060]">Освоено {linesMastered} из {linesTotal}</span>
                   <span className="text-[12px] font-semibold text-[#808080]">{masteryPct}%</span>
                 </div>
-                <div className="h-[3px] bg-[#1E1E1E] rounded-full overflow-hidden">
+                <div style={{ height: 3, background: 'var(--hairline)', borderRadius: 2, overflow: 'hidden' }}>
                   <div
-                    className="h-full bg-white rounded-full transition-all duration-500"
-                    style={{ width: `${masteryPct}%` }}
+                    style={{ height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 0.5s', width: `${masteryPct}%` }}
                   />
                 </div>
               </div>
@@ -626,83 +641,169 @@ export default function OpeningDetailPage({ params }: Props) {
                 const isDue = prog && prog.next_review <= now && prog.mastery < 5;
                 const mastery = prog?.mastery ?? 0;
                 const moveCount = line.moves.length;
+                const lineClass = LINE_CLASSES.find(c => c.id === line.line_class) ?? null;
+                const isEditing = editingLineId === line.id;
 
                 return (
                   <div
                     key={line.id}
-                    className={`flex items-start gap-4 px-5 py-4 hover:bg-[#111111] transition-colors ${i > 0 ? 'border-t border-[#1A1A1A]' : ''}`}
+                    className={`flex flex-col ${i > 0 ? 'border-t border-[#1A1A1A]' : ''}`}
                   >
-                    {/* Number */}
-                    <span className="text-[12px] text-[#383838] tabular-nums pt-[3px] shrink-0 w-5 text-right">
-                      {i + 1}
-                    </span>
+                    {/* Main row */}
+                    <div className="flex items-start gap-4 px-5 py-4 hover:bg-[#111111] transition-colors">
+                      {/* Number */}
+                      <span className="text-[12px] text-[#383838] tabular-nums pt-[3px] shrink-0 w-5 text-right">
+                        {i + 1}
+                      </span>
 
-                    {/* Move text + mastery */}
-                    <div className="flex-1 min-w-0">
-                      <p className="m-0 text-[13px] font-mono text-[#707070] leading-[1.7] break-words">
-                        {line.line_emoji && (
-                          <span className="mr-[6px] not-italic">{line.line_emoji}</span>
-                        )}
-                        {abbreviateMoves(line)}
-                      </p>
-                      <div className="flex items-center gap-3 mt-[6px]">
-                        <div className="flex items-center gap-[3px]">
-                          {masteryDots(mastery)}
+                      {/* Move text + meta */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-2 flex-wrap">
+                          {line.badge && (
+                            <span className="text-[16px] leading-none mt-[1px] shrink-0">{line.badge}</span>
+                          )}
+                          <p className="m-0 text-[13px] font-mono text-[#707070] leading-[1.7] break-words flex-1">
+                            {abbreviateMoves(line)}
+                          </p>
                         </div>
-                        <span className="text-[11px] text-[#383838] tabular-nums">{moveCount} ходов</span>
-                        {line.line_type && (
-                          <span className="text-[10px] text-[#404040] border border-[#1E1E1E] rounded-[3px] px-[5px] py-[1px]">
-                            {LINE_TYPE_LABEL[line.line_type]}
-                          </span>
-                        )}
-                        {isDue && (
-                          <span className="flex items-center gap-[4px]">
-                            <span className="w-[4px] h-[4px] rounded-full bg-white" />
-                            <span className="text-[11px] font-semibold text-[#FFFFFF]">повторить</span>
-                          </span>
+                        <div className="flex items-center gap-3 mt-[6px] flex-wrap">
+                          <div className="flex items-center gap-[3px]">
+                            {masteryDots(mastery)}
+                          </div>
+                          <span className="text-[11px] text-[#383838] tabular-nums">{moveCount} ходов</span>
+                          {lineClass && (
+                            <span
+                              style={{ color: lineClass.color, borderColor: lineClass.color + '55', background: lineClass.color + '12' }}
+                              className="text-[11px] font-semibold px-2 py-[2px] rounded-full border"
+                            >
+                              {lineClass.label}
+                            </span>
+                          )}
+                          {isDue && (
+                            <span className="flex items-center gap-[4px]">
+                              <span className="w-[4px] h-[4px] rounded-full bg-white" />
+                              <span className="text-[11px] font-semibold text-[#FFFFFF]">повторить</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="shrink-0 flex items-center gap-2 pt-[1px]">
+                        {confirmDeleteLineId === line.id ? (
+                          <>
+                            <span className="text-[12px] text-[#606060] whitespace-nowrap">Удалить?</span>
+                            <button
+                              onClick={() => handleDeleteLine(line.id)}
+                              disabled={deletingLineId === line.id}
+                              className="h-8 border border-[#404040] text-[#EF9A9A] hover:border-[#EF9A9A] rounded-full px-3 text-[12px] font-medium transition-colors bg-transparent disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                            >
+                              {deletingLineId === line.id ? '…' : 'Да'}
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteLineId(null)}
+                              className="h-8 border border-[#262626] text-[#606060] hover:border-[#404040] rounded-full px-3 text-[12px] transition-colors bg-transparent cursor-pointer"
+                            >
+                              Нет
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <Link
+                              href={`/openings/${id}/practice?line=${line.id}`}
+                              className="shrink-0 h-8 flex items-center border border-[#262626] text-[#A0A0A0] hover:border-[#505050] hover:text-[#FFFFFF] rounded-full px-4 text-[13px] transition-colors bg-transparent no-underline"
+                            >
+                              Играть
+                            </Link>
+                            <button
+                              onClick={() => isEditing ? setEditingLineId(null) : startEditLine(line)}
+                              title="Значок и класс"
+                              className={`shrink-0 w-8 h-8 flex items-center justify-center border rounded-full transition-colors bg-transparent cursor-pointer ${isEditing ? 'border-[#404040] text-[#A0A0A0]' : 'border-transparent text-[#303030] hover:border-[#303030] hover:text-[#606060]'}`}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteLineId(line.id)}
+                              title="Удалить линию"
+                              className="shrink-0 w-8 h-8 flex items-center justify-center border border-transparent text-[#303030] hover:border-[#303030] hover:text-[#606060] rounded-full transition-colors bg-transparent cursor-pointer"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                              </svg>
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="shrink-0 flex items-center gap-2 pt-[1px]">
-                      {confirmDeleteLineId === line.id ? (
-                        <>
-                          <span className="text-[12px] text-[#606060] whitespace-nowrap">Удалить?</span>
+                    {/* Inline edit panel */}
+                    {isEditing && (
+                      <div className="border-t border-[#1A1A1A] px-5 py-4 flex flex-col gap-4 bg-[#080808]">
+                        {/* Badge picker */}
+                        <div>
+                          <div className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050] mb-2">Значок</div>
+                          <div className="flex gap-1 flex-wrap">
+                            {BADGE_OPTIONS.map(b => (
+                              <button
+                                key={b}
+                                onClick={() => setEditBadge(editBadge === b ? null : b)}
+                                className={`w-9 h-9 rounded-[8px] text-[18px] transition-colors cursor-pointer ${editBadge === b ? 'bg-[#1E1E1E] border border-[#404040]' : 'bg-transparent border border-transparent hover:border-[#303030]'}`}
+                              >
+                                {b}
+                              </button>
+                            ))}
+                            {editBadge && (
+                              <button
+                                onClick={() => setEditBadge(null)}
+                                className="h-9 px-3 rounded-[8px] text-[12px] text-[#505050] border border-transparent hover:border-[#303030] bg-transparent cursor-pointer"
+                              >
+                                Убрать
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Class picker */}
+                        <div>
+                          <div className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050] mb-2">Класс линии</div>
+                          <div className="flex gap-2 flex-wrap">
+                            {LINE_CLASSES.map(cls => (
+                              <button
+                                key={cls.id}
+                                onClick={() => setEditClass(editClass === cls.id ? null : cls.id)}
+                                style={{
+                                  borderColor: editClass === cls.id ? cls.color : '#262626',
+                                  color: editClass === cls.id ? cls.color : '#606060',
+                                  background: editClass === cls.id ? cls.color + '15' : 'transparent',
+                                }}
+                                className="h-7 px-3 rounded-full border text-[12px] font-medium transition-colors bg-transparent cursor-pointer"
+                              >
+                                {cls.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Save / cancel */}
+                        <div className="flex gap-2">
                           <button
-                            onClick={() => handleDeleteLine(line.id)}
-                            disabled={deletingLineId === line.id}
-                            className="h-8 border border-[#404040] text-[#EF9A9A] hover:border-[#EF9A9A] rounded-full px-3 text-[12px] font-medium transition-colors bg-transparent disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                            onClick={() => handleSaveLineMeta(line.id)}
+                            style={{ background: 'var(--accent)', color: '#fff' }}
+                            className="h-8 px-5 rounded-full text-[13px] font-semibold border-none cursor-pointer"
                           >
-                            {deletingLineId === line.id ? '…' : 'Да'}
+                            Сохранить
                           </button>
                           <button
-                            onClick={() => setConfirmDeleteLineId(null)}
-                            className="h-8 border border-[#262626] text-[#606060] hover:border-[#404040] rounded-full px-3 text-[12px] transition-colors bg-transparent cursor-pointer"
+                            onClick={() => setEditingLineId(null)}
+                            className="h-8 px-4 rounded-full text-[13px] border border-[#262626] text-[#808080] bg-transparent cursor-pointer"
                           >
-                            Нет
+                            Отмена
                           </button>
-                        </>
-                      ) : (
-                        <>
-                          <Link
-                            href={`/openings/${id}/practice?line=${line.id}`}
-                            className="shrink-0 h-8 flex items-center border border-[#262626] text-[#A0A0A0] hover:border-[#505050] hover:text-[#FFFFFF] rounded-full px-4 text-[13px] transition-colors bg-transparent no-underline"
-                          >
-                            Играть
-                          </Link>
-                          <button
-                            onClick={() => setConfirmDeleteLineId(line.id)}
-                            title="Удалить линию"
-                            className="shrink-0 w-8 h-8 flex items-center justify-center border border-transparent text-[#303030] hover:border-[#303030] hover:text-[#606060] rounded-full transition-colors bg-transparent cursor-pointer"
-                          >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                              <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
-                            </svg>
-                          </button>
-                        </>
-                      )}
-                    </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })
@@ -729,7 +830,6 @@ export default function OpeningDetailPage({ params }: Props) {
                     placeholder={"1. e4 e5 2. Nf3 Nc6 3. Bb5\n\nили с вариациями:\n1. d4 d5 2. c4 (2. Nf3 Nf6) 2... dxc4"}
                     className="bg-[#080808] border border-[#222222] rounded-[10px] px-4 py-3 text-[13px] text-[#E0E0E0] placeholder-[#383838] outline-none focus:border-[#505050] transition-colors font-mono resize-y leading-[1.7]"
                   />
-                  <PgnCheatsheet />
                   {addLineCount !== null && (
                     <div
                       className={`flex items-center gap-2 text-[12px] font-medium px-3 py-[7px] rounded-[8px] border ${
@@ -757,36 +857,44 @@ export default function OpeningDetailPage({ params }: Props) {
                   )}
                 </div>
 
-                {/* Type + emoji */}
+                {/* Badge for new lines */}
                 <div className="flex flex-col gap-[8px]">
                   <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">
-                    Тип линий{' '}
-                    <span className="text-[#383838] font-normal normal-case tracking-normal">— необязательно</span>
+                    Значок <span className="normal-case font-normal text-[#383838]">(необязательно)</span>
                   </label>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {LINE_TYPE_OPTIONS.map((opt) => (
+                  <div className="flex gap-1 flex-wrap">
+                    {BADGE_OPTIONS.map(b => (
                       <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setAddLineType(addLineType === opt.value ? null : opt.value)}
-                        className={`h-8 rounded-full px-4 text-[13px] transition-all border cursor-pointer ${
-                          addLineType === opt.value
-                            ? 'bg-[#1E1E1E] border-[#505050] text-[#FFFFFF]'
-                            : 'border-[#222222] text-[#505050] bg-transparent hover:border-[#404040] hover:text-[#D0D0D0]'
-                        }`}
+                        key={b}
+                        onClick={() => setAddLineBadge(addLineBadge === b ? null : b)}
+                        className={`w-9 h-9 rounded-[8px] text-[18px] transition-colors cursor-pointer ${addLineBadge === b ? 'bg-[#1E1E1E] border border-[#404040]' : 'bg-transparent border border-transparent hover:border-[#303030]'}`}
                       >
-                        {opt.label}
+                        {b}
                       </button>
                     ))}
-                    <div className="w-px h-5 bg-[#262626] mx-1" />
-                    <input
-                      type="text"
-                      value={addLineEmoji}
-                      onChange={(e) => setAddLineEmoji(e.target.value.slice(0, 4))}
-                      placeholder="✨"
-                      title="Смайлик для этих линий"
-                      className="w-12 h-8 bg-[#080808] border border-[#222222] rounded-[8px] px-2 text-[18px] text-center outline-none focus:border-[#505050] transition-colors"
-                    />
+                  </div>
+                </div>
+
+                {/* Class for new lines */}
+                <div className="flex flex-col gap-[8px]">
+                  <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-[#505050]">
+                    Класс линии <span className="normal-case font-normal text-[#383838]">(необязательно)</span>
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {LINE_CLASSES.map(cls => (
+                      <button
+                        key={cls.id}
+                        onClick={() => setAddLineClass(addLineClass === cls.id ? null : cls.id)}
+                        style={{
+                          borderColor: addLineClass === cls.id ? cls.color : '#262626',
+                          color: addLineClass === cls.id ? cls.color : '#606060',
+                          background: addLineClass === cls.id ? cls.color + '15' : 'transparent',
+                        }}
+                        className="h-7 px-3 rounded-full border text-[12px] font-medium transition-colors bg-transparent cursor-pointer"
+                      >
+                        {cls.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -803,7 +911,7 @@ export default function OpeningDetailPage({ params }: Props) {
                   <button
                     onClick={handleAddLines}
                     disabled={addingLine || !addLinePgn.trim()}
-                    className="h-9 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-5 text-[13px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    style={{ height: 36, background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 18, padding: '0 20px', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', opacity: addingLine || !addLinePgn.trim() ? 0.4 : 1 }}
                   >
                     {addingLine ? 'Добавление...' : 'Добавить'}
                   </button>
