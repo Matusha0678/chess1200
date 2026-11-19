@@ -219,7 +219,7 @@ function ConvertPageInner() {
             {/* Stats grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 2 }}>
               {[
-                { n: totalSolved, label: 'дожато', color: '#81B64C' },
+                { n: totalSolved, label: 'дожато', color: 'var(--accent)' },
                 { n: totalTried, label: 'в работе', color: '#F4B45C' },
                 { n: totalNew, label: 'новых', color: 'var(--muted)' },
               ].map(({ n, label, color }) => (
@@ -411,7 +411,7 @@ function ConvertCard({
   const isHovered = hovered === idx;
 
   const statusText = pos.status === 'solved' ? 'Дожато ✓' : pos.status === 'tried' ? 'В работе' : 'Новая';
-  const statusColor = pos.status === 'solved' ? '#81B64C' : pos.status === 'tried' ? '#F4B45C' : 'var(--muted)';
+  const statusColor = pos.status === 'solved' ? 'var(--accent)' : pos.status === 'tried' ? '#F4B45C' : 'var(--muted)';
   const resultLabel = pos.result === 'loss' ? 'поражение' : 'ничья';
   const evalStr = pos.evalCp > 0 ? `+${(pos.evalCp / 100).toFixed(1)}` : (pos.evalCp / 100).toFixed(1);
 
@@ -441,7 +441,7 @@ function ConvertCard({
           height: 24, borderRadius: 6, padding: '0 8px',
           display: 'flex', alignItems: 'center', gap: 4,
           fontSize: 13, fontWeight: 700,
-          background: '#81B64C', color: '#fff',
+          background: 'var(--accent)', color: '#fff',
           boxShadow: '0 2px 6px rgba(0,0,0,.35)', zIndex: 2,
         }}>
           {evalStr}
@@ -454,12 +454,12 @@ function ConvertCard({
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             justifyContent: 'center', gap: 16, padding: 20, textAlign: 'center', zIndex: 3,
           }}>
-            <p style={{ fontSize: 15, color: '#F1EFEC', lineHeight: 1.45, margin: 0 }}>
+            <p style={{ fontSize: 15, color: 'var(--ivory)', lineHeight: 1.45, margin: 0 }}>
               Ты был {evalStr} — дожми
             </p>
             <div style={{
-              width: 54, height: 54, borderRadius: 27, background: '#81B64C',
-              boxShadow: '0 4px 0 #5E8C35', display: 'grid', placeItems: 'center', color: '#fff',
+              width: 54, height: 54, borderRadius: 27, background: 'var(--accent)',
+              boxShadow: 'var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4))', display: 'grid', placeItems: 'center', color: '#fff',
             }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 3 }}>
                 <polygon points="5,3 19,12 5,21" />

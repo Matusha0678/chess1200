@@ -282,7 +282,7 @@ function PlansPageInner() {
         } catch { /* ignore */ }
         setQuizArrows([
           { from: m.from, to: m.to, color: '#C2453A', role: 'played' },
-          { from: bestFrom as Square, to: bestTo as Square, color: '#5E8C35', style: 'dashed', role: 'best' },
+          { from: bestFrom as Square, to: bestTo as Square, color: 'var(--accent-press)', style: 'dashed', role: 'best' },
         ]);
       }
       const topList = v.top.map(t => `${t.san} (${Math.round(t.share * 100)}%)`).join(', ');
@@ -321,7 +321,7 @@ function PlansPageInner() {
   }, [ends, statusOf, demo]);
 
   const sessionStats = [
-    { value: counts.mastered, label: 'изучено', color: '#81B64C' },
+    { value: counts.mastered, label: 'изучено', color: 'var(--accent)' },
     { value: counts.due, label: 'повторить', color: '#C98424' },
     { value: counts.fresh, label: 'новых', color: 'var(--ivory)' },
   ];
@@ -340,7 +340,7 @@ function PlansPageInner() {
             flex: 1, height: 30, borderRadius: 8,
             border: '1px solid var(--hairline)',
             background: m === mode ? 'rgba(129,182,76,.15)' : 'transparent',
-            color: m === mode ? '#81B64C' : 'var(--ivory)',
+            color: m === mode ? 'var(--accent)' : 'var(--ivory)',
             fontSize: 12, cursor: 'pointer',
           }}
         >
@@ -364,7 +364,7 @@ function PlansPageInner() {
           </div>
           {group.map(e => {
             const st = statusOf(e.key);
-            const dotColor = st === 'mastered' ? '#81B64C' : st === 'due' ? '#C98424' : '#3A78C2';
+            const dotColor = st === 'mastered' ? 'var(--accent)' : st === 'due' ? '#C98424' : '#3A78C2';
             return (
               <div
                 key={e.key}
@@ -527,7 +527,7 @@ function PlansPageInner() {
             style={{
               padding: 12, borderRadius: 8,
               background: quizFeedback.ok ? 'rgba(129,182,76,.10)' : 'rgba(194,69,58,.10)',
-              color: quizFeedback.ok ? '#81B64C' : '#C2453A', fontSize: 14,
+              color: quizFeedback.ok ? 'var(--accent)' : '#C2453A', fontSize: 14,
             }}
           >
             {quizFeedback.played && <span>{quizFeedback.played}: </span>}{quizFeedback.text}
@@ -593,7 +593,7 @@ function PlansPageInner() {
       color: 'var(--ivory)', borderRadius: 'var(--radius-btn)', fontSize: 13, cursor: 'pointer',
       padding: '0 16px',
     };
-    const primary: React.CSSProperties = { ...btn, background: '#81B64C', border: 'none', color: '#fff' };
+    const primary: React.CSSProperties = { ...btn, background: 'var(--accent)', border: 'none', color: '#fff' };
     panelActions = (
       <div style={{ display: 'flex', gap: 8 }}>
         <button

@@ -397,7 +397,7 @@ function TrapsPageInner() {
             const best = trap.moves[trap.mistakePly];
             setAvoidArrows([
               { from: m.from, to: m.to, color: '#C2453A', role: 'played' },
-              { from: best.from as Square, to: best.to as Square, color: '#5E8C35', style: 'dashed', role: 'best' },
+              { from: best.from as Square, to: best.to as Square, color: 'var(--accent-press)', style: 'dashed', role: 'best' },
             ]);
             setAvoidResultText({ ok: false, text: `Этот ход хуже. Лучше ${activeTrap.trap.safe[0] ?? 'из безопасных ходов'}.` });
           }
@@ -411,7 +411,7 @@ function TrapsPageInner() {
 
   // ── UI pieces ──
   const sessionStats = [
-    { value: counts.mastered, label: 'выучено', color: '#81B64C' },
+    { value: counts.mastered, label: 'выучено', color: 'var(--accent)' },
     { value: counts.due, label: 'повторить', color: '#C98424' },
     { value: counts.fresh, label: 'новых', color: 'var(--ivory)' },
   ];
@@ -428,7 +428,7 @@ function TrapsPageInner() {
             flex: 1, height: 30, borderRadius: 8,
             border: '1px solid var(--hairline)',
             background: filter === k ? 'rgba(129,182,76,.15)' : 'transparent',
-            color: filter === k ? '#81B64C' : 'var(--ivory)',
+            color: filter === k ? 'var(--accent)' : 'var(--ivory)',
             fontSize: 12, cursor: 'pointer',
           }}
         >
@@ -454,7 +454,7 @@ function TrapsPageInner() {
       st === 'due' ? '●' :
       st === 'new' ? '●' : '●';
     const dotColor =
-      st === 'mastered' ? '#81B64C' :
+      st === 'mastered' ? 'var(--accent)' :
       st === 'due' ? '#C98424' : '#3A78C2';
     return (
       <div
@@ -469,7 +469,7 @@ function TrapsPageInner() {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: e.role === 'setter' ? '#81B64C' : e.role === 'victim' ? '#C98424' : 'var(--muted)', fontSize: 14 }}>
+            <span style={{ color: e.role === 'setter' ? 'var(--accent)' : e.role === 'victim' ? '#C98424' : 'var(--muted)', fontSize: 14 }}>
               {roleIcon(e.role)}
             </span>
             <span style={{ fontSize: 13, color: 'var(--ivory)', fontWeight: 500 }}>{e.trap.name ?? e.trap.id}</span>
@@ -524,7 +524,7 @@ function TrapsPageInner() {
             }}
             style={{
               height: 36, border: 'none', borderRadius: 8,
-              background: '#81B64C', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
             }}
           >
             Тренировать · {dueCount}
@@ -560,7 +560,7 @@ function TrapsPageInner() {
       fenToShow = v.fen;
       boardArrows = v.arrows.map(a => ({
         from: a.from as Square, to: a.to as Square,
-        color: a.role === 'played' ? '#C2453A' : '#5E8C35',
+        color: a.role === 'played' ? '#C2453A' : 'var(--accent-press)',
         style: a.style as 'dashed' | undefined,
         role: a.role as 'played' | 'best',
       }));
@@ -633,7 +633,7 @@ function TrapsPageInner() {
       const r = runResult(run);
       if (run.phase === 'done' && r.perfect) {
         feedbackBlock = (
-          <div data-ui="trap-feedback" data-result="ok" style={{ padding: 12, borderRadius: 8, background: 'rgba(129,182,76,.10)', color: '#81B64C', fontSize: 14 }}>
+          <div data-ui="trap-feedback" data-result="ok" style={{ padding: 12, borderRadius: 8, background: 'rgba(129,182,76,.10)', color: 'var(--accent)', fontSize: 14 }}>
             Верно! {t.result === 'мат' ? 'Мат' : `Выигрываешь: ${t.result}`}.
           </div>
         );
@@ -662,7 +662,7 @@ function TrapsPageInner() {
         );
       } else if (avoidResultText?.ok === true) {
         feedbackBlock = (
-          <div data-ui="trap-feedback" data-result="ok" style={{ padding: 12, borderRadius: 8, background: 'rgba(129,182,76,.10)', color: '#81B64C', fontSize: 14 }}>
+          <div data-ui="trap-feedback" data-result="ok" style={{ padding: 12, borderRadius: 8, background: 'rgba(129,182,76,.10)', color: 'var(--accent)', fontSize: 14 }}>
             {avoidResultText.text}
           </div>
         );
@@ -686,7 +686,7 @@ function TrapsPageInner() {
             const isMistake = i === t.mistakePly;
             return (
               <span key={i} style={{
-                color: isMistake ? '#C2453A' : i > t.mistakePly ? '#81B64C' : 'var(--ivory)',
+                color: isMistake ? '#C2453A' : i > t.mistakePly ? 'var(--accent)' : 'var(--ivory)',
                 marginRight: 6,
               }}>
                 {m.color === 'w' ? `${Math.floor(i / 2) + 1}.` : ''} {m.san}{isMistake ? '??' : ''}
@@ -703,7 +703,7 @@ function TrapsPageInner() {
       color: 'var(--ivory)', borderRadius: 'var(--radius-btn)', fontSize: 13, cursor: 'pointer',
       padding: '0 16px',
     };
-    const primaryBtn: React.CSSProperties = { ...btnStyle, background: '#81B64C', border: 'none', color: '#fff' };
+    const primaryBtn: React.CSSProperties = { ...btnStyle, background: 'var(--accent)', border: 'none', color: '#fff' };
     panelActions = (
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button data-ui="trap-watch" style={btnStyle} onClick={() => { setMode('watch'); setWatchIdx(0); setWatchPlaying(true); }}>

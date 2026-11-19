@@ -155,7 +155,7 @@ export function LinePanel({
                 <div data-ui="lesson-notes" style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {currentNotes.map(note => (
                     <div key={note.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 13, color: 'var(--ivory)' }}>
-                      <span style={{ color: note.kind === 'confused' ? '#E8A23A' : '#4A90E2', flexShrink: 0 }}>
+                      <span style={{ color: note.kind === 'confused' ? 'var(--accent)' : 'color-mix(in srgb, var(--accent) 45%, var(--muted))', flexShrink: 0 }}>
                         {note.kind === 'confused' ? '?' : '✎'}
                       </span>
                       <span>{note.body}</span>
@@ -169,7 +169,7 @@ export function LinePanel({
                 <div style={{ marginTop: 10, display: 'flex', gap: 6 }}>
                   <button
                     data-ui="lesson-note-add"
-                    style={{ fontSize: 13, color: '#4A90E2', background: 'none', border: '1px solid rgba(74,144,226,.3)', borderRadius: 4, cursor: 'pointer', padding: '3px 8px' }}
+                    style={{ fontSize: 13, color: 'color-mix(in srgb, var(--accent) 45%, var(--muted))', background: 'none', border: '1px solid rgba(74,144,226,.3)', borderRadius: 4, cursor: 'pointer', padding: '3px 8px' }}
                     onClick={() => {
                       const body = prompt('Заметка к ходу:');
                       if (body?.trim()) onNoteAdd(ply, lineIdx, body.trim());
@@ -179,7 +179,7 @@ export function LinePanel({
                   </button>
                   <button
                     data-ui="lesson-confused"
-                    style={{ fontSize: 13, color: '#E8A23A', background: 'none', border: '1px solid rgba(232,162,58,.3)', borderRadius: 4, cursor: 'pointer', padding: '3px 8px' }}
+                    style={{ fontSize: 13, color: 'var(--accent)', background: 'none', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', borderRadius: 4, cursor: 'pointer', padding: '3px 8px' }}
                     onClick={() => onConfusedAdd(ply, lineIdx)}
                   >
                     ? Не понял
@@ -224,7 +224,7 @@ export function LinePanel({
             }}>
               <span>🏁</span>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#81B64C' }}>Конец линии.</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)' }}>Конец линии.</div>
                 {line.outro_md && (
                   <div style={{ fontSize: 13, color: 'var(--ivory)', marginTop: 4, lineHeight: 1.5 }}>
                     {simpleMarkdown(line.outro_md)}
@@ -292,7 +292,7 @@ export function LinePanel({
                             padding: '0 4px',
                             borderRadius: 4,
                             cursor: 'pointer',
-                            border: isCurrent ? '1px solid #81B64C' : '1px solid transparent',
+                            border: isCurrent ? '1px solid var(--accent)' : '1px solid transparent',
                             background: isCurrent ? 'rgba(129,182,76,0.12)' : 'transparent',
                             color: isFuture ? 'var(--muted)' : isOpponent ? 'rgba(255,255,255,0.65)' : 'var(--ivory)',
                             fontSize: 13,
@@ -301,8 +301,8 @@ export function LinePanel({
                         >
                           <span>{m.san}</span>
                           {mBadge && <ClassIcon cls={mBadge as BadgeKind} size={14} />}
-                          {hasNote && <span style={{ color: '#4A90E2', fontSize: 13 }}>✎</span>}
-                          {hasConfused && <span style={{ color: '#E8A23A', fontSize: 13 }}>?</span>}
+                          {hasNote && <span style={{ color: 'color-mix(in srgb, var(--accent) 45%, var(--muted))', fontSize: 13 }}>✎</span>}
+                          {hasConfused && <span style={{ color: 'var(--accent)', fontSize: 13 }}>?</span>}
                         </div>
                         {hasVariant && (
                           <div
@@ -345,7 +345,7 @@ export function LinePanel({
             onClick={onNextStep}
             style={{
               width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600,
-              color: '#fff', background: '#81B64C', border: 'none',
+              color: '#fff', background: 'var(--accent)', border: 'none',
               borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer',
             }}
           >

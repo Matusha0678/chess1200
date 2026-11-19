@@ -43,6 +43,35 @@ function detectMode(progs: Array<{ mastery: number; next_review: string } | null
   return 'review';
 }
 
+// ── Local-storage fallback for line progress ─────────────────────────────────
+// Guaranteed persistence even if Supabase writes silently fail (RLS etc).
+// Keyed per line so entries never clash and are cheap to read/write.
+const LP_KEY = (lineId: string) => `op-lp:${lineId}`;
+
+interface LocalProg { mastery: number; next_review: string; correct_count: number; incorrect_count: number; last_practiced: string; }
+
+function readLocalProg(lineId: string): LocalProg | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(LP_KEY(lineId));
+    return raw ? JSON.parse(raw) as LocalProg : null;
+  } catch { return null; }
+}
+
+function writeLocalProg(lineId: string, prog: LocalProg): void {
+  if (typeof window === 'undefined') return;
+  try { window.localStorage.setItem(LP_KEY(lineId), JSON.stringify(prog)); } catch { /* quota full etc. */ }
+}
+
+/** Pick the fresher of two progs by last_practiced (local wins on tie). */
+function mergeProg(db: LocalProg | null, local: LocalProg | null): LocalProg | null {
+  if (!db) return local;
+  if (!local) return db;
+  const dbT = Date.parse(db.last_practiced || '1970-01-01');
+  const loT = Date.parse(local.last_practiced || '1970-01-01');
+  return loT >= dbT ? local : db;
+}
+
 export default function OpeningTrainerPage({ params }: Props) {
   const { id } = use(params);
   const searchParams = useSearchParams();
@@ -119,17 +148,28 @@ export default function OpeningTrainerPage({ params }: Props) {
       if (linesErr) { setError('Ошибка базы: ' + linesErr.message); setLoading(false); return; }
 
       const rows = (linesData ?? []) as LineRow[];
-      const linesBuilt = rows.map(r => ({
-        id: r.id, index: r.line_index,
-        moves: Array.isArray(r.moves) ? r.moves as ChessMove[] : toMoves((r.moves as unknown as string) ?? ''),
-        prog: r.line_progress?.[0] ? {
+      const linesBuilt = rows.map(r => {
+        const dbProg: LocalProg | null = r.line_progress?.[0] ? {
           mastery: r.line_progress[0].mastery,
           next_review: r.line_progress[0].next_review,
           correct_count: r.line_progress[0].correct_count ?? 0,
           incorrect_count: r.line_progress[0].incorrect_count ?? 0,
-        } : null,
-        badge: r.badge, line_class: r.line_class,
-      }));
+          last_practiced: r.line_progress[0].last_practiced ?? '',
+        } : null;
+        // Overlay with localStorage so progress survives silent DB write failures.
+        const merged = mergeProg(dbProg, readLocalProg(r.id));
+        return {
+          id: r.id, index: r.line_index,
+          moves: Array.isArray(r.moves) ? r.moves as ChessMove[] : toMoves((r.moves as unknown as string) ?? ''),
+          prog: merged ? {
+            mastery: merged.mastery,
+            next_review: merged.next_review,
+            correct_count: merged.correct_count,
+            incorrect_count: merged.incorrect_count,
+          } : null,
+          badge: r.badge, line_class: r.line_class,
+        };
+      });
       setLines(linesBuilt);
 
       // Hard rows
@@ -216,11 +256,15 @@ export default function OpeningTrainerPage({ params }: Props) {
     xp: number,
     mistakePlies: number[],
   ) => {
+    // 1) Durable local write first — survives DB write failures.
+    writeLocalProg(lineId, row);
+
+    // 2) Attempt DB upsert in background (best-effort; local copy already safe).
     const { error: upErr } = await supabase.from('line_progress').upsert(
       { line_id: lineId, ...row },
       { onConflict: 'line_id' },
     );
-    if (upErr) console.error('line_progress upsert failed:', upErr.message);
+    if (upErr) console.warn('[line_progress] db upsert failed, using local only:', upErr.message);
 
     void supabase.from('opening_practice_log').insert({
       opening_id: id, line_id: lineId,

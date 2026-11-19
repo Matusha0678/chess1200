@@ -37,7 +37,7 @@ export function TaskPanel({
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
               {progress.current} / {progress.total}
               {xp != null && xp > 0 && (
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#81B64C', background: 'rgba(129,182,76,.14)', borderRadius: 6, padding: '2px 7px', fontVariantNumeric: 'tabular-nums' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', background: 'rgba(129,182,76,.14)', borderRadius: 6, padding: '2px 7px', fontVariantNumeric: 'tabular-nums' }}>
                   +{xp} XP
                 </span>
               )}
@@ -50,7 +50,7 @@ export function TaskPanel({
         ) : progress && progress.total > 0 ? (
           <div style={{ height: 4, borderRadius: 4, background: '#3A3835', marginTop: 12, overflow: 'hidden' }}>
             <div style={{
-              height: '100%', background: '#81B64C', borderRadius: 4,
+              height: '100%', background: 'var(--accent)', borderRadius: 4,
               width: `${Math.max(2, Math.min(100, (progress.current / progress.total) * 100))}%`,
               transition: 'width 0.3s ease',
             }} />

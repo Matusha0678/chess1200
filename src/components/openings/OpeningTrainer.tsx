@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Square } from 'chess.js';
+import { supabase } from '@/lib/supabase';
 import { Board } from '@/components/board/Board';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
 import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
@@ -99,7 +101,13 @@ export function OpeningTrainer({
   ...rest
 }: Props) {
   const { S } = useTrainerGeometry();
+  const router = useRouter();
   const now = Date.now();
+
+  // ── Menu + opening-level delete state ──────────────────────────────────────
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDeleteOpening, setConfirmDeleteOpening] = useState(false);
+  const [deletingOpening, setDeletingOpening] = useState(false);
 
   // ── Flip ──────────────────────────────────────────────────────────────────
   const [flipped, setFlipped] = useState(false);
@@ -452,7 +460,7 @@ export function OpeningTrainer({
   const boardArrows = v ? v.arrows.map(a => ({
     from: a.from as Square,
     to: a.to as Square,
-    color: a.role === 'played' ? '#E05050' : '#81B64C',
+    color: a.role === 'played' ? '#E05050' : 'var(--accent)',
     style: (a.style === 'dashed' ? 'dashed' : 'solid') as 'solid' | 'dashed',
   })) : [];
   const boardRings = v ? v.rings as Partial<Record<Square, string>> : {};
@@ -516,8 +524,8 @@ export function OpeningTrainer({
               <div key={i} style={{ fontSize: 13, padding: '4px 0', borderBottom: '1px solid var(--hairline)', color: 'var(--muted)' }}>
                 <span style={{ color: 'var(--ivory)', fontWeight: 500 }}>{lbl}</span>
                 {sr.perfect
-                  ? <span style={{ color: '#81B64C' }}> — без ошибок · уровень {sr.masteryBefore} → {sr.masteryAfter} · {inDays(sr.days)}</span>
-                  : <span style={{ color: '#E8A23A' }}> — с ошибкой · снова {inDays(sr.days)}</span>}
+                  ? <span style={{ color: 'var(--accent)' }}> — без ошибок · уровень {sr.masteryBefore} → {sr.masteryAfter} · {inDays(sr.days)}</span>
+                  : <span style={{ color: 'var(--accent)' }}> — с ошибкой · снова {inDays(sr.days)}</span>}
                 {!l2 && null}
               </div>
             );
@@ -714,8 +722,8 @@ export function OpeningTrainer({
       {run && line && line.prog && (
         <PanelChip>Уровень {line.prog.mastery}/5</PanelChip>
       )}
-      {mode === 'learn' && !line?.prog && <PanelChip color="#8FB4DA">Новая линия</PanelChip>}
-      {lineId && freshDevSet.has(lineId) && <PanelChip color="#E8A23A">Из партии</PanelChip>}
+      {mode === 'learn' && !line?.prog && <PanelChip color="var(--muted)">Новая линия</PanelChip>}
+      {lineId && freshDevSet.has(lineId) && <PanelChip color="var(--accent)">Из партии</PanelChip>}
       {learnPhase === 'recall' && <PanelChip>По памяти</PanelChip>}
       {examStarted && (
         <span data-ui="op-timer" style={{ fontSize: 13, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums', marginLeft: 4 }}>
@@ -740,7 +748,53 @@ export function OpeningTrainer({
   const panelAttrs: Record<string, string> = {};
   if (isDemo && rest['data-demo']) panelAttrs['data-demo'] = rest['data-demo'];
 
+  const handleAddLines = () => {
+    if (isDemo) return;
+    router.push(`/openings/${opening.id}/edit`);
+  };
+
+  const handleOpenMenu = () => {
+    if (isDemo) return;
+    setMenuOpen(true);
+  };
+
+  const handleEditOpening = () => {
+    setMenuOpen(false);
+    router.push(`/openings/${opening.id}/edit`);
+  };
+
+  const handleDeleteLine = async (lineId: string) => {
+    if (isDemo) return;
+    if (!confirm('Удалить эту линию?')) return;
+    const { error: delProgErr } = await supabase.from('line_progress').delete().eq('line_id', lineId);
+    if (delProgErr) console.error('line_progress delete:', delProgErr.message);
+    const { error: delMoveErr } = await supabase.from('line_move_progress').delete().eq('line_id', lineId);
+    if (delMoveErr) console.error('line_move_progress delete:', delMoveErr.message);
+    const { error: delLineErr } = await supabase.from('opening_lines').delete().eq('id', lineId);
+    if (delLineErr) { alert('Не удалось удалить линию: ' + delLineErr.message); return; }
+    setLinesState(prev => prev.filter(l => l.id !== lineId));
+  };
+
+  const handleDeleteOpening = async () => {
+    if (isDemo) return;
+    setDeletingOpening(true);
+    const lineIds = linesState.map(l => l.id);
+    if (lineIds.length > 0) {
+      await supabase.from('line_progress').delete().in('line_id', lineIds);
+      await supabase.from('line_move_progress').delete().in('line_id', lineIds);
+      await supabase.from('opening_lines').delete().eq('opening_id', opening.id);
+    }
+    const { error: delOpErr } = await supabase.from('openings').delete().eq('id', opening.id);
+    if (delOpErr) {
+      alert('Не удалось удалить дебют: ' + delOpErr.message);
+      setDeletingOpening(false);
+      return;
+    }
+    router.push('/openings');
+  };
+
   return (
+    <>
     <TrainerLayout
       session={
         <LineList
@@ -754,8 +808,9 @@ export function OpeningTrainer({
           activeLineId={currentLineId}
           onModeChange={handleModeChange}
           onLineClick={handleLineClick}
-          onAddLines={() => {}}
-          onMenu={() => {}}
+          onAddLines={handleAddLines}
+          onMenu={handleOpenMenu}
+          onDeleteLine={isDemo ? undefined : handleDeleteLine}
         />
       }
       topBar={
@@ -798,5 +853,127 @@ export function OpeningTrainer({
       }
       panelAttrs={panelAttrs}
     />
+
+    {/* Menu modal */}
+    {menuOpen && (
+      <div
+        onClick={() => setMenuOpen(false)}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
+          zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 20,
+        }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{
+            background: 'var(--surface)', border: '1px solid var(--hairline)',
+            borderRadius: 'var(--radius-card, 4px)', padding: 20, minWidth: 280, maxWidth: 360,
+            display: 'flex', flexDirection: 'column', gap: 10,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
+          }}
+        >
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ivory)', marginBottom: 4 }}>
+            Действия с дебютом
+          </div>
+          <div style={{
+            fontSize: 13, color: 'var(--muted)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 6,
+          }}>
+            {opening.name}
+          </div>
+          <button
+            onClick={handleEditOpening}
+            style={{
+              padding: '10px 14px', fontSize: 14, fontWeight: 500, textAlign: 'left',
+              background: 'transparent', color: 'var(--ivory)',
+              border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn, 4px)',
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Редактировать дебют
+          </button>
+          <button
+            onClick={() => { setMenuOpen(false); setConfirmDeleteOpening(true); }}
+            style={{
+              padding: '10px 14px', fontSize: 14, fontWeight: 500, textAlign: 'left',
+              background: 'transparent', color: '#D86464',
+              border: '1px solid rgba(216,100,100,0.3)', borderRadius: 'var(--radius-btn, 4px)',
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Удалить дебют
+          </button>
+          <button
+            onClick={() => setMenuOpen(false)}
+            style={{
+              padding: '8px 14px', fontSize: 13,
+              background: 'transparent', color: 'var(--muted)',
+              border: 'none', borderRadius: 'var(--radius-btn, 4px)',
+              cursor: 'pointer', fontFamily: 'inherit', marginTop: 2,
+            }}
+          >
+            Отмена
+          </button>
+        </div>
+      </div>
+    )}
+
+    {/* Delete-opening confirmation */}
+    {confirmDeleteOpening && (
+      <div
+        onClick={() => !deletingOpening && setConfirmDeleteOpening(false)}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)',
+          zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 20,
+        }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{
+            background: 'var(--surface)', border: '1px solid var(--hairline)',
+            borderRadius: 'var(--radius-card, 4px)', padding: 24, minWidth: 320, maxWidth: 400,
+            display: 'flex', flexDirection: 'column', gap: 14,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+          }}
+        >
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ivory)' }}>
+            Удалить дебют?
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
+            «{opening.name}» и все его линии ({linesState.length}) будут удалены без возможности восстановления.
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button
+              onClick={handleDeleteOpening}
+              disabled={deletingOpening}
+              style={{
+                flex: 1, padding: '10px 14px', fontSize: 14, fontWeight: 600,
+                background: 'var(--c-bad)', color: '#fff', border: 'none',
+                borderRadius: 'var(--radius-btn, 4px)',
+                cursor: deletingOpening ? 'default' : 'pointer', fontFamily: 'inherit',
+                opacity: deletingOpening ? 0.7 : 1,
+              }}
+            >
+              {deletingOpening ? 'Удаляю…' : 'Удалить'}
+            </button>
+            <button
+              onClick={() => setConfirmDeleteOpening(false)}
+              disabled={deletingOpening}
+              style={{
+                flex: 1, padding: '10px 14px', fontSize: 14,
+                background: 'transparent', color: 'var(--ivory)',
+                border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn, 4px)',
+                cursor: deletingOpening ? 'default' : 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

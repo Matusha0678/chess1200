@@ -43,7 +43,7 @@ export function SummaryPanel({
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {allStepsDone && (
-          <span style={{ fontSize: 13, padding: '3px 8px', background: 'rgba(129,182,76,0.12)', color: '#81B64C', borderRadius: 4, alignSelf: 'flex-start' }}>
+          <span style={{ fontSize: 13, padding: '3px 8px', background: 'rgba(129,182,76,0.12)', color: 'var(--accent)', borderRadius: 4, alignSelf: 'flex-start' }}>
             все шаги пройдены
           </span>
         )}
@@ -58,7 +58,7 @@ export function SummaryPanel({
         {/* Stats */}
         <div data-ui="lesson-end" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, border: '1px solid var(--hairline)', borderRadius: 8, overflow: 'hidden' }}>
           <div style={{ padding: '12px 10px', textAlign: 'center', borderRight: '1px solid var(--hairline)' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: linesDone === linesTotal ? '#81B64C' : 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{linesDone}/{linesTotal}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: linesDone === linesTotal ? 'var(--accent)' : 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{linesDone}/{linesTotal}</div>
             <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>линии</div>
           </div>
           <div style={{ padding: '12px 10px', textAlign: 'center', borderRight: '1px solid var(--hairline)' }}>
@@ -77,7 +77,7 @@ export function SummaryPanel({
 
         {/* Test result or note */}
         {testPassed ? (
-          <div style={{ padding: '10px 14px', background: 'rgba(129,182,76,0.1)', border: '1px solid rgba(129,182,76,0.35)', borderRadius: 8, fontSize: 14, color: '#81B64C', fontWeight: 600 }}>
+          <div style={{ padding: '10px 14px', background: 'rgba(129,182,76,0.1)', border: '1px solid rgba(129,182,76,0.35)', borderRadius: 8, fontSize: 14, color: 'var(--accent)', fontWeight: 600 }}>
             Урок пройден ✓ · тест {testResult!.score}/{testResult!.max}
           </div>
         ) : (
@@ -95,7 +95,7 @@ export function SummaryPanel({
               <button
                 onClick={onNextLesson}
                 data-ui="lesson-next-lesson"
-                style={{ width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600, color: '#fff', background: '#81B64C', border: 'none', borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer' }}
+                style={{ width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer' }}
               >
                 Следующий урок →
               </button>
@@ -113,7 +113,7 @@ export function SummaryPanel({
             <button
               onClick={onTest}
               data-ui="lesson-test"
-              style={{ width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600, color: '#fff', background: '#81B64C', border: 'none', borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer' }}
+              style={{ width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer' }}
             >
               Пройти тест
             </button>

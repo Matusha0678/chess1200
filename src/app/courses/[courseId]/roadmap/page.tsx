@@ -18,8 +18,8 @@ interface LessonNode {
   moveCount: number;
 }
 
-const C_DONE   = '#5E8C35';
-const C_ACTIVE = '#81B64C';
+const C_DONE   = 'var(--accent-press)';
+const C_ACTIVE = 'var(--accent)';
 
 function NodeIcon({ status, index }: { status: NodeStatus; index: number }) {
   if (status === 'done') {

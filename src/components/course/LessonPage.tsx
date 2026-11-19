@@ -489,7 +489,7 @@ export function LessonPage({
         return (
           <div key={i} title={s.title} onClick={() => goToStep(i)} style={{
             flex: 1, height: 4, borderRadius: 2, cursor: 'pointer',
-            background: done ? '#81B64C' : isCur ? 'var(--ivory)' : 'var(--track, #2A2A2A)',
+            background: done ? 'var(--accent)' : isCur ? 'var(--ivory)' : 'var(--track, #2A2A2A)',
             border: isCur ? '1px solid var(--ivory)' : '1px solid transparent',
             transition: 'background 0.2s',
           }} />
@@ -573,15 +573,15 @@ export function LessonPage({
       return (
         <TaskPanel breadcrumb={breadcrumb} title={step.title} titleSize={26} chips={stepChip} progressBar={stepperEl}
           actions={
-            <button data-ui="lesson-next-step" onClick={goToNextStep} style={{ width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600, color: '#fff', background: '#81B64C', border: 'none', borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer' }}>
+            <button data-ui="lesson-next-step" onClick={goToNextStep} style={{ width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer' }}>
               {nextStepTitle ? `Начать: ${nextStepTitle}` : 'Дальше'}
             </button>
           }
         >
           <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
             {lesson.goal && (
-              <div style={{ padding: '12px 14px', border: '2px solid #81B64C', borderRadius: 8, fontSize: 14, color: 'var(--ivory)', lineHeight: 1.5 }}>
-                <span style={{ fontSize: 13, color: '#81B64C', fontWeight: 600, display: 'block', marginBottom: 4 }}>Цель</span>
+              <div style={{ padding: '12px 14px', border: '2px solid var(--accent)', borderRadius: 8, fontSize: 14, color: 'var(--ivory)', lineHeight: 1.5 }}>
+                <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600, display: 'block', marginBottom: 4 }}>Цель</span>
                 {lesson.goal}
               </div>
             )}
@@ -611,7 +611,7 @@ export function LessonPage({
       return (
         <TaskPanel breadcrumb={breadcrumb} title={step.title} titleSize={26} chips={stepChip} progressBar={stepperEl}
           actions={
-            <button data-ui="lesson-next-step" onClick={goToNextStep} style={{ width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600, color: '#fff', background: '#81B64C', border: 'none', borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer' }}>
+            <button data-ui="lesson-next-step" onClick={goToNextStep} style={{ width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer' }}>
               {nextStepTitle ? `Дальше: ${nextStepTitle}` : 'Дальше'}
             </button>
           }
@@ -663,7 +663,7 @@ export function LessonPage({
       const nextLesson = curLessonIdx >= 0 ? allLessons[curLessonIdx + 1] : undefined;
       return (
         <TaskPanel breadcrumb={breadcrumb} title="Итог урока" titleSize={26}
-          chips={doneSteps.size >= steps.length - 1 ? <span style={{ fontSize: 12, padding: '3px 8px', background: 'rgba(129,182,76,0.12)', color: '#81B64C', borderRadius: 4 }}>все шаги пройдены</span> : stepChip}
+          chips={doneSteps.size >= steps.length - 1 ? <span style={{ fontSize: 12, padding: '3px 8px', background: 'rgba(129,182,76,0.12)', color: 'var(--accent)', borderRadius: 4 }}>все шаги пройдены</span> : stepChip}
           progressBar={stepperEl} actions={null}
         >
           <SummaryPanel

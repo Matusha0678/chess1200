@@ -111,9 +111,9 @@ export function StepsBar({ steps, label }: { steps: Array<{ ply: number; state: 
       <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
         {steps.map((s, i) => {
           let bg = 'var(--hairline)';
-          if (s.state === 'ok')   bg = '#81B64C';
+          if (s.state === 'ok')   bg = 'var(--accent)';
           if (s.state === 'fail') bg = '#E05050';
-          if (s.state === 'hint') bg = '#E8A23A';
+          if (s.state === 'hint') bg = 'var(--accent)';
           if (s.state === 'now')  bg = 'var(--muted)';
           return (
             <div
@@ -167,7 +167,7 @@ export function MovesTable({ items }: { items: Array<{ ply: number; text: string
     } else if (state === 'fail' || state === 'wrong') {
       base.color = '#E05050';
     } else if (state === 'hint') {
-      base.color = '#E8A23A';
+      base.color = 'var(--accent)';
     }
     return base;
   };

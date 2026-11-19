@@ -74,7 +74,7 @@ export function PlayPanel({
           </div>
 
           {result === 'ok' && lastPlayedMove && (
-            <div style={{ fontSize: 14, color: '#81B64C' }}>
+            <div style={{ fontSize: 14, color: 'var(--accent)' }}>
               Верно: <strong>{sanNo(startFen, lastPlayedMove.ply, lastPlayedMove.san)}</strong>
             </div>
           )}
@@ -112,7 +112,7 @@ export function PlayPanel({
           )}
 
           {result === 'done' && (
-            <div style={{ fontSize: 14, color: '#81B64C' }}>
+            <div style={{ fontSize: 14, color: 'var(--accent)' }}>
               {playState.mistakes
                 ? `${playState.firstTry} из ${playState.mine} ходов с первой попытки`
                 : 'Без ошибок!'}
@@ -122,7 +122,7 @@ export function PlayPanel({
 
         {/* Chips */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, padding: '3px 8px', background: 'rgba(129,182,76,0.15)', color: '#81B64C', borderRadius: 4, border: '1px solid rgba(129,182,76,0.3)' }}>
+          <span style={{ fontSize: 13, padding: '3px 8px', background: 'rgba(129,182,76,0.15)', color: 'var(--accent)', borderRadius: 4, border: '1px solid rgba(129,182,76,0.3)' }}>
             Сыграй сам
           </span>
           {totalLines > 1 && (
@@ -144,7 +144,7 @@ export function PlayPanel({
           <button
             data-ui="lesson-next-step"
             onClick={onNextStep}
-            style={{ width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600, color: '#fff', background: '#81B64C', border: 'none', borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer' }}
+            style={{ width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-btn, 8px)', cursor: 'pointer' }}
           >
             Дальше: {nextStepTitle}
           </button>

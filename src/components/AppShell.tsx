@@ -6,15 +6,18 @@ import { usePathname } from 'next/navigation';
 import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { NAV_GROUPS, matchHref } from '@/lib/nav';
 import { NavIcon } from './NavIcon';
+import { FUN_THEMES } from '@/lib/themes';
+import ThemeDecor from './ThemeDecor';
 
 // ── TopBar ────────────────────────────────────────────────────────────────────
 
 function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
-  const { openPanel, openSearch } = useBoardTheme();
+  const { openPanel, openSearch, siteThemeId } = useBoardTheme();
+  const funLogo = FUN_THEMES[siteThemeId]?.logo;
   return (
     <header className="app-topbar">
       <Link href="/" className="app-logo">
-        <span className="app-logo-mark" aria-hidden="true">♚</span>
+        <span className="app-logo-mark" aria-hidden="true">{funLogo ?? '♚'}</span>
         <span className="app-logo-text">
           Chess <span style={{ fontWeight: 500, color: 'var(--muted)' }}>1200</span>
         </span>
@@ -243,6 +246,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <ThemeDecor />
       <TopBar onMenuClick={() => setMobileOpen(true)} />
 
       {/* Desktop shell */}

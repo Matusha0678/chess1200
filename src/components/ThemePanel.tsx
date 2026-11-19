@@ -3,7 +3,33 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useBoardTheme, type AnimationSpeed } from '@/contexts/BoardThemeContext';
-import { BOARD_THEMES, PIECE_STYLES, SITE_THEMES, getSiteThemeFamily } from '@/lib/themes';
+import { BOARD_THEMES, PIECE_STYLES, SITE_THEMES, getSiteThemeFamily, FUN_THEMES } from '@/lib/themes';
+
+type FunPreset = {
+  id: string;
+  label: string;
+  desc: string;
+  emoji: string;
+  bg: string;
+  accent: string;
+};
+
+const FUN_PRESETS: FunPreset[] = [
+  { id: 'halloween', label: 'Хэллоуин',  desc: FUN_THEMES.halloween.desc, emoji: FUN_THEMES.halloween.logo, bg: '#120806', accent: '#FF7A1F' },
+  { id: 'newyear',   label: 'Новый год', desc: FUN_THEMES.newyear.desc,   emoji: FUN_THEMES.newyear.logo,   bg: '#040F17', accent: '#E54848' },
+  { id: 'alien',     label: 'Alien',     desc: FUN_THEMES.alien.desc,     emoji: FUN_THEMES.alien.logo,     bg: '#050A05', accent: '#39FF14' },
+  { id: 'cyber',     label: 'Cyberpunk', desc: FUN_THEMES.cyber.desc,     emoji: FUN_THEMES.cyber.logo,     bg: '#08051A', accent: '#FF2EC8' },
+  { id: 'easter',    label: 'Пасха',     desc: FUN_THEMES.easter.desc,    emoji: FUN_THEMES.easter.logo,    bg: '#FFF7EC', accent: '#FF8AB4' },
+  { id: 'robot',     label: 'Робот',     desc: FUN_THEMES.robot.desc,     emoji: FUN_THEMES.robot.logo,     bg: '#0E1217', accent: '#4FC3F7' },
+  { id: 'valentine', label: 'Валентин',  desc: FUN_THEMES.valentine.desc, emoji: FUN_THEMES.valentine.logo, bg: '#140608', accent: '#FF5A8A' },
+  { id: 'pirate',    label: 'Пираты',    desc: FUN_THEMES.pirate.desc,    emoji: FUN_THEMES.pirate.logo,    bg: '#060A14', accent: '#D4A648' },
+  { id: 'xeno',      label: 'Ксеноморф', desc: FUN_THEMES.xeno.desc,      emoji: FUN_THEMES.xeno.logo,      bg: '#060805', accent: '#BFE830' },
+  { id: 'sakura',    label: 'Сакура',    desc: FUN_THEMES.sakura.desc,    emoji: FUN_THEMES.sakura.logo,    bg: '#FFF4F3', accent: '#FFB7CE' },
+  { id: 'autumn',    label: 'Осень',     desc: FUN_THEMES.autumn.desc,    emoji: FUN_THEMES.autumn.logo,    bg: '#180C04', accent: '#E88A3C' },
+  { id: 'galaxy',    label: 'Галактика', desc: FUN_THEMES.galaxy.desc,    emoji: FUN_THEMES.galaxy.logo,    bg: '#0A0520', accent: '#B48AFF' },
+  { id: 'abyss',     label: 'Глубина',   desc: FUN_THEMES.abyss.desc,     emoji: FUN_THEMES.abyss.logo,     bg: '#04141A', accent: '#40D0E0' },
+  { id: 'dragon',    label: 'Дракон',    desc: FUN_THEMES.dragon.desc,    emoji: FUN_THEMES.dragon.logo,    bg: '#180608', accent: '#FF7030' },
+];
 
 type FamilyPreset = {
   id: string;
@@ -18,8 +44,8 @@ type FamilyPreset = {
 const FAMILY_PRESETS: FamilyPreset[] = [
   { id: 'dark',        label: 'Газетный',      bg: '#050505', card: '#141414', border: '#1E1E1E', accent: null,      rounded: false },
   { id: 'light',       label: 'Светлый',       bg: '#F8F8F8', card: '#FFFFFF', border: '#D0D0D0', accent: null,      rounded: false },
-  { id: 'soft-dark',   label: 'Мягкий тёмный', bg: '#302E2B', card: '#262522', border: 'transparent', accent: '#81B64C', rounded: true  },
-  { id: 'soft-light',  label: 'Мягкий светл.', bg: '#F3F3F1', card: '#FFFFFF', border: 'rgba(0,0,0,0.08)', accent: '#81B64C', rounded: true },
+  { id: 'soft-dark',   label: 'Мягкий тёмный', bg: '#302E2B', card: '#262522', border: 'transparent', accent: 'var(--accent)', rounded: true  },
+  { id: 'soft-light',  label: 'Мягкий светл.', bg: '#F3F3F1', card: '#FFFFFF', border: 'rgba(0,0,0,0.08)', accent: 'var(--accent)', rounded: true },
   { id: 'cream-dark',  label: 'Сепия',         bg: '#1E1A14', card: '#2A2520', border: 'transparent', accent: '#D4A464', rounded: true },
   { id: 'cream',       label: 'Крем',          bg: '#F5EFE0', card: '#FFFAEE', border: 'rgba(140,100,40,0.18)', accent: '#B86B30', rounded: true },
   { id: 'nord',        label: 'Nord',          bg: '#2E3440', card: '#3B4252', border: 'transparent', accent: '#88C0D0', rounded: true },
@@ -172,6 +198,43 @@ export default function ThemePanel() {
             )}
           </section>
 
+          {/* Fun / Easter-egg themes */}
+          <section>
+            <h2 className="text-[11px] font-semibold text-[#505050] uppercase tracking-widest mb-3">
+              Пасхалки
+            </h2>
+            <div className="grid grid-cols-2 gap-1.5">
+              {FUN_PRESETS.map(opt => {
+                const active = siteThemeId === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => setSiteThemeId(opt.id)}
+                    className={[
+                      'flex items-center gap-2 w-full px-2.5 py-2 rounded text-left transition-colors min-w-0',
+                      active ? 'bg-[#1E1E1E] ring-1 ring-white/20' : 'hover:bg-[#161616]',
+                    ].join(' ')}
+                    title={opt.desc}
+                  >
+                    <div
+                      className="w-7 h-7 relative shrink-0 rounded flex items-center justify-center text-[16px]"
+                      style={{ background: opt.bg, boxShadow: `inset 0 0 0 1px ${opt.accent}44` }}
+                      aria-hidden="true"
+                    >
+                      {opt.emoji}
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className={['text-[11px] font-semibold truncate', active ? 'text-[#F5F5F5]' : 'text-[#A0A0A0]'].join(' ')}>
+                        {opt.label}
+                      </span>
+                      <span className="text-[10px] text-[#606060] truncate">{opt.desc}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
           {/* Board theme */}
           <section>
             <h2 className="text-[11px] font-semibold text-[#505050] uppercase tracking-widest mb-3">
@@ -229,7 +292,7 @@ export default function ThemePanel() {
                     <div className="w-12 h-12 flex items-center justify-center">
                       {style.baseUrl ? (
                         <img
-                          src={`${style.baseUrl}/wQ.svg`}
+                          src={`${style.baseUrl}/${style.lowercase ? 'wq' : 'wQ'}${style.ext ?? '.svg'}`}
                           alt={style.name}
                           className="w-10 h-10 object-contain"
                           draggable={false}

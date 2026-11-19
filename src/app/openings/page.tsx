@@ -111,9 +111,26 @@ export default function OpeningsPage() {
         linesByOp.get(l.opening_id)!.push({ id: l.id, moves: mvs });
       }
 
-      const progMap = new Map<string, { mastery: number; next_review: string }>();
-      for (const p of (progData ?? []) as Array<{ line_id: string; mastery: number; next_review: string }>) {
+      const progMap = new Map<string, { mastery: number; next_review: string; last_practiced?: string }>();
+      for (const p of (progData ?? []) as Array<{ line_id: string; mastery: number; next_review: string; last_practiced?: string }>) {
         progMap.set(p.line_id, p);
+      }
+
+      // Overlay with localStorage so catalog counters stay correct even when DB writes fail silently.
+      if (typeof window !== 'undefined') {
+        for (const [, ls] of linesByOp) {
+          for (const l of ls) {
+            try {
+              const raw = window.localStorage.getItem(`op-lp:${l.id}`);
+              if (!raw) continue;
+              const local = JSON.parse(raw) as { mastery: number; next_review: string; last_practiced: string };
+              const db = progMap.get(l.id);
+              const dbT = db ? Date.parse(db.last_practiced ?? '1970-01-01') : 0;
+              const loT = Date.parse(local.last_practiced ?? '1970-01-01');
+              if (!db || loT >= dbT) progMap.set(l.id, local);
+            } catch { /* ignore */ }
+          }
+        }
       }
 
       const now = Date.now();
@@ -440,10 +457,10 @@ function OpeningCard({ op, isHovered, onHover, isDemo }: {
 
         {/* Mastered checkmark */}
         {st === 'mastered' && (
-          <div style={{ position: 'absolute', right: 10, top: 10, zIndex: 2 }}>
+          <div style={{ position: 'absolute', right: 10, top: 10, zIndex: 2, color: 'var(--accent)' }}>
             <svg width="28" height="28" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="11.5" fill="currentColor" />
-              <path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M7 12.5l3.2 3.2L17 9" stroke="var(--accent-contrast)" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         )}

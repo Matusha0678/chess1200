@@ -268,7 +268,7 @@ export default function CourseOverviewPage({ params }: Props) {
           <button
             className="ui-btn ui-btn-outline"
             onClick={() => setConfirmDelete(true)}
-            style={{ color: '#c0392b', borderColor: '#c0392b' }}
+            style={{ color: 'var(--c-bad)', borderColor: 'var(--c-bad)' }}
           >
             Удалить
           </button>
@@ -277,13 +277,13 @@ export default function CourseOverviewPage({ params }: Props) {
 
       {/* Delete confirmation */}
       {confirmDelete && (
-        <div className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', background: 'var(--bg)', border: '1px solid #c0392b' }}>
+        <div className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', background: 'var(--bg)', border: '1px solid var(--c-bad)' }}>
           <span style={{ flex: 1, fontSize: 14, color: 'var(--ivory)' }}>
             Удалить курс «{course.name}» и все {lessons.length} уроков? Это необратимо.
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="ui-btn ui-btn-sm" onClick={deleteCourse} disabled={actionSaving}
-              style={{ background: '#c0392b', color: '#fff', border: 'none', borderRadius: 'var(--radius-btn)' }}>
+              style={{ background: 'var(--c-bad)', color: '#fff', border: 'none', borderRadius: 'var(--radius-btn)' }}>
               {actionSaving ? 'Удаляю…' : 'Удалить'}
             </button>
             <button className="ui-btn ui-btn-outline ui-btn-sm" onClick={() => setConfirmDelete(false)}>

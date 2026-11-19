@@ -200,7 +200,7 @@ function BlindPageInner() {
       arrows.push({
         from: targetMoveUci.slice(0, 2) as Square,
         to: targetMoveUci.slice(2, 4) as Square,
-        color: '#81B64C', style: 'dashed', role: 'best',
+        color: 'var(--accent)', style: 'dashed', role: 'best',
       });
     }
   }
@@ -268,7 +268,7 @@ function BlindPageInner() {
     <SessionPanel
       title="Вслепую"
       stats={[
-        { label: 'верно', value: score.correct, color: '#81B64C' },
+        { label: 'верно', value: score.correct, color: 'var(--accent)' },
         { label: 'ошибок', value: score.errors, color: '#F08277' },
         { label: 'серия', value: score.streak, color: '#F4B45C' },
       ]}

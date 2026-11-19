@@ -1023,10 +1023,10 @@ function EgCard({
 
         {/* Solved checkmark */}
         {egStatus === 'solved' && (
-          <div style={{ position: 'absolute', right: 10, top: 10, zIndex: 2 }}>
+          <div style={{ position: 'absolute', right: 10, top: 10, zIndex: 2, color: 'var(--accent)' }}>
             <svg width="28" height="28" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="11.5" fill="currentColor" />
-              <path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M7 12.5l3.2 3.2L17 9" stroke="var(--accent-contrast)" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         )}

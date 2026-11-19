@@ -34,7 +34,7 @@ function CourseKingIcon({ color }: { color: 'white' | 'black' | 'both' }) {
 function StepKindIcon({ kind, done }: { kind: LessonStep['kind']; done: boolean }) {
   if (done) {
     return (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#81B64C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent)' }}>
         <path d="M5 12.5l4.5 4.5L19 7.5" />
       </svg>
     );
@@ -140,7 +140,7 @@ export function CourseSidebar({
     {
       value: `${doneLessonsCount}/${totalLessons}`,
       label: 'уроков',
-      color: '#81B64C',
+      color: 'var(--accent)',
     },
     {
       value: testPct !== null ? `${testPct}%` : '—',
@@ -150,7 +150,7 @@ export function CourseSidebar({
     {
       value: confusedCount,
       label: 'не понял',
-      color: confusedCount > 0 ? '#E8A23A' : 'var(--muted)',
+      color: confusedCount > 0 ? 'var(--accent)' : 'var(--muted)',
       href: '/courses/notes',
     },
   ];
@@ -204,7 +204,7 @@ export function CourseSidebar({
               <div style={{
                 width: 28, height: 28, flexShrink: 0,
                 borderRadius: 4,
-                background: done ? '#81B64C' : isCurrent ? '#81B64C' : 'var(--track, #2A2A2A)',
+                background: done ? 'var(--accent)' : isCurrent ? 'var(--accent)' : 'var(--track, #2A2A2A)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 13, fontWeight: 700, color: done || isCurrent ? '#fff' : 'var(--muted)',
               }}>
@@ -264,7 +264,7 @@ export function CourseSidebar({
                         borderRadius: 4,
                         cursor: 'pointer',
                         background: stepCurrent ? 'rgba(129,182,76,0.1)' : 'transparent',
-                        borderLeft: stepCurrent ? '2px solid #81B64C' : '2px solid transparent',
+                        borderLeft: stepCurrent ? '2px solid var(--accent)' : '2px solid transparent',
                         marginLeft: -2,
                       }}
                       onClick={() => onStepClick(si)}

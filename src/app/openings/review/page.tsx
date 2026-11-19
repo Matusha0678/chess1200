@@ -93,14 +93,29 @@ function ReviewAllPageInner() {
 
       // Load progress separately — same approach as catalog page
       const lineIds = rows.map(r => r.id);
-      const progMap = new Map<string, { mastery: number; next_review: string; correct_count: number; incorrect_count: number }>();
+      const progMap = new Map<string, { mastery: number; next_review: string; correct_count: number; incorrect_count: number; last_practiced?: string }>();
       if (lineIds.length > 0) {
         const { data: progData } = await supabase
           .from('line_progress')
-          .select('line_id, mastery, next_review, correct_count, incorrect_count')
+          .select('line_id, mastery, next_review, correct_count, incorrect_count, last_practiced')
           .in('line_id', lineIds);
-        for (const p of (progData ?? []) as Array<{ line_id: string; mastery: number; next_review: string; correct_count: number; incorrect_count: number }>) {
-          progMap.set(p.line_id, { mastery: p.mastery, next_review: p.next_review, correct_count: p.correct_count ?? 0, incorrect_count: p.incorrect_count ?? 0 });
+        for (const p of (progData ?? []) as Array<{ line_id: string; mastery: number; next_review: string; correct_count: number; incorrect_count: number; last_practiced: string }>) {
+          progMap.set(p.line_id, { mastery: p.mastery, next_review: p.next_review, correct_count: p.correct_count ?? 0, incorrect_count: p.incorrect_count ?? 0, last_practiced: p.last_practiced });
+        }
+      }
+
+      // Overlay with localStorage so reviews work even when DB writes fail silently.
+      if (typeof window !== 'undefined') {
+        for (const lid of lineIds) {
+          try {
+            const raw = window.localStorage.getItem(`op-lp:${lid}`);
+            if (!raw) continue;
+            const local = JSON.parse(raw) as { mastery: number; next_review: string; correct_count: number; incorrect_count: number; last_practiced: string };
+            const db = progMap.get(lid);
+            const dbT = db ? Date.parse(db.last_practiced ?? '1970-01-01') : 0;
+            const loT = Date.parse(local.last_practiced ?? '1970-01-01');
+            if (!db || loT >= dbT) progMap.set(lid, local);
+          } catch { /* ignore */ }
         }
       }
 
@@ -158,6 +173,10 @@ function ReviewAllPageInner() {
     xp: number,
     mistakePlies: number[],
   ) => {
+    // Durable local write first — survives DB write failures.
+    if (typeof window !== 'undefined') {
+      try { window.localStorage.setItem(`op-lp:${lineId}`, JSON.stringify(row)); } catch { /* quota */ }
+    }
     const { error: upErr } = await supabase.from('line_progress').upsert(
       { line_id: lineId, ...row },
       { onConflict: 'line_id' },

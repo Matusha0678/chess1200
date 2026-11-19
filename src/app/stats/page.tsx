@@ -217,7 +217,7 @@ function StatsPageInner() {
         boardArrows.push({
           from: ex.decisive_best.slice(0, 2) as Square,
           to: ex.decisive_best.slice(2, 4) as Square,
-          color: '#81B64C', style: 'dashed', role: 'best',
+          color: 'var(--accent)', style: 'dashed', role: 'best',
         });
       }
     }
@@ -267,7 +267,7 @@ function StatsPageInner() {
       title="Мои очки"
       rightNote={`${filteredInsights.length} ${pluralGames(filteredInsights.length)}`}
       stats={[
-        { label: 'очков', value: percent, color: '#81B64C' },
+        { label: 'очков', value: percent, color: 'var(--accent)' },
         { label: 'поражений', value: losses, color: '#F08277' },
         { label: 'не дожал', value: missedWin, color: '#F4B45C' },
       ]}
@@ -586,7 +586,7 @@ function StatsPageInner() {
             {ratingChange != null && (
               <div style={{ padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
                 <div style={{ fontSize: 13, color: 'var(--muted)' }}>За 30 дней</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: ratingChange >= 0 ? '#81B64C' : '#F08277' }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: ratingChange >= 0 ? 'var(--accent)' : '#F08277' }}>
                   {ratingChange >= 0 ? '+' : ''}{ratingChange}
                 </div>
               </div>

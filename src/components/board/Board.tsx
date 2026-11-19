@@ -29,7 +29,7 @@ export interface BoardArrow {
 
 const ROLE_CIRCLE: Record<string, string> = {
   plan: '#3A78C2', threat: '#C2453A', fork: '#C98424',
-  best: '#5E8C35', 'line-opp': '#C2453A', 'line-me': '#3A78C2', offer: '#C98424',
+  best: 'var(--accent-press)', 'line-opp': '#C2453A', 'line-me': '#3A78C2', offer: '#C98424',
 };
 
 export interface BoardProps {

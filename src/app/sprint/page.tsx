@@ -499,7 +499,7 @@ function SprintPageInner() {
     };
     const arr: BoardArrow[] = [
       { from: m.from, to: m.to, color: '#C2453A', role: 'played' },
-      { from: currentItem.from as Square, to: currentItem.to as Square, color: '#5E8C35', style: 'dashed', role: 'best' },
+      { from: currentItem.from as Square, to: currentItem.to as Square, color: 'var(--accent-press)', style: 'dashed', role: 'best' },
     ];
     setLives(newLives);
     setStreak(0);
@@ -556,7 +556,7 @@ function SprintPageInner() {
 
   // session panel content
   const sessionStats = [
-    { value: record, label: 'рекорд', color: '#81B64C' },
+    { value: record, label: 'рекорд', color: 'var(--accent)' },
     { value: totalRuns, label: runsPlural(totalRuns), color: 'var(--ivory)' },
     { value: accuracy, label: 'точность %', color: 'var(--ivory)' },
   ];
@@ -576,7 +576,7 @@ function SprintPageInner() {
             borderRadius: 8,
             border: '1px solid var(--hairline)',
             background: t === timeSec ? 'rgba(129,182,76,.15)' : 'transparent',
-            color: t === timeSec ? '#81B64C' : 'var(--ivory)',
+            color: t === timeSec ? 'var(--accent)' : 'var(--ivory)',
             cursor: phase === 'run' ? 'not-allowed' : 'pointer',
             fontSize: 13,
           }}
@@ -615,7 +615,7 @@ function SprintPageInner() {
                   });
                 }}
                 disabled={phase === 'run'}
-                style={{ accentColor: '#81B64C' }}
+                style={{ accentColor: 'var(--accent)' }}
               />
               <span style={{ fontSize: 13, color: 'var(--ivory)' }}>{o.name}</span>
             </span>
@@ -644,7 +644,7 @@ function SprintPageInner() {
               {dayLabel(r.played_at)} · {timeStr}
             </span>
             <span style={{ color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
-              {r.score} {isRec && <span style={{ color: '#81B64C' }}>★</span>}
+              {r.score} {isRec && <span style={{ color: 'var(--accent)' }}>★</span>}
             </span>
           </div>
         );
@@ -690,7 +690,7 @@ function SprintPageInner() {
         disabled={itemsPool.length === 0}
         style={{
           height: 44, border: 'none', borderRadius: 'var(--radius-btn)',
-          background: '#81B64C', color: '#fff', fontSize: 15, fontWeight: 600,
+          background: 'var(--accent)', color: '#fff', fontSize: 15, fontWeight: 600,
           cursor: itemsPool.length ? 'pointer' : 'not-allowed', opacity: itemsPool.length ? 1 : .5,
         }}
       >
@@ -768,7 +768,7 @@ function SprintPageInner() {
           {log.map((e, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
               <span>
-                <span style={{ color: e.ok ? '#81B64C' : '#C2453A', marginRight: 8 }}>{e.ok ? '✓' : '✗'}</span>
+                <span style={{ color: e.ok ? 'var(--accent)' : '#C2453A', marginRight: 8 }}>{e.ok ? '✓' : '✗'}</span>
                 <span style={{ color: 'var(--ivory)' }}>{e.numSan}</span>
                 {!e.ok && e.played && (
                   <span style={{ color: 'var(--muted)', marginLeft: 8 }}>· ты сыграл {e.played}</span>
@@ -796,7 +796,7 @@ function SprintPageInner() {
           onClick={startRun}
           style={{
             flex: 1, height: 44, border: 'none', borderRadius: 'var(--radius-btn)',
-            background: '#81B64C', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer',
+            background: 'var(--accent)', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer',
           }}
         >
           Ещё раз
@@ -830,12 +830,12 @@ function SprintPageInner() {
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>{errorsPlural(finalMistakes)}</span>
           </div>
           <div style={cellStyle}>
-            <span style={{ fontSize: 26, fontWeight: 700, color: isNewRecord ? '#81B64C' : 'var(--ivory)' }}>{Math.max(record, finalScore)}</span>
+            <span style={{ fontSize: 26, fontWeight: 700, color: isNewRecord ? 'var(--accent)' : 'var(--ivory)' }}>{Math.max(record, finalScore)}</span>
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>рекорд</span>
           </div>
         </div>
         {isNewRecord && (
-          <div style={{ fontSize: 14, color: '#81B64C', fontWeight: 600 }}>Новый рекорд!</div>
+          <div style={{ fontSize: 14, color: 'var(--accent)', fontWeight: 600 }}>Новый рекорд!</div>
         )}
         <div style={{ fontSize: 14, color: 'var(--muted)' }}>
           {needed > 0

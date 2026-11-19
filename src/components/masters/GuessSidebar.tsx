@@ -40,7 +40,7 @@ const LABEL_STYLE: React.CSSProperties = {
 };
 
 function PtsBox({ pts }: { pts: 0 | 1 | 2 }) {
-  const color = pts === 2 ? '#81B64C' : pts === 1 ? '#F0A43A' : '#E0574A';
+  const color = pts === 2 ? 'var(--accent)' : pts === 1 ? '#F0A43A' : 'var(--c-bad)';
   return (
     <span style={{
       display: 'inline-block', width: 20, height: 20, lineHeight: '20px', textAlign: 'center',
@@ -54,10 +54,10 @@ function PtsBox({ pts }: { pts: 0 | 1 | 2 }) {
 
 function KindIcon({ kind }: { kind: MomentKind }) {
   if (kind === 'sac') return <span style={{ color: '#F0A43A', fontSize: 13 }}>♦</span>;
-  if (kind === 'check') return <span style={{ color: '#E05757', fontSize: 13 }}>⚡</span>;
+  if (kind === 'check') return <span style={{ color: 'var(--c-bad)', fontSize: 13 }}>⚡</span>;
   if (kind === 'capture') return <span style={{ color: 'var(--muted)', fontSize: 13 }}>×</span>;
-  if (kind === 'annotated') return <span style={{ color: '#F0D060', fontSize: 13 }}>★</span>;
-  return <span style={{ color: '#4A90E2', fontSize: 13 }}>·</span>;
+  if (kind === 'annotated') return <span style={{ color: 'color-mix(in srgb, var(--accent) 70%, var(--ivory))', fontSize: 13 }}>★</span>;
+  return <span style={{ color: 'color-mix(in srgb, var(--accent) 45%, var(--muted))', fontSize: 13 }}>·</span>;
 }
 
 export function GuessSidebar({
@@ -75,7 +75,7 @@ export function GuessSidebar({
   const answered = answers.length;
 
   const stats = [
-    { label: 'очки', value: phase === 'overview' ? '—' : String(totalPts), color: '#81B64C' },
+    { label: 'очки', value: phase === 'overview' ? '—' : String(totalPts), color: 'var(--accent)' },
     { label: 'как мастер', value: phase === 'overview' ? '—' : `${masterHits}/${answered}`, color: 'var(--ivory)' },
     { label: 'рекорд', value: record != null ? String(record) : '—', color: 'var(--muted)' },
   ];
@@ -173,7 +173,7 @@ export function GuessSidebar({
       </div>
       <div style={{ height: 3, background: 'var(--hairline)', borderRadius: 2, overflow: 'hidden' }}>
         <div style={{
-          height: '100%', background: '#81B64C', borderRadius: 2,
+          height: '100%', background: 'var(--accent)', borderRadius: 2,
           width: analyzing.total > 0 ? `${Math.round(100 * analyzing.done / analyzing.total)}%` : '0%',
           transition: 'width 0.3s',
         }} />

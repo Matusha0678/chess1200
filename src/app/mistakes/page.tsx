@@ -436,7 +436,7 @@ export default function MistakesPage() {
     arrows.push({
       from: card.best_move.slice(0, 2) as Square,
       to: card.best_move.slice(2, 4) as Square,
-      color: '#81B64C',
+      color: 'var(--accent)',
     });
   }
   // After answer: show user's move + best move arrows
@@ -445,14 +445,14 @@ export default function MistakesPage() {
       const mv = new Chess(card.fen_before).move(answered.userSan);
       if (mv) {
         const isCorrect = answered.correct;
-        arrows.push({ from: mv.from as Square, to: mv.to as Square, color: isCorrect ? '#81B64C' : '#E0574A' });
+        arrows.push({ from: mv.from as Square, to: mv.to as Square, color: isCorrect ? 'var(--accent)' : 'var(--c-bad)' });
       }
     } catch { /* ignore */ }
     if (!answered.correct && card.best_move?.length >= 4) {
       arrows.push({
         from: card.best_move.slice(0, 2) as Square,
         to: card.best_move.slice(2, 4) as Square,
-        color: '#81B64C',
+        color: 'var(--accent)',
         style: 'dashed',
       });
     }
@@ -586,8 +586,8 @@ export default function MistakesPage() {
         flexShrink: 0,
       }}>
         {[
-          { label: 'верно', value: session.correct, color: '#81B64C' },
-          { label: 'ошибок', value: session.incorrect, color: '#E0574A' },
+          { label: 'верно', value: session.correct, color: 'var(--accent)' },
+          { label: 'ошибок', value: session.incorrect, color: 'var(--c-bad)' },
           { label: 'серия', value: session.streak, color: 'var(--ivory)' },
         ].map(({ label, value, color }, i) => (
           <div key={label} style={{
@@ -647,12 +647,12 @@ export default function MistakesPage() {
             }}>
               {/* left indicator */}
               {isCur && (
-                <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: '#81B64C' }} />
+                <div style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: 'var(--accent)' }} />
               )}
               {/* index / check / x */}
-              <div style={{ display: 'grid', placeItems: 'center', fontSize: 13, color: isCur ? '#81B64C' : 'var(--control)', fontWeight: isCur ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ display: 'grid', placeItems: 'center', fontSize: 13, color: isCur ? 'var(--accent)' : 'var(--control)', fontWeight: isCur ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
                 {isDone ? (
-                  <span style={{ color: '#81B64C', fontSize: 15 }}>✓</span>
+                  <span style={{ color: 'var(--accent)', fontSize: 15 }}>✓</span>
                 ) : (
                   <span>{i + 1}</span>
                 )}
@@ -694,7 +694,7 @@ export default function MistakesPage() {
           {buildingCourse ? 'Собираем…' : 'Собрать мини-курс'}
         </button>
         {buildError && (
-          <span style={{ display: 'block', marginTop: 6, fontSize: 13, color: '#E0574A' }}>{buildError}</span>
+          <span style={{ display: 'block', marginTop: 6, fontSize: 13, color: 'var(--c-bad)' }}>{buildError}</span>
         )}
       </div>
     </div>
@@ -731,7 +731,7 @@ export default function MistakesPage() {
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
               {Math.min(index + 1, total)} / {total}
               {session.xp > 0 && (
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#81B64C', background: 'rgba(129,182,76,.14)', borderRadius: 6, padding: '2px 7px', fontVariantNumeric: 'tabular-nums' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', background: 'rgba(129,182,76,.14)', borderRadius: 6, padding: '2px 7px', fontVariantNumeric: 'tabular-nums' }}>
                   +{session.xp} XP
                 </span>
               )}
@@ -742,7 +742,7 @@ export default function MistakesPage() {
         {!loading && total > 0 && (
           <div style={{ height: 4, borderRadius: 4, background: '#3A3835', marginTop: 12, overflow: 'hidden' }}>
             <div style={{
-              height: '100%', background: '#81B64C', borderRadius: 4,
+              height: '100%', background: 'var(--accent)', borderRadius: 4,
               width: `${Math.max(2, Math.min(100, (index / total) * 100))}%`,
               transition: 'width 0.3s ease',
             }} />
@@ -787,8 +787,8 @@ export default function MistakesPage() {
             <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--ivory)' }}>Всё готово на сегодня!</span>
             <span style={{ fontSize: 15, color: 'var(--muted)' }}>Повторено {cards.length} карточек</span>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {[{ label: 'верно', value: session.correct, color: '#81B64C' },
-                { label: 'ошибок', value: session.incorrect, color: '#E0574A' },
+              {[{ label: 'верно', value: session.correct, color: 'var(--accent)' },
+                { label: 'ошибок', value: session.incorrect, color: 'var(--c-bad)' },
                 { label: 'XP', value: `+${session.xp}`, color: 'var(--ivory)' }].map(s => (
                   <div key={s.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 20px', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card)' }}>
                     <span style={{ fontSize: 24, fontWeight: 700, color: s.color as string, fontVariantNumeric: 'tabular-nums' }}>{s.value}</span>
@@ -814,7 +814,7 @@ export default function MistakesPage() {
                 {PHASE_LABEL[card.phase]}
               </span>
               {card.eval_loss > 0 && (
-                <span style={{ height: 28, display: 'inline-flex', alignItems: 'center', padding: '0 10px', borderRadius: 8, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', fontSize: 13, fontWeight: 500, color: '#E59A8F', fontVariantNumeric: 'tabular-nums' }}>
+                <span style={{ height: 28, display: 'inline-flex', alignItems: 'center', padding: '0 10px', borderRadius: 8, background: 'var(--st-b0)', border: '1px solid rgba(255,255,255,.11)', fontSize: 13, fontWeight: 500, color: 'var(--c-bad)', fontVariantNumeric: 'tabular-nums' }}>
                   −{(card.eval_loss / 100).toFixed(2)}
                 </span>
               )}
@@ -833,7 +833,7 @@ export default function MistakesPage() {
                       {card.my_move}
                     </span>
                     {' '}и потерял{' '}
-                    <span style={{ color: '#E59A8F', fontVariantNumeric: 'tabular-nums' }}>
+                    <span style={{ color: 'var(--c-bad)', fontVariantNumeric: 'tabular-nums' }}>
                       {(card.eval_loss / 100).toFixed(1)} п.
                     </span>
                   </div>
@@ -865,7 +865,7 @@ export default function MistakesPage() {
                     ? <ClassIcon cls={answered.alternate ? 'good' : 'best'} size={28} />
                     : <ClassIcon cls={userMoveCls ?? 'blunder'} size={28} />
                   }
-                  <b style={{ fontSize: 19, color: answered.correct ? '#81B64C' : '#E0574A' }}>
+                  <b style={{ fontSize: 19, color: answered.correct ? 'var(--accent)' : 'var(--c-bad)' }}>
                     {answered.correct ? (answered.alternate ? 'Хороший ход!' : 'Верно! Лучший ход') : 'Не то'}
                     {answered.xpEarned > 0 && (
                       <span style={{ fontWeight: 400, fontSize: 14, marginLeft: 10, color: 'var(--muted)' }}>
@@ -876,7 +876,7 @@ export default function MistakesPage() {
                 </div>
                 {bestMoveSan && (
                   <p style={{ marginTop: 8, fontSize: 15, color: 'var(--ivory)', lineHeight: 1.5 }}>
-                    <span style={{ background: 'rgba(255,255,255,.06)', borderRadius: 6, padding: '2px 7px', color: '#81B64C', fontWeight: 500 }}>
+                    <span style={{ background: 'rgba(255,255,255,.06)', borderRadius: 6, padding: '2px 7px', color: 'var(--accent)', fontWeight: 500 }}>
                       {bestMoveSan}
                     </span>
                     {answered.alternate && ' — тоже хороший ход'}
@@ -889,7 +889,7 @@ export default function MistakesPage() {
                       <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)' }}>
                         {answered.correct ? 'твой ход' : 'в партии'}
                       </span>
-                      <b style={{ fontSize: 18, color: answered.correct ? '#81B64C' : '#E59A8F', fontVariantNumeric: 'tabular-nums' }}>
+                      <b style={{ fontSize: 18, color: answered.correct ? 'var(--accent)' : 'var(--c-bad)', fontVariantNumeric: 'tabular-nums' }}>
                         {answered.evalMyMoveCp !== undefined ? fmtEval(answered.evalMyMoveCp) : '—'}
                       </b>
                     </div>
@@ -897,7 +897,7 @@ export default function MistakesPage() {
                       <span style={{ display: 'block', fontSize: 13, color: 'var(--muted)' }}>
                         {answered.correct ? 'в партии' : 'лучший ход'}
                       </span>
-                      <b style={{ fontSize: 18, color: '#81B64C', fontVariantNumeric: 'tabular-nums' }}>
+                      <b style={{ fontSize: 18, color: 'var(--accent)', fontVariantNumeric: 'tabular-nums' }}>
                         {answered.evalBestCp !== undefined ? fmtEval(answered.evalBestCp) : (card.eval_before !== null ? fmtEval(card.eval_before) : '—')}
                       </b>
                     </div>
@@ -916,7 +916,7 @@ export default function MistakesPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
                 {[1, 2, 3, 4, 5].map(lvl => (
-                  <div key={lvl} style={{ height: 6, borderRadius: 3, background: lvl <= card.mastery ? '#81B64C' : '#3A3835' }} />
+                  <div key={lvl} style={{ height: 6, borderRadius: 3, background: lvl <= card.mastery ? 'var(--accent)' : '#3A3835' }} />
                 ))}
               </div>
             </div>
@@ -945,8 +945,8 @@ export default function MistakesPage() {
               onClick={goNext}
               style={{
                 height: 52, fontSize: 18, fontWeight: 700,
-                background: '#81B64C',
-                boxShadow: '0 4px 0 #5E8C35',
+                background: 'var(--accent)',
+                boxShadow: 'var(--shadow-btn, 0 4px 0 rgba(0,0,0,.4))',
                 color: '#fff', border: 'none', cursor: 'pointer',
                 borderRadius: 'var(--radius-btn)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,

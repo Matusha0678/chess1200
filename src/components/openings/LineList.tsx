@@ -32,11 +32,11 @@ interface LineListProps {
 }
 
 const LINE_CLASS_COLORS: Record<string, string> = {
-  main:      '#81B64C',
+  main:      'var(--accent)',
   common:    '#5096CC',
   rare:      '#C98424',
   very_rare: '#A04040',
-  sharp:     '#E0574A',
+  sharp:     'var(--c-bad)',
 };
 
 const LINE_CLASS_LABELS: Record<string, string> = {
@@ -56,7 +56,7 @@ function MasteryBar({ mastery }: { mastery: number }) {
           style={{
             width: 8, height: 4,
             borderRadius: 2,
-            background: i < mastery ? '#81B64C' : 'var(--hairline)',
+            background: i < mastery ? 'var(--accent)' : 'var(--hairline)',
             flexShrink: 0,
           }}
         />
@@ -66,9 +66,9 @@ function MasteryBar({ mastery }: { mastery: number }) {
 }
 
 function dueColor(text: string): string {
-  if (text === 'сегодня') return '#E8A23A';
-  if (text === 'освоена') return '#81B64C';
-  if (text === 'новая') return '#8FB4DA';
+  if (text === 'сегодня') return 'var(--accent)';
+  if (text === 'освоена') return 'var(--accent)';
+  if (text === 'новая') return 'var(--muted)';
   return 'var(--muted)';
 }
 
@@ -131,7 +131,7 @@ export function LineList({
   const hardEl = hardCount > 0 ? (
     <div
       data-ui="op-hard"
-      style={{ fontSize: 13, color: '#E8A23A', cursor: 'pointer', padding: '4px 0' }}
+      style={{ fontSize: 13, color: 'var(--accent)', cursor: 'pointer', padding: '4px 0' }}
       onClick={() => onModeChange('review' as const)}
     >
       Трудные ходы · {hardCount}
@@ -178,7 +178,7 @@ export function LineList({
               {line.label}
             </span>
             {line.isFreshDev && (
-              <span style={{ fontSize: 11, color: '#E8A23A', fontWeight: 600, flexShrink: 0 }}>из партии</span>
+              <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600, flexShrink: 0 }}>из партии</span>
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
@@ -265,10 +265,10 @@ export function LineList({
     <SessionPanel
       header={header}
       stats={[
-        { value: counts.mastered, label: 'освоено', color: '#81B64C' },
-        { value: counts.learning, label: 'изучаю', color: '#B088D8' },
-        { value: counts.due,      label: 'повторить', color: '#E8A23A' },
-        { value: counts.new,      label: 'новых', color: '#8FB4DA' },
+        { value: counts.mastered, label: 'освоено', color: 'var(--accent)' },
+        { value: counts.learning, label: 'изучаю', color: 'color-mix(in srgb, var(--accent) 60%, var(--muted))' },
+        { value: counts.due,      label: 'повторить', color: 'var(--accent)' },
+        { value: counts.new,      label: 'новых', color: 'var(--muted)' },
       ]}
       controls={
         <div>

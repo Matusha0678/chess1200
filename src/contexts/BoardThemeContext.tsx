@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
-import { BOARD_THEMES, PIECE_STYLES, PIECE_KEYS, type BoardTheme, type PieceStyle } from '@/lib/themes';
+import { BOARD_THEMES, PIECE_STYLES, PIECE_KEYS, FUN_THEME_IDS, type BoardTheme, type PieceStyle } from '@/lib/themes';
 
 type PieceRenderObject = Record<string, (props?: { fill?: string; square?: string; svgStyle?: React.CSSProperties }) => React.JSX.Element>;
 
@@ -99,10 +99,11 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
       id.startsWith('cream') ||
       id.startsWith('nord') ||
       id.startsWith('sunset') ||
-      id.startsWith('mono');
+      id.startsWith('mono') ||
+      FUN_THEME_IDS.has(id);
     document.documentElement.dataset.themeShape = isRounded ? 'rounded' : 'sharp';
     const lightModeIds = new Set([
-      'light', 'soft-light', 'cream', 'nord-light', 'sunset-warm', 'mono-light',
+      'light', 'soft-light', 'cream', 'nord-light', 'sunset-warm', 'mono-light', 'easter', 'sakura',
     ]);
     document.documentElement.dataset.themeMode = lightModeIds.has(id) ? 'light' : 'dark';
   }, [settings.siteThemeId]);

@@ -149,13 +149,13 @@ function capturedPieces(fen: string, side: PlayerColor): string {
 function getResultTitle(chess: Chess, playerColor: PlayerColor, surrendered: boolean): { title: string; color: string; reason: string } {
   if (surrendered) {
     const plyCount = chess.history().length;
-    return { title: 'Поражение', color: '#E0574A', reason: `Ты сдался на ${Math.ceil(plyCount / 2)}-м ходу` };
+    return { title: 'Поражение', color: 'var(--c-bad)', reason: `Ты сдался на ${Math.ceil(plyCount / 2)}-м ходу` };
   }
   if (chess.isCheckmate()) {
     const winner = chess.turn() === playerColor ? 'loss' : 'win';
     const plyCount = chess.history().length;
-    if (winner === 'win') return { title: 'Победа!', color: '#81B64C', reason: `Мат на ${Math.ceil(plyCount / 2)}-м ходу` };
-    return { title: 'Поражение', color: '#E0574A', reason: `Мат на ${Math.ceil(plyCount / 2)}-м ходу` };
+    if (winner === 'win') return { title: 'Победа!', color: 'var(--accent)', reason: `Мат на ${Math.ceil(plyCount / 2)}-м ходу` };
+    return { title: 'Поражение', color: 'var(--c-bad)', reason: `Мат на ${Math.ceil(plyCount / 2)}-м ходу` };
   }
   if (chess.isStalemate()) return { title: 'Ничья', color: 'var(--muted)', reason: 'Пат' };
   if (chess.isThreefoldRepetition()) return { title: 'Ничья', color: 'var(--muted)', reason: 'Троекратное повторение' };
@@ -810,14 +810,14 @@ function PlayContent() {
   // Arrows
   const arrows: BoardArrow[] = [];
   if (hintArrow && hintArrow.length >= 4 && gamePhase === 'playing') {
-    arrows.push({ from: hintArrow.slice(0, 2) as Square, to: hintArrow.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best' });
+    arrows.push({ from: hintArrow.slice(0, 2) as Square, to: hintArrow.slice(2, 4) as Square, color: 'var(--accent)', style: 'dashed', role: 'best' });
   }
   // Mistake arrows: only when viewing the mistake position (not while navigating history)
   const shownMistake = gamePhase === 'review' && selectedMistake !== null && viewIdx === -1 ? keyMistakes[selectedMistake] ?? null : null;
   if (shownMistake) {
-    arrows.push({ from: shownMistake.uci.slice(0, 2) as Square, to: shownMistake.uci.slice(2, 4) as Square, color: '#E0574A', role: 'played' });
+    arrows.push({ from: shownMistake.uci.slice(0, 2) as Square, to: shownMistake.uci.slice(2, 4) as Square, color: 'var(--c-bad)', role: 'played' });
     if (shownMistake.bestMoveUci.length >= 4) {
-      arrows.push({ from: shownMistake.bestMoveUci.slice(0, 2) as Square, to: shownMistake.bestMoveUci.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best' });
+      arrows.push({ from: shownMistake.bestMoveUci.slice(0, 2) as Square, to: shownMistake.bestMoveUci.slice(2, 4) as Square, color: 'var(--accent)', style: 'dashed', role: 'best' });
     }
   }
 
@@ -916,9 +916,9 @@ function PlayContent() {
         overflow: 'hidden', flexShrink: 0,
       }}>
         {([
-          { label: 'Победы', value: stats.wins, color: '#81B64C' },
+          { label: 'Победы', value: stats.wins, color: 'var(--accent)' },
           { label: 'Ничьи', value: stats.draws, color: 'var(--muted)' },
-          { label: 'Поражения', value: stats.losses, color: '#E0574A' },
+          { label: 'Поражения', value: stats.losses, color: 'var(--c-bad)' },
         ] as const).map(({ label, value, color }, i) => (
           <div key={label} style={{
             padding: '10px 0', textAlign: 'center',
@@ -1072,7 +1072,7 @@ function PlayContent() {
         : isPlayerTurn ? 'rgba(129,182,76,.15)' : 'rgba(255,255,255,.06)',
       color: gamePhase === 'review'
         ? (resultInfo?.color ?? 'var(--muted)')
-        : isPlayerTurn ? '#81B64C' : 'var(--muted)',
+        : isPlayerTurn ? 'var(--accent)' : 'var(--muted)',
     }}>
       {gamePhase === 'review'
         ? (resultInfo?.title ?? 'Игра завершена')
@@ -1230,7 +1230,7 @@ function PlayContent() {
                           <span style={{ fontSize: 14, color: 'var(--ivory)', fontWeight: 600 }}>{km.moveNum}. {km.san}</span>
                           {km.bestMoveSan && <span style={{ fontSize: 13, color: 'var(--muted)', marginLeft: 6 }}>· лучше {km.bestMoveSan}</span>}
                         </div>
-                        <span style={{ fontSize: 14, color: '#E59A8F', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                        <span style={{ fontSize: 14, color: 'var(--c-bad)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
                           {km.dropLabel}
                         </span>
                       </div>
@@ -1287,12 +1287,12 @@ function PlayContent() {
         {/* Toggles */}
         <div style={{ padding: '10px 24px', borderTop: '1px solid var(--hairline)', display: 'flex', gap: 10, flexShrink: 0 }}>
           <button onClick={() => { const v = !showEvalBar; setShowEvalBar(v); saveSettings(v, showBadges); }}
-            style={{ height: 32, padding: '0 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', background: showEvalBar ? 'rgba(129,182,76,.12)' : 'transparent', color: showEvalBar ? '#81B64C' : 'var(--muted)', border: `1px solid ${showEvalBar ? 'rgba(129,182,76,.4)' : 'var(--hairline)'}`, borderRadius: 'var(--radius-btn)' }}
+            style={{ height: 32, padding: '0 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', background: showEvalBar ? 'rgba(129,182,76,.12)' : 'transparent', color: showEvalBar ? 'var(--accent)' : 'var(--muted)', border: `1px solid ${showEvalBar ? 'rgba(129,182,76,.4)' : 'var(--hairline)'}`, borderRadius: 'var(--radius-btn)' }}
           >
             Полоса оценки
           </button>
           <button onClick={() => { const v = !showBadges; setShowBadges(v); saveSettings(showEvalBar, v); }}
-            style={{ height: 32, padding: '0 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', background: showBadges ? 'rgba(129,182,76,.12)' : 'transparent', color: showBadges ? '#81B64C' : 'var(--muted)', border: `1px solid ${showBadges ? 'rgba(129,182,76,.4)' : 'var(--hairline)'}`, borderRadius: 'var(--radius-btn)' }}
+            style={{ height: 32, padding: '0 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', background: showBadges ? 'rgba(129,182,76,.12)' : 'transparent', color: showBadges ? 'var(--accent)' : 'var(--muted)', border: `1px solid ${showBadges ? 'rgba(129,182,76,.4)' : 'var(--hairline)'}`, borderRadius: 'var(--radius-btn)' }}
           >
             Значки ходов
           </button>
@@ -1305,7 +1305,7 @@ function PlayContent() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={handleHint}
-                style={{ flex: 1, height: 40, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', background: hintArrow ? 'rgba(129,182,76,.12)' : 'transparent', color: hintArrow ? '#81B64C' : 'var(--ivory)', border: `1px solid ${hintArrow ? 'rgba(129,182,76,.4)' : 'var(--hairline)'}`, borderRadius: 'var(--radius-btn)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                style={{ flex: 1, height: 40, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', background: hintArrow ? 'rgba(129,182,76,.12)' : 'transparent', color: hintArrow ? 'var(--accent)' : 'var(--ivory)', border: `1px solid ${hintArrow ? 'rgba(129,182,76,.4)' : 'var(--hairline)'}`, borderRadius: 'var(--radius-btn)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 Подсказка
                 <kbd data-allow-small style={{ fontSize: 12, background: 'rgba(255,255,255,.08)', borderRadius: 3, padding: '1px 5px', fontStyle: 'normal', color: 'var(--muted)' }}>H</kbd>
@@ -1319,7 +1319,7 @@ function PlayContent() {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={handleSurrender}
-                style={{ flex: 1, height: 40, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', background: surrenderConfirm ? 'rgba(224,87,74,.12)' : 'transparent', color: surrenderConfirm ? '#E0574A' : 'var(--muted)', border: `1px solid ${surrenderConfirm ? 'rgba(224,87,74,.4)' : 'var(--hairline)'}`, borderRadius: 'var(--radius-btn)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                style={{ flex: 1, height: 40, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', background: surrenderConfirm ? 'rgba(224,87,74,.12)' : 'transparent', color: surrenderConfirm ? 'var(--c-bad)' : 'var(--muted)', border: `1px solid ${surrenderConfirm ? 'rgba(224,87,74,.4)' : 'var(--hairline)'}`, borderRadius: 'var(--radius-btn)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 {surrenderConfirm ? 'Подтвердить?' : '⚑ Сдаться'}
               </button>

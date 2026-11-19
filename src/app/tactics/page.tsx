@@ -167,7 +167,7 @@ function TacticsPageInner() {
       setWrongArrow({
         from: correctUci.slice(0, 2) as Square,
         to: correctUci.slice(2, 4) as Square,
-        color: '#81B64C', style: 'dashed', role: 'best',
+        color: 'var(--accent)', style: 'dashed', role: 'best',
       });
       setPhase('wrong');
       setScore(s => ({ solved: s.solved, errors: s.errors + 1, streak: 0 }));
@@ -196,7 +196,7 @@ function TacticsPageInner() {
     setWrongArrow({
       from: correctUci.slice(0, 2) as Square,
       to: correctUci.slice(2, 4) as Square,
-      color: '#81B64C', style: 'dashed', role: 'best',
+      color: 'var(--accent)', style: 'dashed', role: 'best',
     });
   }, [puzzle, phase, moveIdx]);
 
@@ -210,7 +210,7 @@ function TacticsPageInner() {
       setWrongArrow({
         from: correctUci.slice(0, 2) as Square,
         to: correctUci.slice(2, 4) as Square,
-        color: '#81B64C', style: 'dashed', role: 'best',
+        color: 'var(--accent)', style: 'dashed', role: 'best',
       });
     }
   }, [puzzle, moveIdx]);
@@ -251,7 +251,7 @@ function TacticsPageInner() {
     <SessionPanel
       title="Тактика"
       stats={[
-        { label: 'решено', value: score.solved, color: '#81B64C' },
+        { label: 'решено', value: score.solved, color: 'var(--accent)' },
         { label: 'ошибок', value: score.errors, color: '#F08277' },
         { label: 'серия', value: score.streak, color: '#F4B45C' },
       ]}

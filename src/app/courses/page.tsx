@@ -31,12 +31,12 @@ const KIND_ICON: Record<CourseKind, string> = {
 };
 
 const KIND_COLOR: Record<CourseKind, string> = {
-  opening: '#8FB4DA',
-  theme: '#F0D060',
-  endgame: '#B088D8',
-  tactics: '#E8A23A',
-  structure: '#81B64C',
-  games: '#E05757',
+  opening: 'var(--muted)',
+  theme: 'color-mix(in srgb, var(--accent) 70%, var(--ivory))',
+  endgame: 'color-mix(in srgb, var(--accent) 60%, var(--muted))',
+  tactics: 'var(--accent)',
+  structure: 'var(--accent)',
+  games: 'var(--c-bad)',
 };
 
 const TABS: { id: TabId; label: string }[] = [
@@ -51,12 +51,6 @@ const TABS: { id: TabId; label: string }[] = [
 
 type ShowFilter = 'all' | 'progress' | 'new' | 'done';
 
-function diffLabel(value: number): { text: string; color: string } {
-  if (value <= 2) return { text: 'Лёгкий',  color: '#81B64C' };
-  if (value <= 3) return { text: 'Средний', color: '#E8A23A' };
-  return { text: 'Сложный', color: '#E05757' };
-}
-
 function colorText(c: 'white' | 'black' | 'both'): string {
   if (c === 'white') return 'Белыми';
   if (c === 'black') return 'Чёрными';
@@ -68,6 +62,19 @@ function courseStatus(c: CourseWithStats): 'done' | 'progress' | 'new' {
   if (c.lessonsCompleted > 0) return 'progress';
   return 'new';
 }
+
+function plural(n: number, one: string, few: string, many: string): string {
+  const m100 = n % 100, m10 = n % 10;
+  if (m100 >= 11 && m100 <= 19) return `${n} ${many}`;
+  if (m10 === 1)                 return `${n} ${one}`;
+  if (m10 >= 2 && m10 <= 4)      return `${n} ${few}`;
+  return `${n} ${many}`;
+}
+
+const sectionLabelStyle: React.CSSProperties = {
+  fontSize: 12, fontWeight: 600, color: 'var(--muted)',
+  letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6,
+};
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<CourseWithStats[]>([]);
@@ -158,7 +165,7 @@ export default function CoursesPage() {
   };
 
   const segBtnStyle = (active: boolean): React.CSSProperties => ({
-    flex: 1, padding: '5px 2px', border: 'none',
+    flex: 1, padding: '6px 4px', border: 'none',
     background: active ? 'var(--surface)' : 'transparent',
     color: active ? 'var(--ivory)' : 'var(--muted)',
     fontSize: 13, fontWeight: active ? 600 : 400,
@@ -172,7 +179,7 @@ export default function CoursesPage() {
 
         {/* LEFT COLUMN */}
         <section data-ui="co-left" style={leftStyle}>
-          <div style={{ padding: '20px 20px 0', flexShrink: 0 }}>
+          <div style={{ padding: '20px 20px 18px', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 19, fontWeight: 700, color: 'var(--ivory)' }}>Курсы</span>
               <span style={{ fontSize: 13, color: 'var(--muted)' }}>
@@ -183,29 +190,43 @@ export default function CoursesPage() {
               <div style={{
                 height: '100%',
                 width: totals.lessonsTotal > 0 ? `${(totals.lessonsCompleted / totals.lessonsTotal) * 100}%` : '0%',
-                background: '#81B64C', transition: 'width 0.3s',
+                background: 'var(--accent)', transition: 'width 0.3s',
               }} />
             </div>
 
             {/* Stats */}
-            <div data-ui="co-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 14 }}>
+            <div data-ui="co-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 16 }}>
               {[
-                { v: totals.done,     label: 'пройдено', color: '#81B64C' },
-                { v: totals.progress, label: 'в работе', color: '#B088D8' },
-                { v: totals.newC,     label: 'новых',    color: '#8FB4DA' },
+                { v: totals.done,     label: 'пройдено', color: 'var(--ivory)' },
+                { v: totals.progress, label: 'в работе', color: 'color-mix(in srgb, var(--accent) 65%, var(--ivory))' },
+                { v: totals.newC,     label: 'новых',    color: 'var(--muted)' },
               ].map(item => (
                 <div key={item.label} style={{ textAlign: 'center', padding: '8px 4px', background: 'rgba(0,0,0,0.2)', borderRadius: 6 }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: item.color }}>{item.v}</div>
-                  <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>{item.label}</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{item.label}</div>
                 </div>
               ))}
             </div>
 
+            {/* Primary CTA — now inline with filters, not banished to the bottom */}
+            <Link
+              href="/courses/import"
+              style={{
+                display: 'block', width: '100%', textAlign: 'center',
+                padding: '10px 0', background: 'var(--accent)',
+                border: '1px solid var(--accent)', borderRadius: 'var(--radius-btn, 4px)',
+                color: 'var(--accent-contrast, #fff)', fontSize: 14, fontWeight: 600, textDecoration: 'none',
+                marginBottom: 18,
+              }}
+            >
+              Импортировать курс
+            </Link>
+
             {/* Kind filter (tabs) */}
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)', marginBottom: 6 }}>Тип</div>
+            <div style={sectionLabelStyle}>Тип</div>
             <div data-ui="co-kinds" style={{
               display: 'flex', flexDirection: 'column', gap: 2,
-              background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-card, 4px)', padding: 3, marginBottom: 12,
+              background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-card, 4px)', padding: 3, marginBottom: 14,
             }}>
               {tabsWithCounts.filter(t => t.count > 0 || t.id === 'all').map(tab => {
                 const active = activeTab === tab.id;
@@ -232,8 +253,8 @@ export default function CoursesPage() {
             </div>
 
             {/* Show filter */}
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)', marginBottom: 6 }}>Показать</div>
-            <div style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-card, 4px)', padding: 3, marginBottom: 16, flexWrap: 'wrap' }}>
+            <div style={sectionLabelStyle}>Показать</div>
+            <div style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-card, 4px)', padding: 3, flexWrap: 'wrap', marginBottom: 18 }}>
               {(['all','progress','new','done'] as const).map(s => {
                 const labels: Record<ShowFilter, string> = { all: 'Все', progress: 'В работе', new: 'Новые', done: 'Пройденные' };
                 return (
@@ -243,69 +264,75 @@ export default function CoursesPage() {
                 );
               })}
             </div>
-          </div>
 
-          {/* Footer */}
-          <div style={{ marginTop: 'auto', padding: '16px 20px', borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
-            <Link
-              href="/courses/import"
-              style={{
-                display: 'block', width: '100%', textAlign: 'center',
-                padding: '10px 0', background: 'var(--accent)',
-                border: '1px solid var(--accent)', borderRadius: 'var(--radius-btn, 4px)',
-                color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                marginBottom: 8,
-              }}
-            >
-              Импортировать курс
-            </Link>
+            {/* Secondary link + hint — grouped with filters, not banished to the bottom */}
             <Link
               href="/courses/path"
               style={{
-                display: 'block', width: '100%', textAlign: 'center',
-                padding: '8px 0', background: 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '8px 10px', background: 'transparent',
                 border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn, 4px)',
-                color: 'var(--muted)', fontSize: 13, fontWeight: 500, textDecoration: 'none',
-                marginBottom: 6,
+                color: 'var(--ivory)', fontSize: 13, fontWeight: 500, textDecoration: 'none',
+                marginBottom: 10,
               }}
             >
-              Пути обучения
+              <span>Пути обучения</span>
+              <span style={{ opacity: 0.5, fontSize: 14 }}>→</span>
             </Link>
-            <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.4, opacity: 0.7 }}>
-              Курсы импортируются из Markdown-файлов. Пути связывают несколько курсов в маршрут.
+            <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5, opacity: 0.75 }}>
+              Курсы импортируются из Markdown. Пути связывают несколько курсов в маршрут.
             </div>
           </div>
         </section>
 
         {/* RIGHT COLUMN */}
         <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: 16, flexShrink: 0 }}>
-            <div>
-              <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ivory)', lineHeight: 1.1, fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: 16, flexShrink: 0, gap: 16 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{
+                fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ivory)',
+                lineHeight: 1.1, fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)",
+              }}>
                 Мои курсы
               </div>
               <div style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>
-                {courses.length} {courses.length === 1 ? 'курс' : courses.length <= 4 ? 'курса' : 'курсов'}
-                {' · '}
-                {totals.lessonsTotal} уроков
-                {totals.progress > 0 ? ` · ${totals.progress} в работе` : ''}
+                {courses.length > 0
+                  ? <>
+                      {plural(courses.length, 'курс', 'курса', 'курсов')} · {plural(totals.lessonsTotal, 'урок', 'урока', 'уроков')}
+                      {totals.progress > 0 ? ` · ${totals.progress} в работе` : ''}
+                    </>
+                  : 'Пока ни одного курса'}
               </div>
             </div>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
+            <div style={{ position: 'relative', flexShrink: 0, width: 260 }}>
+              <svg
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                aria-hidden="true"
+                style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none' }}
+              >
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
               <input
                 ref={searchRef}
                 data-ui="co-search"
                 type="text"
-                placeholder="Найти курс /"
+                placeholder="Найти курс…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{
-                  height: 36, padding: '0 12px', background: 'var(--surface)',
+                  height: 36, width: '100%', padding: '0 42px 0 34px', background: 'var(--surface)',
                   border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn, 4px)',
                   color: 'var(--ivory)', fontSize: 13, outline: 'none', fontFamily: 'inherit',
-                  width: 200,
+                  boxSizing: 'border-box',
                 }}
               />
+              <kbd style={{
+                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                fontSize: 11, color: 'var(--muted)', padding: '2px 6px',
+                border: '1px solid var(--hairline)', borderRadius: 4, lineHeight: 1,
+                fontFamily: 'inherit',
+              }}>/</kbd>
             </div>
           </div>
 
@@ -319,7 +346,7 @@ export default function CoursesPage() {
               <div style={{ fontSize: 16, color: 'var(--ivory)', fontWeight: 600 }}>Нет курсов</div>
               <div style={{ fontSize: 13, textAlign: 'center' }}>Импортируй первый курс из Markdown-файла</div>
               <Link href="/courses/import" style={{
-                padding: '10px 18px', background: 'var(--accent)', color: '#fff',
+                padding: '10px 18px', background: 'var(--accent)', color: 'var(--accent-contrast, #fff)',
                 borderRadius: 'var(--radius-btn, 4px)', textDecoration: 'none', fontSize: 14, fontWeight: 600,
               }}>Импортировать курс</Link>
             </div>
@@ -353,7 +380,7 @@ export default function CoursesPage() {
                 href="/courses/import"
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  gap: 8, padding: 24, minHeight: 200,
+                  gap: 10, padding: 24, minHeight: 240,
                   background: 'transparent',
                   border: '2px dashed var(--hairline)',
                   borderRadius: 'var(--radius-card, 0px)',
@@ -363,10 +390,10 @@ export default function CoursesPage() {
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ivory)'; (e.currentTarget as HTMLElement).style.color = 'var(--ivory)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--hairline)'; (e.currentTarget as HTMLElement).style.color = 'var(--muted)'; }}
               >
-                <span style={{ fontSize: 28 }}>＋</span>
+                <span style={{ fontSize: 32, lineHeight: 1 }}>＋</span>
                 <span style={{ fontSize: 14, fontWeight: 600 }}>Новый курс</span>
-                <span style={{ fontSize: 13, textAlign: 'center', lineHeight: 1.4, opacity: 0.7 }}>
-                  Вставь Markdown — уроки, тесты и партии создадутся сами
+                <span style={{ fontSize: 12, textAlign: 'center', lineHeight: 1.4, opacity: 0.7, maxWidth: 200 }}>
+                  Вставь Markdown — уроки, тесты и партии появятся сами
                 </span>
               </Link>
             </div>
@@ -398,7 +425,6 @@ function CourseCard({
   const kindColor = KIND_COLOR[kind];
   const kindIcon = KIND_ICON[kind];
   const kindLabel = KIND_LABEL[kind];
-  const diff = diffLabel(course.difficulty);
   const status = courseStatus(course);
   const pct = course.lessonsTotal > 0 ? (course.lessonsCompleted / course.lessonsTotal) * 100 : 0;
 
@@ -434,45 +460,50 @@ function CourseCard({
     onDelete(course.id);
   }
 
+  const progressTint = status === 'done'
+    ? 'var(--accent)'
+    : status === 'progress'
+      ? 'var(--accent)'
+      : 'var(--hairline)';
+
   const inner = (
     <>
-      {/* Top: colored header with kind icon */}
-      <div style={{
-        position: 'relative',
-        padding: '24px 16px 20px',
-        background: `linear-gradient(135deg, ${kindColor}26 0%, ${kindColor}0d 100%)`,
-        borderBottom: '1px solid var(--hairline)',
-        display: 'flex', alignItems: 'center', gap: 14,
-      }}>
-        <div style={{
-          width: 48, height: 48, flexShrink: 0,
-          background: kindColor, color: '#fff',
-          borderRadius: 'var(--radius-btn, 4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 24, fontWeight: 700,
-          boxShadow: `0 2px 8px ${kindColor}40`,
-        }}>
-          {kindIcon}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, color: kindColor, fontWeight: 600, marginBottom: 2, letterSpacing: '0.02em' }}>
-            {kindLabel}
-          </div>
-          <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-            {course.color !== 'both' && <span style={{ marginRight: 6 }}>{course.color === 'white' ? '♔' : '♚'} {colorText(course.color)}</span>}
-            <span>{course.lessonsTotal} {course.lessonsTotal === 1 ? 'урок' : course.lessonsTotal <= 4 ? 'урока' : 'уроков'}</span>
-          </div>
-        </div>
-        {status === 'done' && (
-          <svg width="24" height="24" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-            <circle cx="12" cy="12" r="11.5" fill="#81B64C" />
-            <path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
-      </div>
+      {/* Thin colored kind stripe */}
+      <div style={{ height: 3, background: kindColor, flexShrink: 0 }} />
 
-      {/* Below: title + progress + diff */}
-      <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ padding: '18px 18px 16px', display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+        {/* Top meta row: kind icon + label + color */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 28 }}>
+          <div style={{
+            width: 28, height: 28, flexShrink: 0,
+            background: `${kindColor}1f`, color: kindColor,
+            borderRadius: 'var(--radius-btn, 4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 16, fontWeight: 700,
+          }}>
+            {kindIcon}
+          </div>
+          <div style={{
+            fontSize: 12, color: 'var(--muted)', fontWeight: 600,
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1,
+          }}>
+            {kindLabel}
+            {course.color !== 'both' && (
+              <span style={{ marginLeft: 8, textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>
+                · {course.color === 'white' ? '♔' : '♚'} {colorText(course.color)}
+              </span>
+            )}
+          </div>
+          {status === 'done' && (
+            <svg width="20" height="20" viewBox="0 0 24 24" style={{ flexShrink: 0, color: 'var(--accent)' }} aria-hidden="true">
+              <circle cx="12" cy="12" r="11.5" fill="currentColor" />
+              <path d="M7 12.5l3.2 3.2L17 9" stroke="var(--accent-contrast)" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
+
+        {/* Title */}
         {renaming ? (
           <input
             ref={inputRef}
@@ -484,7 +515,7 @@ function CourseCard({
             }}
             onClick={e => e.preventDefault()}
             style={{
-              fontSize: 15, fontWeight: 700, padding: '4px 8px', width: '100%',
+              fontSize: 16, fontWeight: 700, padding: '4px 8px', width: '100%',
               background: 'var(--bg)', border: '1px solid var(--accent)',
               borderRadius: 'var(--radius-btn, 4px)', color: 'var(--ivory)',
               outline: 'none', fontFamily: 'inherit',
@@ -493,13 +524,13 @@ function CourseCard({
           />
         ) : (
           <div data-ui="co-title" style={{
-            fontSize: 15, fontWeight: 600, color: 'var(--ivory)',
+            fontSize: 16, fontWeight: 700, color: 'var(--ivory)',
             lineHeight: 1.3,
             overflow: 'hidden',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
-            minHeight: 40,
+            minHeight: 42,
           }}>
             {course.name}
           </div>
@@ -507,26 +538,50 @@ function CourseCard({
 
         {course.opening && !renaming && (
           <div style={{
-            fontSize: 13, color: 'var(--muted)',
+            fontSize: 13, color: 'var(--muted)', lineHeight: 1.4,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            marginTop: -4,
           }}>
             {course.opening}
           </div>
         )}
 
+        {/* Difficulty — subtle dots */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--muted)' }}>
+          <span>Сложность</span>
+          <span style={{ display: 'inline-flex', gap: 3 }}>
+            {[1, 2, 3, 4, 5].map(n => (
+              <span
+                key={n}
+                style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: n <= course.difficulty ? 'var(--muted)' : 'var(--hairline)',
+                  opacity: n <= course.difficulty ? 0.8 : 1,
+                }}
+              />
+            ))}
+          </span>
+        </div>
+
+        {/* Spacer pushes progress to bottom when card is tall */}
+        <div style={{ flex: 1, minHeight: 2 }} />
+
         {/* Progress */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-              {course.lessonsCompleted}/{course.lessonsTotal} уроков
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: 'var(--ivory)', fontWeight: 500 }}>
+              {course.lessonsCompleted} / {course.lessonsTotal} уроков
             </span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: diff.color }}>{diff.text}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+              {status === 'done'     && 'пройдено'}
+              {status === 'progress' && `${Math.round(pct)}%`}
+              {status === 'new'      && 'не начат'}
+            </span>
           </div>
-          <div style={{ height: 5, background: 'var(--hairline)', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ height: 4, background: 'var(--hairline)', borderRadius: 2, overflow: 'hidden' }}>
             <div style={{
               height: '100%', width: `${pct}%`,
-              background: status === 'done' ? '#81B64C' : status === 'progress' ? '#B088D8' : 'var(--hairline)',
-              transition: 'width 0.3s',
+              background: progressTint, transition: 'width 0.3s',
             }} />
           </div>
         </div>
@@ -607,7 +662,7 @@ function CourseCard({
             disabled={saving}
             style={{
               flex: 1, padding: '7px 10px', fontSize: 13, fontWeight: 600,
-              background: 'var(--accent)', color: '#fff', border: 'none',
+              background: 'var(--accent)', color: 'var(--accent-contrast, #fff)', border: 'none',
               borderRadius: 'var(--radius-btn, 4px)', cursor: saving ? 'default' : 'pointer',
             }}
           >
@@ -642,7 +697,7 @@ function CourseCard({
               disabled={saving}
               style={{
                 flex: 1, padding: '8px 12px', fontSize: 13, fontWeight: 600,
-                background: '#c0392b', color: '#fff', border: 'none',
+                background: 'var(--c-bad)', color: '#fff', border: 'none',
                 borderRadius: 'var(--radius-btn, 4px)', cursor: saving ? 'default' : 'pointer',
               }}
             >{saving ? 'Удаляю…' : 'Удалить'}</button>

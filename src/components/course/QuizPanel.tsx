@@ -112,7 +112,7 @@ export function QuizPanel({
                 if (key === item.answer) {
                   bg = 'rgba(129,182,76,0.15)';
                   border = '1px solid rgba(129,182,76,0.5)';
-                  color = '#81B64C';
+                  color = 'var(--accent)';
                 } else if (key === chosenKey && key !== item.answer) {
                   bg = 'rgba(220,60,60,0.12)';
                   border = '1px solid rgba(220,60,60,0.4)';
@@ -165,7 +165,7 @@ export function QuizPanel({
             <div style={{ fontSize: 14, color: 'var(--ivory)' }}>{item.answer}</div>
             {!answered && (
               <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                <button onClick={() => handleSelfJudge(true)} style={{ flex: 1, padding: '7px 0', background: 'rgba(129,182,76,0.15)', border: '1px solid rgba(129,182,76,0.4)', borderRadius: 6, cursor: 'pointer', color: '#81B64C', fontSize: 13 }}>Я знал</button>
+                <button onClick={() => handleSelfJudge(true)} style={{ flex: 1, padding: '7px 0', background: 'rgba(129,182,76,0.15)', border: '1px solid rgba(129,182,76,0.4)', borderRadius: 6, cursor: 'pointer', color: 'var(--accent)', fontSize: 13 }}>Я знал</button>
                 <button onClick={() => handleSelfJudge(false)} style={{ flex: 1, padding: '7px 0', background: 'var(--track, #2A2A2A)', border: '1px solid var(--hairline)', borderRadius: 6, cursor: 'pointer', color: 'var(--muted)', fontSize: 13 }}>Не знал</button>
               </div>
             )}
@@ -184,7 +184,7 @@ export function QuizPanel({
               borderRadius: 'var(--radius-btn, 8px)',
             }}
           >
-            <div style={{ fontSize: 14, fontWeight: 600, color: feedbackResult === 'ok' ? '#81B64C' : '#E05050', marginBottom: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: feedbackResult === 'ok' ? 'var(--accent)' : '#E05050', marginBottom: 4 }}>
               {feedbackResult === 'ok' ? 'Верно.' : `Верный ответ — ${item.answer}.`}
             </div>
             {item.why && <div style={{ fontSize: 13, color: 'var(--ivory)', lineHeight: 1.5 }}>{item.why}</div>}
@@ -200,7 +200,7 @@ export function QuizPanel({
             let borderColor = 'var(--hairline)';
             if (r?.result === 'ok') { bg = 'rgba(129,182,76,0.2)'; borderColor = 'rgba(129,182,76,0.5)'; }
             else if (r?.result === 'fail') { bg = 'rgba(220,60,60,0.15)'; borderColor = 'rgba(220,60,60,0.4)'; }
-            if (isCur) borderColor = '#81B64C';
+            if (isCur) borderColor = 'var(--accent)';
             return (
               <div
                 key={qi}
@@ -211,7 +211,7 @@ export function QuizPanel({
                   borderRadius: 4, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 13, fontWeight: 700,
-                  color: r?.result === 'ok' ? '#81B64C' : r?.result === 'fail' ? '#E05050' : 'var(--muted)',
+                  color: r?.result === 'ok' ? 'var(--accent)' : r?.result === 'fail' ? '#E05050' : 'var(--muted)',
                 }}
               >
                 {r?.result === 'ok' ? '✓' : r?.result === 'fail' ? '✗' : qi + 1}
@@ -229,7 +229,7 @@ export function QuizPanel({
             вопрос {currentQuizIdx + 1} из {items.length}
           </span>
           {quizResults.filter(r => r.result === 'ok').length > 0 && (
-            <span style={{ fontSize: 13, padding: '3px 8px', background: 'rgba(129,182,76,0.12)', color: '#81B64C', borderRadius: 4 }}>
+            <span style={{ fontSize: 13, padding: '3px 8px', background: 'rgba(129,182,76,0.12)', color: 'var(--accent)', borderRadius: 4 }}>
               {quizResults.filter(r => r.result === 'ok').length} верно
             </span>
           )}
@@ -245,8 +245,8 @@ export function QuizPanel({
           style={{
             width: '100%', padding: '10px 0', fontSize: 15, fontWeight: 600,
             color: (answered || selfJudge) ? '#fff' : 'var(--muted)',
-            background: (answered || selfJudge) ? '#81B64C' : 'var(--track, #2A2A2A)',
-            border: `1px solid ${(answered || selfJudge) ? '#81B64C' : 'var(--hairline)'}`,
+            background: (answered || selfJudge) ? 'var(--accent)' : 'var(--track, #2A2A2A)',
+            border: `1px solid ${(answered || selfJudge) ? 'var(--accent)' : 'var(--hairline)'}`,
             borderRadius: 'var(--radius-btn, 8px)', cursor: (answered || selfJudge) ? 'pointer' : 'default',
           }}
         >

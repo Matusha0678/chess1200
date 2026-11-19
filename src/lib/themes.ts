@@ -99,7 +99,7 @@ export const PIECE_STYLES: PieceStyle[] = [
 
 export const PIECE_KEYS = ['wP','wN','wB','wR','wQ','wK','bP','bN','bB','bR','bQ','bK'] as const;
 
-export type SiteThemeFamily = 'newspaper' | 'soft' | 'cream' | 'nord' | 'sunset' | 'mono';
+export type SiteThemeFamily = 'newspaper' | 'soft' | 'cream' | 'nord' | 'sunset' | 'mono' | 'fun';
 
 export function getSiteThemeFamily(id: string): SiteThemeFamily {
   if (id.startsWith('soft'))   return 'soft';
@@ -107,8 +107,55 @@ export function getSiteThemeFamily(id: string): SiteThemeFamily {
   if (id.startsWith('nord'))   return 'nord';
   if (id.startsWith('sunset')) return 'sunset';
   if (id.startsWith('mono'))   return 'mono';
+  if (FUN_THEME_IDS.has(id))   return 'fun';
   return 'newspaper';
 }
+
+export const FUN_THEME_IDS = new Set([
+  'halloween',
+  'newyear',
+  'alien',
+  'cyber',
+  'easter',
+  'robot',
+  'valentine',
+  'pirate',
+  'xeno',
+  'sakura',
+  'autumn',
+  'galaxy',
+  'abyss',
+  'dragon',
+]);
+
+export type FunThemeConfig = {
+  /** Emoji shown in the top-bar logo slot. */
+  logo: string;
+  /** Decorations floating in the shell background. */
+  decor: 'pumpkins' | 'snow' | 'ufo' | 'glitch' | 'easter' | 'robot' | 'hearts' | 'pirate' | 'xeno'
+       | 'sakura' | 'leaves' | 'stars' | 'bubbles' | 'fire';
+  /** Human-readable Russian label. */
+  label: string;
+  /** One-line description. */
+  desc: string;
+};
+
+export const FUN_THEMES: Record<string, FunThemeConfig> = {
+  halloween: { logo: '🎃', decor: 'pumpkins', label: 'Хэллоуин',  desc: 'Тыквы и кислотный оранж' },
+  newyear:   { logo: '⛄', decor: 'snow',     label: 'Новый год',  desc: 'Снег и ёлка'             },
+  alien:     { logo: '👽', decor: 'ufo',      label: 'Alien',     desc: 'Ядовитый неон'           },
+  cyber:     { logo: '⚡', decor: 'glitch',   label: 'Cyberpunk',  desc: 'Розовый и голубой неон'  },
+  easter:    { logo: '🐣', decor: 'easter',   label: 'Пасха',     desc: 'Пастель, яйца и зайцы'   },
+  robot:     { logo: '🤖', decor: 'robot',    label: 'Робот',     desc: 'Хром и шестерни'         },
+  valentine: { logo: '💗', decor: 'hearts',   label: 'Валентин',  desc: 'Сердца и розы'           },
+  pirate:    { logo: '☠',  decor: 'pirate',   label: 'Пираты',    desc: 'Череп и золото'          },
+  xeno:      { logo: '👁', decor: 'xeno',     label: 'Ксеноморф', desc: 'Биомех и кислотная слизь'},
+  sakura:    { logo: '🌸', decor: 'sakura',   label: 'Сакура',    desc: 'Падающие лепестки'       },
+  autumn:    { logo: '🍁', decor: 'leaves',   label: 'Осень',     desc: 'Янтарь и листопад'       },
+  galaxy:    { logo: '🌌', decor: 'stars',    label: 'Галактика', desc: 'Звёздная туманность'     },
+  abyss:     { logo: '🫧', decor: 'bubbles',  label: 'Глубина',   desc: 'Пузыри из бездны'        },
+  dragon:    { logo: '🐉', decor: 'fire',     label: 'Дракон',    desc: 'Пламя и угли'            },
+};
 
 export const SITE_THEMES: SiteTheme[] = [
   // ── Мягкий (chess.com style) ───────────────────────────────────────────────
@@ -126,6 +173,21 @@ export const SITE_THEMES: SiteTheme[] = [
   // ── Моно (чисто-серый минимализм) ──────────────────────────────────────────
   { id: 'mono-dark',  name: 'Моно тёмный',    bg: '#1A1A1A', card: '#242424' },
   { id: 'mono-light', name: 'Моно светлый',   bg: '#EEEEEE', card: '#F8F8F8' },
+  // ── Пасхалки ───────────────────────────────────────────────────────────────
+  { id: 'halloween',  name: 'Хэллоуин',       bg: '#120806', card: '#1C0D08' },
+  { id: 'newyear',    name: 'Новый год',      bg: '#040F17', card: '#0A1A26' },
+  { id: 'alien',      name: 'Alien',          bg: '#050A05', card: '#0A160A' },
+  { id: 'cyber',      name: 'Cyberpunk',      bg: '#08051A', card: '#120828' },
+  { id: 'easter',     name: 'Пасха',          bg: '#FFF7EC', card: '#FFFFFF' },
+  { id: 'robot',      name: 'Робот',          bg: '#0E1217', card: '#181E25' },
+  { id: 'valentine',  name: 'Валентин',       bg: '#140608', card: '#230A10' },
+  { id: 'pirate',     name: 'Пираты',         bg: '#060A14', card: '#0E1626' },
+  { id: 'xeno',       name: 'Ксеноморф',      bg: '#060805', card: '#0D1008' },
+  { id: 'sakura',     name: 'Сакура',         bg: '#FFF4F3', card: '#FFFFFF' },
+  { id: 'autumn',     name: 'Осень',          bg: '#180C04', card: '#241406' },
+  { id: 'galaxy',     name: 'Галактика',      bg: '#0A0520', card: '#140A2E' },
+  { id: 'abyss',      name: 'Глубина',        bg: '#04141A', card: '#0A2530' },
+  { id: 'dragon',     name: 'Дракон',         bg: '#180608', card: '#260A0C' },
   // ── Газетный (цветовые варианты) ─────────────────────────────────────────────
   { id: 'dark',     name: 'Уголь',      bg: '#050505', card: '#0D0D0D' },
   { id: 'midnight', name: 'Полночь',    bg: '#05070F', card: '#0C0E1A' },
@@ -146,5 +208,15 @@ export const SITE_THEMES: SiteTheme[] = [
   { id: 'cobalt',  name: 'Кобальт',    bg: '#02060F', card: '#061024' },
   { id: 'violet',  name: 'Фиалка',     bg: '#08030F', card: '#120620' },
   { id: 'rust',    name: 'Ржавчина',   bg: '#0A0603', card: '#180D06' },
+  { id: 'dracula', name: 'Dracula',    bg: '#0B0812', card: '#140A1E' },
+  { id: 'tokyo',   name: 'Tokyo',      bg: '#07081A', card: '#0E1030' },
+  { id: 'monokai', name: 'Monokai',    bg: '#0F0C08', card: '#1A1510' },
+  { id: 'matrix',  name: 'Matrix',     bg: '#020604', card: '#06110A' },
+  { id: 'mint',    name: 'Мята',       bg: '#050C0A', card: '#0C1A16' },
+  { id: 'peach',   name: 'Персик',     bg: '#0E0604', card: '#1A0C08' },
+  { id: 'mocha',   name: 'Мокко',      bg: '#0A0603', card: '#140B06' },
+  { id: 'arctic2', name: 'Айсберг',    bg: '#02090C', card: '#061620' },
+  { id: 'plum',    name: 'Слива',      bg: '#09040C', card: '#130818' },
+  { id: 'steel',   name: 'Сталь',      bg: '#0A0C0F', card: '#141820' },
   { id: 'light',   name: 'Светлый',    bg: '#F8F8F8', card: '#FFFFFF' },
 ];
