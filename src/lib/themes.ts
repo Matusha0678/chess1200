@@ -99,16 +99,33 @@ export const PIECE_STYLES: PieceStyle[] = [
 
 export const PIECE_KEYS = ['wP','wN','wB','wR','wQ','wK','bP','bN','bB','bR','bQ','bK'] as const;
 
-export type SiteThemeFamily = 'newspaper' | 'soft';
+export type SiteThemeFamily = 'newspaper' | 'soft' | 'cream' | 'nord' | 'sunset' | 'mono';
 
 export function getSiteThemeFamily(id: string): SiteThemeFamily {
-  return id.startsWith('soft') ? 'soft' : 'newspaper';
+  if (id.startsWith('soft'))   return 'soft';
+  if (id.startsWith('cream'))  return 'cream';
+  if (id.startsWith('nord'))   return 'nord';
+  if (id.startsWith('sunset')) return 'sunset';
+  if (id.startsWith('mono'))   return 'mono';
+  return 'newspaper';
 }
 
 export const SITE_THEMES: SiteTheme[] = [
-  // ── Мягкий ──────────────────────────────────────────────────────────────────
+  // ── Мягкий (chess.com style) ───────────────────────────────────────────────
   { id: 'soft-dark',  name: 'Мягкий тёмный',  bg: '#302E2B', card: '#262522' },
   { id: 'soft-light', name: 'Мягкий светлый',  bg: '#F3F3F1', card: '#FFFFFF' },
+  // ── Крем (тёплый светлый, сепия) ───────────────────────────────────────────
+  { id: 'cream',      name: 'Крем',           bg: '#F5EFE0', card: '#FFFAEE' },
+  { id: 'cream-dark', name: 'Сепия',          bg: '#1E1A14', card: '#2A2520' },
+  // ── Nord (холодный сине-серый) ─────────────────────────────────────────────
+  { id: 'nord',       name: 'Nord',           bg: '#2E3440', card: '#3B4252' },
+  { id: 'nord-light', name: 'Nord Light',     bg: '#ECEFF4', card: '#FFFFFF' },
+  // ── Закат (тёплые градиенты) ──────────────────────────────────────────────
+  { id: 'sunset',     name: 'Закат',          bg: '#1A0F1A', card: '#2A1820' },
+  { id: 'sunset-warm',name: 'Персик',         bg: '#FDF2E9', card: '#FFFFFF' },
+  // ── Моно (чисто-серый минимализм) ──────────────────────────────────────────
+  { id: 'mono-dark',  name: 'Моно тёмный',    bg: '#1A1A1A', card: '#242424' },
+  { id: 'mono-light', name: 'Моно светлый',   bg: '#EEEEEE', card: '#F8F8F8' },
   // ── Газетный (цветовые варианты) ─────────────────────────────────────────────
   { id: 'dark',     name: 'Уголь',      bg: '#050505', card: '#0D0D0D' },
   { id: 'midnight', name: 'Полночь',    bg: '#05070F', card: '#0C0E1A' },
@@ -124,5 +141,10 @@ export const SITE_THEMES: SiteTheme[] = [
   { id: 'teal',    name: 'Бирюза',     bg: '#020B0C', card: '#061517' },
   { id: 'wine',    name: 'Вино',       bg: '#09020A', card: '#120413' },
   { id: 'jade',    name: 'Нефрит',     bg: '#030809', card: '#071314' },
+  { id: 'carbon',  name: 'Карбон',     bg: '#08090A', card: '#111315' },
+  { id: 'emerald', name: 'Изумруд',    bg: '#021008', card: '#061A10' },
+  { id: 'cobalt',  name: 'Кобальт',    bg: '#02060F', card: '#061024' },
+  { id: 'violet',  name: 'Фиалка',     bg: '#08030F', card: '#120620' },
+  { id: 'rust',    name: 'Ржавчина',   bg: '#0A0603', card: '#180D06' },
   { id: 'light',   name: 'Светлый',    bg: '#F8F8F8', card: '#FFFFFF' },
 ];

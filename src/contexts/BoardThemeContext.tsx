@@ -89,9 +89,22 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Apply site theme to <html> data attribute so CSS overrides kick in
+  // Apply site theme to <html> data attribute so CSS overrides kick in.
+  // Also expose theme shape (rounded vs sharp) so shared CSS can target families.
   useEffect(() => {
-    document.documentElement.dataset.siteTheme = settings.siteThemeId;
+    const id = settings.siteThemeId;
+    document.documentElement.dataset.siteTheme = id;
+    const isRounded =
+      id.startsWith('soft') ||
+      id.startsWith('cream') ||
+      id.startsWith('nord') ||
+      id.startsWith('sunset') ||
+      id.startsWith('mono');
+    document.documentElement.dataset.themeShape = isRounded ? 'rounded' : 'sharp';
+    const lightModeIds = new Set([
+      'light', 'soft-light', 'cream', 'nord-light', 'sunset-warm', 'mono-light',
+    ]);
+    document.documentElement.dataset.themeMode = lightModeIds.has(id) ? 'light' : 'dark';
   }, [settings.siteThemeId]);
 
   // Global Ctrl+K / Cmd+K → open search

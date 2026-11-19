@@ -95,7 +95,8 @@ function arrowColor(c?: string) {
 
 function ArrowLayer({ arrows, orientation }: { arrows: Arrow[]; orientation: 'white' | 'black' }) {
   if (!arrows.length) return null;
-  const HEAD_LEN = 28, HEAD_W = 22, SHAFT_W = 10;
+  // chess.com-like proportions (square = 100 units): shaft 20%, head 48% wide × 36% long.
+  const HEAD_LEN = 36, HEAD_W = 48, SHAFT_W = 20;
   return (
     <svg viewBox="0 0 800 800"
       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}

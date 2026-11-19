@@ -5,6 +5,31 @@ import { X } from 'lucide-react';
 import { useBoardTheme, type AnimationSpeed } from '@/contexts/BoardThemeContext';
 import { BOARD_THEMES, PIECE_STYLES, SITE_THEMES, getSiteThemeFamily } from '@/lib/themes';
 
+type FamilyPreset = {
+  id: string;
+  label: string;
+  bg: string;
+  card: string;
+  border: string;
+  accent: string | null;
+  rounded: boolean;
+};
+
+const FAMILY_PRESETS: FamilyPreset[] = [
+  { id: 'dark',        label: 'Газетный',      bg: '#050505', card: '#141414', border: '#1E1E1E', accent: null,      rounded: false },
+  { id: 'light',       label: 'Светлый',       bg: '#F8F8F8', card: '#FFFFFF', border: '#D0D0D0', accent: null,      rounded: false },
+  { id: 'soft-dark',   label: 'Мягкий тёмный', bg: '#302E2B', card: '#262522', border: 'transparent', accent: '#81B64C', rounded: true  },
+  { id: 'soft-light',  label: 'Мягкий светл.', bg: '#F3F3F1', card: '#FFFFFF', border: 'rgba(0,0,0,0.08)', accent: '#81B64C', rounded: true },
+  { id: 'cream-dark',  label: 'Сепия',         bg: '#1E1A14', card: '#2A2520', border: 'transparent', accent: '#D4A464', rounded: true },
+  { id: 'cream',       label: 'Крем',          bg: '#F5EFE0', card: '#FFFAEE', border: 'rgba(140,100,40,0.18)', accent: '#B86B30', rounded: true },
+  { id: 'nord',        label: 'Nord',          bg: '#2E3440', card: '#3B4252', border: 'transparent', accent: '#88C0D0', rounded: true },
+  { id: 'nord-light',  label: 'Nord Light',    bg: '#ECEFF4', card: '#FFFFFF', border: 'rgba(46,52,64,0.1)', accent: '#5E81AC', rounded: true },
+  { id: 'sunset',      label: 'Закат',         bg: '#1A0F1A', card: '#2A1820', border: 'transparent', accent: '#FF8A5C', rounded: true },
+  { id: 'sunset-warm', label: 'Персик',        bg: '#FDF2E9', card: '#FFFFFF', border: 'rgba(200,100,40,0.14)', accent: '#E06A3C', rounded: true },
+  { id: 'mono-dark',   label: 'Моно тёмный',   bg: '#1A1A1A', card: '#242424', border: '#2A2A2A',  accent: null,      rounded: true },
+  { id: 'mono-light',  label: 'Моно светлый',  bg: '#EEEEEE', card: '#F8F8F8', border: '#D0D0D0',  accent: null,      rounded: true },
+];
+
 export default function ThemePanel() {
   const {
     boardThemeId, pieceStyleId, showNotation, soundEnabled, animationSpeed, siteThemeId,
@@ -59,88 +84,89 @@ export default function ThemePanel() {
             <h2 className="text-[11px] font-semibold text-[#505050] uppercase tracking-widest mb-3">
               Стиль
             </h2>
-            {/* 3 primary choices */}
-            <div className="flex flex-col gap-1.5 mb-4">
-              {[
-                { id: 'dark',       label: 'Газетный',       desc: 'Острые углы, большой контраст', isSoft: false },
-                { id: 'soft-dark',  label: 'Мягкий тёмный',  desc: 'Скругления, зелёный акцент',   isSoft: true  },
-                { id: 'soft-light', label: 'Мягкий светлый', desc: 'Светлый фон, зелёный акцент',  isSoft: true  },
-              ].map(opt => {
-                const currentFamily = getSiteThemeFamily(siteThemeId);
-                const optFamily = opt.isSoft ? 'soft' : 'newspaper';
-                const active = opt.isSoft
-                  ? siteThemeId === opt.id
-                  : !siteThemeId.startsWith('soft') && opt.id === 'dark'
-                    ? currentFamily === 'newspaper'
-                    : siteThemeId === opt.id;
-                const handleClick = () => {
-                  if (opt.isSoft) {
-                    setSiteThemeId(opt.id);
-                  } else if (currentFamily === 'soft') {
-                    // switching from soft → newspaper: pick dark as default
-                    setSiteThemeId('dark');
-                  }
-                  // else already in newspaper family: keep current color variant
-                };
-                void optFamily;
+            {/* Family presets */}
+            <div className="grid grid-cols-2 gap-1.5 mb-4">
+              {FAMILY_PRESETS.map(opt => {
+                const active = siteThemeId === opt.id;
                 return (
                   <button
                     key={opt.id}
-                    onClick={handleClick}
+                    onClick={() => setSiteThemeId(opt.id)}
                     className={[
-                      'flex items-center gap-3 w-full px-3 py-2.5 rounded text-left transition-colors',
+                      'flex items-center gap-2 w-full px-2.5 py-2 rounded text-left transition-colors min-w-0',
                       active ? 'bg-[#1E1E1E] ring-1 ring-white/20' : 'hover:bg-[#161616]',
                     ].join(' ')}
+                    title={opt.label}
                   >
-                    <div className="w-8 h-8 rounded-md overflow-hidden relative shrink-0"
-                      style={{ background: opt.isSoft ? (opt.id === 'soft-light' ? '#F3F3F1' : '#302E2B') : '#050505', borderRadius: opt.isSoft ? 6 : 0 }}>
-                      <div className="absolute bottom-[3px] left-[3px] right-[3px]"
-                        style={{ height: 9, background: opt.isSoft ? (opt.id === 'soft-light' ? '#FFFFFF' : '#262522') : '#141414', borderRadius: opt.isSoft ? 3 : 0, border: opt.isSoft ? 'none' : '1px solid #1E1E1E' }} />
-                      {opt.isSoft && (
-                        <div className="absolute top-[4px] right-[4px] w-[6px] h-[6px] rounded-full" style={{ background: '#81B64C' }} />
+                    <div
+                      className="w-7 h-7 relative shrink-0 overflow-hidden"
+                      style={{
+                        background: opt.bg,
+                        borderRadius: opt.rounded ? 6 : 0,
+                        border: `1px solid ${opt.border}`,
+                      }}
+                    >
+                      <div
+                        className="absolute bottom-[3px] left-[3px] right-[3px]"
+                        style={{
+                          height: 8,
+                          background: opt.card,
+                          borderRadius: opt.rounded ? 3 : 0,
+                          border: `1px solid ${opt.border}`,
+                        }}
+                      />
+                      {opt.accent && (
+                        <div
+                          className="absolute top-[4px] right-[4px] w-[5px] h-[5px] rounded-full"
+                          style={{ background: opt.accent }}
+                        />
                       )}
                     </div>
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <span className={['text-[12px] font-semibold truncate', active ? 'text-[#F5F5F5]' : 'text-[#A0A0A0]'].join(' ')}>
-                        {opt.label}
-                      </span>
-                      <span className="text-[10px] text-[#606060] truncate">{opt.desc}</span>
-                    </div>
+                    <span
+                      className={[
+                        'text-[11px] font-semibold truncate min-w-0',
+                        active ? 'text-[#F5F5F5]' : 'text-[#A0A0A0]',
+                      ].join(' ')}
+                    >
+                      {opt.label}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Color variants – only shown for newspaper family */}
-            {!siteThemeId.startsWith('soft') && (
+            {/* Color variants – only for newspaper family (which has 20+ variants) */}
+            {getSiteThemeFamily(siteThemeId) === 'newspaper' && (
               <>
                 <h3 className="text-[10px] font-semibold text-[#505050] uppercase tracking-widest mb-2">
                   Оттенок
                 </h3>
                 <div className="grid grid-cols-4 gap-1.5">
-                  {SITE_THEMES.filter(t => !t.id.startsWith('soft')).map(theme => {
-                    const active = theme.id === siteThemeId;
-                    const isLight = theme.id === 'light';
-                    return (
-                      <button
-                        key={theme.id}
-                        onClick={() => setSiteThemeId(theme.id)}
-                        className={[
-                          'flex flex-col items-center gap-1.5 rounded p-1.5 transition-colors',
-                          active ? 'bg-[#1E1E1E] ring-1 ring-white/20' : 'hover:bg-[#161616]',
-                        ].join(' ')}
-                        title={theme.name}
-                      >
-                        <div className="w-10 h-7 rounded overflow-hidden relative" style={{ background: theme.bg }}>
-                          <div className="absolute top-0 left-0 right-0 h-[6px]" style={{ background: theme.bg, borderBottom: `1px solid ${isLight ? '#D0D0D0' : '#1E1E1E'}` }} />
-                          <div className="absolute bottom-[3px] left-[3px] right-[3px] rounded-sm" style={{ height: '10px', background: theme.card, border: `1px solid ${isLight ? '#D0D0D0' : '#1E1E1E'}` }} />
-                        </div>
-                        <span className={['text-[9px] leading-tight text-center truncate w-full', active ? 'text-[#F5F5F5]' : 'text-[#606060]'].join(' ')}>
-                          {theme.name}
-                        </span>
-                      </button>
-                    );
-                  })}
+                  {SITE_THEMES
+                    .filter(t => getSiteThemeFamily(t.id) === 'newspaper')
+                    .map(theme => {
+                      const active = theme.id === siteThemeId;
+                      const isLight = theme.id === 'light';
+                      return (
+                        <button
+                          key={theme.id}
+                          onClick={() => setSiteThemeId(theme.id)}
+                          className={[
+                            'flex flex-col items-center gap-1 rounded p-1 transition-colors min-w-0',
+                            active ? 'bg-[#1E1E1E] ring-1 ring-white/20' : 'hover:bg-[#161616]',
+                          ].join(' ')}
+                          title={theme.name}
+                        >
+                          <div className="w-full h-6 rounded overflow-hidden relative" style={{ background: theme.bg }}>
+                            <div className="absolute top-0 left-0 right-0 h-[5px]" style={{ background: theme.bg, borderBottom: `1px solid ${isLight ? '#D0D0D0' : '#1E1E1E'}` }} />
+                            <div className="absolute bottom-[2px] left-[2px] right-[2px] rounded-sm" style={{ height: '9px', background: theme.card, border: `1px solid ${isLight ? '#D0D0D0' : '#1E1E1E'}` }} />
+                          </div>
+                          <span className={['text-[9px] leading-tight text-center truncate w-full', active ? 'text-[#F5F5F5]' : 'text-[#606060]'].join(' ')}>
+                            {theme.name}
+                          </span>
+                        </button>
+                      );
+                    })}
                 </div>
               </>
             )}

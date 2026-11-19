@@ -88,9 +88,10 @@ interface ArrowLayerProps {
 function ArrowLayer({ arrows, fadingArrows, orientation, animKey, animEnabled }: ArrowLayerProps) {
   if (arrows.length === 0 && fadingArrows.length === 0) return null;
 
-  const SHAFT_W  = 10;
-  const HEAD_LEN = 28;
-  const HEAD_W   = 22;
+  // chess.com-like proportions (square = 100 units): shaft 20%, head 48% wide × 36% long.
+  const SHAFT_W  = 20;
+  const HEAD_LEN = 36;
+  const HEAD_W   = 48;
 
   function drawArrow(arrow: Arrow, key: string, grow: boolean) {
     const [x1, y1] = squareXY(arrow.from, orientation);

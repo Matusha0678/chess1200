@@ -71,22 +71,24 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
   const from = squareCenter(arrow.from, S, 'white'); // orientation handled by ArrowLayer
   const to   = squareCenter(arrow.to,   S, 'white');
 
-  const opacity = arrow.opacity ?? 0.85;
+  const opacity = arrow.opacity ?? 0.80;
   const color   = arrow.color;
   const circleColor = arrow.role ? (ROLE_CIRCLE[arrow.role] ?? '#3A78C2') : '#3A78C2';
 
+  // chess.com-like proportions (all values relative to a 96-unit square).
+  // Shaft ≈ 20% of a square, head ≈ 48% wide × 36% long.
   const isDashed = arrow.style === 'dashed';
   const startOffset = 18 * scale;
-  const endOffset   = 14 * scale;
+  const endOffset   = 10 * scale;
   // Solid dimensions
-  const headLen  = 34 * scale;
-  const headHW   = 22 * scale;
-  const shaftHW  =  9 * scale;
-  const shaftStroke = 18 * scale;
+  const headLen  = 35 * scale;
+  const headHW   = 23 * scale;
+  const shaftHW  = 10 * scale;
+  const shaftStroke = 20 * scale;
   // Dashed dimensions (thin line + small head)
-  const dHeadLen = 22 * scale;
-  const dHeadHW  = 10 * scale;
-  const dStroke  =  5 * scale;
+  const dHeadLen = 24 * scale;
+  const dHeadHW  = 11 * scale;
+  const dStroke  =  6 * scale;
   const dash     = `${10 * scale} ${8 * scale}`;
 
   // Detect knight L-shape: file diff × rank diff must equal 2

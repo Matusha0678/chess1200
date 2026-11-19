@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Chess } from 'chess.js';
-import { Chessboard } from 'react-chessboard';
+import { Chessboard, defaultArrowOptions } from 'react-chessboard';
 import type { SquareRenderer } from 'react-chessboard';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
@@ -768,6 +768,7 @@ export default function GameViewerPage({ params }: Props) {
                   allowDragging: false,
                   squareRenderer,
                   arrows: arrows.length ? arrows : [],
+                  arrowOptions: { ...defaultArrowOptions, opacity: 0.8 },
                   boardStyle: { width: '100%', height: '100%', borderRadius: 0 },
                 }}
               />

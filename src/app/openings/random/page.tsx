@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { Chessboard } from 'react-chessboard';
+import { Chessboard, defaultArrowOptions } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import type { PieceDropHandlerArgs, Arrow } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
@@ -763,6 +763,7 @@ export default function RandomOpeningPage() {
                   onPieceDrop: handlePieceDrop,
                   squareStyles: displaySquareStyles,
                   arrows: showAnalysis && phase === 'free_play' ? uciToArrow(bestMoveArrow) : [],
+                  arrowOptions: { ...defaultArrowOptions, opacity: 0.8 },
                   allowDragging: isPlayerTurn || phase === 'free_play',
                   boardStyle: { borderRadius: '4px', width: '100%', height: '100%' },
                   pieces: customPieces,

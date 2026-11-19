@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Chessboard } from 'react-chessboard';
+import { Chessboard, defaultArrowOptions } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import type { PieceDropHandlerArgs, Arrow } from 'react-chessboard';
 import { supabase } from '@/lib/supabase';
@@ -403,6 +403,7 @@ export default function PlayFromPosition({
             boardOrientation: playerColor === 'w' ? 'white' : 'black',
             onPieceDrop: handlePieceDrop,
             arrows: displayArrows,
+            arrowOptions: { ...defaultArrowOptions, opacity: 0.8 },
             allowDragging: isPlayerTurn,
             boardStyle: { borderRadius: 4 },
           }}
