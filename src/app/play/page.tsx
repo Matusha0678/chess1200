@@ -535,10 +535,12 @@ function PlayContent() {
 
   const handleGameOver = useCallback((startFen: string, surrenderedNow: boolean, history: MoveRecord[], pc: PlayerColor, md: PlayMode, lvl: number) => {
     stopAnalysis();
+    if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+    setHintArrow(null);
     setResultInfo(getResultTitle(chessRef.current, pc, surrenderedNow));
     setGamePhase('review');
     runReviewAnalysis(startFen, surrenderedNow, history, pc, md, lvl);
-  }, [stopAnalysis, runReviewAnalysis]);
+  }, [stopAnalysis, hintTimerRef, runReviewAnalysis]);
 
   // ── Stockfish move ────────────────────────────────────────────────────────
 
@@ -626,8 +628,6 @@ function PlayContent() {
       );
       moveHistoryRef.current = updated;
       setMoveHistory(updated);
-
-      setEvalCpWhite(evalAfter);
 
       const moveNum = Number(fenBefore.split(' ')[5]);
       const info: CoachInfo = {
@@ -798,10 +798,11 @@ function PlayContent() {
 
   // Arrows
   const arrows: BoardArrow[] = [];
-  if (hintArrow && hintArrow.length >= 4) {
+  if (hintArrow && hintArrow.length >= 4 && gamePhase === 'playing') {
     arrows.push({ from: hintArrow.slice(0, 2) as Square, to: hintArrow.slice(2, 4) as Square, color: '#81B64C', style: 'dashed', role: 'best' });
   }
-  const shownMistake = gamePhase === 'review' && selectedMistake !== null ? keyMistakes[selectedMistake] ?? null : null;
+  // Mistake arrows: only when viewing the mistake position (not while navigating history)
+  const shownMistake = gamePhase === 'review' && selectedMistake !== null && viewIdx === -1 ? keyMistakes[selectedMistake] ?? null : null;
   if (shownMistake) {
     arrows.push({ from: shownMistake.uci.slice(0, 2) as Square, to: shownMistake.uci.slice(2, 4) as Square, color: '#E0574A', role: 'played' });
     if (shownMistake.bestMoveUci.length >= 4) {
@@ -811,13 +812,16 @@ function PlayContent() {
 
   // Badges
   const badges: Partial<Record<Square, BadgeKind>> = {};
-  if (showBadges && coach && gamePhase === 'playing') {
-    const myLastMove = [...moveHistory].reverse().find(m => m.side === activeColor);
-    if (myLastMove) {
-      badges[myLastMove.uci.slice(2, 4) as Square] = coach.cls as BadgeKind;
+  if (showBadges) {
+    if (gamePhase === 'playing') {
+      const myLastMove = [...moveHistory].reverse().find(m => m.side === activeColor);
+      if (myLastMove?.cls) badges[myLastMove.uci.slice(2, 4) as Square] = myLastMove.cls as BadgeKind;
+    } else if (gamePhase === 'review' && viewIdx !== -1) {
+      // Show badge for the move being viewed in history
+      const mv = moveHistory[viewIdx];
+      if (mv?.cls && mv.side === activeColor) badges[mv.uci.slice(2, 4) as Square] = mv.cls as BadgeKind;
     }
   }
-  // No badge on board in review — icon shows only in the panel mistake row
 
   // Captured pieces
   const myCaptures = capturedPieces(fen, activeColor);
@@ -825,8 +829,21 @@ function PlayContent() {
 
   // Result info (set as state when game ends — no ref access during render)
 
-  // Eval bar pct
-  const evalPct = evalCpWhite !== null ? evalBarPct(evalCpWhite) : 50;
+  // Eval bar: in review mode, derive from move history to update on navigation
+  const evalCpForBar = (() => {
+    if (gamePhase === 'review') {
+      if (viewIdx !== -1) {
+        const ev = moveHistory[viewIdx]?.evalAfter;
+        if (ev !== undefined) return ev;
+      } else {
+        const prevIdx = shownMistake && shownMistake.moveIdx > 0 ? shownMistake.moveIdx - 1 : moveHistory.length - 1;
+        const ev = moveHistory[prevIdx]?.evalAfter;
+        if (ev !== undefined) return ev;
+      }
+    }
+    return evalCpWhite;
+  })();
+  const evalPct = evalCpForBar !== null ? evalBarPct(evalCpForBar) : 50;
 
   // Level label
   const presetLabel = LEVEL_PRESETS[presetIdx]?.label ?? 'Клубный';
