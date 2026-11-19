@@ -1,482 +1,792 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import type { Square } from 'chess.js';
 import { supabase } from '@/lib/supabase';
-import { useStockfish } from '@/hooks/useStockfish';
 import { Board } from '@/components/board/Board';
+import type { BoardArrow } from '@/components/board/Board';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
+import { SessionPanel } from '@/components/trainer/SessionPanel';
+import { TaskPanel } from '@/components/trainer/TaskPanel';
 import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
-import type { CourseLessonMove } from '@/types/courses';
+import { useStockfish } from '@/hooks/useStockfish';
+import {
+  toMoves,
+  fenBefore,
+  numSan,
+  isMyTurn,
+  move as runMove,
+  auto as runAuto,
+  needsAuto as runNeedsAuto,
+  result as runResult,
+  view as runView,
+  type ChessMove,
+  type Run,
+} from '@/lib/opening-trainer';
+import {
+  loadTraps,
+  trapsForRepertoire,
+  punishRun,
+  avoidVerdict,
+  type TrapData,
+  type OpeningForMatch,
+} from '@/lib/traps';
+import { TRAPS_LIBRARY } from '@/data/traps';
 
-const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const BOARD_SIZE = 140;
+// ── types ────────────────────────────────────────────────────────────────────
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface TrapRow {
-  trap_key: string;
-  title: string;
-  course_name: string;
-  course_slug: string;
-  course_id: string;
-  lesson_id: string;
-  opening: string;
+interface OpeningRow {
+  id: string;
+  name: string;
   color: 'white' | 'black' | 'both';
-  lesson_order: number;
-  line_order: number;
-  final_fen: string;
-  puzzle_fen: string;
-  trap_move_san: string;
-  trap_move_color: 'w' | 'b';
 }
 
-interface EvalResult {
-  cp?: number | null;
-  mate?: number | null;
-  depth: number;
+interface OpeningLineRow {
+  id: string;
+  opening_id: string;
+  moves: ChessMove[];
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function formatEval(e: EvalResult | undefined): string {
-  if (!e) return '—';
-  if (e.mate != null) {
-    // negative mate = opponent is getting mated (good for trap setter)
-    if (e.mate < 0) return `Мат в ${-e.mate}`;
-    return `−Мат в ${e.mate}`;
-  }
-  if (e.cp != null) {
-    // cp is from side-to-move (opponent of trap setter) perspective
-    // negate to get trap setter's advantage
-    const v = -e.cp / 100;
-    const sign = v >= 0 ? '+' : '';
-    return `≈${sign}${v.toFixed(1)}`;
-  }
-  return '—';
+interface TrapProgressRow {
+  trap_key: string;
+  mastery: number;
+  next_review: string;
 }
 
-function colorLabel(c: 'white' | 'black' | 'both'): string {
-  return c === 'white' ? 'Белые' : c === 'black' ? 'Чёрные' : 'Оба';
+interface TrapHit { trap_key: string; type: string; }
+
+type Role = 'setter' | 'victim' | 'other';
+type Mode = 'punish' | 'avoid' | 'watch';
+
+interface EnrichedTrap {
+  trap: TrapData;
+  role: Role;
+  openingId: string | null;
+  openingName: string | null;
+  source: 'rep' | 'course' | 'other';
+  k: number;
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── demo data (TRAPS.md §7) ──────────────────────────────────────────────────
 
-export default function TrapsPage() {
+const DEMO_OPENINGS: Array<{ id: string; name: string; color: 'white' | 'black' | 'both'; lines: string[] }> = [
+  { id: 'stafford', name: 'Гамбит Стаффорда', color: 'black',
+    lines: ['e4 e5 Nf3 Nf6 Nxe5 Nc6 Nxc6 dxc6 d3 Bc5 Be2 h5', 'e4 e5 Nf3 Nf6 Nxe5 Nc6 Nxc6 dxc6 e5 Ne4 d4 Qh4 g3 Nxg3'] },
+  { id: 'italian', name: 'Итальянская партия', color: 'white',
+    lines: ['e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3', 'e4 e5 Nf3 Nc6 Bc4 Nf6 d3 Be7'] },
+  { id: 'dragon', name: 'Ускоренный дракон', color: 'black',
+    lines: ['e4 c5 Nf3 Nc6 d4 cxd4 Nxd4 g6 c4 Nf6 Nc3 d6', 'e4 c5 Nf3 Nc6 d4 cxd4 Nxd4 g6 Nc3 Bg7 Be3 Nf6'] },
+  { id: 'caro', name: 'Защита Каро-Канн', color: 'black',
+    lines: ['e4 c6 d4 d5 e5 Bf5 Nf3 e6 Be2 c5'] },
+];
+
+const DEMO_MASTERY: Record<string, number> = {
+  legal: 4, scholar: 4, 'caro-nd6': 4,
+  blackburne: 2,
+};
+const DEMO_BLACKBURNE_DUE = new Date(Date.now() - 86400000).toISOString();
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function statusOf(prog: TrapProgressRow | null, now: number): 'new' | 'due' | 'mastered' | 'learning' {
+  if (!prog) return 'new';
+  if (Date.parse(prog.next_review) <= now) return 'due';
+  return prog.mastery >= 4 ? 'mastered' : 'learning';
+}
+
+function roleIcon(role: Role): string {
+  if (role === 'setter') return '⚔';
+  if (role === 'victim') return '🛡';
+  return '◇';
+}
+
+function roleLabel(role: Role): string {
+  if (role === 'setter') return 'ставишь';
+  if (role === 'victim') return 'ставят';
+  return 'другая';
+}
+
+// ── page ─────────────────────────────────────────────────────────────────────
+
+function TrapsPageInner() {
+  const params = useSearchParams();
+  const demo = params.get('demo') === '1';
   const { S } = useTrainerGeometry();
-  const [traps, setTraps] = useState<TrapRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [evalMap, setEvalMap] = useState<Record<string, EvalResult>>({});
-  const [hitMap, setHitMap] = useState<Record<string, { caught: number; caught_self: number }>>({});
-  const [evalStatus, setEvalStatus] = useState<{ done: number; total: number } | null>(null);
-  const [search, setSearch] = useState('');
-  const [colorFilter, setColorFilter] = useState<'all' | 'white' | 'black'>('all');
-  const [openingFilter, setOpeningFilter] = useState('');
-  const [revealed, setRevealed] = useState<Set<string>>(new Set());
-  const [dataReady, setDataReady] = useState(false);
+  const { getEval, isReady: sfReady } = useStockfish();
 
-  const evalStartedRef = useRef(false);
-  const { startAnalysis, stopAnalysis, isReady } = useStockfish();
+  const traps = useMemo(() => loadTraps(TRAPS_LIBRARY), []);
 
-  // ── Fetch data ──────────────────────────────────────────────────────────────
+  const [openingsForMatch, setOpeningsForMatch] = useState<OpeningForMatch[]>([]);
+  const [openingNames, setOpeningNames] = useState<Map<string, string>>(new Map());
+  const [progress, setProgress] = useState<Record<string, TrapProgressRow>>({});
+  const [hits, setHits] = useState<Record<string, { caught: number; caught_self: number }>>({});
+  const [dbMissing, setDbMissing] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'setter' | 'victim'>('all');
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode>('punish');
+  const [run, setRun] = useState<Run | null>(null);
+  const [avoidArrows, setAvoidArrows] = useState<BoardArrow[]>([]);
+  const [avoidResultText, setAvoidResultText] = useState<{ ok: boolean; text: string } | null>(null);
+  const [watchIdx, setWatchIdx] = useState(0);
+  const [watchPlaying, setWatchPlaying] = useState(false);
+  const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [nowMs, setNowMs] = useState(0);
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-
-      // 1. Trap lines
-      const { data: rawLines } = await supabase
-        .from('lesson_lines')
-        .select('id, lesson_id, line_order, title, moves')
-        .ilike('title', '%ловушка%');
-
-      if (!rawLines || rawLines.length === 0) {
-        setLoading(false);
-        setDataReady(true);
-        return;
-      }
-
-      // 2. Lessons
-      const lessonIds = [...new Set(rawLines.map((l: { lesson_id: string }) => l.lesson_id))];
-      const { data: lessons } = await supabase
-        .from('course_lessons')
-        .select('id, course_id, lesson_order')
-        .in('id', lessonIds);
-
-      // 3. Courses
-      const courseIds = [...new Set((lessons ?? []).map((l: { course_id: string }) => l.course_id))];
-      const { data: courses } = await supabase
-        .from('courses')
-        .select('id, slug, name, color, opening')
-        .in('id', courseIds);
-
-      // 4. Build trap rows
-      const rows: TrapRow[] = [];
-      for (const ll of rawLines) {
-        const lesson = (lessons ?? []).find((ls: { id: string }) => ls.id === ll.lesson_id);
-        const course = lesson ? (courses ?? []).find((c: { id: string }) => c.id === lesson.course_id) : null;
-        if (!lesson || !course) continue;
-
-        const moves = ll.moves as CourseLessonMove[];
-        if (!moves || moves.length === 0) continue;
-
-        const trap_key = `${course.slug}/${lesson.lesson_order}/${ll.line_order}`;
-        const last = moves[moves.length - 1];
-        const prev = moves.length >= 2 ? moves[moves.length - 2] : null;
-
-        rows.push({
-          trap_key,
-          title: ll.title as string,
-          course_name: course.name as string,
-          course_slug: course.slug as string,
-          course_id: course.id as string,
-          lesson_id: ll.lesson_id as string,
-          opening: (course.opening as string) ?? '',
-          color: course.color as 'white' | 'black' | 'both',
-          lesson_order: lesson.lesson_order as number,
-          line_order: ll.line_order as number,
-          final_fen: last.fen,
-          puzzle_fen: prev?.fen ?? START_FEN,
-          trap_move_san: last.san,
-          trap_move_color: last.color,
-        });
-      }
-
-      // 5. Fetch existing evals
-      const trapKeys = rows.map(r => r.trap_key);
-      const { data: evals } = trapKeys.length > 0
-        ? await supabase.from('trap_eval').select('trap_key, cp, mate, depth').in('trap_key', trapKeys)
-        : { data: [] };
-
-      const evalMapInit: Record<string, EvalResult> = {};
-      for (const e of evals ?? []) {
-        evalMapInit[e.trap_key as string] = { cp: e.cp as number | null, mate: e.mate as number | null, depth: e.depth as number };
-      }
-
-      // 6. Fetch hit counts
-      const { data: hits } = trapKeys.length > 0
-        ? await supabase.from('trap_hits').select('trap_key, type').in('trap_key', trapKeys)
-        : { data: [] };
-
-      const hitMapInit: Record<string, { caught: number; caught_self: number }> = {};
-      for (const h of hits ?? []) {
-        const key = h.trap_key as string;
-        if (!hitMapInit[key]) hitMapInit[key] = { caught: 0, caught_self: 0 };
-        if (h.type === 'caught') hitMapInit[key].caught++;
-        else hitMapInit[key].caught_self++;
-      }
-
-      setTraps(rows);
-      setEvalMap(evalMapInit);
-      setHitMap(hitMapInit);
-      setLoading(false);
-      setDataReady(true);
-    }
-    void load();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNowMs(Date.now());
   }, []);
 
-  // ── Auto-eval missing traps ─────────────────────────────────────────────────
-
+  // ── Load repertoire & progress ──
   useEffect(() => {
-    if (!isReady || !dataReady || evalStartedRef.current) return;
-    const missing = traps.filter(t => !evalMap[t.trap_key]);
-    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      if (demo) {
+        const ops: OpeningForMatch[] = DEMO_OPENINGS.map(o => ({
+          id: o.id, color: o.color, lines: o.lines.map(toMoves),
+        }));
+        const names = new Map(DEMO_OPENINGS.map(o => [o.id, o.name]));
+        const prog: Record<string, TrapProgressRow> = {};
+        for (const [id, mastery] of Object.entries(DEMO_MASTERY)) {
+          prog[`lib:${id}`] = {
+            trap_key: `lib:${id}`, mastery,
+            next_review: new Date(Date.now() + 10 * 86400000).toISOString(),
+          };
+        }
+        prog['lib:blackburne'] = { trap_key: 'lib:blackburne', mastery: 2, next_review: DEMO_BLACKBURNE_DUE };
+        setOpeningsForMatch(ops);
+        setOpeningNames(names);
+        setProgress(prog);
+        setActiveKey('lib:stafford-bg5');
+        setMode('punish');
+        return;
+      }
+      try {
+        const { data: ops, error: opErr } = await supabase
+          .from('openings').select('id, name, color').order('created_at', { ascending: true });
+        if (opErr) throw opErr;
+        const openingsArr = (ops ?? []) as OpeningRow[];
+        const opIds = openingsArr.map(o => o.id);
+        let linesArr: OpeningLineRow[] = [];
+        if (opIds.length) {
+          const { data: ls } = await supabase
+            .from('opening_lines')
+            .select('id, opening_id, moves')
+            .in('opening_id', opIds);
+          linesArr = (ls ?? []) as OpeningLineRow[];
+        }
+        const byOp = new Map<string, ChessMove[][]>();
+        for (const l of linesArr) {
+          if (!byOp.has(l.opening_id)) byOp.set(l.opening_id, []);
+          byOp.get(l.opening_id)!.push(l.moves);
+        }
+        const forMatch: OpeningForMatch[] = openingsArr.map(o => ({
+          id: o.id, color: o.color, lines: byOp.get(o.id) ?? [],
+        }));
+        const names = new Map(openingsArr.map(o => [o.id, o.name]));
+        if (cancelled) return;
+        setOpeningsForMatch(forMatch);
+        setOpeningNames(names);
 
-    evalStartedRef.current = true;
+        // Progress
+        try {
+          const { data: pg, error: pgErr } = await supabase
+            .from('trap_progress').select('trap_key, mastery, next_review');
+          if (pgErr) {
+            if (pgErr.code === '42P01' || /does not exist/i.test(pgErr.message)) setDbMissing(true);
+          } else {
+            const map: Record<string, TrapProgressRow> = {};
+            for (const row of (pg ?? []) as TrapProgressRow[]) map[row.trap_key] = row;
+            setProgress(map);
+          }
+        } catch { /* ignore */ }
 
-    let idx = 0;
-    function next() {
-      if (idx >= missing.length) { setEvalStatus(null); return; }
-      setEvalStatus({ done: idx, total: missing.length });
-      const trap = missing[idx];
-      let latest: { cp?: number; mate?: number } = {};
-      startAnalysis(trap.final_fen, info => {
-        if (info.cp != null || info.mate != null) latest = { cp: info.cp, mate: info.mate };
+        // Hits
+        try {
+          const { data: hh } = await supabase.from('trap_hits').select('trap_key, type');
+          const map: Record<string, { caught: number; caught_self: number }> = {};
+          for (const h of (hh ?? []) as TrapHit[]) {
+            if (!map[h.trap_key]) map[h.trap_key] = { caught: 0, caught_self: 0 };
+            if (h.type === 'caught') map[h.trap_key].caught++;
+            else map[h.trap_key].caught_self++;
+          }
+          setHits(map);
+        } catch { /* ignore */ }
+      } catch {
+        setDbMissing(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [demo]);
+
+  // ── Compute mine/other ──
+  const matched = useMemo(() => trapsForRepertoire(traps, openingsForMatch), [traps, openingsForMatch]);
+
+  const enriched = useMemo<EnrichedTrap[]>(() => {
+    const result: EnrichedTrap[] = [];
+    for (const m of matched.mine) {
+      result.push({
+        trap: m.trap,
+        role: m.role,
+        openingId: m.openingId,
+        openingName: openingNames.get(m.openingId) ?? null,
+        source: 'rep',
+        k: m.k,
       });
-      setTimeout(() => {
-        stopAnalysis();
-        setTimeout(async () => {
-          await supabase.from('trap_eval').upsert({
-            trap_key: trap.trap_key,
-            cp: latest.cp ?? null,
-            mate: latest.mate ?? null,
-            depth: 14,
-          });
-          setEvalMap(prev => ({ ...prev, [trap.trap_key]: { cp: latest.cp, mate: latest.mate, depth: 14 } }));
-          idx++;
-          next();
-        }, 150);
-      }, 1500);
     }
-    setTimeout(next, 0);
-  // dataReady and traps/evalMap intentionally not in deps: snapshot state at first eval trigger
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, dataReady, startAnalysis, stopAnalysis]);
-
-  // ── Hit counter ─────────────────────────────────────────────────────────────
-
-  async function addHit(trap_key: string, type: 'caught' | 'caught_self') {
-    await supabase.from('trap_hits').insert({ trap_key, type });
-    setHitMap(prev => {
-      const cur = prev[trap_key] ?? { caught: 0, caught_self: 0 };
-      return {
-        ...prev,
-        [trap_key]: type === 'caught'
-          ? { ...cur, caught: cur.caught + 1 }
-          : { ...cur, caught_self: cur.caught_self + 1 },
-      };
-    });
-  }
-
-  // ── Filters ─────────────────────────────────────────────────────────────────
-
-  const openings = [...new Set(traps.map(t => t.opening).filter(Boolean))].sort();
-
-  const filtered = traps.filter(t => {
-    if (colorFilter !== 'all' && t.color !== colorFilter && t.color !== 'both') return false;
-    if (openingFilter && t.opening !== openingFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      if (!t.title.toLowerCase().includes(q) && !t.opening.toLowerCase().includes(q) && !t.course_name.toLowerCase().includes(q)) return false;
+    for (const t of matched.other) {
+      result.push({ trap: t, role: 'other', openingId: null, openingName: t.opening ?? null, source: 'other', k: 0 });
     }
-    return true;
+    return result;
+  }, [matched, openingNames]);
+
+  // Filter
+  const visible = useMemo(() => {
+    if (filter === 'setter') return enriched.filter(e => e.role === 'setter');
+    if (filter === 'victim') return enriched.filter(e => e.role === 'victim');
+    return enriched;
+  }, [enriched, filter]);
+
+  const mineList = visible.filter(e => e.source === 'rep');
+  const otherList = visible.filter(e => e.source === 'other');
+
+  const counts = useMemo(() => {
+    const total = enriched.length;
+    let mastered = 0, due = 0, fresh = 0;
+    for (const e of enriched) {
+      const p = progress[e.trap.key] ?? null;
+      const st = statusOf(p, nowMs);
+      if (st === 'mastered') mastered++;
+      else if (st === 'due') due++;
+      else if (st === 'new') fresh++;
+    }
+    return { total, mastered, due, fresh };
+  }, [enriched, progress, nowMs]);
+
+  const dueCount = enriched.filter(e => {
+    const p = progress[e.trap.key] ?? null;
+    return statusOf(p, nowMs) === 'due';
+  }).length + Math.min(8, enriched.filter(e => e.source === 'rep' && !progress[e.trap.key]).length);
+
+  const activeTrap = useMemo(() => enriched.find(e => e.trap.key === activeKey) ?? null, [enriched, activeKey]);
+
+  // ── Mode state transitions ──
+  const openTrap = useCallback((e: EnrichedTrap, forceMode?: Mode) => {
+    const defaultMode: Mode = forceMode ?? (e.role === 'victim' ? 'avoid' : 'punish');
+    setActiveKey(e.trap.key);
+    setMode(defaultMode);
+    setAvoidArrows([]);
+    setAvoidResultText(null);
+    setWatchIdx(0);
+    setWatchPlaying(false);
+    if (defaultMode === 'punish') {
+      setRun(punishRun(e.trap));
+    } else {
+      setRun(null);
+    }
+  }, []);
+
+  // when activeTrap or mode changes, ensure run for punish
+  useEffect(() => {
+    if (!activeTrap) return;
+    if (mode === 'punish') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRun(punishRun(activeTrap.trap));
+      setAvoidArrows([]);
+      setAvoidResultText(null);
+    } else if (mode === 'avoid') {
+      setRun(null);
+      setAvoidArrows([]);
+      setAvoidResultText(null);
+    } else if (mode === 'watch') {
+      setRun(null);
+      setWatchIdx(0);
+    }
+  }, [activeTrap, mode]);
+
+  // ── auto-play opponent response in punish mode (600ms) ──
+  useEffect(() => {
+    if (!run) return;
+    if (mode !== 'punish') return;
+    if (!runNeedsAuto(run)) return;
+    const t = setTimeout(() => {
+      setRun(prev => (prev ? runAuto(prev) : prev));
+    }, 600);
+    return () => clearTimeout(t);
+  }, [run, mode]);
+
+  // ── watch mode playback ──
+  useEffect(() => {
+    if (mode !== 'watch' || !activeTrap || !watchPlaying) return;
+    if (watchIdx >= activeTrap.trap.moves.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setWatchPlaying(false);
+      return;
+    }
+    const t = setTimeout(() => setWatchIdx(i => i + 1), 900);
+    autoTimerRef.current = t;
+    return () => clearTimeout(t);
+  }, [mode, activeTrap, watchPlaying, watchIdx]);
+
+  // ── punish: record hit when finished ──
+  const prevPunishPhase = useRef<string | null>(null);
+  useEffect(() => {
+    if (mode !== 'punish' || !run || !activeTrap) return;
+    const cur = run.phase;
+    if (prevPunishPhase.current !== 'done' && cur === 'done') {
+      const r = runResult(run);
+      if (r.perfect && !demo && !dbMissing) {
+        void supabase.from('trap_hits').insert({ trap_key: activeTrap.trap.key, type: 'caught' });
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setHits(prev => {
+          const cur = prev[activeTrap.trap.key] ?? { caught: 0, caught_self: 0 };
+          return { ...prev, [activeTrap.trap.key]: { ...cur, caught: cur.caught + 1 } };
+        });
+      }
+    }
+    prevPunishPhase.current = cur;
+  }, [run, mode, activeTrap, demo, dbMissing]);
+
+  // ── handlers ──
+  const handlePunishMove = useCallback((m: { from: Square; to: Square }): boolean => {
+    if (!run || !activeTrap) return false;
+    if (!isMyTurn(run)) return false;
+    const next = runMove(run, m.from, m.to);
+    setRun(next);
+    // If wrong — optionally check with Stockfish (not required for lint)
+    return false;
+  }, [run, activeTrap]);
+
+  const handleAvoidMove = useCallback((m: { from: Square; to: Square }): boolean => {
+    if (!activeTrap) return false;
+    const v = avoidVerdict(activeTrap.trap, m.from, m.to);
+    if (v === 'illegal') return false;
+    if (v === 'trap') {
+      const trap = activeTrap.trap;
+      const played = trap.moves[trap.mistakePly];
+      const safe = trap.safe[0] ?? '';
+      setAvoidArrows([
+        { from: played.from as Square, to: played.to as Square, color: '#C2453A', role: 'played' },
+        { from: m.from, to: m.to, color: '#C2453A', role: 'played' }, // the user actually did same moves
+      ]);
+      setAvoidResultText({
+        ok: false,
+        text: `${numSan(trap.moves, trap.mistakePly)} — это и есть ловушка. Здесь надо ${safe ? safe : 'играть безопасно'}.`,
+      });
+      if (!demo && !dbMissing) {
+        void supabase.from('trap_hits').insert({ trap_key: activeTrap.trap.key, type: 'caught_self' });
+        setHits(prev => {
+          const cur = prev[activeTrap.trap.key] ?? { caught: 0, caught_self: 0 };
+          return { ...prev, [activeTrap.trap.key]: { ...cur, caught_self: cur.caught_self + 1 } };
+        });
+      }
+    } else if (v === 'safe') {
+      setAvoidResultText({ ok: true, text: `Верно. Ловушки нет.` });
+    } else {
+      // 'other' — check with Stockfish
+      if (sfReady && activeTrap) {
+        setAvoidResultText({ ok: true, text: 'Проверяем движком…' });
+        getEval(fenBefore(activeTrap.trap.moves, activeTrap.trap.mistakePly), 12, (res) => {
+          const cp = res.cp != null ? res.cp / 100 : null;
+          if (cp != null && Math.abs(cp) <= 0.8) {
+            setAvoidResultText({ ok: true, text: `Можно и так. Чаще играют ${activeTrap.trap.safe[0] ?? 'из безопасных'}.` });
+          } else {
+            const trap = activeTrap.trap;
+            const best = trap.moves[trap.mistakePly];
+            setAvoidArrows([
+              { from: m.from, to: m.to, color: '#C2453A', role: 'played' },
+              { from: best.from as Square, to: best.to as Square, color: '#5E8C35', style: 'dashed', role: 'best' },
+            ]);
+            setAvoidResultText({ ok: false, text: `Этот ход хуже. Лучше ${activeTrap.trap.safe[0] ?? 'из безопасных ходов'}.` });
+          }
+        });
+      } else {
+        setAvoidResultText({ ok: true, text: 'Проверить движком можно после загрузки Stockfish.' });
+      }
+    }
+    return false;
+  }, [activeTrap, demo, dbMissing, sfReady, getEval]);
+
+  // ── UI pieces ──
+  const sessionStats = [
+    { value: counts.mastered, label: 'выучено', color: '#81B64C' },
+    { value: counts.due, label: 'повторить', color: '#C98424' },
+    { value: counts.fresh, label: 'новых', color: 'var(--ivory)' },
+  ];
+
+  const filterControls = (
+    <div data-ui="trap-filter" style={{ display: 'flex', gap: 6 }}>
+      {([
+        ['all', 'Все'], ['setter', 'Я ставлю'], ['victim', 'Мне ставят'],
+      ] as const).map(([k, l]) => (
+        <button
+          key={k}
+          onClick={() => setFilter(k)}
+          style={{
+            flex: 1, height: 30, borderRadius: 8,
+            border: '1px solid var(--hairline)',
+            background: filter === k ? 'rgba(129,182,76,.15)' : 'transparent',
+            color: filter === k ? '#81B64C' : 'var(--ivory)',
+            fontSize: 12, cursor: 'pointer',
+          }}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+
+  const rowStyle = (active: boolean): React.CSSProperties => ({
+    display: 'flex', flexDirection: 'column', gap: 2,
+    padding: '8px 10px', borderRadius: 8,
+    background: active ? 'rgba(129,182,76,.10)' : 'transparent',
+    cursor: 'pointer', userSelect: 'none',
   });
 
-  // ── Render ───────────────────────────────────────────────────────────────────
-
-  if (loading) {
+  const renderRow = (e: EnrichedTrap) => {
+    const p = progress[e.trap.key] ?? null;
+    const st = statusOf(p, nowMs);
+    const active = activeKey === e.trap.key;
+    const dot =
+      st === 'mastered' ? '✓' :
+      st === 'due' ? '●' :
+      st === 'new' ? '●' : '●';
+    const dotColor =
+      st === 'mastered' ? '#81B64C' :
+      st === 'due' ? '#C98424' : '#3A78C2';
     return (
-      <div className="page">
-        <div style={{ height: 60, background: 'var(--surface)', borderRadius: 'var(--radius-card)' }} className="animate-pulse" />
-        {[0, 1, 2].map(i => (
-          <div key={i} className="ui-card animate-pulse" style={{ height: 180 }} />
-        ))}
+      <div
+        key={e.trap.key}
+        data-ui="trap-row"
+        data-trap={e.trap.id}
+        data-role={e.role}
+        data-status={st}
+        data-active={active ? 'true' : undefined}
+        onClick={() => openTrap(e)}
+        style={rowStyle(active)}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: e.role === 'setter' ? '#81B64C' : e.role === 'victim' ? '#C98424' : 'var(--muted)', fontSize: 14 }}>
+              {roleIcon(e.role)}
+            </span>
+            <span style={{ fontSize: 13, color: 'var(--ivory)', fontWeight: 500 }}>{e.trap.name ?? e.trap.id}</span>
+          </span>
+          <span style={{ color: dotColor, fontSize: 12 }}>{dot}</span>
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--muted)', paddingLeft: 22 }}>
+          {e.openingName ?? '—'} · {roleLabel(e.role)} · {st === 'new' ? 'новая' : st === 'due' ? 'повторить' : st === 'mastered' ? 'выучена' : 'учится'}
+        </div>
       </div>
     );
-  }
+  };
 
-  if (traps.length === 0) {
-    return (
-      <TrainerLayout
-        topBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Соперник</span>}
-        board={<Board fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" size={S} orientation="white" interactive={false} />}
-        bottomBar={<span style={{ fontSize: 14, color: 'var(--muted)' }}>Ты</span>}
-        panel={
-          <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)' }}>Ловушки</div>
-            <div style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>
-              Ловушек пока нет.
-            </div>
-            <div style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>
-              Добавьте в курс секции{' '}
-              <code style={{ fontSize: 13, background: 'var(--bg)', padding: '2px 6px', borderRadius: 3 }}>
-                ## Ловушка: Название
-              </code>{' '}
-              — они появятся здесь автоматически.
-            </div>
-            <Link href="/courses/import" className="ui-btn ui-btn-primary" style={{ alignSelf: 'flex-start' }}>
-              Импортировать курс
-            </Link>
-          </div>
-        }
-      />
+  const list = (
+    <div style={{ padding: '0 10px' }}>
+      <div style={{ fontSize: 12, color: 'var(--muted)', padding: '6px 10px 2px', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+        В твоих дебютах
+      </div>
+      {mineList.length === 0 && (
+        <div style={{ fontSize: 13, color: 'var(--muted)', padding: '6px 10px' }}>
+          Добавь дебюты — подберём ловушки к ним
+        </div>
+      )}
+      {mineList.map(renderRow)}
+
+      <div data-ui="trap-lichess" style={{ fontSize: 12, color: 'var(--muted)', padding: '12px 10px 2px' }}>
+        <Link href="/tactics?mode=openings" style={{ color: 'var(--muted)', textDecoration: 'none' }}>
+          Из партий Lichess · 0 задач · в «Тактике»
+        </Link>
+      </div>
+
+      <div style={{ fontSize: 12, color: 'var(--muted)', padding: '12px 10px 2px', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+        Другие ловушки
+      </div>
+      {otherList.map(renderRow)}
+    </div>
+  );
+
+  const session = (
+    <SessionPanel
+      title={`Ловушки · ${enriched.length}`}
+      stats={sessionStats}
+      controls={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {filterControls}
+          <button
+            data-ui="trap-session"
+            onClick={() => {
+              // start session: open first due trap
+              const target = enriched.find(e => statusOf(progress[e.trap.key] ?? null, nowMs) === 'due') ?? enriched.find(e => e.source === 'rep');
+              if (target) openTrap(target);
+            }}
+            style={{
+              height: 36, border: 'none', borderRadius: 8,
+              background: '#81B64C', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            Тренировать · {dueCount}
+          </button>
+        </div>
+      }
+      list={list}
+    />
+  );
+
+  // ── Right panel ──
+  let fenToShow = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  let orientationColor: 'white' | 'black' = 'white';
+  let boardArrows: BoardArrow[] = [];
+  let boardMovableColor: 'w' | 'b' | undefined;
+  let boardLastMove: { from: Square; to: Square } | null = null;
+  let boardOnMove: ((m: { from: Square; to: Square; promotion?: 'q' | 'r' | 'b' | 'n' }) => boolean) | undefined;
+  let boardInteractive = false;
+
+  let panelTitle = 'Ловушки';
+  let panelChips: React.ReactNode = null;
+  let panelBody: React.ReactNode = null;
+  let panelActions: React.ReactNode = null;
+
+  if (activeTrap) {
+    const t = activeTrap.trap;
+    orientationColor = t.setter === 'w' ? 'white' : 'black';
+    // for avoid, orientation = victim color
+    if (mode === 'avoid') orientationColor = t.setter === 'w' ? 'black' : 'white';
+
+    if (mode === 'punish' && run) {
+      const v = runView(run);
+      fenToShow = v.fen;
+      boardArrows = v.arrows.map(a => ({
+        from: a.from as Square, to: a.to as Square,
+        color: a.role === 'played' ? '#C2453A' : '#5E8C35',
+        style: a.style as 'dashed' | undefined,
+        role: a.role as 'played' | 'best',
+      }));
+      boardLastMove = v.lastMove ? { from: v.lastMove.from as Square, to: v.lastMove.to as Square } : null;
+      if (isMyTurn(run) && run.phase !== 'done') {
+        boardMovableColor = t.setter;
+        boardInteractive = true;
+        boardOnMove = handlePunishMove;
+      }
+      const r = runResult(run);
+      if (run.phase === 'done' && r.perfect) {
+        panelTitle = t.name ?? t.id;
+      } else if (run.phase === 'done') {
+        panelTitle = t.name ?? t.id;
+      } else {
+        panelTitle = t.name ?? t.id;
+      }
+    } else if (mode === 'avoid') {
+      fenToShow = fenBefore(t.moves, t.mistakePly);
+      boardArrows = avoidArrows;
+      boardLastMove = t.mistakePly >= 1
+        ? { from: t.moves[t.mistakePly - 1].from as Square, to: t.moves[t.mistakePly - 1].to as Square }
+        : null;
+      if (avoidResultText?.ok === false) {
+        panelTitle = 'Попался';
+      } else {
+        panelTitle = t.name ?? t.id;
+      }
+      if (!avoidResultText) {
+        boardMovableColor = t.setter === 'w' ? 'b' : 'w';
+        boardInteractive = true;
+        boardOnMove = handleAvoidMove;
+      }
+    } else if (mode === 'watch') {
+      const shownPly = Math.min(Math.max(0, watchIdx - 1), t.moves.length - 1);
+      fenToShow = watchIdx === 0 ? fenBefore(t.moves, 0) : t.moves[shownPly].fen;
+      boardLastMove = watchIdx > 0 ? { from: t.moves[shownPly].from as Square, to: t.moves[shownPly].to as Square } : null;
+      panelTitle = t.name ?? t.id;
+    }
+
+    // Chips
+    panelChips = (
+      <>
+        <span style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+          {roleLabel(activeTrap.role)}
+        </span>
+        {activeTrap.openingName && (
+          <span style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+            {t.setter === 'w' ? '♔' : '♚'} {activeTrap.openingName}
+          </span>
+        )}
+        <span style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+          Итог: {t.result}
+        </span>
+      </>
     );
+
+    const hitBlock = (() => {
+      const h = hits[t.key] ?? { caught: 0, caught_self: 0 };
+      return (
+        <div data-ui="trap-hits" style={{ fontSize: 12, color: 'var(--muted)', display: 'flex', gap: 12 }}>
+          <span>Поймал соперника · {h.caught}</span>
+          <span>Попался сам · {h.caught_self}</span>
+        </div>
+      );
+    })();
+
+    let feedbackBlock: React.ReactNode = null;
+    if (mode === 'punish' && run) {
+      const r = runResult(run);
+      if (run.phase === 'done' && r.perfect) {
+        feedbackBlock = (
+          <div data-ui="trap-feedback" data-result="ok" style={{ padding: 12, borderRadius: 8, background: 'rgba(129,182,76,.10)', color: '#81B64C', fontSize: 14 }}>
+            Верно! {t.result === 'мат' ? 'Мат' : `Выигрываешь: ${t.result}`}.
+          </div>
+        );
+      } else if (run.phase === 'done' && !r.perfect) {
+        feedbackBlock = (
+          <div data-ui="trap-feedback" data-result="fail" style={{ padding: 12, borderRadius: 8, background: 'rgba(194,69,58,.10)', color: '#C2453A', fontSize: 14 }}>
+            Ловушка сработала, но с ошибками.
+          </div>
+        );
+      } else {
+        feedbackBlock = (
+          <div data-ui="trap-task" data-result="info" style={{ padding: 12, borderRadius: 8, background: 'rgba(58,120,194,.08)', color: 'var(--ivory)', fontSize: 14 }}>
+            Жертва ошиблась. Найди наказание.
+          </div>
+        );
+      }
+    } else if (mode === 'avoid') {
+      if (avoidResultText?.ok === false) {
+        feedbackBlock = (
+          <div data-ui="trap-feedback" data-result="fail" style={{ padding: 12, borderRadius: 8, background: 'rgba(194,69,58,.10)', color: '#C2453A', fontSize: 14 }}>
+            {avoidResultText.text}{' '}
+            <span style={{ color: 'var(--ivory)' }}>
+              {t.moves.slice(t.mistakePly).map(m => m.san).join(' ')}
+            </span>
+          </div>
+        );
+      } else if (avoidResultText?.ok === true) {
+        feedbackBlock = (
+          <div data-ui="trap-feedback" data-result="ok" style={{ padding: 12, borderRadius: 8, background: 'rgba(129,182,76,.10)', color: '#81B64C', fontSize: 14 }}>
+            {avoidResultText.text}
+          </div>
+        );
+      } else {
+        feedbackBlock = (
+          <div data-ui="trap-task" data-result="info" style={{ padding: 12, borderRadius: 8, background: 'rgba(58,120,194,.08)', color: 'var(--ivory)', fontSize: 14 }}>
+            Сопернику ходить. Не попадись.
+          </div>
+        );
+      }
+    }
+
+    panelBody = (
+      <div style={{ padding: '14px 24px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div data-ui="trap-story" style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.5 }}>
+          {t.idea}
+        </div>
+        {feedbackBlock}
+        <div data-ui="trap-line" style={{ fontSize: 13, color: 'var(--muted)', fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace', lineHeight: 1.6 }}>
+          {t.moves.map((m, i) => {
+            const isMistake = i === t.mistakePly;
+            return (
+              <span key={i} style={{
+                color: isMistake ? '#C2453A' : i > t.mistakePly ? '#81B64C' : 'var(--ivory)',
+                marginRight: 6,
+              }}>
+                {m.color === 'w' ? `${Math.floor(i / 2) + 1}.` : ''} {m.san}{isMistake ? '??' : ''}
+              </span>
+            );
+          })}
+        </div>
+        {hitBlock}
+      </div>
+    );
+
+    const btnStyle: React.CSSProperties = {
+      height: 40, border: '1px solid var(--hairline)', background: 'transparent',
+      color: 'var(--ivory)', borderRadius: 'var(--radius-btn)', fontSize: 13, cursor: 'pointer',
+      padding: '0 16px',
+    };
+    const primaryBtn: React.CSSProperties = { ...btnStyle, background: '#81B64C', border: 'none', color: '#fff' };
+    panelActions = (
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button data-ui="trap-watch" style={btnStyle} onClick={() => { setMode('watch'); setWatchIdx(0); setWatchPlaying(true); }}>
+          ▶ Смотреть
+        </button>
+        <button data-ui="trap-punish" style={mode === 'punish' ? primaryBtn : btnStyle} onClick={() => setMode('punish')}>
+          Накажи сам
+        </button>
+        {t.safe.length > 0 && (
+          <button data-ui="trap-avoid" style={mode === 'avoid' ? primaryBtn : btnStyle} onClick={() => setMode('avoid')}>
+            Не попадись
+          </button>
+        )}
+        {(mode === 'punish' && run?.phase === 'done') && (
+          <button data-ui="trap-retry" style={btnStyle} onClick={() => setRun(punishRun(t))}>
+            Ещё раз
+          </button>
+        )}
+        {(mode === 'avoid' && avoidResultText) && (
+          <button data-ui="trap-retry" style={btnStyle} onClick={() => { setAvoidArrows([]); setAvoidResultText(null); }}>
+            Ещё раз
+          </button>
+        )}
+        <button data-ui="trap-next" style={btnStyle} onClick={() => {
+          const i = enriched.findIndex(e => e.trap.key === t.key);
+          const next = enriched[(i + 1) % enriched.length];
+          if (next) openTrap(next);
+        }}>
+          Дальше
+        </button>
+      </div>
+    );
+  } else {
+    panelBody = (
+      <div style={{ padding: '20px 24px', color: 'var(--muted)', fontSize: 14 }}>
+        Выбери ловушку слева — её можно посмотреть, наказать или проверить, как не попасться.
+      </div>
+    );
+    panelActions = <div style={{ fontSize: 12, color: 'var(--muted)' }}>Нажми на строку в списке</div>;
   }
 
   return (
-    <div className="page" style={{ maxWidth: 900 }}>
-
-      {/* Header */}
-      <div className="page-head">
-        <div className="page-head-text">
-          <h1 className="page-title">Ловушки</h1>
-          <p className="page-lead">
-            {traps.length} {traps.length === 1 ? 'ловушка' : traps.length < 5 ? 'ловушки' : 'ловушек'} из курсов
-          </p>
-        </div>
-      </div>
-
-      {/* Eval progress */}
-      {evalStatus && (
-        <div className="ui-banner" style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: 'var(--muted)' }}>
-          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', border: '2px solid var(--muted)', borderTopColor: 'var(--ivory)', animation: 'spin 0.8s linear infinite' }} />
-          Вычисляю оценку {evalStatus.done + 1} из {evalStatus.total}…
-        </div>
-      )}
-
-      {/* Filters */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-        <div className="ui-search-wrap" style={{ flex: '1 1 180px', maxWidth: 280 }}>
-          <svg className="ui-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
-          </svg>
-          <input
-            type="text"
-            placeholder="Поиск…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="ui-search search-input"
-          />
-        </div>
-        <div className="chip-row">
-          {(['all', 'white', 'black'] as const).map(c => (
-            <button
-              key={c}
-              onClick={() => setColorFilter(c)}
-              className={`ui-chip ${colorFilter === c ? 'ui-chip-active' : ''}`}
-            >
-              {c === 'all' ? 'Все' : c === 'white' ? 'Белые' : 'Чёрные'}
-            </button>
-          ))}
-          {openings.length > 1 && (
-            <select
-              value={openingFilter}
-              onChange={e => setOpeningFilter(e.target.value)}
-              className="ui-chip"
-              style={{ cursor: 'pointer', outline: 'none' }}
-            >
-              <option value="">Все дебюты</option>
-              {openings.map(op => <option key={op} value={op}>{op}</option>)}
-            </select>
-          )}
-          {(search || colorFilter !== 'all' || openingFilter) && (
-            <button
-              onClick={() => { setSearch(''); setColorFilter('all'); setOpeningFilter(''); }}
-              className="ui-chip"
-            >
-              Сбросить ×
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Results count */}
-      {filtered.length !== traps.length && (
-        <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-          Показано {filtered.length} из {traps.length}
-        </div>
-      )}
-
-      {/* Traps section */}
-      <section>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--hairline)', marginBottom: 2 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>ЛОВУШКИ</span>
-          <span style={{ fontSize: 13, color: 'var(--muted)' }}>{filtered.length}</span>
-        </div>
-
-        {filtered.length === 0 ? (
-          <p style={{ marginTop: 20, fontSize: 14, color: 'var(--muted)' }}>Ничего не найдено</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
-            {filtered.map(trap => {
-              const ev = evalMap[trap.trap_key];
-              const hits = hitMap[trap.trap_key] ?? { caught: 0, caught_self: 0 };
-              const isRevealed = revealed.has(trap.trap_key);
-              const boardOrientation = trap.trap_move_color === 'w' ? 'white' : 'black';
-
-              return (
-                <div
-                  key={trap.trap_key}
-                  style={{
-                    display: 'flex', gap: 20, padding: '16px',
-                    border: '1px solid var(--hairline)',
-                    background: 'var(--surface)',
-                    borderRadius: 'var(--radius-card)',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  {/* Board */}
-                  <div style={{ flexShrink: 0, borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
-                    <Board
-                      fen={trap.puzzle_fen}
-                      orientation={boardOrientation}
-                      size={BOARD_SIZE}
-                      interactive={false}
-                    />
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 160, display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {/* Eyebrow */}
-                      <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                        {trap.opening || trap.course_name} · {colorLabel(trap.color)}
-                      </div>
-                      {/* Title */}
-                      <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ivory)', lineHeight: 1.3 }}>
-                        {trap.title}
-                      </div>
-                      {/* Eval */}
-                      <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                        Оценка:&nbsp;
-                        <span style={{ color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
-                          {evalStatus && !ev ? 'вычисляю…' : formatEval(ev)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Answer reveal */}
-                    <div>
-                      {isRevealed ? (
-                        <div style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 8,
-                          padding: '7px 14px',
-                          border: '1px solid var(--accent)',
-                          borderRadius: 'var(--radius-btn)',
-                          background: 'rgba(129,182,76,0.08)',
-                          fontSize: 15, fontWeight: 700, color: 'var(--accent)',
-                          fontFamily: 'monospace', letterSpacing: '0.05em',
-                        }}>
-                          {trap.trap_move_san}
-                        </div>
-                      ) : (
-                        <button
-                          className="ui-btn ui-btn-outline ui-btn-sm"
-                          onClick={() => setRevealed(prev => new Set(prev).add(trap.trap_key))}
-                        >
-                          Показать ход
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Hit counters */}
-                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                      {[
-                        { label: 'Заманил', type: 'caught' as const, count: hits.caught },
-                        { label: 'Попался', type: 'caught_self' as const, count: hits.caught_self },
-                      ].map(({ label, type, count }) => (
-                        <button
-                          key={type}
-                          onClick={() => void addHit(trap.trap_key, type)}
-                          style={{
-                            height: 30, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6,
-                            border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn)',
-                            background: 'transparent', color: 'var(--muted)', cursor: 'pointer',
-                            fontSize: 13, fontFamily: 'inherit',
-                          }}
-                          title={type === 'caught' ? 'Заманил соперника' : 'Сам попался'}
-                        >
-                          {label}
-                          <span style={{ color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{count}</span>
-                          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Course link */}
-                    <Link
-                      href={`/courses/${trap.course_id}/${trap.lesson_id}`}
-                      style={{ fontSize: 13, color: 'var(--muted)', textDecoration: 'none' }}
-                      className="play-button-link"
-                    >
-                      {trap.course_name} →
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
+    <TrainerLayout
+      session={session}
+      panelAttrs={demo ? { 'data-demo': 'traps' } : undefined}
+      topBar={null}
+      bottomBar={
+        dbMissing ? (
+          <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+            Прогресс не сохраняется: выполни supabase/34-pages2.sql
           </div>
-        )}
-      </section>
-    </div>
+        ) : null
+      }
+      board={
+        <Board
+          fen={fenToShow}
+          orientation={orientationColor}
+          movableColor={boardMovableColor}
+          size={S}
+          interactive={boardInteractive}
+          onMove={boardOnMove}
+          lastMove={boardLastMove}
+          arrows={boardArrows}
+        />
+      }
+      panel={
+        <TaskPanel
+          breadcrumb="Учиться · Ловушки"
+          title={panelTitle}
+          chips={panelChips}
+          actions={panelActions}
+        >
+          {panelBody}
+        </TaskPanel>
+      }
+    />
+  );
+}
+
+export default function TrapsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 32, color: 'var(--muted)' }}>Загрузка…</div>}>
+      <TrapsPageInner />
+    </Suspense>
   );
 }
