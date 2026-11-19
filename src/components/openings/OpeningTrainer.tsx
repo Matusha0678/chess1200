@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { Square } from 'chess.js';
 import { Board } from '@/components/board/Board';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
@@ -28,6 +28,7 @@ export interface OpeningLine {
   prog: LessonProg | null;
   badge?: string | null;
   line_class?: string | null;
+  opening_color?: 'white' | 'black' | 'both';
 }
 
 export interface GameDev {
@@ -56,10 +57,14 @@ interface Props {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function myColorForLine(openingColor: 'white' | 'black' | 'both', lineId: string): 'w' | 'b' {
-  if (openingColor === 'white') return 'w';
-  if (openingColor === 'black') return 'b';
-  // 'both' — deterministic per line id (hash)
+function myColorForLine(
+  openingColor: 'white' | 'black' | 'both',
+  lineId: string,
+  lineOpeningColor?: 'white' | 'black' | 'both',
+): 'w' | 'b' {
+  const color = lineOpeningColor ?? openingColor;
+  if (color === 'white') return 'w';
+  if (color === 'black') return 'b';
   let h = 0;
   for (let i = 0; i < lineId.length; i++) h = (h * 31 + lineId.charCodeAt(i)) | 0;
   return (h & 1) === 0 ? 'w' : 'b';
@@ -96,9 +101,8 @@ export function OpeningTrainer({
   const [mode, setMode] = useState<TrainerMode>(initialMode);
 
   // ── Queue ──────────────────────────────────────────────────────────────────
-  const freshDevSet = new Set(gameDevs.map(g => g.lineId));
   const [okSet, setOkSet] = useState<Set<string>>(new Set());
-  const [queue, setQueue] = useState<string[]>(() => buildQueue(initialMode, lines, hardRows, initialLineId, freshDevSet, okSet, now));
+  const [queue, setQueue] = useState<string[]>(() => buildQueue(initialMode, lines, hardRows, initialLineId, new Set(gameDevs.map(g => g.lineId)), new Set(), now));
   const [qPos, setQPos] = useState(0);
 
   // ── Run ────────────────────────────────────────────────────────────────────
@@ -133,6 +137,9 @@ export function OpeningTrainer({
   // ── Auto-move timer ───────────────────────────────────────────────────────
   const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Stable set of line IDs with game deviations ──────────────────────────
+  const freshDevSet = useMemo(() => new Set(gameDevs.map(g => g.lineId)), [gameDevs]);
+
   function buildQueue(
     m: TrainerMode, ls: OpeningLine[], hrs: HardRow[], forceId: string | null | undefined,
     devSet: Set<string>, ok: Set<string>, t: number,
@@ -146,7 +153,7 @@ export function OpeningTrainer({
     }
     if (m === 'hard') {
       const linesById: Record<string, { moves: ChessMove[]; myColor: 'w' | 'b' }> = {};
-      for (const l of ls) linesById[l.id] = { moves: l.moves, myColor: myColorForLine(opening.color, l.id) };
+      for (const l of ls) linesById[l.id] = { moves: l.moves, myColor: myColorForLine(opening.color, l.id, l.opening_color) };
       return hardQueue(hrs, linesById).map(h => h.lineId);
     }
     return [];
@@ -160,7 +167,7 @@ export function OpeningTrainer({
   const startRun = useCallback((lineId: string, m: TrainerMode, ok: Set<string>, lp?: 'learn' | 'recall') => {
     const line = linesState.find(l => l.id === lineId);
     if (!line) return;
-    const myColor = myColorForLine(opening.color, lineId);
+    const myColor = myColorForLine(opening.color, lineId, line.opening_color);
     let startPly = 0;
     if (m === 'review' && lp !== 'recall') {
       startPly = sessionStart(line.moves, myColor, ok);
@@ -172,7 +179,7 @@ export function OpeningTrainer({
     const endPly = m === 'hard'
       ? (() => {
           const linesById: Record<string, { moves: ChessMove[]; myColor: 'w' | 'b' }> = {};
-          for (const l of linesState) linesById[l.id] = { moves: l.moves, myColor: myColorForLine(opening.color, l.id) };
+          for (const l of linesState) linesById[l.id] = { moves: l.moves, myColor: myColorForLine(opening.color, l.id, l.opening_color) };
           const hq = hardQueue(hardRows, linesById);
           const entry = hq.find(h => h.lineId === lineId);
           return entry ? entry.ply + 1 : line.moves.length;
@@ -186,7 +193,8 @@ export function OpeningTrainer({
   // ── Initialize first run ──────────────────────────────────────────────────
   useEffect(() => {
     if (mode === 'exam') return;
-    const q = buildQueue(mode, lines, hardRows, initialLineId, freshDevSet, okSet, now);
+    const initDevSet = new Set(gameDevs.map(g => g.lineId));
+    const q = buildQueue(mode, lines, hardRows, initialLineId, initDevSet, new Set(), now);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setQueue(q);
     setQPos(0);
@@ -397,28 +405,40 @@ export function OpeningTrainer({
   const movesData = run ? moveItems(run) : null;
   const lineId = currentLineId;
   const line = lineId ? getLine(lineId) : null;
-  const myColor = lineId ? myColorForLine(opening.color, lineId) : 'w';
+  const myColor = lineId ? myColorForLine(opening.color, lineId, line?.opening_color) : 'w';
 
   // Orientation respects flip
   const baseOrientation: 'white' | 'black' = myColor === 'w' ? 'white' : 'black';
   const orientation: 'white' | 'black' = flipped ? (baseOrientation === 'white' ? 'black' : 'white') : baseOrientation;
 
-  // ── Line rows for LineList ────────────────────────────────────────────────
-  const labelsArr = lineLabels(linesState, myColor === myColorForLine(opening.color, linesState[0]?.id ?? '') ? myColor : null);
-  const lineRows: LineRow[] = linesState.map((l, i) => ({
-    id: l.id,
-    index: l.index,
-    label: labelsArr[i] ?? `Линия ${l.index + 1}`,
-    badge: l.badge ?? null,
-    line_class: l.line_class ?? null,
-    prog: l.prog,
-    status: lineStatus(l.prog, now),
-    dueText: formatDueText(dueText(l.prog, now)),
-    isFreshDev: freshDevSet.has(l.id),
-  }));
+  // ── Memoised heavy computations ───────────────────────────────────────────
+  const labelsMyColor = opening.color !== 'both' ? (opening.color === 'white' ? 'w' : 'b') as 'w' | 'b' : null;
+  const labelsArr = useMemo(
+    () => lineLabels(linesState, labelsMyColor),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [linesState, labelsMyColor],
+  );
 
-  const counts = countStatuses(linesState.map(l => l.prog), now);
-  const groups = lineGroups(linesState);
+  const lineRows: LineRow[] = useMemo(() => {
+    const t = Date.now();
+    return linesState.map((l, i) => ({
+      id: l.id,
+      index: l.index,
+      label: labelsArr[i] ?? `Линия ${l.index + 1}`,
+      badge: l.badge ?? null,
+      line_class: l.line_class ?? null,
+      prog: l.prog,
+      status: lineStatus(l.prog, t),
+      dueText: formatDueText(dueText(l.prog, t)),
+      isFreshDev: freshDevSet.has(l.id),
+    }));
+  }, [linesState, labelsArr, freshDevSet]);
+
+  const counts = useMemo(
+    () => countStatuses(linesState.map(l => l.prog), Date.now()),
+    [linesState],
+  );
+  const groups = useMemo(() => lineGroups(linesState), [linesState]);
 
   // ── Board arrows / rings ──────────────────────────────────────────────────
   const boardArrows = v ? v.arrows.map(a => ({

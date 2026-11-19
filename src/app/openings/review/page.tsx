@@ -4,18 +4,18 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { OpeningTrainer } from '@/components/openings/OpeningTrainer';
-import { toMoves, reviewQueue, lineStatus } from '@/lib/opening-trainer';
+import { toMoves, lineStatus } from '@/lib/opening-trainer';
 import type { ChessMove, HardRow } from '@/lib/opening-trainer';
 import { getDemoTrainer, DEMO_SCOTCH, DEMO_GAME_DEV, DEMO_MOVE_ROWS } from '@/lib/demo-openings';
 
-// For /openings/review we show all due lines from all openings.
-// In demo mode: combines DEMO_TRAINER (L2, L3) + DEMO_SCOTCH (S2).
+// /openings/review — все линии из всех дебютов; очередь строит OpeningTrainer.
 
 interface OpeningRow { id: string; name: string; color: 'white' | 'black' | 'both'; }
 interface LineItem {
   id: string; index: number; moves: ChessMove[];
   prog: { mastery: number; next_review: string; correct_count: number; incorrect_count: number } | null;
   badge: string | null; line_class: string | null;
+  opening_color: 'white' | 'black' | 'both';
 }
 
 function ReviewAllPageInner() {
@@ -27,14 +27,13 @@ function ReviewAllPageInner() {
   const [opening, setOpening] = useState<OpeningRow | null>(null);
   const [lines, setLines] = useState<LineItem[]>([]);
   const [hardRows] = useState<HardRow[]>([]);
-  const [gameDevs, setGameDevs] = useState<Array<{
+  const [gameDevs] = useState<Array<{
     lineId: string; ply: number; played_uci: string; opp: string; date: string; result: 'win' | 'loss' | 'draw'; daysAgo: number;
   }>>([]);
 
   const loadDemo = useCallback(() => {
     const trainer = getDemoTrainer();
     const now = Date.now();
-    // Combine L2, L3 from trainer + S2 from scotch
     const demoLines: LineItem[] = [
       ...trainer.lines.map(l => ({
         id: l.id, index: l.index,
@@ -44,6 +43,7 @@ function ReviewAllPageInner() {
           correct_count: l.prog.correct_count, incorrect_count: l.prog.incorrect_count,
         } : null,
         badge: l.badge, line_class: l.line_class,
+        opening_color: 'black' as const,
       })),
       ...DEMO_SCOTCH.lines.map(l => ({
         id: l.id, index: l.index,
@@ -53,20 +53,14 @@ function ReviewAllPageInner() {
           correct_count: l.prog.correct_count, incorrect_count: l.prog.incorrect_count,
         } : null,
         badge: l.badge, line_class: l.line_class,
+        opening_color: 'white' as const,
       })),
     ];
 
-    // Filter to only due lines
     const dueLines = demoLines.filter(l => lineStatus(l.prog, now) === 'due');
     setLines(dueLines);
-    setOpening({ id: 'demo-review', name: 'Повторение', color: 'black' });
-
-    const DAY = 86400000;
-    setGameDevs(DEMO_GAME_DEV.map(g => ({
-      lineId: g.lineId, ply: g.ply, played_uci: g.played_uci,
-      opp: g.opp, date: g.date, result: g.result, daysAgo: g.daysAgo,
-    })));
-    void DEMO_MOVE_ROWS; void DAY;
+    setOpening({ id: 'demo-review', name: 'Повторение', color: 'both' });
+    void DEMO_MOVE_ROWS; void DEMO_GAME_DEV;
     setLoading(false);
   }, []);
 
@@ -76,39 +70,53 @@ function ReviewAllPageInner() {
         .from('openings').select('id, name, color');
       if (opErr) { setError('Ошибка базы: ' + opErr.message); setLoading(false); return; }
 
+      const openingColorMap = new Map<string, 'white' | 'black' | 'both'>();
+      const openingNameList: string[] = [];
+      for (const op of (openingsData ?? []) as Array<{ id: string; name: string; color: string }>) {
+        openingColorMap.set(op.id, (op.color as 'white' | 'black' | 'both') ?? 'both');
+        openingNameList.push(op.name);
+      }
+
+      // Load lines without embedded progress join (more reliable)
       const { data: linesData, error: lErr } = await supabase
         .from('opening_lines')
-        .select('id, opening_id, line_index, moves, badge, line_class, line_progress(*)');
+        .select('id, opening_id, line_index, moves, badge, line_class');
       if (lErr) { setError('Ошибка базы: ' + lErr.message); setLoading(false); return; }
 
-      type LRow = {
+      const rows = (linesData ?? []) as Array<{
         id: string; opening_id: string; line_index: number; moves: unknown;
         badge: string | null; line_class: string | null;
-        line_progress: Array<{mastery: number; next_review: string; correct_count: number; incorrect_count: number}>;
-      };
-      const rows = (linesData ?? []) as LRow[];
-      const now = Date.now();
+      }>;
+
+      // Load progress separately — same approach as catalog page
+      const lineIds = rows.map(r => r.id);
+      const progMap = new Map<string, { mastery: number; next_review: string; correct_count: number; incorrect_count: number }>();
+      if (lineIds.length > 0) {
+        const { data: progData } = await supabase
+          .from('line_progress')
+          .select('line_id, mastery, next_review, correct_count, incorrect_count')
+          .in('line_id', lineIds);
+        for (const p of (progData ?? []) as Array<{ line_id: string; mastery: number; next_review: string; correct_count: number; incorrect_count: number }>) {
+          progMap.set(p.line_id, { mastery: p.mastery, next_review: p.next_review, correct_count: p.correct_count ?? 0, incorrect_count: p.incorrect_count ?? 0 });
+        }
+      }
 
       const allLines: LineItem[] = rows.map(r => ({
         id: r.id, index: r.line_index,
         moves: Array.isArray(r.moves) ? r.moves as ChessMove[] : toMoves((r.moves as string) ?? ''),
-        prog: r.line_progress?.[0] ? {
-          mastery: r.line_progress[0].mastery,
-          next_review: r.line_progress[0].next_review,
-          correct_count: r.line_progress[0].correct_count ?? 0,
-          incorrect_count: r.line_progress[0].incorrect_count ?? 0,
-        } : null,
+        prog: progMap.get(r.id) ?? null,
         badge: r.badge, line_class: r.line_class,
+        opening_color: openingColorMap.get(r.opening_id) ?? 'both',
       }));
 
-      const withProg = allLines.map(l => ({ id: l.id, index: l.index, prog: l.prog }));
-      const queueIds = reviewQueue(withProg, now);
-      const dueLines = queueIds.map(qid => allLines.find(l => l.id === qid)).filter(Boolean) as LineItem[];
-      setLines(dueLines);
-
-      // Use first opening name or generic
-      const firstOpening = (openingsData ?? [])[0] as OpeningRow | undefined;
-      setOpening({ id: 'review-all', name: firstOpening?.name ?? 'Повторение', color: 'black' });
+      // Pass ALL lines — OpeningTrainer builds the review queue internally.
+      // This lets "Повторять" button work properly after a session.
+      setLines(allLines);
+      setOpening({
+        id: 'review-all',
+        name: openingNameList.length > 0 ? 'Повторение всех дебютов' : 'Повторение',
+        color: 'both',
+      });
       setLoading(false);
     } catch (e) {
       setError('Ошибка: ' + String(e));
