@@ -63,10 +63,12 @@ function loadSettings(): BoardThemeSettings {
   }
 }
 
-function buildCustomPieces(baseUrl: string): PieceRenderObject {
+function buildCustomPieces(style: { baseUrl: string; ext?: '.svg' | '.png'; lowercase?: boolean }): PieceRenderObject {
   const pieces: PieceRenderObject = {};
+  const ext = style.ext ?? '.svg';
   for (const key of PIECE_KEYS) {
-    const url = `${baseUrl}/${key}.svg`;
+    const fileKey = style.lowercase ? key.toLowerCase() : key;
+    const url = `${style.baseUrl}/${fileKey}${ext}`;
     pieces[key] = () => (
       <img
         src={url}
@@ -123,10 +125,11 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
   const boardTheme = BOARD_THEMES.find(t => t.id === settings.boardThemeId) ?? BOARD_THEMES[0];
   const pieceStyle = PIECE_STYLES.find(p => p.id === settings.pieceStyleId) ?? PIECE_STYLES[0];
 
-  // Memoize customPieces by baseUrl to avoid recreating functions on every render
+  // Memoize customPieces by piece style id to avoid recreating functions on every render
   const customPieces = useMemo<PieceRenderObject | undefined>(
-    () => pieceStyle.baseUrl ? buildCustomPieces(pieceStyle.baseUrl) : undefined,
-    [pieceStyle.baseUrl],
+    () => pieceStyle.baseUrl ? buildCustomPieces({ ...pieceStyle, baseUrl: pieceStyle.baseUrl }) : undefined,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pieceStyle.id],
   );
 
   const animationMs = ANIMATION_MS[settings.animationSpeed];
