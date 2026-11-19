@@ -23,6 +23,8 @@ export interface OpeningLine {
   badge?: string | null;
   line_class?: string | null;
   moves: ChessMove[];
+  line_type?: 'common' | 'sharp' | 'rare' | null;
+  line_emoji?: string | null;
   created_at: string;
 }
 

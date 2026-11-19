@@ -1,14 +1,16 @@
 'use client';
 
-interface StatCell {
-  value: number;
+export interface StatCell {
+  value: number | string;
   label: string;
   color: string;
+  href?: string;
 }
 
 interface SessionPanelProps {
   title?: string;
   rightNote?: React.ReactNode;
+  header?: React.ReactNode;
   stats: StatCell[];
   controls?: React.ReactNode;
   listLabel?: React.ReactNode;
@@ -21,6 +23,7 @@ interface SessionPanelProps {
 export function SessionPanel({
   title = 'Сессия',
   rightNote,
+  header,
   stats,
   controls,
   listLabel,
@@ -32,14 +35,20 @@ export function SessionPanel({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* Header */}
-      <div style={{ padding: '20px 20px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexShrink: 0 }}>
-        <span style={{ fontSize: 19, fontWeight: 700, color: 'var(--ivory)' }}>{title}</span>
-        {rightNote && (
-          <span style={{ fontSize: 14, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
-            {rightNote}
-          </span>
-        )}
-      </div>
+      {header !== undefined ? (
+        <div style={{ padding: '20px 20px 14px', flexShrink: 0 }}>
+          {header}
+        </div>
+      ) : (
+        <div style={{ padding: '20px 20px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexShrink: 0 }}>
+          <span style={{ fontSize: 19, fontWeight: 700, color: 'var(--ivory)' }}>{title}</span>
+          {rightNote && (
+            <span style={{ fontSize: 14, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+              {rightNote}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Stats grid */}
       <div data-ui="session-stats" style={{
@@ -49,17 +58,32 @@ export function SessionPanel({
         borderRadius: 10, overflow: 'hidden',
         flexShrink: 0,
       }}>
-        {stats.map(({ label, value, color }, i) => (
-          <div key={label} style={{
-            padding: '10px 0', textAlign: 'center',
-            borderRight: i < stats.length - 1 ? '1px solid var(--hairline)' : 'none',
-          }}>
-            <b style={{ display: 'block', fontSize: 20, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>
-              {value}
-            </b>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>{label}</span>
-          </div>
-        ))}
+        {stats.map(({ label, value, color, href }, i) => {
+          const inner = (
+            <>
+              <b style={{ display: 'block', fontSize: 20, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>
+                {value}
+              </b>
+              <span style={{ fontSize: 13, color: 'var(--muted)' }}>{label}</span>
+            </>
+          );
+          return href ? (
+            <a key={label} href={href} style={{
+              padding: '10px 0', textAlign: 'center', display: 'block',
+              borderRight: i < stats.length - 1 ? '1px solid var(--hairline)' : 'none',
+              textDecoration: 'none',
+            }}>
+              {inner}
+            </a>
+          ) : (
+            <div key={label} style={{
+              padding: '10px 0', textAlign: 'center',
+              borderRight: i < stats.length - 1 ? '1px solid var(--hairline)' : 'none',
+            }}>
+              {inner}
+            </div>
+          );
+        })}
       </div>
 
       {/* Controls (segmented / filters) */}

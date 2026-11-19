@@ -40,3 +40,4 @@
 | 31-game-insights.sql | game_insights — анализ «Где я теряю очки» и «Дожми партию» |
 | 32-puzzles.sql | puzzles, puzzle_sets, puzzle_attempts — тактика и расчёт вслепую |
 | 34-pages2.sql | trap_progress, position_explorer, sprint_log, puzzles.opening_key — ловушки, идеи, спринт |
+| 36-lesson-notes-line.sql | lesson_notes.line_order — заметки к ходам по линиям урока |

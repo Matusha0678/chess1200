@@ -341,7 +341,7 @@ export default function CourseOverviewPage({ params }: Props) {
                   <Link href={`/courses/${courseId}/${lesson.id}`} className="ui-btn ui-btn-outline ui-btn-sm" style={{ textDecoration: 'none' }}>
                     Изучить
                   </Link>
-                  <Link href={`/courses/${courseId}/${lesson.id}/practice`} className="ui-btn ui-btn-primary ui-btn-sm" style={{ textDecoration: 'none' }}>
+                  <Link href={`/courses/${courseId}/${lesson.id}?mode=play`} className="ui-btn ui-btn-primary ui-btn-sm" style={{ textDecoration: 'none' }}>
                     Тренировать
                   </Link>
                 </div>

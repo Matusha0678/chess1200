@@ -1017,7 +1017,7 @@ export default function GameViewerPage({ params }: Props) {
               className="ui-btn ui-btn-outline ui-btn-sm" style={{ textDecoration: 'none' }}>
               Открыть урок
             </Link>
-            <Link href={`/courses/${courseMatch.courseId}/${courseMatch.lessonId}/practice`}
+            <Link href={`/courses/${courseMatch.courseId}/${courseMatch.lessonId}?mode=play`}
               className="ui-btn ui-btn-primary ui-btn-sm" style={{ textDecoration: 'none' }}>
               Повторить линию
             </Link>

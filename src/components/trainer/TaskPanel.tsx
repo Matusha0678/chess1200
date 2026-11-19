@@ -5,9 +5,12 @@ interface TaskPanelProps {
   progress?: { current: number; total: number };
   xp?: number;
   title: string;
+  titleSize?: number;
   chips?: React.ReactNode;
   children: React.ReactNode;
   actions: React.ReactNode;
+  headerRight?: React.ReactNode;
+  progressBar?: React.ReactNode;
 }
 
 export function TaskPanel({
@@ -15,9 +18,12 @@ export function TaskPanel({
   progress,
   xp,
   title,
+  titleSize,
   chips,
   children,
   actions,
+  headerRight,
+  progressBar,
 }: TaskPanelProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
@@ -25,7 +31,9 @@ export function TaskPanel({
       <div data-ui="panel-header" style={{ padding: '20px 24px 18px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--muted)' }}>
           {breadcrumb && <span>{breadcrumb}</span>}
-          {progress && (
+          {headerRight !== undefined ? (
+            <span>{headerRight}</span>
+          ) : progress ? (
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>
               {progress.current} / {progress.total}
               {xp != null && xp > 0 && (
@@ -34,10 +42,12 @@ export function TaskPanel({
                 </span>
               )}
             </span>
-          )}
+          ) : null}
         </div>
         {/* Progress bar */}
-        {progress && progress.total > 0 && (
+        {progressBar !== undefined ? (
+          <div style={{ marginTop: 12 }}>{progressBar}</div>
+        ) : progress && progress.total > 0 ? (
           <div style={{ height: 4, borderRadius: 4, background: '#3A3835', marginTop: 12, overflow: 'hidden' }}>
             <div style={{
               height: '100%', background: '#81B64C', borderRadius: 4,
@@ -45,9 +55,9 @@ export function TaskPanel({
               transition: 'width 0.3s ease',
             }} />
           </div>
-        )}
+        ) : null}
         {/* Title */}
-        <div data-ui="panel-title" style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
+        <div data-ui="panel-title" style={{ fontSize: titleSize ?? 30, fontWeight: 700, letterSpacing: '-0.01em', marginTop: 14, lineHeight: 1.15, color: 'var(--ivory)', fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
           {title}
         </div>
         {/* Chips */}

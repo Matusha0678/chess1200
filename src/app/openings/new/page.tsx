@@ -6,8 +6,16 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { extractAllLines } from '@/lib/pgn-tree';
 import type { ChessMove } from '@/types/openings';
+import PgnCheatsheet from '@/components/PgnCheatsheet';
 
 type ColorChoice = 'white' | 'black' | 'both';
+type LineType = 'common' | 'sharp' | 'rare';
+
+const LINE_TYPE_OPTIONS: { value: LineType; label: string }[] = [
+  { value: 'common', label: 'Частая' },
+  { value: 'sharp', label: 'Острая' },
+  { value: 'rare', label: 'Редкая' },
+];
 
 function extractEcoCode(pgn: string): string | null {
   const match = pgn.match(/\[ECO\s+"([^"]+)"\]/);
@@ -23,6 +31,9 @@ export default function NewOpeningPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewInfo, setPreviewInfo] = useState<{ count: number; gameCount: number } | null>(null);
+  const [lineType, setLineType] = useState<LineType | null>(null);
+  const [lineEmoji, setLineEmoji] = useState('');
+  const [lineMeta, setLineMeta] = useState<import('@/lib/pgn-tree').LineMeta[]>([]);
   const parseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handlePgnChange(value: string) {
@@ -35,15 +46,18 @@ export default function NewOpeningPage() {
 
     if (!value.trim()) {
       setPreviewInfo(null);
+      setLineMeta([]);
       return;
     }
 
     parseTimeoutRef.current = setTimeout(() => {
       try {
-        const { lines, gameCount } = extractAllLines(value);
+        const { lines, gameCount, meta } = extractAllLines(value);
         setPreviewInfo({ count: lines.length, gameCount });
+        setLineMeta(meta);
       } catch {
         setPreviewInfo({ count: 0, gameCount: 0 });
+        setLineMeta([]);
       }
     }, 400);
   }
@@ -62,9 +76,11 @@ export default function NewOpeningPage() {
     }
 
     let lines: ChessMove[][];
+    let freshMeta: import('@/lib/pgn-tree').LineMeta[] = [];
     try {
       const result = extractAllLines(pgn);
       lines = result.lines;
+      freshMeta = result.meta;
     } catch {
       setError('Не удалось разобрать PGN. Проверь формат.');
       return;
@@ -99,11 +115,13 @@ export default function NewOpeningPage() {
         return;
       }
 
-      // Insert all lines
+      // Insert all lines with per-line meta from PGN headers / heuristic
       const lineRows = lines.map((moves, index) => ({
         opening_id: opening.id,
         line_index: index,
         moves: moves,
+        badge: (freshMeta[index]?.badge ?? lineEmoji.trim()) || null,
+        line_class: freshMeta[index]?.line_class ?? (lineType ?? null),
       }));
 
       const { error: linesError } = await supabase
@@ -222,6 +240,7 @@ export default function NewOpeningPage() {
                 required
                 className="min-h-[200px] bg-[#050505] border border-[#262626] rounded-[12px] px-4 py-3 text-[14px] text-[#F5F5F5] placeholder-[#4A4540] outline-none focus:border-[#FFFFFF] transition-colors font-mono resize-y leading-[1.6]"
               />
+              <PgnCheatsheet />
               {previewInfo !== null && (
                 <div
                   className={`flex items-center gap-2 text-[14px] font-medium px-4 py-[10px] rounded-[10px] border ${
@@ -250,6 +269,39 @@ export default function NewOpeningPage() {
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Line type + emoji */}
+            <div className="flex flex-col gap-[10px]">
+              <label className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#A0A0A0]">
+                Тип линий{' '}
+                <span className="text-[#404040] font-normal normal-case tracking-normal">— необязательно</span>
+              </label>
+              <div className="flex items-center gap-2 flex-wrap">
+                {LINE_TYPE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setLineType(lineType === opt.value ? null : opt.value)}
+                    className={`h-8 rounded-full px-4 text-[13px] transition-all border cursor-pointer ${
+                      lineType === opt.value
+                        ? 'bg-[#1E1E1E] border-[#505050] text-[#FFFFFF]'
+                        : 'border-[#222222] text-[#505050] bg-transparent hover:border-[#404040] hover:text-[#D0D0D0]'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+                <div className="w-px h-5 bg-[#262626] mx-1" />
+                <input
+                  type="text"
+                  value={lineEmoji}
+                  onChange={(e) => setLineEmoji(e.target.value.slice(0, 4))}
+                  placeholder="✨"
+                  title="Смайлик для этих линий"
+                  className="w-12 h-8 bg-[#050505] border border-[#262626] rounded-[8px] px-2 text-[18px] text-center outline-none focus:border-[#FFFFFF] transition-colors"
+                />
+              </div>
             </div>
 
             {/* Error */}

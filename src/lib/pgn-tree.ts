@@ -281,11 +281,39 @@ function getAllLines(
  *  - Annotation glyphs (!, ?, !?, ?!, !!, ??)
  *  - Standard result tokens (1-0, 0-1, 1/2-1/2, *)
  */
+export interface LineMeta {
+  line_class: string | null;
+  badge: string | null;
+}
+
+const LINE_CLASS_MAP: Record<string, string> = {
+  острая: 'sharp', sharp: 'sharp',
+  редкая: 'rare', rare: 'rare',
+  частая: 'common', common: 'common',
+  главная: 'main', main: 'main',
+  'очень редкая': 'very_rare', very_rare: 'very_rare',
+};
+
+function extractPgnHeader(pgn: string, key: string): string | null {
+  const re = new RegExp(`\\[${key}\\s+"([^"]+)"\\]`, 'i');
+  const m = pgn.match(re);
+  return m ? m[1] : null;
+}
+
+function autoClassify(moves: ChessMove[]): string {
+  if (moves.length === 0) return 'common';
+  const captures = moves.filter(m => m.san.includes('x')).length;
+  const checks = moves.filter(m => m.san.includes('+') || m.san.includes('#')).length;
+  const score = (captures * 1.5 + checks * 2) / moves.length;
+  return score > 0.38 ? 'sharp' : 'common';
+}
+
 /**
  * Split a text blob into individual PGN games, then extract all lines from
  * every game. Supports pasting multiple games at once.
+ * Returns per-line metadata (line_class, badge) from PGN headers or heuristic.
  */
-export function extractAllLines(text: string): { lines: ChessMove[][]; gameCount: number } {
+export function extractAllLines(text: string): { lines: ChessMove[][]; gameCount: number; meta: LineMeta[] } {
   const trimmed = text.trim();
   const parts: string[] = [];
   const rawLines = trimmed.split('\n');
@@ -306,11 +334,25 @@ export function extractAllLines(text: string): { lines: ChessMove[][]; gameCount
   if (parts.length === 0) parts.push(trimmed);
 
   const allLines: ChessMove[][] = [];
+  const allMeta: LineMeta[] = [];
+
   for (const part of parts) {
     if (!part.trim()) continue;
-    try { allLines.push(...extractLinesFromPgn(part)); } catch { /* skip */ }
+    const rawClass = extractPgnHeader(part, 'LineType') ?? extractPgnHeader(part, 'Class');
+    const explicitClass = rawClass ? (LINE_CLASS_MAP[rawClass.toLowerCase()] ?? null) : null;
+    const badge = extractPgnHeader(part, 'Badge') ?? extractPgnHeader(part, 'Emoji');
+    try {
+      const lines = extractLinesFromPgn(part);
+      for (const line of lines) {
+        allLines.push(line);
+        allMeta.push({
+          line_class: explicitClass ?? autoClassify(line),
+          badge: badge ?? null,
+        });
+      }
+    } catch { /* skip */ }
   }
-  return { lines: allLines, gameCount: parts.length };
+  return { lines: allLines, gameCount: parts.length, meta: allMeta };
 }
 
 export function extractLinesFromPgn(pgn: string): ChessMove[][] {

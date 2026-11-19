@@ -1,0 +1,1138 @@
+{
+ "_about": "Демо-курс для /courses/demo/<номер урока> (COURSE-LESSON.md, раздел 9). Уроки 1 и 2 — настоящий формат v1 (собраны парсером сайта из demo-course.md), уроки 3–8 — только названия.",
+ "course": {
+  "id": "demo",
+  "slug": "accelerated-dragon-demo",
+  "name": "Ускоренный дракон за чёрных",
+  "color": "black",
+  "kind": "opening",
+  "opening": "Sicilian Defense: Accelerated Dragon",
+  "level": "1000-1600",
+  "description": "Демо-курс для страницы урока: идея ускоренного дракона и удар d5."
+ },
+ "stats": {
+  "lessonsDone": 1,
+  "lessonsTotal": 8,
+  "testsPct": 80,
+  "confused": 2
+ },
+ "lessons": [
+  {
+   "n": 1,
+   "title": "Ходы дебюта и главная идея",
+   "status": "done",
+   "linesCount": 1,
+   "test": {
+    "score": 4,
+    "max": 5
+   },
+   "content": {
+    "title": "Ходы дебюта и главная идея",
+    "goal": "запомнить первые ходы ускоренного дракона.",
+    "blocks": [
+     {
+      "type": "text",
+      "md": "Чёрные играют c5, Nc6 и g6. Слон встаёт на g7, а пешка d пока стоит дома."
+     },
+     {
+      "type": "line",
+      "title": "Первые ходы",
+      "intro_md": "",
+      "moves": [
+       {
+        "san": "e4",
+        "color": "w",
+        "from": "e2",
+        "to": "e4",
+        "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+        "comment": "Белые занимают центр.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "c5",
+        "color": "b",
+        "from": "c7",
+        "to": "c5",
+        "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+        "comment": "Сицилианская защита.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "Nf3",
+        "color": "w",
+        "from": "g1",
+        "to": "f3",
+        "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
+        "comment": "Конь готовит d4.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Nc6",
+        "color": "b",
+        "from": "b8",
+        "to": "c6",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+        "comment": "Конь смотрит на d4.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "d4",
+        "color": "w",
+        "from": "d2",
+        "to": "d4",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3",
+        "comment": "Белые открывают центр.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "cxd4",
+        "color": "b",
+        "from": "c5",
+        "to": "d4",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4",
+        "comment": "Меняем пешку c на пешку d.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "Nxd4",
+        "color": "w",
+        "from": "f3",
+        "to": "d4",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4",
+        "comment": "Конь в центре.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "g6",
+        "color": "b",
+        "from": "g7",
+        "to": "g6",
+        "fen": "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 0 5",
+        "comment": "Ускоренный дракон: слон пойдёт на g7.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       }
+      ],
+      "outro_md": "Итог: пешка d стоит на d7 — это пригодится в следующем уроке."
+     }
+    ]
+   }
+  },
+  {
+   "n": 2,
+   "title": "Идея дебюта и удар ...d5",
+   "status": "current",
+   "linesCount": 2,
+   "test": null,
+   "content": {
+    "title": "Идея дебюта и удар ...d5",
+    "goal": "понять, зачем в ускоренном драконе пешка d ждёт на d7.",
+    "blocks": [
+     {
+      "type": "text",
+      "md": "В обычном драконе чёрные играют d6, а потом долго готовят d5. В ускоренном драконе пешка d стоит дома. Поэтому чёрные могут сыграть d5 сразу — за один ход. Удар d5 вскрывает центр и разменивает фигуры, и чёрные легко уравнивают игру."
+     },
+     {
+      "type": "line",
+      "title": "Схема f3 и Qd2 — удар 8...d5!",
+      "intro_md": "Белые играют как против обычного дракона: Be3, f3, Qd2 и длинная рокировка. Но пешка d у чёрных ещё на d7.",
+      "moves": [
+       {
+        "san": "e4",
+        "color": "w",
+        "from": "e2",
+        "to": "e4",
+        "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+        "comment": "Белые занимают центр.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "c5",
+        "color": "b",
+        "from": "c7",
+        "to": "c5",
+        "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+        "comment": "Сицилианская защита: чёрные бьют по d4 сбоку.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "Nf3",
+        "color": "w",
+        "from": "g1",
+        "to": "f3",
+        "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
+        "comment": "Конь готовит d4.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Nc6",
+        "color": "b",
+        "from": "b8",
+        "to": "c6",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+        "comment": "Конь тоже смотрит на d4.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "d4",
+        "color": "w",
+        "from": "d2",
+        "to": "d4",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3",
+        "comment": "Белые открывают центр.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "cxd4",
+        "color": "b",
+        "from": "c5",
+        "to": "d4",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4",
+        "comment": "Меняем пешку c на центральную пешку d.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "Nxd4",
+        "color": "w",
+        "from": "f3",
+        "to": "d4",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4",
+        "comment": "Конь занимает центр.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "g6",
+        "color": "b",
+        "from": "g7",
+        "to": "g6",
+        "fen": "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 0 5",
+        "comment": "Это ускоренный дракон: слон пойдёт на g7, а пешка d пока стоит дома.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "Nc3",
+        "color": "w",
+        "from": "b1",
+        "to": "c3",
+        "fen": "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 1 5",
+        "comment": "Белые развивают коня.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Bg7",
+        "color": "b",
+        "from": "f8",
+        "to": "g7",
+        "fen": "r1bqk1nr/pp1pppbp/2n3p1/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 2 6",
+        "comment": "Слон на длинной диагонали сразу давит на коня d4.",
+        "arrows": [
+         {
+          "from": "g7",
+          "to": "d4",
+          "color": "blue"
+         }
+        ],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Be3",
+        "color": "w",
+        "from": "c1",
+        "to": "e3",
+        "fen": "r1bqk1nr/pp1pppbp/2n3p1/8/3NP3/2N1B3/PPP2PPP/R2QKB1R b KQkq - 3 6",
+        "comment": "Слон защищает коня d4.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Nf6",
+        "color": "b",
+        "from": "g8",
+        "to": "f6",
+        "fen": "r1bqk2r/pp1pppbp/2n2np1/8/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq - 4 7",
+        "comment": "Развиваем коня и нападаем на пешку e4.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "f3",
+        "color": "w",
+        "from": "f2",
+        "to": "f3",
+        "fen": "r1bqk2r/pp1pppbp/2n2np1/8/3NP3/2N1BP2/PPP3PP/R2QKB1R b KQkq - 0 7",
+        "comment": "Белые укрепляют e4. Дальше они хотят Qd2 и длинную рокировку.",
+        "arrows": [
+         {
+          "from": "f3",
+          "to": "e4",
+          "color": "green"
+         }
+        ],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "O-O",
+        "color": "b",
+        "from": "e8",
+        "to": "g8",
+        "fen": "r1bq1rk1/pp1pppbp/2n2np1/8/3NP3/2N1BP2/PPP3PP/R2QKB1R w KQ - 1 8",
+        "comment": "Сначала рокировка. Сразу 7... d5 хуже: после 8. Bb5 конь c6 связан, белым удобнее.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Qd2",
+        "color": "w",
+        "from": "d1",
+        "to": "d2",
+        "fen": "r1bq1rk1/pp1pppbp/2n2np1/8/3NP3/2N1BP2/PPPQ2PP/R3KB1R b KQ - 2 8",
+        "comment": "Белые готовят Bh6: разменять слона g7 и атаковать короля.",
+        "arrows": [
+         {
+          "from": "e3",
+          "to": "h6",
+          "color": "red"
+         }
+        ],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "d5",
+        "color": "b",
+        "from": "d7",
+        "to": "d5",
+        "fen": "r1bq1rk1/pp2ppbp/2n2np1/3p4/3NP3/2N1BP2/PPPQ2PP/R3KB1R w KQ - 0 9",
+        "comment": "Главный удар! Пешка прошла на d5 за один ход: чёрные бьют по e4 и вскрывают центр. Позиция равная.",
+        "arrows": [
+         {
+          "from": "d5",
+          "to": "e4",
+          "color": "green"
+         },
+         {
+          "from": "f6",
+          "to": "e4",
+          "color": "green"
+         }
+        ],
+        "squares": [],
+        "nags": [
+         1
+        ],
+        "variations": []
+       },
+       {
+        "san": "exd5",
+        "color": "w",
+        "from": "e4",
+        "to": "d5",
+        "fen": "r1bq1rk1/pp2ppbp/2n2np1/3P4/3N4/2N1BP2/PPPQ2PP/R3KB1R b KQ - 0 9",
+        "comment": "Самый естественный ответ. Но после него чёрные уже чуть лучше.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Nxd5",
+        "color": "b",
+        "from": "f6",
+        "to": "d5",
+        "fen": "r1bq1rk1/pp2ppbp/2n3p1/3n4/3N4/2N1BP2/PPPQ2PP/R3KB1R w KQ - 0 10",
+        "comment": "Конь забирает пешку и открывает диагональ слону g7.",
+        "arrows": [
+         {
+          "from": "g7",
+          "to": "d4",
+          "color": "blue"
+         }
+        ],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Nxd5",
+        "color": "w",
+        "from": "c3",
+        "to": "d5",
+        "fen": "r1bq1rk1/pp2ppbp/2n3p1/3N4/3N4/4BP2/PPPQ2PP/R3KB1R b KQ - 0 10",
+        "comment": "Белые меняют коней.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Qxd5",
+        "color": "b",
+        "from": "d8",
+        "to": "d5",
+        "fen": "r1b2rk1/pp2ppbp/2n3p1/3q4/3N4/4BP2/PPPQ2PP/R3KB1R w KQ - 0 11",
+        "comment": "Конь d4 под тройным ударом: ферзь, конь c6 и слон g7.",
+        "arrows": [
+         {
+          "from": "d5",
+          "to": "d4",
+          "color": "green"
+         },
+         {
+          "from": "c6",
+          "to": "d4",
+          "color": "green"
+         },
+         {
+          "from": "g7",
+          "to": "d4",
+          "color": "green"
+         }
+        ],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Nxc6",
+        "color": "w",
+        "from": "d4",
+        "to": "c6",
+        "fen": "r1b2rk1/pp2ppbp/2N3p1/3q4/8/4BP2/PPPQ2PP/R3KB1R b KQ - 0 11",
+        "comment": "Белые меняют и этого коня.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Qxc6",
+        "color": "b",
+        "from": "d5",
+        "to": "c6",
+        "fen": "r1b2rk1/pp2ppbp/2q3p1/8/8/4BP2/PPPQ2PP/R3KB1R w KQ - 0 12",
+        "comment": "Берём ферзём, ферзи остаются на доске. Слон g7 бьёт по b2 — у чёрных чуть лучше.",
+        "arrows": [
+         {
+          "from": "g7",
+          "to": "b2",
+          "color": "green"
+         }
+        ],
+        "squares": [],
+        "nags": [],
+        "variations": [
+         [
+          {
+           "san": "Qxd2+",
+           "color": "b",
+           "from": "d5",
+           "to": "d2",
+           "fen": "r1b2rk1/pp2ppbp/2N3p1/8/8/4BP2/PPPq2PP/R3KB1R w KQ - 0 12",
+           "comment": "Размен ферзей.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "Bxd2",
+           "color": "w",
+           "from": "e3",
+           "to": "d2",
+           "fen": "r1b2rk1/pp2ppbp/2N3p1/8/8/5P2/PPPB2PP/R3KB1R b KQ - 0 12",
+           "comment": "Слон берёт ферзя.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "bxc6",
+           "color": "b",
+           "from": "b7",
+           "to": "c6",
+           "fen": "r1b2rk1/p3ppbp/2p3p1/8/8/5P2/PPPB2PP/R3KB1R w KQ - 0 13",
+           "comment": "Пешки a7 и c6 слабые.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "O-O-O",
+           "color": "w",
+           "from": "e1",
+           "to": "c1",
+           "fen": "r1b2rk1/p3ppbp/2p3p1/8/8/5P2/PPPB2PP/2KR1B1R b - - 1 13",
+           "comment": "У белых чуть лучше: такой эндшпиль чёрным не нужен.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          }
+         ]
+        ]
+       }
+      ],
+      "outro_md": "Итог линии: удар d5 разменял фигуры в центре. Ферзь и слон g7 стоят активно — чёрные чуть лучше."
+     },
+     {
+      "type": "line",
+      "title": "Классика 7.Be2 — тот же удар",
+      "intro_md": "Белые играют спокойно: Be2 и короткая рокировка. И здесь пешка d идёт на d5 одним ходом.",
+      "moves": [
+       {
+        "san": "e4",
+        "color": "w",
+        "from": "e2",
+        "to": "e4",
+        "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+        "comment": "Белые занимают центр.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "c5",
+        "color": "b",
+        "from": "c7",
+        "to": "c5",
+        "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+        "comment": "Сицилианская защита.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "Nf3",
+        "color": "w",
+        "from": "g1",
+        "to": "f3",
+        "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
+        "comment": "Конь готовит d4.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Nc6",
+        "color": "b",
+        "from": "b8",
+        "to": "c6",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+        "comment": "Конь давит на d4.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "d4",
+        "color": "w",
+        "from": "d2",
+        "to": "d4",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3",
+        "comment": "Белые открывают центр.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "cxd4",
+        "color": "b",
+        "from": "c5",
+        "to": "d4",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4",
+        "comment": "Размен на d4.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "Nxd4",
+        "color": "w",
+        "from": "f3",
+        "to": "d4",
+        "fen": "r1bqkbnr/pp1ppppp/2n5/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4",
+        "comment": "Конь в центре.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "g6",
+        "color": "b",
+        "from": "g7",
+        "to": "g6",
+        "fen": "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 0 5",
+        "comment": "Ускоренный дракон.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "Nc3",
+        "color": "w",
+        "from": "b1",
+        "to": "c3",
+        "fen": "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 1 5",
+        "comment": "Развитие.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Bg7",
+        "color": "b",
+        "from": "f8",
+        "to": "g7",
+        "fen": "r1bqk1nr/pp1pppbp/2n3p1/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 2 6",
+        "comment": "Слон на длинную диагональ.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Be3",
+        "color": "w",
+        "from": "c1",
+        "to": "e3",
+        "fen": "r1bqk1nr/pp1pppbp/2n3p1/8/3NP3/2N1B3/PPP2PPP/R2QKB1R b KQkq - 3 6",
+        "comment": "Слон защищает коня d4.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Nf6",
+        "color": "b",
+        "from": "g8",
+        "to": "f6",
+        "fen": "r1bqk2r/pp1pppbp/2n2np1/8/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq - 4 7",
+        "comment": "Развиваем коня.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [],
+        "label": "book"
+       },
+       {
+        "san": "Be2",
+        "color": "w",
+        "from": "f1",
+        "to": "e2",
+        "fen": "r1bqk2r/pp1pppbp/2n2np1/8/3NP3/2N1B3/PPP1BPPP/R2QK2R b KQkq - 5 7",
+        "comment": "Классика: белые готовят короткую рокировку.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "O-O",
+        "color": "b",
+        "from": "e8",
+        "to": "g8",
+        "fen": "r1bq1rk1/pp1pppbp/2n2np1/8/3NP3/2N1B3/PPP1BPPP/R2QK2R w KQ - 6 8",
+        "comment": "Сначала безопасность короля.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "O-O",
+        "color": "w",
+        "from": "e1",
+        "to": "g1",
+        "fen": "r1bq1rk1/pp1pppbp/2n2np1/8/3NP3/2N1B3/PPP1BPPP/R2Q1RK1 b - - 7 8",
+        "comment": "Белые тоже рокируют.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "d5",
+        "color": "b",
+        "from": "d7",
+        "to": "d5",
+        "fen": "r1bq1rk1/pp2ppbp/2n2np1/3p4/3NP3/2N1B3/PPP1BPPP/R2Q1RK1 w - - 0 9",
+        "comment": "Тот же удар: пешка прошла на d5 одним ходом. Позиция равная.",
+        "arrows": [
+         {
+          "from": "d5",
+          "to": "e4",
+          "color": "green"
+         },
+         {
+          "from": "f6",
+          "to": "e4",
+          "color": "green"
+         }
+        ],
+        "squares": [],
+        "nags": [
+         1
+        ],
+        "variations": []
+       },
+       {
+        "san": "exd5",
+        "color": "w",
+        "from": "e4",
+        "to": "d5",
+        "fen": "r1bq1rk1/pp2ppbp/2n2np1/3P4/3N4/2N1B3/PPP1BPPP/R2Q1RK1 b - - 0 9",
+        "comment": "Белые берут пешку.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": [
+         [
+          {
+           "san": "Nxc6",
+           "color": "w",
+           "from": "d4",
+           "to": "c6",
+           "fen": "r1bq1rk1/pp2ppbp/2N2np1/3p4/4P3/2N1B3/PPP1BPPP/R2Q1RK1 b - - 0 9",
+           "comment": "Белые меняют коней.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "bxc6",
+           "color": "b",
+           "from": "b7",
+           "to": "c6",
+           "fen": "r1bq1rk1/p3ppbp/2p2np1/3p4/4P3/2N1B3/PPP1BPPP/R2Q1RK1 w - - 0 10",
+           "comment": "Берём пешкой.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "e5",
+           "color": "w",
+           "from": "e4",
+           "to": "e5",
+           "fen": "r1bq1rk1/p3ppbp/2p2np1/3pP3/8/2N1B3/PPP1BPPP/R2Q1RK1 b - - 0 10",
+           "comment": "Пешка нападает на коня.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "Ne8",
+           "color": "b",
+           "from": "f6",
+           "to": "e8",
+           "fen": "r1bqnrk1/p3ppbp/2p3p1/3pP3/8/2N1B3/PPP1BPPP/R2Q1RK1 w - - 1 11",
+           "comment": "Конь отходит.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "f4",
+           "color": "w",
+           "from": "f2",
+           "to": "f4",
+           "fen": "r1bqnrk1/p3ppbp/2p3p1/3pP3/5P2/2N1B3/PPP1B1PP/R2Q1RK1 b - - 0 11",
+           "comment": "Белые укрепляют e5.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "f6",
+           "color": "b",
+           "from": "f7",
+           "to": "f6",
+           "fen": "r1bqnrk1/p3p1bp/2p2pp1/3pP3/5P2/2N1B3/PPP1B1PP/R2Q1RK1 w - - 0 12",
+           "comment": "Подрываем центр. Позиция равная.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          }
+         ]
+        ]
+       },
+       {
+        "san": "Nxd5",
+        "color": "b",
+        "from": "f6",
+        "to": "d5",
+        "fen": "r1bq1rk1/pp2ppbp/2n3p1/3n4/3N4/2N1B3/PPP1BPPP/R2Q1RK1 w - - 0 10",
+        "comment": "Конь забирает пешку.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Nxd5",
+        "color": "w",
+        "from": "c3",
+        "to": "d5",
+        "fen": "r1bq1rk1/pp2ppbp/2n3p1/3N4/3N4/4B3/PPP1BPPP/R2Q1RK1 b - - 0 10",
+        "comment": "Размен коней.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Qxd5",
+        "color": "b",
+        "from": "d8",
+        "to": "d5",
+        "fen": "r1b2rk1/pp2ppbp/2n3p1/3q4/3N4/4B3/PPP1BPPP/R2Q1RK1 w - - 0 11",
+        "comment": "Снова тройной удар по коню d4.",
+        "arrows": [
+         {
+          "from": "d5",
+          "to": "d4",
+          "color": "green"
+         },
+         {
+          "from": "c6",
+          "to": "d4",
+          "color": "green"
+         },
+         {
+          "from": "g7",
+          "to": "d4",
+          "color": "green"
+         }
+        ],
+        "squares": [],
+        "nags": [],
+        "variations": [
+         [
+          {
+           "san": "Nxd4",
+           "color": "b",
+           "from": "c6",
+           "to": "d4",
+           "fen": "r1bq1rk1/pp2ppbp/6p1/3N4/3n4/4B3/PPP1BPPP/R2Q1RK1 w - - 0 11",
+           "comment": "Сначала меняем коня d4.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "Bxd4",
+           "color": "w",
+           "from": "e3",
+           "to": "d4",
+           "fen": "r1bq1rk1/pp2ppbp/6p1/3N4/3B4/8/PPP1BPPP/R2Q1RK1 b - - 0 11",
+           "comment": "Слон берёт.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "Qxd5",
+           "color": "b",
+           "from": "d8",
+           "to": "d5",
+           "fen": "r1b2rk1/pp2ppbp/6p1/3q4/3B4/8/PPP1BPPP/R2Q1RK1 w - - 0 12",
+           "comment": "Ферзь забирает коня.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "Bxg7",
+           "color": "w",
+           "from": "d4",
+           "to": "g7",
+           "fen": "r1b2rk1/pp2ppBp/6p1/3q4/8/8/PPP1BPPP/R2Q1RK1 b - - 0 12",
+           "comment": "Размен слонов.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "Qxd1",
+           "color": "b",
+           "from": "d5",
+           "to": "d1",
+           "fen": "r1b2rk1/pp2ppBp/6p1/8/8/8/PPP1BPPP/R2q1RK1 w - - 0 13",
+           "comment": "Размен ферзей.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "Rfxd1",
+           "color": "w",
+           "from": "f1",
+           "to": "d1",
+           "fen": "r1b2rk1/pp2ppBp/6p1/8/8/8/PPP1BPPP/R2R2K1 b - - 0 13",
+           "comment": "Ладья берёт.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          },
+          {
+           "san": "Kxg7",
+           "color": "b",
+           "from": "g8",
+           "to": "g7",
+           "fen": "r1b2r2/pp2ppkp/6p1/8/8/8/PPP1BPPP/R2R2K1 w - - 0 14",
+           "comment": "Все фигуры в центре разменялись — ровный эндшпиль.",
+           "arrows": [],
+           "squares": [],
+           "nags": [],
+           "variations": []
+          }
+         ]
+        ]
+       },
+       {
+        "san": "Bf3",
+        "color": "w",
+        "from": "e2",
+        "to": "f3",
+        "fen": "r1b2rk1/pp2ppbp/2n3p1/3q4/3N4/4BB2/PPP2PPP/R2Q1RK1 b - - 1 11",
+        "comment": "Слон нападает на ферзя.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       },
+       {
+        "san": "Qc4",
+        "color": "b",
+        "from": "d5",
+        "to": "c4",
+        "fen": "r1b2rk1/pp2ppbp/2n3p1/8/2qN4/4BB2/PPP2PPP/R2Q1RK1 w - - 2 12",
+        "comment": "Ферзь уходит с линии d и давит на c2. Позиция равная.",
+        "arrows": [],
+        "squares": [],
+        "nags": [],
+        "variations": []
+       }
+      ],
+      "outro_md": "Итог линии: против спокойной схемы удар d5 сразу уравнивает игру."
+     },
+     {
+      "type": "plan",
+      "title": "План",
+      "md": "- После размена в центре ставь ладьи на открытые линии c и d: там нет пешек.\n- Слон g7 — главная фигура чёрных. Не меняй его без причины.\n- Дави на ферзевый фланг: ферзь и слон g7 бьют по b2 и c2."
+     },
+     {
+      "type": "mistakes",
+      "title": "Ошибки",
+      "md": "- Играть d6 по привычке. Тогда для удара d5 нужно два хода, и белые успеют начать атаку.\n- Играть d5 до рокировки: 7... d5 8. Bb5 — конь c6 связан, белым удобнее.\n- Менять ферзей без нужды: после 11... Qxd2+ 12. Bxd2 у белых чуть лучший эндшпиль."
+     },
+     {
+      "type": "quiz",
+      "title": "Проверь себя",
+      "items": [
+       {
+        "type": "choice",
+        "question": "Почему в ускоренном драконе чёрные не спешат играть d6?",
+        "options": {
+         "A": "Чтобы потом сыграть d5 за один ход",
+         "B": "Чтобы быстрее сделать длинную рокировку",
+         "C": "Чтобы защитить пешку e7"
+        },
+        "answer": "A",
+        "why": "Пешка с d7 может сразу пойти на d5. Удар d5 вскрывает центр и уравнивает игру."
+       },
+       {
+        "type": "puzzle",
+        "fen": "r1bq1rk1/pp1pppbp/2n2np1/8/3NP3/2N1BP2/PPPQ2PP/R3KB1R b KQ - 2 8",
+        "question": "Белые сыграли 8. Qd2. Найди удар чёрных.",
+        "answer": "d5",
+        "why": "8... d5! бьёт по e4 и вскрывает центр. Чёрные уравнивают."
+       },
+       {
+        "type": "puzzle",
+        "fen": "r1bq1rk1/pp2ppbp/2n3p1/3N4/3N4/4BP2/PPPQ2PP/R3KB1R b KQ - 0 10",
+        "question": "Белые взяли 10. Nxd5. Чем взять на d5?",
+        "answer": "Qxd5",
+        "why": "Ферзь берёт — и конь d4 сразу под тройным ударом: ферзь, конь c6 и слон g7."
+       }
+      ]
+     },
+     {
+      "type": "summary",
+      "title": "Итог",
+      "md": "Пока пешка d стоит на d7, у чёрных есть удар d5 за один ход. Против f3 и Qd2, и против Be2 с короткой рокировкой он сразу уравнивает игру. Порядок простой: сначала рокировка, потом d5."
+     }
+    ]
+   }
+  },
+  {
+   "n": 3,
+   "title": "5. Nxc6: структура с c6",
+   "status": "todo",
+   "linesCount": 2,
+   "test": null,
+   "content": null
+  },
+  {
+   "n": 4,
+   "title": "Мароци: 5. c4",
+   "status": "todo",
+   "linesCount": 3,
+   "test": null,
+   "content": null
+  },
+  {
+   "n": 5,
+   "title": "Россолимо: 3. Bb5",
+   "status": "todo",
+   "linesCount": 2,
+   "test": null,
+   "content": null
+  },
+  {
+   "n": 6,
+   "title": "3. Bc4 и ловушки",
+   "status": "todo",
+   "linesCount": 2,
+   "test": null,
+   "content": null
+  },
+  {
+   "n": 7,
+   "title": "Смит-Морра и 2. c3",
+   "status": "todo",
+   "linesCount": 3,
+   "test": null,
+   "content": null
+  },
+  {
+   "n": 8,
+   "title": "Итог курса",
+   "status": "todo",
+   "linesCount": 0,
+   "test": null,
+   "content": null
+  }
+ ],
+ "notes": [
+  {
+   "lesson": 2,
+   "line": 1,
+   "ply": 16,
+   "kind": "note",
+   "body": "Сравнить с обычным драконом: там d5 готовят долго."
+  },
+  {
+   "lesson": 2,
+   "line": 1,
+   "ply": 19,
+   "kind": "confused",
+   "body": "(не понял)"
+  },
+  {
+   "lesson": 1,
+   "line": 1,
+   "ply": 6,
+   "kind": "confused",
+   "body": "(не понял)"
+  }
+ ]
+}
