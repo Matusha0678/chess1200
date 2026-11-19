@@ -101,7 +101,7 @@ export function SoftToday({
         {/* CTA button */}
         {firstOpeningId && todayTotal > 0 ? (
           <Link
-            href={`/openings/${firstOpeningId}/practice`}
+            href={`/openings/${firstOpeningId}?mode=review`}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 10,
               height: 52, padding: '0 28px',
@@ -144,7 +144,7 @@ export function SoftToday({
           label="Линии сегодня"
           value={todayTotal}
           sub={todayTotal === 0 ? 'всё готово' : totalDue > 0 && totalNew > 0 ? `${totalDue} повт · ${totalNew} нов` : totalDue > 0 ? 'на повторение' : 'новые'}
-          href={firstOpeningId ? `/openings/${firstOpeningId}/practice` : '/openings'}
+          href={firstOpeningId ? `/openings/${firstOpeningId}?mode=review` : '/openings'}
         />
         <StatCard
           label="Ошибки"

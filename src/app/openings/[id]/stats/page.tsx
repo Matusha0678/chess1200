@@ -191,7 +191,7 @@ export default function OpeningStatsPage({ params }: Props) {
         </div>
 
         <Link
-          href={`/openings/${id}/practice`}
+          href={`/openings/${id}?mode=review`}
           className="h-10 flex items-center gap-2 bg-white text-[#050505] hover:bg-[#F0F0F0] rounded-full px-6 text-[14px] font-semibold transition-colors no-underline"
         >
           Тренировка →
