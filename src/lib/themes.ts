@@ -42,7 +42,48 @@ export const BOARD_THEMES: BoardTheme[] = [
   { id: 'midnight', name: 'Ночь',     dark: '#1A1A2E', light: '#16213E' },
   { id: 'rose',     name: 'Роза',     dark: '#7A4066', light: '#D4A5BD' },
   { id: 'teal',     name: 'Бирюза',   dark: '#2A6B6B', light: '#A0CFCF' },
+  // ── Themed boards matching fun themes ───────────────────────────────────────
+  { id: 'th-halloween', name: 'Хэллоуин',  dark: '#4A2410', light: '#D48838' },
+  { id: 'th-newyear',   name: 'Новый год', dark: '#3A5A78', light: '#D4E4F0' },
+  { id: 'th-alien',     name: 'Alien',     dark: '#1A4020', light: '#80D080' },
+  { id: 'th-cyber',     name: 'Cyberpunk', dark: '#4A2868', light: '#E89CD4' },
+  { id: 'th-easter',    name: 'Пасха',     dark: '#E898BC', light: '#FFF0F8' },
+  { id: 'th-robot',     name: 'Робот',     dark: '#40505E', light: '#90A4B8' },
+  { id: 'th-valentine', name: 'Валентин',  dark: '#6A2A48', light: '#F0C0D4' },
+  { id: 'th-pirate',    name: 'Пираты',    dark: '#1E324A', light: '#D4B068' },
+  { id: 'th-xeno',      name: 'Ксеноморф', dark: '#203820', light: '#90C088' },
+  { id: 'th-sakura',    name: 'Сакура',    dark: '#E890B8', light: '#FFEEF4' },
+  { id: 'th-autumn',    name: 'Осень',     dark: '#6A3818', light: '#E89860' },
+  { id: 'th-galaxy',    name: 'Галактика', dark: '#3A2868', light: '#A890D8' },
+  { id: 'th-abyss',     name: 'Глубина',   dark: '#0E485C', light: '#70B4C8' },
+  { id: 'th-dragon',    name: 'Дракон',    dark: '#5A1C14', light: '#E86A30' },
+  { id: 'th-sakura-dark', name: 'Сакура ночь',    dark: '#3A1024', light: '#D86098' },
+  { id: 'th-bloodmoon',   name: 'Кровавая луна',  dark: '#3A0808', light: '#D82820' },
+  { id: 'th-icedragon',   name: 'Ледяной дракон', dark: '#12304A', light: '#A0D8F0' },
+  { id: 'th-synthwave',   name: 'Синтвейв',       dark: '#2A1448', light: '#FF4FA3' },
 ];
+
+/** Bundle preset — what board + pieces fit each fun theme. */
+export const FUN_THEME_BUNDLES: Record<string, { boardThemeId: string; pieceStyleId: string }> = {
+  halloween: { boardThemeId: 'th-halloween', pieceStyleId: 'cc_gothic'    },
+  newyear:   { boardThemeId: 'th-newyear',   pieceStyleId: 'cc_icy_sea'   },
+  alien:     { boardThemeId: 'th-alien',     pieceStyleId: 'cc_neon'      },
+  cyber:     { boardThemeId: 'th-cyber',     pieceStyleId: 'cc_8bit'      },
+  easter:    { boardThemeId: 'th-easter',    pieceStyleId: 'cc_bubblegum' },
+  robot:     { boardThemeId: 'th-robot',     pieceStyleId: 'cc_metal'     },
+  valentine: { boardThemeId: 'th-valentine', pieceStyleId: 'cc_bubblegum' },
+  pirate:    { boardThemeId: 'th-pirate',    pieceStyleId: 'cc_vintage'   },
+  xeno:      { boardThemeId: 'th-xeno',      pieceStyleId: 'cc_neon'      },
+  sakura:    { boardThemeId: 'th-sakura',    pieceStyleId: 'cc_bubblegum' },
+  autumn:    { boardThemeId: 'th-autumn',    pieceStyleId: 'cc_wood'      },
+  galaxy:    { boardThemeId: 'th-galaxy',    pieceStyleId: 'cc_space'     },
+  abyss:     { boardThemeId: 'th-abyss',     pieceStyleId: 'cc_icy_sea'   },
+  dragon:    { boardThemeId: 'th-dragon',    pieceStyleId: 'cc_gothic'    },
+  'sakura-dark': { boardThemeId: 'th-sakura-dark', pieceStyleId: 'cc_bubblegum' },
+  bloodmoon:     { boardThemeId: 'th-bloodmoon',   pieceStyleId: 'cc_gothic'    },
+  icedragon:     { boardThemeId: 'th-icedragon',   pieceStyleId: 'cc_icy_sea'   },
+  synthwave:     { boardThemeId: 'th-synthwave',   pieceStyleId: 'cc_neon'      },
+};
 
 export const PIECE_STYLES: PieceStyle[] = [
   { id: 'default',    name: 'Стандарт',  baseUrl: null },
@@ -126,6 +167,10 @@ export const FUN_THEME_IDS = new Set([
   'galaxy',
   'abyss',
   'dragon',
+  'sakura-dark',
+  'bloodmoon',
+  'icedragon',
+  'synthwave',
 ]);
 
 export type FunThemeConfig = {
@@ -155,6 +200,10 @@ export const FUN_THEMES: Record<string, FunThemeConfig> = {
   galaxy:    { logo: '🌌', decor: 'stars',    label: 'Галактика', desc: 'Звёздная туманность'     },
   abyss:     { logo: '🫧', decor: 'bubbles',  label: 'Глубина',   desc: 'Пузыри из бездны'        },
   dragon:    { logo: '🐉', decor: 'fire',     label: 'Дракон',    desc: 'Пламя и угли'            },
+  'sakura-dark': { logo: '🌸', decor: 'sakura',   label: 'Сакура ночь',    desc: 'Тёмная вишня'            },
+  bloodmoon:     { logo: '🩸', decor: 'pumpkins', label: 'Кровавая луна',  desc: 'Красный туман'           },
+  icedragon:     { logo: '❄',  decor: 'snow',     label: 'Ледяной дракон', desc: 'Снег и голубое пламя'    },
+  synthwave:     { logo: '◢',  decor: 'glitch',   label: 'Синтвейв',       desc: '80-е: розовый и cyan'    },
 };
 
 export const SITE_THEMES: SiteTheme[] = [
@@ -188,6 +237,10 @@ export const SITE_THEMES: SiteTheme[] = [
   { id: 'galaxy',     name: 'Галактика',      bg: '#0A0520', card: '#140A2E' },
   { id: 'abyss',      name: 'Глубина',        bg: '#04141A', card: '#0A2530' },
   { id: 'dragon',     name: 'Дракон',         bg: '#180608', card: '#260A0C' },
+  { id: 'sakura-dark',name: 'Сакура ночь',    bg: '#0A0608', card: '#180A12' },
+  { id: 'bloodmoon',  name: 'Кровавая луна',  bg: '#0A0202', card: '#1A0404' },
+  { id: 'icedragon',  name: 'Ледяной дракон', bg: '#020A12', card: '#061828' },
+  { id: 'synthwave',  name: 'Синтвейв',       bg: '#0A0426', card: '#140636' },
   // ── Газетный (цветовые варианты) ─────────────────────────────────────────────
   { id: 'dark',     name: 'Уголь',      bg: '#050505', card: '#0D0D0D' },
   { id: 'midnight', name: 'Полночь',    bg: '#05070F', card: '#0C0E1A' },

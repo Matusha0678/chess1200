@@ -1260,6 +1260,186 @@ html, body {
   --c-brill: #FFE040;
 }
 
+/* ── Sakura ночь (тёмная вишня) ─────────────────────────────────────────── */
+[data-site-theme="sakura-dark"] {
+  --bg:           #0A0608;
+  --surface:      #180A12;
+  --row-hover:    rgba(255,120,180,0.06);
+  --ivory:        #FFE0EC;
+  --ink:          #0A0608;
+  --ink-2:        #8A5068;
+  --muted:        #C89AB0;
+  --hairline:     rgba(255,120,180,0.14);
+  --track:        #22101A;
+  --eyebrow-line: #341826;
+  --control:      #5A2840;
+  --card-hover:   #FF5090;
+  --board-border: rgba(255,120,180,0.26);
+  --placeholder:  #7A3858;
+  --level-new:    #5A2840;
+  --level-top:    #FFE0EC;
+  --header-bg:    rgba(10,6,8,0.96);
+
+  --accent:          #FF5090;
+  --accent-contrast: #0A0608;
+  --radius-card:     14px;
+  --radius-btn:      12px;
+  --shadow-card:     0 4px 16px rgba(255,80,144,0.14);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.5);
+
+  --st-bg: #0A0608; --st-card: #180A12; --st-panel: #12080E;
+  --st-h1: #1E0D16; --st-h2: #22101A; --st-h3: #28141F;
+  --st-b0: #341826; --st-b1: #442234; --st-b2: #542C42;
+  --st-b3: #643650; --st-b4: #74405E;
+  --st-text: #FFE0EC; --st-t2: #C89AB0; --st-t3: #8A5068; --st-t4: #5A2840;
+
+  --surface-2: #1C0C14;
+  --row: #22101A;
+  --hairline-2: rgba(255,120,180,0.2);
+  --faint: #5A2840;
+  --accent-press: #D03070;
+  --c-bad: #FF4060;
+  --c-warn: #FFB040;
+  --c-mark: #FFB0D0;
+  --c-plan: #FFB0D0;
+  --c-brill: #FFD040;
+}
+
+/* ── Кровавая луна (halloween-вариант, красный туман) ───────────────────── */
+[data-site-theme="bloodmoon"] {
+  --bg:           #0A0202;
+  --surface:      #1A0404;
+  --row-hover:    rgba(232,32,32,0.06);
+  --ivory:        #FFD8C8;
+  --ink:          #0A0202;
+  --ink-2:        #7A2820;
+  --muted:        #B86860;
+  --hairline:     rgba(232,32,32,0.16);
+  --track:        #2E0808;
+  --eyebrow-line: #4A1010;
+  --control:      #6A1C14;
+  --card-hover:   #E82020;
+  --board-border: rgba(232,32,32,0.28);
+  --placeholder:  #7A2820;
+  --level-new:    #6A1C14;
+  --level-top:    #FFD8C8;
+  --header-bg:    rgba(10,2,2,0.96);
+
+  --accent:          #E82020;
+  --accent-contrast: #0A0202;
+  --radius-card:     8px;
+  --radius-btn:      6px;
+  --shadow-card:     0 4px 16px rgba(232,32,32,0.18), 0 0 30px rgba(180,20,20,0.1);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.6);
+
+  --st-bg: #0A0202; --st-card: #1A0404; --st-panel: #140303;
+  --st-h1: #220606; --st-h2: #280808; --st-h3: #300A0A;
+  --st-b0: #3E1010; --st-b1: #501616; --st-b2: #621C1C;
+  --st-b3: #742222; --st-b4: #862828;
+  --st-text: #FFD8C8; --st-t2: #B86860; --st-t3: #7A2820; --st-t4: #6A1C14;
+
+  --surface-2: #1E0505;
+  --row: #220606;
+  --hairline-2: rgba(232,32,32,0.22);
+  --faint: #6A1C14;
+  --accent-press: #B01010;
+  --c-bad: #FF4040;
+  --c-warn: #FF9020;
+  --c-mark: #FFB080;
+  --c-plan: #FFB080;
+  --c-brill: #FFC040;
+}
+
+/* ── Ледяной дракон (холодная вариация dragon) ──────────────────────────── */
+[data-site-theme="icedragon"] {
+  --bg:           #020A12;
+  --surface:      #061828;
+  --row-hover:    rgba(128,216,255,0.06);
+  --ivory:        #E8F4FF;
+  --ink:          #020A12;
+  --ink-2:        #4A7090;
+  --muted:        #80A8C8;
+  --hairline:     rgba(128,216,255,0.16);
+  --track:        #0C2032;
+  --eyebrow-line: #163048;
+  --control:      #2E4A66;
+  --card-hover:   #80D8FF;
+  --board-border: rgba(128,216,255,0.28);
+  --placeholder:  #4A7090;
+  --level-new:    #2E4A66;
+  --level-top:    #E8F4FF;
+  --header-bg:    rgba(2,10,18,0.96);
+
+  --accent:          #80D8FF;
+  --accent-contrast: #020A12;
+  --radius-card:     10px;
+  --radius-btn:      8px;
+  --shadow-card:     0 4px 16px rgba(128,216,255,0.16), 0 0 30px rgba(80,180,240,0.08);
+  --shadow-btn:      0 2px 0 rgba(0,0,0,0.6);
+
+  --st-bg: #020A12; --st-card: #061828; --st-panel: #04121F;
+  --st-h1: #0A1E30; --st-h2: #0C2238; --st-h3: #102840;
+  --st-b0: #163048; --st-b1: #1E3E5E; --st-b2: #264C74;
+  --st-b3: #2E5A8A; --st-b4: #3668A0;
+  --st-text: #E8F4FF; --st-t2: #80A8C8; --st-t3: #4A7090; --st-t4: #2E4A66;
+
+  --surface-2: #081D2E;
+  --row: #0C2032;
+  --hairline-2: rgba(128,216,255,0.22);
+  --faint: #2E4A66;
+  --accent-press: #4EB4E0;
+  --c-bad: #FF6060;
+  --c-warn: #FFC040;
+  --c-mark: #80D8FF;
+  --c-plan: #80D8FF;
+  --c-brill: #80FFE0;
+}
+
+/* ── Синтвейв (80-е: розовый + cyan) ────────────────────────────────────── */
+[data-site-theme="synthwave"] {
+  --bg:           #0A0426;
+  --surface:      #140636;
+  --row-hover:    rgba(255,79,163,0.06);
+  --ivory:        #FFE8F4;
+  --ink:          #0A0426;
+  --ink-2:        #604880;
+  --muted:        #A890C8;
+  --hairline:     rgba(255,79,163,0.16);
+  --track:        #1E0C48;
+  --eyebrow-line: #2E165C;
+  --control:      #4E3080;
+  --card-hover:   #FF4FA3;
+  --board-border: rgba(255,79,163,0.3);
+  --placeholder:  #604880;
+  --level-new:    #4E3080;
+  --level-top:    #FFE8F4;
+  --header-bg:    rgba(10,4,38,0.96);
+
+  --accent:          #FF4FA3;
+  --accent-contrast: #0A0426;
+  --radius-card:     6px;
+  --radius-btn:      4px;
+  --shadow-card:     0 0 20px rgba(255,79,163,0.14), 0 0 40px rgba(79,208,255,0.06);
+  --shadow-btn:      0 0 10px rgba(255,79,163,0.4);
+
+  --st-bg: #0A0426; --st-card: #140636; --st-panel: #10052C;
+  --st-h1: #1A0A40; --st-h2: #1E0C48; --st-h3: #241050;
+  --st-b0: #301866; --st-b1: #402280; --st-b2: #502C9A;
+  --st-b3: #6036B4; --st-b4: #7040CE;
+  --st-text: #FFE8F4; --st-t2: #A890C8; --st-t3: #604880; --st-t4: #4E3080;
+
+  --surface-2: #180A3E;
+  --row: #1E0C48;
+  --hairline-2: rgba(255,79,163,0.22);
+  --faint: #4E3080;
+  --accent-press: #D02080;
+  --c-bad: #FF4060;
+  --c-warn: #FFC048;
+  --c-mark: #4FD0FF;
+  --c-plan: #4FD0FF;
+  --c-brill: #4FFFC0;
+}
+
 /* ── Xeno / Alien Ridley (биомех и кислотная слизь) ─────────────────────── */
 [data-site-theme="xeno"] {
   --bg:           #060805;
@@ -2429,7 +2609,7 @@ html, body {
   80%  { opacity: 1; }
   100% { transform: translateX(120vw)  scale(1.1); opacity: 0; }
 }
-[data-site-theme="halloween"] .theme-decor-item {
+.theme-decor[data-decor="pumpkins"] .theme-decor-item {
   background: radial-gradient(circle,
     rgba(255,120,30,0.26),
     rgba(255,80,20,0.08) 50%,
@@ -2448,7 +2628,7 @@ html, body {
   90%  { opacity: 0.9; }
   100% { transform: translateY(115vh) translateX(-10px); opacity: 0; }
 }
-[data-site-theme="newyear"] .theme-decor-item {
+.theme-decor[data-decor="snow"] .theme-decor-item {
   background: rgba(255,255,255,0.95);
   border-radius: 50%;
   box-shadow: 0 0 3px rgba(255,255,255,0.7), 0 0 8px rgba(200,220,255,0.4);
@@ -2460,7 +2640,7 @@ html, body {
   0%, 100% { transform: translate(-18px, 0)    scale(0.95); opacity: 0.55; }
   50%      { transform: translate(24px, -22px) scale(1.1);  opacity: 1; }
 }
-[data-site-theme="easter"] .theme-decor-item {
+.theme-decor[data-decor="easter"] .theme-decor-item {
   background: radial-gradient(circle,
     rgba(255,180,220,0.42),
     rgba(255,180,220,0.1) 55%,
@@ -2469,13 +2649,13 @@ html, body {
   filter: blur(22px);
   animation: decor-bokeh-float ease-in-out infinite;
 }
-[data-site-theme="easter"] .theme-decor-item:nth-child(3n) {
+.theme-decor[data-decor="easter"] .theme-decor-item:nth-child(3n) {
   background: radial-gradient(circle,
     rgba(180,220,255,0.38),
     rgba(180,220,255,0.08) 55%,
     transparent 72%);
 }
-[data-site-theme="easter"] .theme-decor-item:nth-child(3n+1) {
+.theme-decor[data-decor="easter"] .theme-decor-item:nth-child(3n+1) {
   background: radial-gradient(circle,
     rgba(200,255,200,0.32),
     rgba(200,255,200,0.08) 55%,
@@ -2490,7 +2670,7 @@ html, body {
   88%  { opacity: 0.8; }
   100% { transform: translateY(-10vh) translateX(-8px) scale(1.2); opacity: 0; }
 }
-[data-site-theme="valentine"] .theme-decor-item {
+.theme-decor[data-decor="hearts"] .theme-decor-item {
   background: rgba(255,160,200,0.95);
   border-radius: 50%;
   box-shadow: 0 0 4px rgba(255,120,160,0.9), 0 0 10px rgba(255,80,130,0.5);
@@ -2507,7 +2687,7 @@ html, body {
   90%  { opacity: 0.85; }
   100% { transform: translateY(115vh) translateX(-18px) rotate(-30deg); opacity: 0; }
 }
-[data-site-theme="sakura"] .theme-decor-item {
+.theme-decor[data-decor="sakura"] .theme-decor-item {
   background: radial-gradient(ellipse at center,
     rgba(255,170,205,0.95),
     rgba(255,140,190,0.6) 55%,
@@ -2525,7 +2705,7 @@ html, body {
   90%  { opacity: 0.8; }
   100% { transform: translateY(115vh) translateX(-24px) rotate(360deg); opacity: 0; }
 }
-[data-site-theme="autumn"] .theme-decor-item {
+.theme-decor[data-decor="leaves"] .theme-decor-item {
   background: radial-gradient(circle,
     rgba(255,190,100,0.9),
     rgba(232,138,60,0.5) 55%,
@@ -2540,16 +2720,16 @@ html, body {
   0%, 100% { opacity: 0.15; transform: scale(0.7); }
   40%, 60% { opacity: 0.95; transform: scale(1.1); }
 }
-[data-site-theme="galaxy"] .theme-decor-item {
+.theme-decor[data-decor="stars"] .theme-decor-item {
   background: #FFFFFF;
   border-radius: 50%;
   box-shadow: 0 0 2px rgba(255,255,255,0.7), 0 0 8px rgba(180,138,255,0.5);
   animation: decor-star-twinkle ease-in-out infinite;
 }
-[data-site-theme="galaxy"] .theme-decor-item:nth-child(5n) {
+.theme-decor[data-decor="stars"] .theme-decor-item:nth-child(5n) {
   box-shadow: 0 0 2px rgba(255,255,255,0.8), 0 0 10px rgba(255,120,200,0.6);
 }
-[data-site-theme="galaxy"] .theme-decor-item:nth-child(7n) {
+.theme-decor[data-decor="stars"] .theme-decor-item:nth-child(7n) {
   background: #E0D0FF;
   box-shadow: 0 0 2px rgba(224,208,255,0.9), 0 0 10px rgba(180,138,255,0.7);
 }
@@ -2562,7 +2742,7 @@ html, body {
   90%  { opacity: 0.5; }
   100% { transform: translateY(-15vh) translateX(-10px) scale(1.2); opacity: 0; }
 }
-[data-site-theme="abyss"] .theme-decor-item {
+.theme-decor[data-decor="bubbles"] .theme-decor-item {
   background: radial-gradient(circle at 35% 30%,
     rgba(255,255,255,0.3),
     rgba(100,220,240,0.1) 40%,
@@ -2585,7 +2765,7 @@ html, body {
   0%, 100% { box-shadow: 0 0 4px rgba(255,120,40,0.85), 0 0 10px rgba(255,140,40,0.5); }
   50%      { box-shadow: 0 0 10px rgba(255,200,60,1),  0 0 22px rgba(255,160,40,0.75); }
 }
-[data-site-theme="dragon"] .theme-decor-item {
+.theme-decor[data-decor="fire"] .theme-decor-item {
   background: radial-gradient(circle,
     rgba(255,220,100,0.95),
     rgba(255,120,40,0.7) 50%,
@@ -2627,9 +2807,51 @@ html, body {
 [data-site-theme="autumn"] .app-shell,
 [data-site-theme="galaxy"] .app-shell,
 [data-site-theme="abyss"] .app-shell,
-[data-site-theme="dragon"] .app-shell {
+[data-site-theme="dragon"] .app-shell,
+[data-site-theme="sakura-dark"] .app-topbar,
+[data-site-theme="bloodmoon"] .app-topbar,
+[data-site-theme="icedragon"] .app-topbar,
+[data-site-theme="synthwave"] .app-topbar,
+[data-site-theme="sakura-dark"] .app-shell,
+[data-site-theme="bloodmoon"] .app-shell,
+[data-site-theme="icedragon"] .app-shell,
+[data-site-theme="synthwave"] .app-shell {
   position: relative;
   z-index: 1;
+}
+
+/* Sakura-dark: мягкое розовое свечение сверху */
+[data-site-theme="sakura-dark"] .app-main {
+  background-image:
+    radial-gradient(ellipse at 30% 10%, rgba(255,80,144,0.1) 0%, transparent 42%),
+    radial-gradient(ellipse at 75% 80%, rgba(255,120,180,0.08) 0%, transparent 45%);
+}
+
+/* Bloodmoon: красное свечение сверху + тёмный винетт */
+[data-site-theme="bloodmoon"] .app-main {
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(232,32,32,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.3) 100%);
+}
+
+/* Icedragon: ледяной blue glow снизу */
+[data-site-theme="icedragon"] .app-main {
+  background-image:
+    radial-gradient(ellipse at 50% 100%, rgba(128,216,255,0.1) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 30%, rgba(100,180,230,0.06) 0%, transparent 45%);
+}
+
+/* Synthwave: сигнатурный sunset-градиент снизу + сетка */
+[data-site-theme="synthwave"] .app-main {
+  background-image:
+    linear-gradient(to top,
+      rgba(255,79,163,0.1) 0%,
+      rgba(255,120,80,0.06) 20%,
+      transparent 45%),
+    linear-gradient(rgba(255,79,163,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,208,255,0.04) 1px, transparent 1px);
+  background-size: auto, 48px 48px, 48px 48px;
+  background-position: center bottom, center center, center center;
 }
 
 /* Robot: тонкая сетка на фоне (как плата) */

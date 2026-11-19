@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useBoardTheme, type AnimationSpeed } from '@/contexts/BoardThemeContext';
-import { BOARD_THEMES, PIECE_STYLES, SITE_THEMES, getSiteThemeFamily, FUN_THEMES } from '@/lib/themes';
+import { BOARD_THEMES, PIECE_STYLES, SITE_THEMES, getSiteThemeFamily, FUN_THEMES, FUN_THEME_BUNDLES } from '@/lib/themes';
 
 type FunPreset = {
   id: string;
@@ -29,6 +29,10 @@ const FUN_PRESETS: FunPreset[] = [
   { id: 'galaxy',    label: 'Галактика', desc: FUN_THEMES.galaxy.desc,    emoji: FUN_THEMES.galaxy.logo,    bg: '#0A0520', accent: '#B48AFF' },
   { id: 'abyss',     label: 'Глубина',   desc: FUN_THEMES.abyss.desc,     emoji: FUN_THEMES.abyss.logo,     bg: '#04141A', accent: '#40D0E0' },
   { id: 'dragon',    label: 'Дракон',    desc: FUN_THEMES.dragon.desc,    emoji: FUN_THEMES.dragon.logo,    bg: '#180608', accent: '#FF7030' },
+  { id: 'sakura-dark', label: 'Сакура ночь',    desc: FUN_THEMES['sakura-dark'].desc, emoji: FUN_THEMES['sakura-dark'].logo, bg: '#0A0608', accent: '#FF5090' },
+  { id: 'bloodmoon',   label: 'Кровавая луна',  desc: FUN_THEMES.bloodmoon.desc,      emoji: FUN_THEMES.bloodmoon.logo,      bg: '#0A0202', accent: '#E82020' },
+  { id: 'icedragon',   label: 'Ледяной дракон', desc: FUN_THEMES.icedragon.desc,      emoji: FUN_THEMES.icedragon.logo,      bg: '#020A12', accent: '#80D8FF' },
+  { id: 'synthwave',   label: 'Синтвейв',       desc: FUN_THEMES.synthwave.desc,      emoji: FUN_THEMES.synthwave.logo,      bg: '#0A0426', accent: '#FF4FA3' },
 ];
 
 type FamilyPreset = {
@@ -200,9 +204,24 @@ export default function ThemePanel() {
 
           {/* Fun / Easter-egg themes */}
           <section>
-            <h2 className="text-[11px] font-semibold text-[#505050] uppercase tracking-widest mb-3">
-              Пасхалки
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-[11px] font-semibold text-[#505050] uppercase tracking-widest">
+                Пасхалки
+              </h2>
+              {FUN_THEME_BUNDLES[siteThemeId] && (
+                <button
+                  onClick={() => {
+                    const b = FUN_THEME_BUNDLES[siteThemeId];
+                    setBoardThemeId(b.boardThemeId);
+                    setPieceStyleId(b.pieceStyleId);
+                  }}
+                  className="text-[10px] font-semibold uppercase tracking-wider text-[#A0A0A0] hover:text-[#F5F5F5] border border-[#2A2A2A] hover:border-[#404040] px-2 py-1 rounded transition-colors"
+                  title="Поставить доску и фигуры под тему"
+                >
+                  Подогнать всё
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-1.5">
               {FUN_PRESETS.map(opt => {
                 const active = siteThemeId === opt.id;
