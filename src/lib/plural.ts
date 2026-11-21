@@ -11,6 +11,8 @@ export function plural(n: number, one: string, few: string, many: string): strin
   return `${n} ${many}`;
 }
 
+export const pluralOpenings = (n: number) => plural(n, 'дебют', 'дебюта', 'дебютов');
+export const pluralMinutes = (n: number) => plural(n, 'минута', 'минуты', 'минут');
 export const pluralMoves = (n: number) => plural(n, 'ход', 'хода', 'ходов');
 export const pluralTries = (n: number) => plural(n, 'попытка', 'попытки', 'попыток');
 export const pluralPositions = (n: number) => plural(n, 'позиция', 'позиции', 'позиций');
