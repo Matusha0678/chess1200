@@ -1,6 +1,7 @@
 // «Где ты теряешь очки» (ТЗ §1.3.3): причины поражений с полосами и ссылками.
 'use client';
 
+import Link from 'next/link';
 import type { LeakRow } from '@/lib/coach/context';
 import type { ItemKey } from '@/lib/coach/plan';
 
@@ -27,7 +28,7 @@ export function LeaksCard({ leaks, totalGames, totalLosses, planKeyToNum }: Leak
       {leaks.length === 0 ? (
         <p style={{ fontSize: 13, color: 'var(--text-2, #A39B8A)', lineHeight: 1.5, margin: 0 }}>
           Синхронизируй партии рапид — тогда Таль увидит, где ты теряешь очки.{' '}
-          <a href="/games" className="coach-go-link">Мои партии →</a>
+          <Link href="/games" className="coach-go-link">Мои партии →</Link>
         </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column' }}>

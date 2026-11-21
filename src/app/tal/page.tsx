@@ -26,6 +26,7 @@ export default function CoachPage() {
   const [canLoadMore, setCanLoadMore] = useState(true);
   const today = localDateStr();
   const threadEndRef = useRef<HTMLDivElement | null>(null);
+  const tempIdRef = useRef(0);
 
   // Загружает контекст, план (API), lessonNo, историю чата, ручные отметки
   const refresh = useCallback(async () => {
@@ -74,6 +75,7 @@ export default function CoachPage() {
     }
   }, [today]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void refresh(); }, [refresh]);
 
   // Обновлять данные при возврате на вкладку (ТЗ §5.3)
@@ -101,7 +103,8 @@ export default function CoachPage() {
   async function handleSend(text: string) {
     if (sending) return;
     setSending(true);
-    const tempId = `tmp-${Date.now()}`;
+    tempIdRef.current += 1;
+    const tempId = `tmp-${tempIdRef.current}`;
     // Оптимистично рисуем своё сообщение
     const nowIso = new Date().toISOString();
     setMessages(prev => [...prev, { id: tempId, role: 'user', kind: 'text', content: text, created_at: nowIso }]);
