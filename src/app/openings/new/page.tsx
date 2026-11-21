@@ -33,7 +33,7 @@ export default function NewOpeningPage() {
   const [previewInfo, setPreviewInfo] = useState<{ count: number; gameCount: number } | null>(null);
   const [lineType, setLineType] = useState<LineType | null>(null);
   const [lineEmoji, setLineEmoji] = useState('');
-  const [lineMeta, setLineMeta] = useState<import('@/lib/pgn-tree').LineMeta[]>([]);
+  const [, setLineMeta] = useState<import('@/lib/pgn-tree').LineMeta[]>([]);
   const parseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handlePgnChange(value: string) {

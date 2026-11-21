@@ -46,6 +46,8 @@ type FamilyPreset = {
 };
 
 const FAMILY_PRESETS: FamilyPreset[] = [
+  { id: 'executive',       label: 'Executive',      bg: '#0F0F11', card: '#17171A', border: '#26241F', accent: '#C9A961', rounded: false },
+  { id: 'executive-light', label: 'Executive свет.', bg: '#F4EFE6', card: '#FFFAF1', border: '#D8CDB8', accent: '#9A7A2E', rounded: false },
   { id: 'dark',        label: 'Газетный',      bg: '#050505', card: '#141414', border: '#1E1E1E', accent: null,      rounded: false },
   { id: 'light',       label: 'Светлый',       bg: '#F8F8F8', card: '#FFFFFF', border: '#D0D0D0', accent: null,      rounded: false },
   { id: 'soft-dark',   label: 'Мягкий тёмный', bg: '#302E2B', card: '#262522', border: 'transparent', accent: 'var(--accent)', rounded: true  },
@@ -310,6 +312,7 @@ export default function ThemePanel() {
                   >
                     <div className="w-12 h-12 flex items-center justify-center">
                       {style.baseUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={`${style.baseUrl}/${style.lowercase ? 'wq' : 'wQ'}${style.ext ?? '.svg'}`}
                           alt={style.name}

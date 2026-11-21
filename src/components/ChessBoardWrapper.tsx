@@ -45,6 +45,11 @@ export default function ChessBoardWrapper({
   // Keep ref in sync via effect so callbacks always read the latest value
   useEffect(() => { soundRef.current = soundEnabled; }, [soundEnabled]);
 
+  const playMoveSound = (captured: unknown) => {
+    if (!soundRef.current) return;
+    if (captured) playCapture(); else playMove();
+  };
+
   const [chess] = useState(() => new Chess(INITIAL_FEN));
   const [fen, setFen] = useState(INITIAL_FEN);
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
@@ -75,7 +80,7 @@ export default function ChessBoardWrapper({
       if (index >= line.length) return;
       const move = line[index];
       const result = chess.move({ from: move.from, to: move.to });
-      if (soundRef.current) result?.captured ? playCapture() : playMove();
+      playMoveSound(result?.captured);
       setFen(chess.fen());
       setPlayedMoves((prev) => {
         const updated = [...prev, move.san];
@@ -143,7 +148,7 @@ export default function ChessBoardWrapper({
         if (nextMove.color !== playerColor) {
           setTimeout(() => {
             const r = chess.move({ from: nextMove.from, to: nextMove.to });
-            if (soundRef.current) r?.captured ? playCapture() : playMove();
+            playMoveSound(r?.captured);
             setFen(chess.fen());
             const updated = [...currentMoves, nextMove.san];
             setPlayedMoves(updated);
@@ -163,7 +168,7 @@ export default function ChessBoardWrapper({
 
               if (isCorrect) {
                 const r = chess.move({ from: pm.from, to: pm.to });
-                if (soundRef.current) r?.captured ? playCapture() : playMove();
+                playMoveSound(r?.captured);
                 const newMoves = [...currentMoves, expected.san];
                 setFen(chess.fen());
                 setPlayedMoves(newMoves);
@@ -198,7 +203,7 @@ export default function ChessBoardWrapper({
                   setFeedback(null);
                   setSquareStyles({});
                   const r = chess.move({ from: expected.from, to: expected.to });
-                  if (soundRef.current) r?.captured ? playCapture() : playMove();
+                  playMoveSound(r?.captured);
                   setFen(chess.fen());
                   const newMoves2 = [...currentMoves, expected.san];
                   setPlayedMoves(newMoves2);
@@ -225,7 +230,7 @@ export default function ChessBoardWrapper({
 
         if (isCorrect) {
           const r1 = chess.move({ from: sourceSquare, to: targetSquare });
-          if (soundRef.current) r1?.captured ? playCapture() : playMove();
+          playMoveSound(r1?.captured);
           setFen(chess.fen());
           const newMoves = [...playedMoves, expected.san];
           setPlayedMoves(newMoves);
@@ -276,7 +281,7 @@ export default function ChessBoardWrapper({
             setFeedback(null);
             setSquareStyles({});
             const r2 = chess.move({ from: expected.from, to: expected.to });
-            if (soundRef.current) r2?.captured ? playCapture() : playMove();
+            playMoveSound(r2?.captured);
             setFen(chess.fen());
             const newMoves = [...playedMoves, expected.san];
             setPlayedMoves(newMoves);
@@ -322,7 +327,7 @@ export default function ChessBoardWrapper({
       if (isCorrect) {
         isProcessing.current = true;
         const r3 = chess.move({ from: sourceSquare, to: targetSquare });
-        if (soundRef.current) r3?.captured ? playCapture() : playMove();
+        playMoveSound(r3?.captured);
         const newMoves = [...playedMoves, expected.san];
         setFen(chess.fen());
         setPlayedMoves(newMoves);
@@ -363,7 +368,7 @@ export default function ChessBoardWrapper({
           setFeedback(null);
           setSquareStyles({});
           const r4 = chess.move({ from: expected.from, to: expected.to });
-          if (soundRef.current) r4?.captured ? playCapture() : playMove();
+          playMoveSound(r4?.captured);
           setFen(chess.fen());
           const newMoves = [...playedMoves, expected.san];
           setPlayedMoves(newMoves);

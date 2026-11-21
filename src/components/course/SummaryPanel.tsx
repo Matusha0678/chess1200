@@ -2,7 +2,6 @@
 
 interface Props {
   summaryMd: string;
-  lessonTitle: string;
   linesTotal: number;
   linesDone: number;
   quizCorrect: number;
@@ -28,7 +27,7 @@ function simpleMarkdown(md: string): React.ReactNode {
 function boldify(t: string) { return t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
 
 export function SummaryPanel({
-  summaryMd, lessonTitle,
+  summaryMd,
   linesTotal, linesDone,
   quizCorrect, quizTotal,
   playFirstTry, playTotal,

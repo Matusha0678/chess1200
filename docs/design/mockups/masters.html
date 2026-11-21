@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Партия мастера — макет</title>
+<link rel="stylesheet" href="node_modules/@fontsource/inter/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/600.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter-tight/700.css">
+<style>
+
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A; --plan:#4A90E2;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:10px 12px;display:flex;flex-direction:column}
+.item{height:35px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:14px;flex:none}
+.item .ico{width:17px;height:17px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:12px 12px 4px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);flex:none}
+.grp .ico{width:14px;height:14px}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+/* left */
+.left{width:280px;height:854px;display:flex;flex-direction:column;flex:none}
+.left .hd{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.h2{font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd img{width:26px;height:26px;flex:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.segctl{display:grid;grid-template-columns:.9fr 1.15fr 1fr;margin:14px 20px 0;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.segctl div{height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--muted);font-weight:500}
+.segctl .on{background:#45423E;color:var(--text);font-weight:600}
+.hard{margin:10px 20px 0;height:40px;border-radius:var(--r-btn);border:1px solid var(--hair2);display:flex;align-items:center;gap:10px;padding:0 12px;font-size:14px;font-weight:500;color:#E4E1DC}
+.hard .ico{width:16px;height:16px;color:#F4B45C}
+.hard b{margin-left:auto;font-size:13px;font-weight:600;color:#2A1E0B;background:var(--warn);border-radius:6px;padding:1px 7px}
+.qlabel{margin:16px 20px 6px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.secs{padding:0 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+.lrow{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;height:58px;padding:0 10px;border-radius:10px;position:relative}
+.lrow .ix{width:28px;height:28px;border-radius:8px;background:#3A3835;display:grid;place-items:center;font-size:13px;font-weight:700;color:#CFCBC6}
+.lrow .nm{font-size:14px;font-weight:600;color:#E8E5E0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .sub{display:flex;align-items:center;gap:8px;margin-top:6px}
+.mb{display:flex;gap:3px}
+.mb i{width:10px;height:4px;border-radius:2px;background:#45423E}
+.mb i.f{background:var(--accent)}
+.tag{font-size:13px;font-weight:600;color:#F4B45C;line-height:1;white-space:nowrap}
+.lrow .st{font-size:13px;color:var(--muted);white-space:nowrap}
+.lrow .st.due{color:#F4B45C;font-weight:600}
+.lrow .st.ok{color:var(--accent);font-weight:600}
+.lrow .st.new{color:#8FB4DA}
+.lrow.on{background:var(--row)}
+.lrow.on::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:3px;background:var(--accent)}
+.leftbot{padding:14px 20px 20px;border-top:1px solid var(--hair);display:flex;gap:10px}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#E8E5E0;padding:0 14px}
+.btn2 .ico{width:16px;height:16px}
+.btn2 .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.btn2.off{opacity:.45}
+.three .btn2{font-size:14px;padding:0 10px;gap:7px}
+.btn2.sq{width:44px;padding:0}
+/* board */
+.bcol{width:806px;height:854px;display:flex;flex-direction:column;gap:8px;flex:none}
+.pbar{height:32px;display:flex;align-items:center;justify-content:space-between;padding-left:32px}
+.who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.ava{width:28px;height:28px;border-radius:6px;background:#4A4744;display:grid;place-items:center}
+.ava img{width:22px;height:22px}
+.tg{font-size:13px;font-weight:500;color:var(--muted)}
+.pnote{font-size:13px;color:var(--muted)}
+.pnote b{color:var(--text);font-weight:600}
+.brow{display:flex;gap:8px;height:774px}
+.gutter{width:24px}
+.board{width:774px;height:774px;position:relative}
+.sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden}
+.sq{position:relative}
+.sq .hl{position:absolute;inset:0}
+.sq img{position:absolute;inset:0;width:100%;height:100%}
+.co{position:absolute;font-size:13px;font-weight:600;line-height:1}
+.co.r{left:5px;top:5px}.co.f{right:6px;bottom:4px}
+.over{position:absolute;inset:0;pointer-events:none}
+/* right */
+.right{flex:1;height:854px;display:flex;flex-direction:column;min-width:0}
+.rp-h{padding:20px 24px 14px}
+.crumbs{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.crumbs .pr{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--text)}
+.xp{font-size:13px;font-weight:600;color:#81B64C;background:rgba(129,182,76,.14);border-radius:6px;padding:2px 7px}
+.pb4{height:4px;border-radius:4px;background:#3A3835;margin-top:12px;overflow:hidden}
+.pb4 i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:14px;line-height:1.15}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:500;color:#DCD8D3}
+.chip img{width:16px;height:16px}
+.chip .ico{width:14px;height:14px}
+.chip.orange{color:#F4B45C;border-color:rgba(240,164,58,.35);background:rgba(240,164,58,.08)}
+.rb{flex:1;overflow:hidden;padding:4px 24px 0;display:flex;flex-direction:column;gap:16px}
+.fb{border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start}
+.fb .bi{width:30px;height:30px;border-radius:15px;display:grid;place-items:center;color:#fff}
+.fb .bi .ico{width:17px;height:17px}
+.fb .t1{font-size:16px;line-height:1.45;color:var(--text)}
+.fb .t1 b{font-weight:700;white-space:nowrap}
+.fb .t2{font-size:14px;color:var(--muted);margin-top:6px}
+.fb.fail{background:rgba(224,87,74,.10);border:1px solid rgba(224,87,74,.35)} .fb.fail .bi{background:var(--danger)}
+.fb.info{background:rgba(74,144,226,.09);border:1px solid rgba(74,144,226,.30)} .fb.info .bi{background:#3A78C2}
+.fb.ok{background:rgba(129,182,76,.10);border:1px solid rgba(129,182,76,.35)} .fb.ok .bi{background:var(--accent-press)}
+.note{border-radius:10px;background:rgba(240,164,58,.08);border:1px solid rgba(240,164,58,.28);padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#E6E3DE}
+.note .ico{width:17px;height:17px;color:#F4B45C;margin-top:2px}
+.note b{font-weight:600}
+.note a{color:#F4B45C;text-decoration:none;font-weight:600;white-space:nowrap;margin-left:auto}
+.blk h4{font-size:13px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px}
+.blk h4 span{font-weight:500;color:var(--text)}
+.stp{display:flex;gap:5px}
+.stp i{flex:1;height:10px;border-radius:5px;background:#3D3B38}
+.stp i.ok{background:var(--accent)} .stp i.fail{background:var(--danger)} .stp i.hint{background:var(--warn)}
+.stp i.cur{box-shadow:0 0 0 2px var(--surface),0 0 0 4px rgba(255,255,255,.55)}
+.stp i.now{background:#5A5753}
+.mv{display:grid;grid-template-columns:34px 104px 104px;row-gap:2px;column-gap:6px;font-size:15px}
+.mv .n{color:var(--faint);font-size:14px;line-height:30px;text-align:right;padding-right:4px}
+.mv .c{height:30px;border-radius:7px;padding:0 9px;display:flex;align-items:center;font-weight:600;color:#E4E1DC}
+.mv .c.opp{color:#CFCBC6;font-weight:500}
+.mv .c.known{color:var(--faint);font-weight:500}
+.mv .c.future{color:#6B6863;font-weight:500}
+.mv .c.now{box-shadow:inset 0 0 0 2px var(--accent);color:var(--text)}
+.mv .c.q{box-shadow:inset 0 0 0 2px var(--danger);color:#F08277;font-weight:700}
+.mv .c.bad{color:#F08277}
+.mv.wide{grid-template-columns:34px 1fr 1fr 34px 1fr 1fr}
+.act{padding:16px 24px 18px;border-top:1px solid var(--hair)}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.keys{font-size:13px;color:var(--faint);margin-top:12px;text-align:center}
+.btn1{height:52px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.btn1 .ico{width:18px;height:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.two .btn2{font-size:14px;padding:0 10px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.sum div{padding:14px 0;text-align:center;border-right:1px solid var(--hair)} .sum div:last-child{border-right:none}
+.sum b{display:block;font-size:26px;font-weight:700;line-height:1.2}
+.sum span{font-size:13px;color:var(--muted)}
+.res{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--hair)}
+.res .bi{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.res .bi .ico{width:15px;height:15px}
+.res .t1{font-size:15px;font-weight:600}
+.res .t2{font-size:13px;color:var(--muted);margin-top:2px}
+.res .t2 b{color:#F08277;font-weight:600}
+.planrow{display:flex;justify-content:space-between;font-size:14px;color:#DCD8D3;padding:8px 2px;border-bottom:1px solid var(--hair)}
+.planrow:last-child{border-bottom:none}
+.planrow span{color:var(--muted)}
+
+.lab2{margin:14px 20px 6px;font-size:13px;color:var(--muted)}
+.segctl.sm{margin-top:0}
+.segctl .ki{width:16px;height:16px}
+.skip{margin:0 20px;height:40px;border-radius:var(--r-btn);border:1px solid var(--hair2);display:flex;align-items:center;gap:10px;padding:0 6px 0 12px;font-size:14px;color:#E4E1DC}
+.skip span{flex:1}
+.skip b{font-weight:700}
+.skip .st{width:30px;height:30px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:grid;place-items:center;font-size:16px;font-weight:700;color:#DCD8D3}
+.ml{padding:0 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+.mr{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;height:44px;padding:0 10px;border-radius:10px;position:relative}
+.mr .ki2{width:28px;height:28px;border-radius:8px;background:#3A3835;display:grid;place-items:center;color:var(--muted)}
+.mr .ki2 .ico{width:15px;height:15px}
+.mr .ki2.sac{background:rgba(240,164,58,.14);color:#F4B45C}
+.mr .ki2.quiet{background:rgba(74,144,226,.14);color:#8FB4DA}
+.mr .ki2.chk{background:rgba(224,87,74,.14);color:#F08277}
+.mr .nm{font-size:14px;font-weight:600;color:#E8E5E0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mr .nm span{font-weight:500;color:var(--muted)}
+.mr.todo .nm{color:#9F9B96;font-weight:500}
+.mr .pt{width:26px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff}
+.mr .pt.p2{background:var(--accent-press)} .mr .pt.p1{background:#B9791E} .mr .pt.p0{background:#B8463B}
+.mr .pt.q{background:transparent;color:var(--faint);font-weight:600}
+.mr.on{background:var(--row)}
+.mr.on::before{content:"";position:absolute;left:0;top:11px;bottom:11px;width:3px;border-radius:3px;background:var(--accent)}
+.leftbot .btn2{flex:1;font-size:14px;padding:0 8px}
+.leftbot .btn2.sq{flex:none;width:44px;padding:0}
+/* правая панель */
+.chips .chip{line-height:1}
+.chip.res{color:#E8E5E0;font-weight:700}
+.setup{border-radius:12px;background:var(--surface2);border:1px solid var(--hair2);padding:16px 18px}
+.setup h3{font-size:18px;font-weight:700;margin:0}
+.setup p{font-size:15px;line-height:1.5;color:#DCD8D3;margin:6px 0 0}
+.rules{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.rules div{display:flex;align-items:center;gap:10px;font-size:14px;color:#CFCBC6}
+.rules b{width:26px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;flex:none}
+.sline{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--hair);font-size:14px;color:#DCD8D3}
+.sline .ico{width:16px;height:16px;color:#F4B45C}
+.sline a{margin-left:auto;color:var(--accent);font-weight:600;text-decoration:none}
+.mvw{display:flex;flex-direction:column;min-height:0;flex:1}
+.mvs{overflow:hidden;flex:1;min-height:0}
+.mvl{display:grid;grid-template-columns:34px 1fr 1fr;row-gap:2px;column-gap:6px;font-size:15px}
+.mvl .n{color:var(--faint);font-size:14px;line-height:30px;text-align:right;padding-right:4px}
+.mvl .c{height:30px;border-radius:7px;padding:0 9px;display:flex;align-items:center;gap:6px;font-weight:600;color:#E4E1DC}
+.mvl .c.opp{color:#CFCBC6;font-weight:500}
+.mvl .c.km{color:#F4B45C}
+.mvl .c.now{box-shadow:inset 0 0 0 2px var(--accent);background:rgba(129,182,76,.08);color:var(--text)}
+.mvl .c.ask{box-shadow:inset 0 0 0 2px var(--accent);color:var(--accent);font-weight:700}
+.mvl .c .pt{width:20px;height:18px;border-radius:5px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;margin-left:2px}
+.mvl .c .pt.p2{background:var(--accent-press)} .mvl .c .pt.p1{background:#B9791E} .mvl .c .pt.p0{background:#B8463B}
+.bul{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.bul li{font-size:15px;color:#E6E3DE;display:flex;gap:8px}
+.bul li::before{content:"";width:6px;height:6px;border-radius:3px;background:#8C8984;margin-top:9px;flex:none}
+.evl{display:flex;gap:16px;font-size:14px;color:var(--muted);margin-top:10px}
+.evl b{color:var(--text);font-weight:700}
+.pvline{border-radius:10px;background:var(--surface2);border:1px solid var(--hair);padding:10px 12px;font-size:14px;color:#DCD8D3}
+.pvline span{color:var(--muted)}
+.lg{display:flex;flex-direction:column;gap:4px}
+.lrw{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:10px;height:38px;padding:0 10px;border-radius:9px;background:var(--surface2);border:1px solid var(--hair);font-size:14px;color:#E4E1DC}
+.lrw b{font-weight:700}
+.lrw span{font-size:13px;color:var(--muted)}
+.lrw .pt{width:26px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff}
+.lrw .pt.p2{background:var(--accent-press)} .lrw .pt.p1{background:#B9791E} .lrw .pt.p0{background:#B8463B}
+.navrow{display:flex;align-items:center;gap:6px;margin-top:12px}
+.nb{width:44px;height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:grid;place-items:center;color:#E8E5E0}
+.nb .ico{width:20px;height:20px}
+.navrow .sp{flex:1}
+.ib{width:40px;height:40px;border-radius:var(--r-btn);display:grid;place-items:center;color:var(--muted)}
+.ib .ico{width:18px;height:18px}
+.evbar{position:absolute;left:0;top:0;width:24px;height:774px;border-radius:5px;overflow:hidden;background:#403D3A}
+.evbar i{position:absolute;left:0;right:0;bottom:0;background:#EDEBE7}
+.evbar.hid{background:#3A3835}
+.evbar.hid::after{content:"?";position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:14px;font-weight:700;color:var(--muted)}
+.evbar .tx{position:absolute;left:0;right:0;font-size:11px;font-weight:700;text-align:center}
+.badge{position:absolute;width:36px;height:36px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+<aside class="side" id="side"></aside>
+<main class="main">
+  <section class="card left" data-ui="session">
+    <div class="hd"><div class="h2">Угадай ход</div><span class="muted num" style="font-size:14px" id="mcount"></span></div>
+    <div class="stats" data-ui="session-stats" id="stats"></div>
+    <div class="lab2">Где останавливаться</div>
+    <div class="segctl sm" data-ui="master-mode" style="grid-template-columns:1fr 1fr 1.1fr"><div class="on">Ключевые</div><div>Жертвы</div><div>Каждый ход</div></div>
+    <div class="lab2">За кого</div>
+    <div class="segctl sm" data-ui="master-side" style="grid-template-columns:1fr 1fr"><div class="on"><img class="ki" src="pieces/wK.svg">Tal</div><div><img class="ki" src="pieces/bK.svg">Koblents</div></div>
+    <div class="lab2">Пропустить дебют</div>
+    <div class="skip" data-ui="master-skip"><span>первые <b class="num">10</b> ходов</span><div class="st">−</div><div class="st">+</div></div>
+    <div class="qlabel"><span>Ключевые моменты</span><span class="num" id="mprog"></span></div>
+    <div class="ml" data-ui="session-list" id="mlist"></div>
+    <div class="leftbot"><div class="btn2" data-ui="master-other">Другая партия</div><div class="btn2 sq" data-ui="master-library" title="Библиотека"><i class="ico" data-i="list"></i></div></div>
+  </section>
+
+  <section class="bcol">
+    <div class="pbar" data-ui="player-top"><div class="who"><div class="ava"><img src="pieces/bP.svg"></div>Koblents, Alexander <span class="tg">соперник</span></div><div class="pnote" id="pnote"></div></div>
+    <div class="brow"><div class="gutter" style="position:relative"><div class="evbar" data-ui="eval-bar" id="evbar"></div></div><div class="board" id="board"><div class="sqs" id="sqs"></div><div class="over" id="over"></div></div></div>
+    <div class="pbar" data-ui="player-bottom"><div class="who"><div class="ava"><img src="pieces/wP.svg"></div>Tal, Mihail <span class="tg">· ты</span></div><div class="pnote">Riga · 1957</div></div>
+  </section>
+
+  <section class="card right" data-ui="panel" data-demo="masters">
+    <div class="rp-h" data-ui="panel-header">
+      <div class="crumbs"><span>Мастера · Riga 1957</span><span class="pr num" id="hr"></span></div>
+      <div class="pb4" id="pbw"><i id="pb"></i></div>
+      <div class="title tight" data-ui="panel-title" id="ptitle"></div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="rb" id="rb"></div>
+    <div class="act" data-ui="panel-actions" id="act"></div>
+  </section>
+</main>
+<script src="icons.js"></script>
+<script src="_common.js"></script>
+<script>
+const DATA = {"moments":[{"ply":29,"san":"g6","sanNo":"15. g6","kind":"sac","fen":"r1br2k1/2qnbppp/p1npp3/1p4P1/4P2P/1NN1BP2/PPPQ4/2KR1B1R w - - 1 15","prevSanNo":"14... Nd7","prevLast":["f6","d7"],"evalText":"+0.26","bestCpWhite":59,"explain":["Жертва пешки.","Движок предпочитает 15. Qf2 (+0.59)."],"pvText":"15. Qf2 b4 16. Na4 Nce5 17. Rg1 Rb8"},{"ply":37,"san":"e5","sanNo":"19. e5","kind":"sac","fen":"r1br2k1/2q1bpp1/p1n1pn2/1p1p4/4P3/1NN1BP2/PPPQ4/2KR1B1R w - - 0 19","prevSanNo":"18... d5","prevLast":["d6","d5"],"evalText":"+1.91","bestCpWhite":371,"explain":["Жертва пешки.","Движок предпочитает 19. Bf4 (+3.71)."],"pvText":"19. Bf4 Bd6 20. Bxd6 Qxd6 21. f4 Ng4"},{"ply":47,"san":"Bh6","sanNo":"24. Bh6","kind":"sac","fen":"r1br1knQ/2q3pR/p2bp3/1p1pnp2/5B2/1NN2P2/PPP5/2KR1B2 w - - 0 24","prevSanNo":"23... f5","prevLast":["f7","f5"],"evalText":"−0.52","bestCpWhite":-52,"explain":["Жертва слона.","Это и лучший ход движка."],"pvText":"24. Bh6 Rd7 25. Nd4 Rf7 26. Nxf5 gxh6"},{"ply":51,"san":"Rg1","sanNo":"26. Rg1","kind":"quiet","fen":"r1b2knQ/2q2rpR/p2bp2B/1B1pnp2/8/1NN2P2/PPP5/2KR4 w - - 1 26","prevSanNo":"25... Rf7","prevLast":["d7","f7"],"evalText":"+2.98","bestCpWhite":298,"explain":["Тихий ход, но остальные ходы заметно хуже.","Это и лучший ход движка."],"pvText":"26. Rg1 Ng4 27. fxg4 Bf4+ 28. Bxf4 Qxf4+"},{"ply":61,"san":"Rgh1","sanNo":"31. Rgh1","kind":"quiet","fen":"2b2knQ/r1q2rpR/p1N1p3/1B3p2/3p2P1/2b1B3/PPP5/2K3R1 w - - 0 31","prevSanNo":"30... d4","prevLast":["d5","d4"],"evalText":"+3.34","bestCpWhite":334,"explain":["Тихий ход, но остальные ходы заметно хуже.","Это и лучший ход движка."],"pvText":"31. Rgh1 Rd7 32. gxf5 Qg3 33. R7h3 Qd6"},{"ply":65,"san":"R1h6","sanNo":"33. R1h6","kind":"sac","fen":"2b2knQ/r1qr2pR/2N1p3/1p3pB1/3p2P1/2b5/PPP5/2K4R w - - 0 33","prevSanNo":"32... axb5","prevLast":["a6","b5"],"evalText":"−0.24","bestCpWhite":-24,"explain":["Жертва ладьи.","Это и лучший ход движка."],"pvText":"33. R1h6 d3 34. bxc3 d2+ 35. Bxd2 Rxd2"},{"ply":67,"san":"bxc3","sanNo":"34. bxc3","kind":"capture","fen":"2b2knQ/r1qr2pR/2N1p2R/1p3pB1/6P1/2bp4/PPP5/2K5 w - - 0 34","prevSanNo":"33... d3","prevLast":["d4","d3"],"evalText":"+4.67","bestCpWhite":467,"explain":["Берёт слона.","Это и лучший ход движка."],"pvText":"34. bxc3 d2+ 35. Kd1 Rb7 36. Rxe6 Rf7"},{"ply":69,"san":"Kd1","sanNo":"35. Kd1","kind":"quiet","fen":"2b2knQ/r1qr2pR/2N1p2R/1p3pB1/6P1/2P5/P1Pp4/2K5 w - - 0 35","prevSanNo":"34... d2+","prevLast":["d3","d2"],"evalText":"+4.93","bestCpWhite":493,"explain":["Тихий ход, но остальные ходы заметно хуже.","Это и лучший ход движка."],"pvText":"35. Kd1 Rb7 36. Rxe6 Rf7 37. Be7+ Qxe7"},{"ply":71,"san":"Rf6+","sanNo":"36. Rf6+","kind":"sac","fen":"2b2knQ/r2r2pR/2q1p2R/1p3pB1/6P1/2P5/P1Pp4/3K4 w - - 0 36","prevSanNo":"35... Qxc6","prevLast":["c7","c6"],"evalText":"+5.81","bestCpWhite":581,"explain":["Жертва ладьи.","Это и лучший ход движка."],"pvText":"36. Rf6+ gxf6 37. Bh6+ Rg7 38. Bxg7+ Ke7"},{"ply":73,"san":"Qxg7+","sanNo":"37. Qxg7+","kind":"check","fen":"2b2knQ/r4rpR/2q1pR2/1p3pB1/6P1/2P5/P1Pp4/3K4 w - - 2 37","prevSanNo":"36... Rf7","prevLast":["d7","f7"],"evalText":"+9.71","bestCpWhite":971,"explain":["Шах и взятие пешки.","Это и лучший ход движка."],"pvText":"37. Qxg7+ Ke8 38. Qxg8+ Ke7 39. Rfxf7+ Kd6"},{"ply":75,"san":"Qxg8+","sanNo":"38. Qxg8+","kind":"check","fen":"2b1k1n1/r4rQR/2q1pR2/1p3pB1/6P1/2P5/P1Pp4/3K4 w - - 1 38","prevSanNo":"37... Ke8","prevLast":["f8","e8"],"evalText":"+11.09","bestCpWhite":1419,"explain":["Шах и взятие коня.","Движок предпочитает 38. Rxf7 (+14.19)."],"pvText":"38. Qxg8+ Ke7 39. Rfxf7+ Kd6 40. Bf4+ Kd5"},{"ply":77,"san":"Rhxf7+","sanNo":"39. Rhxf7+","kind":"check","fen":"2b3Q1/r2k1r1R/2q1pR2/1p3pB1/6P1/2P5/P1Pp4/3K4 w - - 1 39","prevSanNo":"38... Kd7","prevLast":["e8","d7"],"evalText":"+10.08","bestCpWhite":1489,"explain":["Шах и взятие ладьи.","Движок предпочитает 39. Rfxf7+ (+14.89)."],"pvText":"39. Rhxf7+ Kd6 40. Rxf5 Rxf7 41. Rxf7 Bd7"}],"cur":3,"answers":[{"pts":1,"user":"15. Qf2"},{"pts":2,"user":"19. Bf4"},{"pts":2,"user":"24. Bh6"},{"pts":0,"user":"26. Be8"},{"pts":2,"user":"31. Rgh1"},{"pts":0,"user":"33. Nxa7"},{"pts":2,"user":"34. bxc3"},{"pts":2,"user":"35. Kd1"},{"pts":2,"user":"36. Rf6+"},{"pts":2,"user":"37. Qxg7+"},{"pts":0,"user":"38. Qh8"},{"pts":2,"user":"39. Rhxf7+"}],"user":{"sanNo":"26. Be8","evalText":"0.00"},"resultArrows":[{"from":"b5","to":"e8","role":"played","color":"#E0574A"},{"from":"d1","to":"g1","role":"best","color":"#81B64C","label":"М"}],"moves":["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","Nc6","Bg5","e6","Qd2","Be7","O-O-O","O-O","Nb3","Qb6","f3","a6","g4","Rd8","Be3","Qc7","h4","b5","g5","Nd7","g6","hxg6","h5","gxh5","Rxh5","Nf6","Rh1","d5","e5","Nxe5","Bf4","Bd6","Qh2","Kf8","Qh8+","Ng8","Rh7","f5","Bh6","Rd7","Bxb5","Rf7","Rg1","Ra7","Nd4","Ng4","fxg4","Be5","Nc6","Bxc3","Be3","d4","Rgh1","Rd7","Bg5","axb5","R1h6","d3","bxc3","d2+","Kd1","Qxc6","Rf6+","Rf7","Qxg7+","Ke8","Qxg8+","Kd7","Rhxf7+"],"startFen":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","endFen":"2b3Q1/r2k1R2/2q1pR2/1p3pB1/6P1/2P5/P1Pp4/3K4 b - - 0 39","endLast":["h7","f7"],"best":19};
+const S = (location.hash || '#overview').slice(1);
+MK.side('Мастера');
+const ico = MK.ico, P = id => document.getElementById(id);
+const M = DATA.moments;                 // ключевые моменты Таля
+const CUR = DATA.cur;                    // индекс текущего момента (для ask/result)
+const ANS = DATA.answers;                // ответы на прошлые моменты: [{pts, user}]
+const KIND = { sac: ['flame', 'sac', 'жертва'], quiet: ['circle-dot', 'quiet', 'тихий ход'], check: ['zap', 'chk', 'шах'], capture: ['swords', '', 'взятие'], annotated: ['star', '', 'пометка автора'] };
+const done = S === 'done' ? M.length : S === 'overview' ? 0 : CUR;
+const score = ANS.slice(0, done).reduce((a, x) => a + x.pts, 0) + (S === 'result' ? 0 : 0);
+P('mcount').textContent = `${M.length} моментов`;
+const answered = S === 'result' ? CUR + 1 : done;
+const got2 = ANS.slice(0, answered).filter(x => x.pts === 2).length;
+const sc = ANS.slice(0, answered).reduce((a, x) => a + x.pts, 0);
+P('stats').innerHTML = `<div class="stat"><b class="num" style="color:var(--accent)">${S === 'overview' ? '—' : sc}</b><span>очки</span></div><div class="stat"><b class="num">${S === 'overview' ? '—' : got2 + '/' + answered}</b><span>как мастер</span></div><div class="stat"><b class="num">${DATA.best}</b><span>рекорд</span></div>`;
+P('mprog').textContent = S === 'overview' ? `${M.length}` : `${answered} из ${M.length}`;
+P('mlist').innerHTML = M.map((m, i) => {
+  const st = i < answered ? 'done' : i === CUR && (S === 'ask') ? 'on' : 'todo';
+  const on = (S === 'ask' || S === 'result') && i === CUR;
+  if (i < answered && !(S === 'ask' && i === CUR)) {
+    const a = ANS[i], k = KIND[m.kind];
+    return `<div class="mr${on ? ' on' : ''}" data-ui="master-moment" data-ply="${m.ply}" data-result="${a.pts}"><div class="ki2 ${k[1]}">${ico(k[0])}</div><div style="min-width:0"><div class="nm">${m.sanNo} <span>· ${k[2]}</span></div></div><div class="pt p${a.pts}">${a.pts}</div></div>`;
+  }
+  return `<div class="mr ${on ? 'on' : 'todo'}" data-ui="master-moment" data-ply="${m.ply}" data-result="${on ? 'current' : 'todo'}"><div class="ki2">${ico('circle-help')}</div><div style="min-width:0"><div class="nm">Ход ${Math.ceil(m.ply / 2)}</div></div><div class="pt q">?</div></div>`;
+}).join('');
+
+// ── список ходов ──
+function moveList(upto, cur, ask, scroll, marks) {
+  let h = '';
+  const last = upto ?? DATA.moves.length;
+  for (let i = 0; i < last; i += 2) {
+    h += `<div class="n">${i / 2 + 1}.</div>`;
+    for (const j of [i, i + 1]) {
+      if (j >= last) { h += ask && j === last ? `<div class="c ask">?</div>` : '<div></div>'; continue; }
+      const ply = j + 1, mk = marks && marks[ply];
+      const cls = ply === cur ? 'now' : (j % 2 === 1 ? 'opp' : '');
+      h += `<div class="c ${cls}" data-ui="master-move" data-ply="${ply}">${DATA.moves[j]}${mk != null ? `<span class="pt p${mk}">${mk}</span>` : ''}</div>`;
+    }
+  }
+  if (ask && last % 2 === 0) h += `<div class="n">${last / 2 + 1}.</div><div class="c ask">?</div><div></div>`;
+  return `<div class="mvs"><div class="mvl" data-ui="master-moves" style="margin-top:${-(scroll || 0) * 32}px">${h}</div></div>`;
+}
+const m = M[CUR];
+const marks = {}; ANS.slice(0, CUR).forEach((a, i) => { marks[M[i].ply] = a.pts; });
+
+const ST = {
+  overview: {
+    hr: '', pb: null, title: 'Tal — Koblents',
+    chips: `<div class="chip">Riga · 1957</div><div class="chip res">1–0</div><div class="chip">39 ходов</div><div class="chip">B63</div>`,
+    body: `<div class="setup" data-ui="master-setup"><h3>Угадай ход Таля</h3><p>Партия идёт сама и останавливается в ключевых моментах. Найди ход, который сыграл Tal.</p>
+      <div class="rules"><div><b style="background:var(--accent-press)">2</b>ход мастера — или лучший ход движка, если он сильнее</div><div><b style="background:#B9791E">1</b>ход не хуже лучшего на 0.5 пешки</div></div>
+      <div class="sline">${ico('flame')}${M.length} ключевых моментов · ${M.filter(x => x.kind === 'sac').length} жертв · с 11-го хода<a>Настроить</a></div></div>
+      <div class="blk mvw"><h4>Ходы партии <span class="num">39</span></h4>${moveList(null, 0, false, 0)}</div>`,
+    act: `<div class="btn1" data-ui="master-start">${ico('play')}Начать <span class="k">Enter</span></div>
+      <div class="navrow" data-ui="master-nav"><div class="nb">${ico('chevrons-left')}</div><div class="nb">${ico('chevron-left')}</div><div class="nb">${ico('chevron-right')}</div><div class="nb">${ico('chevrons-right')}</div><div class="sp"></div><div class="ib">${ico('arrow-up-down')}</div><div class="ib">${ico('ellipsis')}</div></div>`,
+    board: { fen: DATA.startFen, last: [], arrows: [], badges: [], eval: { cp: 33, hid: false } },
+    pnote: 'начальная позиция',
+  },
+  ask: {
+    hr: `момент ${CUR + 1} / ${M.length}`, pb: (CUR / M.length) * 100, title: 'Что сыграет Tal?',
+    chips: `<div class="chip">ход ${Math.ceil(m.ply / 2)} белых</div><div class="chip"><img src="pieces/wK.svg">за Таля</div><div class="chip green">${ico('trophy')}${score} очков</div>`,
+    body: `<div class="fb info" data-ui="master-task" data-result="info"><div class="bi">${ico('lightbulb')}</div><div><div class="t1">Найди ход белых после <b>${m.prevSanNo}</b>.</div><div class="t2">Ход на доске. H — подсказка: что за момент (тогда не больше 1 очка).</div></div></div>
+      <div class="blk mvw"><h4>Ходы партии <span class="num">твой ход ${Math.ceil(m.ply / 2)}</span></h4>${moveList(m.ply - 1, 0, true, Math.max(0, Math.ceil((m.ply - 1) / 2) - 10), marks)}</div>`,
+    act: `<div class="two" style="margin-top:0" data-ui="master-ask-actions"><div class="btn2" data-ui="master-hint">${ico('lightbulb')}Подсказка <span class="k">H</span></div><div class="btn2" data-ui="master-skip-moment">Пропустить <span class="k">N</span></div></div><div class="keys">Esc — стоп · F — перевернуть доску</div>`,
+    board: { fen: m.fen, last: m.prevLast, arrows: [], badges: [], eval: { hid: true } },
+    pnote: `после <b>${m.prevSanNo}</b> · ход белых`,
+  },
+  result: {
+    hr: `момент ${CUR + 1} / ${M.length}`, pb: ((CUR + 1) / M.length) * 100, title: 'Tal сыграл иначе',
+    chips: `<div class="chip">ход ${Math.ceil(m.ply / 2)} белых</div><div class="chip">${ico(KIND[m.kind][0])}${KIND[m.kind][2]}</div><div class="chip green">${ico('trophy')}${score} очков</div>`,
+    body: `<div class="fb fail" data-ui="master-feedback" data-result="miss"><div class="bi">${ico('x')}</div><div><div class="t1"><b>${DATA.user.sanNo}</b> — оценка ${DATA.user.evalText}. Tal сыграл <b>${m.sanNo}</b>: ${m.evalText}.</div>
+        <ul class="bul">${m.explain.map(x => `<li>${x}</li>`).join('')}</ul></div></div>
+      <div class="pvline" data-ui="master-pv"><span>Вариант движка:</span> ${m.pvText}</div>
+      <div class="blk mvw"><h4>Ходы партии <span class="num">${Math.ceil(m.ply / 2)} ход</span></h4>${moveList(m.ply, m.ply, false, Math.max(0, Math.ceil(m.ply / 2) - 10), { ...marks, [m.ply]: 0 })}</div>`,
+    act: `<div class="btn1" data-ui="master-next">Дальше <span class="k">Enter</span></div><div class="two"><div class="btn2" data-ui="master-line">${ico('play')}Вариант движка</div><div class="btn2" data-ui="master-stop">Стоп <span class="k">Esc</span></div></div>`,
+    board: { fen: m.fen, last: m.prevLast, arrows: DATA.resultArrows, badges: [], eval: { cp: m.bestCpWhite, hid: false } },
+    pnote: `после <b>${m.prevSanNo}</b> · ход белых`,
+  },
+  done: {
+    hr: `${M.length} / ${M.length}`, pb: 100, title: 'Партия сыграна',
+    chips: `<div class="chip"><img src="pieces/wK.svg">за Таля</div><div class="chip">Ключевые моменты</div>`,
+    body: `<div data-ui="master-result"><div class="sum"><div><b class="num" style="color:var(--accent)">${sc}</b><span>очков из ${M.length * 2}</span></div><div><b class="num">${got2}/${M.length}</b><span>как мастер</span></div><div><b class="num">${DATA.best}</b><span>рекорд</span></div></div></div>
+      <div class="note"><i class="ico" data-i="trophy"></i><span>До рекорда не хватило <b>${DATA.best - sc} очков</b>. Ошибки — внизу: клик откроет позицию.</span></div>
+      <div class="blk" data-ui="master-log"><h4>Где ты сыграл иначе</h4><div class="lg">${M.map((x, i) => [x, ANS[i]]).filter(([, a]) => a.pts < 2).slice(0, 6).map(([x, a]) => `<div class="lrw"><div class="pt p${a.pts}">${a.pts}</div><div><b>${x.sanNo}</b> · ты ${a.user}</div><span>${KIND[x.kind][2]}</span></div>`).join('')}</div></div>`,
+    act: `<div class="btn1" data-ui="master-again">Ещё раз <span class="k">Enter</span></div><div class="two"><div class="btn2" data-ui="master-other-game">Другая партия</div><div class="btn2" data-ui="master-review">Разбор партии</div></div>`,
+    board: { fen: DATA.endFen, last: DATA.endLast, arrows: [], badges: [], eval: { cp: 726, hid: false } },
+    pnote: 'конец партии · <b>39. Rhxf7+</b> · 1–0',
+  },
+}[S];
+P('hr').textContent = ST.hr;
+if (ST.pb == null) P('pbw').style.display = 'none'; else P('pb').style.width = ST.pb + '%';
+P('ptitle').innerHTML = ST.title; P('chips').innerHTML = ST.chips; P('rb').innerHTML = ST.body; P('act').innerHTML = ST.act; P('pnote').innerHTML = ST.pnote;
+
+// ── доска, стрелки, шкала оценки ──
+MK.board({ fen: ST.board.fen, flip: false, last: ST.board.last });
+const files = 'abcdefgh', Q = 774 / 8;
+const ctr = sq => [(files.indexOf(sq[0]) + .5) * Q, (8 - +sq[1] + .5) * Q];
+let svg = '';
+for (const a of ST.board.arrows) {
+  const [x1, y1] = ctr(a.from), [x2, y2] = ctr(a.to);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const st = 18, en = L - 14, hd = 34, hw = 22, h = 9;
+  const Pp = (t, o) => [(x1 + ux * t + px * o).toFixed(1), (y1 + uy * t + py * o).toFixed(1)].join(',');
+  svg += `<polygon points="${[Pp(st, -h), Pp(en - hd, -h), Pp(en - hd, -hw), Pp(en, 0), Pp(en - hd, hw), Pp(en - hd, h), Pp(st, h)].join(' ')}" fill="${a.color}" opacity=".85"/>`;
+  if (a.label) { const x = x1 + dx * .5, y = y1 + dy * .5; svg += `<circle cx="${x}" cy="${y}" r="15" fill="${a.color}"/><text x="${x}" y="${y + 5.5}" text-anchor="middle" font-family="Inter" font-weight="800" font-size="15" fill="#fff">${a.label}</text>`; }
+}
+P('over').innerHTML = `<svg width="774" height="774" style="position:absolute;inset:0">${svg}</svg>`;
+const ev = ST.board.eval, eb = P('evbar');
+if (ev.hid) eb.classList.add('hid');
+else { const pct = Math.max(5, Math.min(95, 50 + 50 * Math.tanh(ev.cp / 500))); eb.innerHTML = `<i style="height:${pct}%"></i>`; }
+MK.icons();
+</script>
+</body>
+</html>

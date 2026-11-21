@@ -152,6 +152,7 @@ export interface DemoInsight {
   date: string;
   rating_me: number;
   time_class: 'rapid' | 'blitz';
+  opening?: string | null;
 }
 
 // A middlegame FEN used for decisive positions

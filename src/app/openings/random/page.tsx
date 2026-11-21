@@ -91,16 +91,6 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function formatLineFull(moves: ChessMove[]): string {
-  const parts: string[] = [];
-  moves.forEach((m, i) => {
-    if (m.color === 'w') parts.push(`${Math.floor(i / 2) + 1}.`);
-    else if (i === 0) parts.push(`${Math.floor(i / 2) + 1}...`);
-    parts.push(m.san);
-  });
-  return parts.join(' ');
-}
-
 // ── Line Notation Strip ────────────────────────────────────────────────────────
 
 function LineNotationStrip({
@@ -411,7 +401,7 @@ export default function RandomOpeningPage() {
         }, 500);
       }
     },
-    [],
+    [stopAnalysis],
   );
 
   // ── Start new game ────────────────────────────────────────────────────────

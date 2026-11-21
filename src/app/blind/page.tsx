@@ -103,7 +103,7 @@ function BlindPageInner() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       loadPuzzle(p);
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setPhase('empty');
     }
   }, [isDemo, loadPuzzle]);

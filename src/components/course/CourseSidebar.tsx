@@ -1,7 +1,8 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { SessionPanel } from '@/components/trainer/SessionPanel';
-import { movesWord, type LessonStep, type LessonStepLine } from '@/lib/lesson';
+import { type LessonStep, type LessonStepLine } from '@/lib/lesson';
 
 interface LessonMeta {
   id: string;
@@ -90,20 +91,6 @@ function StepKindIcon({ kind, done }: { kind: LessonStep['kind']; done: boolean 
   return <span style={{ color: 'var(--muted)', display: 'flex', alignItems: 'center' }}>{iconMap[kind] ?? null}</span>;
 }
 
-function stepRightLabel(step: LessonStep, stepIdx: number, currentPly: number, isCurrent: boolean): string | null {
-  if (step.kind === 'line') {
-    // Find total moves for this line step
-    const totalMoves = (step as LessonStepLine & { totalMoves?: number }).totalMoves;
-    if (isCurrent && totalMoves !== undefined) return `${currentPly} / ${totalMoves}`;
-    return null;
-  }
-  if (step.kind === 'quiz' || step.kind === 'idea') {
-    const items = (step as { items: unknown[] }).items;
-    return `${items.length} вопр.`;
-  }
-  return null;
-}
-
 export function CourseSidebar({
   courseId,
   lessonId,
@@ -120,11 +107,11 @@ export function CourseSidebar({
   const doneLessonsCount = Object.values(lessonProgress).filter(p => p.completed).length;
   const totalLessons = lessons.length;
 
+  const router = useRouter();
+
   // Test average
   const testVals = Object.values(lessonTests).map(t => t.max > 0 ? Math.round((t.score / t.max) * 100) : 0);
   const testPct = testVals.length > 0 ? Math.round(testVals.reduce((a, b) => a + b, 0) / testVals.length) : null;
-
-  const currentLessonIdx = lessons.findIndex(l => l.id === lessonId);
 
   const header = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -195,9 +182,7 @@ export function CourseSidebar({
                 border: isCurrent ? '1px solid rgba(129,182,76,0.25)' : '1px solid transparent',
               }}
               onClick={() => {
-                if (!isCurrent) {
-                  window.location.href = `/courses/${courseId}/${lesson.id}`;
-                }
+                if (!isCurrent) router.push(`/courses/${courseId}/${lesson.id}`);
               }}
             >
               {/* Square indicator 28px */}

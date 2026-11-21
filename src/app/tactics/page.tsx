@@ -85,18 +85,18 @@ function TacticsPageInner() {
     if (isDemo) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPuzzles(DEMO_TACTICS);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setPuzzleIdx(0);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setMoveIdx(0);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setPhase('intro');
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setBoardFen(DEMO_TACTICS[0]?.fenStart ?? 'start');
       return;
     }
     // Real mode: would load from DB
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setPhase('empty');
   }, [isDemo]);
 

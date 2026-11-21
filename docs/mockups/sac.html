@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Жертвы — макет</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@700&display=swap">
+<style>
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A; --brill:#26C2A3; --plan:#4A90E2;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:14px 12px;display:flex;flex-direction:column}
+.item{height:40px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:15px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:16px 12px 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.grp .ico{width:14px;height:14px}
+.side .bottom{margin-top:auto;color:var(--faint)}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.left{width:280px;height:854px;display:flex;flex-direction:column}
+.left .hd{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:baseline}
+.h2{font-size:19px;font-weight:700}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.segctl{display:grid;grid-template-columns:1fr 1fr;margin:14px 20px 4px;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.segctl div{height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;color:var(--muted);font-weight:500}
+.segctl .on{background:#45423E;color:var(--text);font-weight:600}
+.qlabel{margin:14px 20px 6px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.queue{padding:0 10px;display:flex;flex-direction:column;gap:2px}
+.row{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:8px;height:50px;padding:0 10px;border-radius:10px;position:relative}
+.row .t{font-size:14px;color:#E4E1DC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .p{font-size:13px;color:var(--faint);margin-top:-1px}
+.row .idx{font-size:13px;color:var(--faint);text-align:center}
+.row.cur{background:var(--row)}
+.row.cur::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--accent)}
+.row.cur .idx{color:var(--accent);font-weight:700}
+.row.done .t{color:#BDB9B3}
+.ok{color:var(--accent)} .bad{color:var(--danger)} .warn{color:var(--warn)}
+.prep{margin-top:auto;padding:16px 20px 20px;border-top:1px solid var(--hair)}
+.prep .l{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.prep .t{font-size:14px;color:#DDD9D4;margin:6px 0 10px}
+.bar{height:6px;border-radius:3px;background:#3A3835;overflow:hidden;margin-bottom:12px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#E8E5E0}
+.btn2 .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.bcol{width:806px;height:854px;display:flex;flex-direction:column;gap:8px}
+.pbar{height:32px;display:flex;align-items:center;justify-content:space-between;padding-left:32px}
+.who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.ava{width:28px;height:28px;border-radius:6px;background:#4A4744;display:grid;place-items:center}
+.ava img{width:22px;height:22px}
+.tag{font-size:13px;font-weight:500;color:var(--muted)}
+.pnote{font-size:13px;color:var(--muted)}
+.brow{display:flex;gap:8px;height:774px}
+.gutter{width:24px}
+.evalbar{width:24px;height:774px;border-radius:5px;overflow:hidden;background:#403D3A;position:relative}
+.evalbar .w{position:absolute;left:0;right:0;bottom:0;background:#EDEBE7}
+.evalbar .lbl{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:10px;font-weight:700;color:#3A3835}
+.board{width:774px;height:774px;position:relative}
+.sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden}
+.sq{position:relative}
+.sq .hl{position:absolute;inset:0}
+.sq img{position:absolute;inset:0;width:100%;height:100%}
+.co{position:absolute;font-size:13px;font-weight:600;line-height:1}
+.co.r{left:5px;top:5px}.co.f{right:6px;bottom:4px}
+.over{position:absolute;inset:0;pointer-events:none}
+.badge{position:absolute;width:36px;height:36px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+.right{flex:1;height:854px;display:flex;flex-direction:column}
+.rp-h{padding:20px 24px 18px}
+.crumbs{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.prog{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--text);font-weight:600}
+.xp{font-size:13px;font-weight:600;color:var(--accent);background:rgba(129,182,76,.14);border-radius:6px;padding:2px 7px}
+.pbarline{height:4px;border-radius:4px;background:#3A3835;margin-top:12px;overflow:hidden}
+.pbarline i{display:block;height:100%;width:8.6%;background:var(--accent);border-radius:4px}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:14px;line-height:1.15}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:500;color:#DCD8D3}
+.chip.ok{color:var(--accent)} .chip.brill{color:#4FD8BC}
+.sec{padding:16px 24px;border-top:1px solid var(--hair)}
+.lab{font-size:13px;color:var(--muted);margin-bottom:8px}
+.offer{display:flex;align-items:center;gap:14px}
+.bigmv{font-size:26px;font-weight:700;background:rgba(240,164,58,.12);border:1px solid rgba(240,164,58,.45);color:#F4B45C;border-radius:10px;padding:6px 14px;font-family:'Inter Tight',Inter,sans-serif}
+.rule{display:flex;align-items:center;gap:10px;height:32px;font-size:15px;color:#E2DFDA}
+.rule .ico{color:var(--muted)}
+.mv{background:rgba(255,255,255,.06);border-radius:6px;padding:2px 7px;color:#E6E3DE;font-weight:500}
+.fb{margin:16px 24px 0;border-radius:12px;background:rgba(129,182,76,.09);border:1px solid rgba(129,182,76,.32);padding:16px 18px}
+.fb .top{display:flex;align-items:center;gap:10px}
+.fb .top b{font-size:19px;color:var(--accent)}
+.fb p{margin-top:8px;font-size:15px;color:#E6E3DE}
+.evals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.ev{background:rgba(0,0,0,.18);border-radius:8px;padding:8px 12px}
+.ev span{display:block;font-size:13px;color:var(--muted)}
+.ev b{font-size:18px}
+.lines{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.ln{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.ln .if{color:var(--faint);min-width:52px}
+.dot{width:24px;height:24px;border-radius:12px;display:grid;place-items:center;color:#fff}
+.dot .ico{width:15px;height:15px}
+.gg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gg div{background:var(--surface2);border:1px solid var(--hair);border-radius:10px;padding:10px 12px}
+.gg span{display:block;font-size:13px;color:var(--muted)}
+.gg b{font-size:15px}
+.act{margin-top:auto;padding:20px 24px 20px;border-top:1px solid var(--hair)}
+.btn1{height:52px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:12px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ch{height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:19px;font-weight:700}
+.ch .k{font-size:12px;font-weight:600;border-radius:6px;padding:2px 7px;margin-left:4px}
+.ch.sac{background:rgba(240,164,58,.14);border:1px solid rgba(240,164,58,.55);color:#F4B45C;box-shadow:0 4px 0 rgba(240,164,58,.25)}
+.ch.sac .k{background:rgba(240,164,58,.18)}
+.ch.calm{background:var(--surface2);border:1px solid var(--hair2);color:#E8E5E0;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.ch.calm .k{background:rgba(255,255,255,.08);color:var(--muted)}
+.ch .ico{width:22px;height:22px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.hints{margin-top:14px;font-size:13px;color:var(--faint);text-align:center}
+.qa{display:none} body.a .qa{display:block} body.a .qq{display:none}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+
+<aside class="side" id="side"></aside>
+
+<main class="main">
+  <!-- LEFT -->
+  <section class="card left">
+    <div class="hd"><div class="h2">Сессия</div><div class="muted num" style="font-size:14px">осталось 128</div></div>
+    <div class="stats">
+      <div class="stat"><b class="num ok">9</b><span>верно</span></div>
+      <div class="stat"><b class="num warn">2</b><span>пропустил</span></div>
+      <div class="stat"><b class="num bad">1</b><span>ложная</span></div>
+    </div>
+    <div class="segctl"><div class="on">Таль</div><div>Все мастера</div></div>
+    <div class="qlabel"><span>Позиции</span><span class="num">12 / 140</span></div>
+    <div class="queue" id="queue"></div>
+    <div class="prep">
+      <div class="l"><i class="ico" data-i="database" style="width:15px;height:15px"></i>Подготовка позиций</div>
+      <div class="t">Готово 140 позиций · ещё 1 102 партии Таля не проверены</div>
+      <div class="bar"><i style="width:11%"></i></div>
+      <div class="btn2">Подготовить ещё 200 партий</div>
+    </div>
+  </section>
+
+  <!-- BOARD -->
+  <section class="bcol">
+    <div class="pbar">
+      <div class="who"><div class="ava"><img src="pieces/bP.svg"></div>Чёрные</div>
+      <div class="pnote qq">ход 8</div>
+      <div class="pnote qa">шах</div>
+    </div>
+    <div class="brow">
+      <div class="gutter qq"></div>
+      <div class="evalbar qa"><div class="w" style="height:92%"></div><div class="lbl">6.6</div></div>
+      <div class="board"><div class="sqs" id="sqs"></div><div class="over" id="over"></div></div>
+    </div>
+    <div class="pbar">
+      <div class="who"><div class="ava"><img src="pieces/wP.svg"></div>Белые <span class="tag">ты решаешь за них</span></div>
+      <div class="pnote">Французская защита</div>
+    </div>
+  </section>
+
+  <!-- RIGHT -->
+  <section class="card right">
+    <div class="rp-h">
+      <div class="crumbs"><span>Тренировка · Жертвы</span><span class="prog"><span class="num">12 / 140</span><span class="xp num">+180 XP</span></span></div>
+      <div class="pbarline"><i></i></div>
+      <div class="title tight">Жертвовать или нет?</div>
+      <div class="chips" id="chipsQ">
+        <div class="chip">Ход белых</div>
+        <div class="chip">Партия мастера</div>
+        <div class="chip">Атака на короля</div>
+      </div>
+      <div class="chips qa" id="chipsA">
+        <div class="chip ok">Верно</div>
+        <div class="chip brill"><span id="brillChip"></span>Блестящая жертва</div>
+        <div class="chip ok num">+20 XP</div>
+      </div>
+    </div>
+
+    <!-- QUESTION -->
+    <div class="sec qq">
+      <div class="lab">Предложение</div>
+      <div class="offer"><span class="bigmv">Bxh7+</span><span>Слон берёт пешку с шахом. Король может забрать слона.</span></div>
+    </div>
+    <div class="sec qq">
+      <div class="lab">Взвесь перед ответом</div>
+      <div class="rule"><i class="ico" data-i="scale"></i>Сколько материала ты отдаёшь?</div>
+      <div class="rule"><i class="ico" data-i="shield"></i>Сколько фигур защищают короля соперника?</div>
+      <div class="rule"><i class="ico" data-i="zap"></i>Какие у тебя шахи и угрозы после взятия?</div>
+    </div>
+
+    <!-- ANSWER -->
+    <div class="fb qa">
+      <div class="top"><span class="dot" style="background:var(--accent)"><i class="ico" data-i="check"></i></span><b>Верно! Жертва работает</b></div>
+      <p><span class="mv">Bxh7+</span> — «греческая жертва»: слон отдаётся, чтобы раскрыть короля.</p>
+      <div class="evals">
+        <div class="ev"><span>без жертвы (лучший ход)</span><b class="num">+2.5</b></div>
+        <div class="ev"><span>после Bxh7+</span><b class="num ok">+6.6</b></div>
+      </div>
+      <div class="lines">
+        <div class="ln"><span class="if">если</span><span class="mv">Kxh7</span><span class="mv">Ng5+</span><span class="mv">Kg8</span><span class="mv">Qh5</span>— мат в 5 ходов</div>
+        <div class="ln"><span class="if">если</span><span class="mv">Kxh7</span><span class="mv">Ng5+</span><span class="mv">Kh6</span><span class="mv">Nxf7+</span>— вилка на ферзя</div>
+      </div>
+    </div>
+    <div class="sec qa" style="border-top:none;padding-top:16px">
+      <div class="gg">
+        <div><span>Отдал</span><b>слона (3 пешки)</b></div>
+        <div><span>Получил</span><b>атаку на короля</b></div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="qq">
+        <div class="choice">
+          <div class="ch sac"><i class="ico" data-i="zap"></i>Жертвую<span class="k">1</span></div>
+          <div class="ch calm"><i class="ico" data-i="shield"></i>Не жертвую<span class="k">2</span></div>
+        </div>
+        <div class="hints">Доверься чутью: ответ сразу, без долгого расчёта</div>
+      </div>
+      <div class="qa">
+        <div class="btn1">Дальше <span class="k">Пробел</span></div>
+        <div class="two">
+          <div class="btn2"><i class="ico" data-i="swords"></i>Сыграть атаку</div>
+          <div class="btn2"><i class="ico" data-i="message-square"></i>Открыть партию</div>
+        </div>
+        <div class="hints">Сыграй атаку против движка, чтобы закрепить идею</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script>
+const A = location.hash === '#a';
+if (A) document.body.classList.add('a');
+document.getElementById('chipsA').style.display = A ? 'flex' : 'none';
+document.getElementById('chipsQ').style.display = A ? 'none' : 'flex';
+const ico = (n, s='') => `<i class="ico" data-i="${n}" style="${s}"></i>`;
+
+const nav = [
+  ['calendar','Сегодня'],
+  ['#','Учиться'],['layers','Дебюты'],['book-open','Курсы'],['flag','Ловушки'],['lightbulb','Идеи позиций'],
+  ['#','Тренироваться'],['circle-alert','Ошибки'],['triangle-alert','Проверка угроз'],['grid-3x3','Эндшпили'],['shield','Жертвы',1],['search','Угадай дебют'],['circle-play','Играть'],
+  ['#','Партии'],['message-square','Мои партии'],['star','Мастера'],
+];
+document.getElementById('side').innerHTML = nav.map(([i,t,a]) => i==='#'
+  ? `<div class="grp">${t}${ico('chevron-down')}</div>`
+  : `<div class="item${a?' active':''}">${ico(i)}${t}</div>`).join('')
+  + `<div class="item bottom">${ico('panel-left-close')}Свернуть меню</div>`;
+
+const Q = [
+  ['ok','Rxf7 · работает','ты: жертвую'],
+  ['bad','Nd5 · не работает','ты: жертвую'],
+  ['ok','Qxh7+ · работает','ты: жертвую'],
+  ['warn','Bxg6 · работает','ты: не жертвую'],
+  ['cur','Позиция 12','партия мастера'],
+  ['','Позиция 13','партия мастера'],
+  ['','Позиция 14','партия мастера'],
+  ['','Позиция 15','партия мастера'],
+];
+document.getElementById('queue').innerHTML = Q.map(([s,t,p],k) => {
+  const st = s==='ok' ? `<span class="ok">${ico('check')}</span>`
+           : s==='bad' ? `<span class="bad">${ico('x')}</span>`
+           : s==='warn' ? `<span class="warn" style="font-weight:800">!</span>`
+           : `<span class="idx num">${k+8}</span>`;
+  const cls = s==='cur' ? 'row cur' : s ? 'row done' : 'row';
+  return `<div class="${cls}"><div style="display:grid;place-items:center">${st}</div><div><div class="t">${t}</div><div class="p">${p}</div></div><div></div></div>`;
+}).join('');
+
+// board (white at the bottom)
+const fenQ = 'r1bq1rk1/pppnbppp/2n1p3/3pP3/3P3P/2NB1N2/PPP2PP1/R1BQK2R';
+const fenA = 'r1bq1rk1/pppnbppB/2n1p3/3pP3/3P3P/2N2N2/PPP2PP1/R1BQK2R';
+const fen = A ? fenA : fenQ;
+const files = 'abcdefgh';
+const grid = {};
+fen.split('/').forEach((row, ri) => { let f = 0; for (const ch of row) { if (/\d/.test(ch)) f += +ch; else { grid[files[f] + (8 - ri)] = ch; f++; } } });
+const S = 774 / 8;
+const ctr = sq => [ (files.indexOf(sq[0]) + .5) * S, (8 - +sq[1] + .5) * S ];
+
+let html = '';
+for (let row = 0; row < 8; row++) {
+  for (let col = 0; col < 8; col++) {
+    const sq = files[col] + (8 - row);
+    const isLight = (col + row) % 2 === 0;
+    const bg = isLight ? 'var(--light)' : 'var(--dark)';
+    const coColor = isLight ? 'var(--dark)' : 'var(--light)';
+    let inner = '';
+    if (!A && sq === 'h7') inner += `<div class="hl" style="box-shadow:inset 0 0 0 4px rgba(240,164,58,.95);background:rgba(240,164,58,.18)"></div>`;
+    if (!A && sq === 'd3') inner += `<div class="hl" style="background:rgba(240,164,58,.22)"></div>`;
+    if (A && (sq === 'd3' || sq === 'h7')) inner += `<div class="hl" style="background:rgba(38,194,163,${sq==='h7'?'.55':'.45'})"></div>`;
+    if (A && sq === 'g8') inner += `<div class="hl" style="background:radial-gradient(circle, rgba(232,64,52,.95) 0%, rgba(232,64,52,.6) 38%, rgba(232,64,52,0) 72%)"></div>`;
+    const p = grid[sq];
+    if (p) { const c = p === p.toUpperCase() ? 'w' : 'b'; inner += `<img src="pieces/${c}${p.toUpperCase()}.svg">`; }
+    if (col === 0) inner += `<span class="co r" style="color:${coColor}">${8 - row}</span>`;
+    if (row === 7) inner += `<span class="co f" style="color:${coColor}">${files[col]}</span>`;
+    html += `<div class="sq" style="background:${bg}">${inner}</div>`;
+  }
+}
+document.getElementById('sqs').innerHTML = html;
+
+function arrow(a, b, color, op = .85) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const start = 18, end = L - 14, head = 34, sw = 9, hw = 22;
+  const P = (t, o) => [(x1 + ux * t + px * o).toFixed(1), (y1 + uy * t + py * o).toFixed(1)].join(',');
+  const pts = [P(start, -sw), P(end - head, -sw), P(end - head, -hw), P(end, 0), P(end - head, hw), P(end - head, sw), P(start, sw)].join(' ');
+  return `<polygon points="${pts}" fill="${color}" opacity="${op}"/>`;
+}
+function dashed(a, b, color) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const s = 30, e = L - 18, hl = 26, hw = 16;
+  const ex = x1 + ux * e, ey = y1 + uy * e;
+  const head = [[ex, ey], [ex - ux * hl + px * hw, ey - uy * hl + py * hw], [ex - ux * hl - px * hw, ey - uy * hl - py * hw]].map(p => p.map(v => v.toFixed(1)).join(',')).join(' ');
+  return `<line x1="${(x1 + ux * s).toFixed(1)}" y1="${(y1 + uy * s).toFixed(1)}" x2="${(ex - ux * hl).toFixed(1)}" y2="${(ey - uy * hl).toFixed(1)}" stroke="${color}" stroke-width="9" stroke-dasharray="16 11" stroke-linecap="round" opacity=".95"/><polygon points="${head}" fill="${color}" opacity=".95"/>`;
+}
+function numTag(a, b, n, color, t = .5) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t;
+  return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15" fill="${color}"/><text x="${x.toFixed(1)}" y="${(y + 5.5).toFixed(1)}" text-anchor="middle" font-family="Inter" font-weight="800" font-size="16" fill="#fff">${n}</text>`;
+}
+function brill(size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11.5" fill="#26C2A3"/><text x="12" y="16.6" text-anchor="middle" font-family="Inter" font-weight="800" font-size="12.5" fill="#fff" letter-spacing="-.5">!!</text></svg>`;
+}
+document.getElementById('brillChip').innerHTML = brill(16);
+
+let over = '';
+if (!A) {
+  over = `<svg width="774" height="774" style="position:absolute;inset:0">${dashed('d3', 'h7', '#F0A43A')}</svg>`;
+} else {
+  over = `<svg width="774" height="774" style="position:absolute;inset:0">`
+    + arrow('f3', 'g5', '#4A90E2', .7) + arrow('d1', 'h5', '#4A90E2', .55)
+    + numTag('f3', 'g5', 2, '#3A78C2', .45) + numTag('d1', 'h5', 3, '#3A78C2', .27)
+    + `</svg>`;
+  const [x, y] = ctr('h7');
+  over += `<div class="badge" style="left:${(x + S / 2 - 24).toFixed(1)}px;top:${(y - S / 2 - 12).toFixed(1)}px">${brill(36)}</div>`;
+}
+document.getElementById('over').innerHTML = over;
+
+document.querySelectorAll('[data-i]').forEach(el => {
+  const u = window.ICONS && ICONS[el.dataset.i];
+  if (u) el.style.setProperty('--i', `url("${u}")`);
+});
+</script>
+</body>
+</html>

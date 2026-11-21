@@ -13,15 +13,16 @@ export async function loadInsights(demo: boolean): Promise<DemoInsight[]> {
   const { supabase } = await import('./supabase');
   const { data, error } = await supabase
     .from('game_insights')
-    .select('*, games(opponent_name, played_at, rating_me, time_class)')
+    .select('*, games(opp_name, played_at, rating_me, time_class, eco_name)')
     .order('computed_at', { ascending: false })
     .limit(500);
   if (error) throw new Error(`Ошибка базы: ${error.message}`);
   return (data ?? []).map((r: Record<string, unknown>) => ({
     ...r,
-    opp: (r.games as Record<string, unknown>)?.opponent_name ?? '?',
+    opp: (r.games as Record<string, unknown>)?.opp_name ?? '?',
     date: (r.games as Record<string, unknown>)?.played_at ?? '',
     rating_me: (r.games as Record<string, unknown>)?.rating_me ?? null,
     time_class: (r.games as Record<string, unknown>)?.time_class ?? 'rapid',
+    opening: (r.games as Record<string, unknown>)?.eco_name ?? null,
   })) as DemoInsight[];
 }

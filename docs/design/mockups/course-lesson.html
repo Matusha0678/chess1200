@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Урок курса — макет</title>
+<link rel="stylesheet" href="node_modules/@fontsource/inter/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/600.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter-tight/700.css">
+<style>
+
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A; --plan:#4A90E2;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:10px 12px;display:flex;flex-direction:column}
+.item{height:35px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:14px;flex:none}
+.item .ico{width:17px;height:17px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:12px 12px 4px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);flex:none}
+.grp .ico{width:14px;height:14px}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+/* left */
+.left{width:280px;height:854px;display:flex;flex-direction:column;flex:none}
+.left .hd{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.h2{font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd img{width:26px;height:26px;flex:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.segctl{display:grid;grid-template-columns:.9fr 1.15fr 1fr;margin:14px 20px 0;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.segctl div{height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--muted);font-weight:500}
+.segctl .on{background:#45423E;color:var(--text);font-weight:600}
+.hard{margin:10px 20px 0;height:40px;border-radius:var(--r-btn);border:1px solid var(--hair2);display:flex;align-items:center;gap:10px;padding:0 12px;font-size:14px;font-weight:500;color:#E4E1DC}
+.hard .ico{width:16px;height:16px;color:#F4B45C}
+.hard b{margin-left:auto;font-size:13px;font-weight:600;color:#2A1E0B;background:var(--warn);border-radius:6px;padding:1px 7px}
+.qlabel{margin:16px 20px 6px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.secs{padding:0 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+.lrow{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;height:58px;padding:0 10px;border-radius:10px;position:relative}
+.lrow .ix{width:28px;height:28px;border-radius:8px;background:#3A3835;display:grid;place-items:center;font-size:13px;font-weight:700;color:#CFCBC6}
+.lrow .nm{font-size:14px;font-weight:600;color:#E8E5E0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .sub{display:flex;align-items:center;gap:8px;margin-top:6px}
+.mb{display:flex;gap:3px}
+.mb i{width:10px;height:4px;border-radius:2px;background:#45423E}
+.mb i.f{background:var(--accent)}
+.tag{font-size:13px;font-weight:600;color:#F4B45C;line-height:1;white-space:nowrap}
+.lrow .st{font-size:13px;color:var(--muted);white-space:nowrap}
+.lrow .st.due{color:#F4B45C;font-weight:600}
+.lrow .st.ok{color:var(--accent);font-weight:600}
+.lrow .st.new{color:#8FB4DA}
+.lrow.on{background:var(--row)}
+.lrow.on::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:3px;background:var(--accent)}
+.leftbot{padding:14px 20px 20px;border-top:1px solid var(--hair);display:flex;gap:10px}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#E8E5E0;padding:0 14px}
+.btn2 .ico{width:16px;height:16px}
+.btn2 .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.btn2.off{opacity:.45}
+.three .btn2{font-size:14px;padding:0 10px;gap:7px}
+.btn2.sq{width:44px;padding:0}
+/* board */
+.bcol{width:806px;height:854px;display:flex;flex-direction:column;gap:8px;flex:none}
+.pbar{height:32px;display:flex;align-items:center;justify-content:space-between;padding-left:32px}
+.who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.ava{width:28px;height:28px;border-radius:6px;background:#4A4744;display:grid;place-items:center}
+.ava img{width:22px;height:22px}
+.tg{font-size:13px;font-weight:500;color:var(--muted)}
+.pnote{font-size:13px;color:var(--muted)}
+.pnote b{color:var(--text);font-weight:600}
+.brow{display:flex;gap:8px;height:774px}
+.gutter{width:24px}
+.board{width:774px;height:774px;position:relative}
+.sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden}
+.sq{position:relative}
+.sq .hl{position:absolute;inset:0}
+.sq img{position:absolute;inset:0;width:100%;height:100%}
+.co{position:absolute;font-size:13px;font-weight:600;line-height:1}
+.co.r{left:5px;top:5px}.co.f{right:6px;bottom:4px}
+.over{position:absolute;inset:0;pointer-events:none}
+/* right */
+.right{flex:1;height:854px;display:flex;flex-direction:column;min-width:0}
+.rp-h{padding:20px 24px 14px}
+.crumbs{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.crumbs .pr{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--text)}
+.xp{font-size:13px;font-weight:600;color:#81B64C;background:rgba(129,182,76,.14);border-radius:6px;padding:2px 7px}
+.pb4{height:4px;border-radius:4px;background:#3A3835;margin-top:12px;overflow:hidden}
+.pb4 i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:14px;line-height:1.15}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:500;color:#DCD8D3}
+.chip img{width:16px;height:16px}
+.chip .ico{width:14px;height:14px}
+.chip.orange{color:#F4B45C;border-color:rgba(240,164,58,.35);background:rgba(240,164,58,.08)}
+.rb{flex:1;overflow:hidden;padding:4px 24px 0;display:flex;flex-direction:column;gap:16px}
+.fb{border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start}
+.fb .bi{width:30px;height:30px;border-radius:15px;display:grid;place-items:center;color:#fff}
+.fb .bi .ico{width:17px;height:17px}
+.fb .t1{font-size:16px;line-height:1.45;color:var(--text)}
+.fb .t1 b{font-weight:700;white-space:nowrap}
+.fb .t2{font-size:14px;color:var(--muted);margin-top:6px}
+.fb.fail{background:rgba(224,87,74,.10);border:1px solid rgba(224,87,74,.35)} .fb.fail .bi{background:var(--danger)}
+.fb.info{background:rgba(74,144,226,.09);border:1px solid rgba(74,144,226,.30)} .fb.info .bi{background:#3A78C2}
+.fb.ok{background:rgba(129,182,76,.10);border:1px solid rgba(129,182,76,.35)} .fb.ok .bi{background:var(--accent-press)}
+.note{border-radius:10px;background:rgba(240,164,58,.08);border:1px solid rgba(240,164,58,.28);padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#E6E3DE}
+.note .ico{width:17px;height:17px;color:#F4B45C;margin-top:2px}
+.note b{font-weight:600}
+.note a{color:#F4B45C;text-decoration:none;font-weight:600;white-space:nowrap;margin-left:auto}
+.blk h4{font-size:13px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px}
+.blk h4 span{font-weight:500;color:var(--text)}
+.stp{display:flex;gap:5px}
+.stp i{flex:1;height:10px;border-radius:5px;background:#3D3B38}
+.stp i.ok{background:var(--accent)} .stp i.fail{background:var(--danger)} .stp i.hint{background:var(--warn)}
+.stp i.cur{box-shadow:0 0 0 2px var(--surface),0 0 0 4px rgba(255,255,255,.55)}
+.stp i.now{background:#5A5753}
+.mv{display:grid;grid-template-columns:34px 104px 104px;row-gap:2px;column-gap:6px;font-size:15px}
+.mv .n{color:var(--faint);font-size:14px;line-height:30px;text-align:right;padding-right:4px}
+.mv .c{height:30px;border-radius:7px;padding:0 9px;display:flex;align-items:center;font-weight:600;color:#E4E1DC}
+.mv .c.opp{color:#CFCBC6;font-weight:500}
+.mv .c.known{color:var(--faint);font-weight:500}
+.mv .c.future{color:#6B6863;font-weight:500}
+.mv .c.now{box-shadow:inset 0 0 0 2px var(--accent);color:var(--text)}
+.mv .c.q{box-shadow:inset 0 0 0 2px var(--danger);color:#F08277;font-weight:700}
+.mv .c.bad{color:#F08277}
+.mv.wide{grid-template-columns:34px 1fr 1fr 34px 1fr 1fr}
+.act{padding:16px 24px 18px;border-top:1px solid var(--hair)}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.keys{font-size:13px;color:var(--faint);margin-top:12px;text-align:center}
+.btn1{height:52px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.btn1 .ico{width:18px;height:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.two .btn2{font-size:14px;padding:0 10px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.sum div{padding:14px 0;text-align:center;border-right:1px solid var(--hair)} .sum div:last-child{border-right:none}
+.sum b{display:block;font-size:26px;font-weight:700;line-height:1.2}
+.sum span{font-size:13px;color:var(--muted)}
+.res{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--hair)}
+.res .bi{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.res .bi .ico{width:15px;height:15px}
+.res .t1{font-size:15px;font-weight:600}
+.res .t2{font-size:13px;color:var(--muted);margin-top:2px}
+.res .t2 b{color:#F08277;font-weight:600}
+.planrow{display:flex;justify-content:space-between;font-size:14px;color:#DCD8D3;padding:8px 2px;border-bottom:1px solid var(--hair)}
+.planrow:last-child{border-bottom:none}
+.planrow span{color:var(--muted)}
+
+/* ── левая колонка: курс ── */
+.chd{padding:18px 20px 14px;display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:center}
+.chd img{width:30px;height:30px}
+.chd .cn{font-size:17px;font-weight:700;line-height:1.25}
+.chd .cs{font-size:13px;color:var(--muted);margin-top:2px}
+.stat b.warn{color:#F4B45C}
+.lessons{padding:0 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+.lr{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:center;min-height:46px;padding:5px 10px;border-radius:10px;position:relative}
+.lr .ix{width:28px;height:28px;border-radius:8px;background:#3A3835;display:grid;place-items:center;font-size:13px;font-weight:700;color:#CFCBC6}
+.lr .ix.done{background:rgba(129,182,76,.18);color:#9BCB6A}
+.lr .ix.done .ico{width:15px;height:15px}
+.lr .ix.cur{background:var(--accent);color:#fff}
+.lr .nm{font-size:14px;font-weight:600;color:#E8E5E0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lr .sub{font-size:13px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lr .sub b{color:#9BCB6A;font-weight:600}
+.lr.todo .nm{color:#BDB9B4;font-weight:500}
+.lr.cur .nm{color:var(--text)}
+.steps{margin:2px 0 6px 23px;padding-left:15px;border-left:2px solid #3D3B38;display:flex;flex-direction:column;gap:1px}
+.sr{display:grid;grid-template-columns:18px 1fr auto;gap:9px;align-items:center;height:32px;padding:0 8px;border-radius:8px;font-size:14px;color:#CFCBC6;position:relative}
+.sr .ico{width:15px;height:15px;color:var(--faint)}
+.sr .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr .m{font-size:13px;color:var(--faint)}
+.sr.done .ico{color:var(--accent)}
+.sr.done .t{color:#A8A49F}
+.sr.cur{background:var(--row);color:var(--text);font-weight:600}
+.sr.cur .ico{color:var(--text)}
+.sr.cur .m{color:var(--muted);font-weight:500}
+.sr.cur::before{content:"";position:absolute;left:-17px;top:6px;bottom:6px;width:2px;border-radius:2px;background:var(--accent)}
+/* ── правая панель ── */
+.lstp{display:flex;gap:4px;margin-top:12px}
+.lstp i{flex:1;height:8px;border-radius:4px;background:#3D3B38}
+.lstp i.ok{background:var(--accent)}
+.lstp i.cur{background:#5A5753;box-shadow:0 0 0 2px var(--surface),0 0 0 4px rgba(255,255,255,.55)}
+.title.step{font-size:26px;margin-top:14px}
+.cmt{border-radius:12px;background:var(--surface2);border:1px solid var(--hair2);padding:14px 18px 14px}
+.cmt .mh{display:flex;align-items:center;gap:10px}
+.cmt .mh b{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.cmt .mh img{width:24px;height:24px}
+.cmt .mh .lb{font-size:13px;font-weight:600}
+.cmt .mh .nv{margin-left:auto;font-size:13px;color:var(--faint)}
+.cmt .tx{font-size:16px;line-height:1.55;color:#ECE9E5;margin-top:8px}
+.cmt .tx b{font-weight:700;white-space:nowrap}
+.cmt .notes{margin-top:12px;padding-top:12px;border-top:1px solid var(--hair);display:flex;flex-direction:column;gap:8px}
+.nt{display:flex;gap:8px;align-items:flex-start;font-size:14px;color:#CFCBC6}
+.nt .ico{width:15px;height:15px;color:#7FA8D9;margin-top:2px}
+.ni{display:flex;gap:8px}
+.ni .inp{flex:1;height:36px;border-radius:9px;background:#262522;border:1px solid var(--hair2);display:flex;align-items:center;gap:8px;padding:0 10px;font-size:14px;color:var(--faint)}
+.ni .inp .ico{width:15px;height:15px}
+.ni .sb{height:36px;border-radius:9px;border:1px solid var(--hair2);background:var(--surface);display:flex;align-items:center;padding:0 12px;font-size:14px;font-weight:600;color:#DCD8D3}
+.ni .np{height:36px;border-radius:9px;border:1px solid rgba(240,164,58,.45);background:rgba(240,164,58,.08);display:flex;align-items:center;gap:6px;padding:0 12px;font-size:14px;font-weight:600;color:#F4B45C}
+.ni .np .ico{width:15px;height:15px}
+.na{display:flex;gap:8px;justify-content:space-between}
+.gb{height:32px;border-radius:8px;border:1px solid var(--hair2);display:flex;align-items:center;gap:7px;padding:0 10px;font-size:14px;font-weight:500;color:#CFCBC6}
+.gb .ico{width:15px;height:15px;color:var(--muted)}
+.gb.warn{border-color:rgba(240,164,58,.4);color:#F4B45C;background:rgba(240,164,58,.06)} .gb.warn .ico{color:#F4B45C}
+.intro{font-size:15px;line-height:1.55;color:#DCD8D3}
+.intro .ttl{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.mvl{display:grid;grid-template-columns:34px 1fr 1fr;row-gap:2px;column-gap:6px;font-size:15px}
+.mvl .n{color:var(--faint);font-size:14px;line-height:30px;text-align:right;padding-right:4px}
+.mvl .c{height:30px;border-radius:7px;padding:0 9px;display:flex;align-items:center;gap:6px;font-weight:600;color:#E4E1DC}
+.mvl .c img{width:16px;height:16px}
+.mvl .c .mk{font-size:12px;font-weight:700;line-height:1;margin-left:2px}
+.mvl .c .mk.n{color:#7FA8D9}.mvl .c .mk.q{color:#F4B45C}
+.mvl .c.opp{color:#CFCBC6;font-weight:500}
+.mvl .c.fut{color:#8E8A85;font-weight:500}
+.mvl .c.now{box-shadow:inset 0 0 0 2px var(--accent);background:rgba(129,182,76,.08);color:var(--text)}
+.mvl .c.ask{box-shadow:inset 0 0 0 2px var(--accent);color:var(--accent);font-weight:700}
+.mvl .vl{grid-column:2 / 4;font-size:14px;color:var(--muted);line-height:28px;padding:0 9px;border-radius:7px;background:rgba(255,255,255,.03);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mvl .vl .ico{width:13px;height:13px;vertical-align:-2px;margin-right:6px}
+.mvw{display:flex;flex-direction:column;min-height:0}
+.mvs{overflow:hidden;flex:1;min-height:0}
+.vars{display:flex;flex-direction:column;gap:6px}
+.vr{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 10px 8px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--hair)}
+.vr .vt{font-size:14px;color:#DCD8D3}
+.vr .vt b{font-weight:700}
+.vr .vh{font-size:13px;color:var(--muted)}
+.vr .vs{font-size:15px;color:#E4E1DC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.vr .btn2{height:34px;font-size:14px}
+/* текстовые шаги */
+.goal{display:flex;gap:10px;align-items:flex-start;border-radius:10px;background:rgba(129,182,76,.08);border:1px solid rgba(129,182,76,.3);padding:10px 12px;font-size:15px;color:#E6E3DE}
+.goal .ico{width:17px;height:17px;color:#9BCB6A;margin-top:2px}
+.ptx{font-size:16px;line-height:1.6;color:#E6E3DE}
+.ptx b{font-weight:700;white-space:nowrap}
+.pts{display:flex;flex-direction:column;gap:10px}
+.pt{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;padding:12px 14px;border-radius:12px;background:var(--surface2);border:1px solid var(--hair)}
+.pt .no{width:30px;height:30px;border-radius:9px;background:rgba(74,144,226,.16);color:#8FB4DA;display:grid;place-items:center;font-size:14px;font-weight:700}
+.pt .tt{font-size:15px;line-height:1.5;color:#E6E3DE;padding-top:4px}
+.pt .tt b{font-weight:700;white-space:nowrap}
+.toc{display:flex;flex-direction:column;gap:4px}
+.toc div{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:9px;background:var(--surface2);border:1px solid var(--hair);font-size:14px;color:#DCD8D3}
+.toc .ico{width:15px;height:15px;color:var(--muted)}
+.toc span{margin-left:auto;font-size:13px;color:var(--faint)}
+/* тест-вопросы */
+.qn{font-size:13px;color:var(--muted)}
+.qlist{display:flex;flex-direction:column;gap:4px}
+.qi{display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center;height:38px;padding:0 12px;border-radius:9px;background:var(--surface2);border:1px solid var(--hair);font-size:14px;color:#CFCBC6}
+.qi .ico{width:15px;height:15px;color:var(--faint)}
+.qi em{font-style:normal;font-size:13px;color:var(--faint)}
+.qi.ok .ico{color:var(--accent)}
+.qi.cur{border-color:rgba(129,182,76,.5);color:var(--text);font-weight:600}
+.qi.cur .ico{color:var(--text)}
+.qq{font-size:18px;font-weight:600;line-height:1.4;margin-top:4px}
+.opts{display:flex;flex-direction:column;gap:6px}
+.op2{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:center;min-height:44px;padding:8px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--hair2);font-size:15px;color:#E4E1DC}
+.op2 .k{width:28px;height:28px;border-radius:8px;background:#3A3835;display:grid;place-items:center;font-size:13px;font-weight:700;color:#CFCBC6}
+.op2.ok{border-color:rgba(129,182,76,.6);background:rgba(129,182,76,.10)} .op2.ok .k{background:var(--accent-press);color:#fff}
+/* итог */
+.sum3{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.sum3 div{padding:14px 0;text-align:center;border-right:1px solid var(--hair)} .sum3 div:last-child{border-right:none}
+.sum3 b{display:block;font-size:26px;font-weight:700;line-height:1.2}
+.sum3 span{font-size:13px;color:var(--muted)}
+/* кнопки внизу */
+.navrow{display:flex;align-items:center;gap:6px}
+.nb{width:44px;height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:grid;place-items:center;color:#E8E5E0}
+.nb .ico{width:20px;height:20px}
+.nb.play{width:auto;padding:0 16px;display:flex;gap:8px;font-size:15px;font-weight:600}
+.nb.play .ico{width:16px;height:16px}
+.navrow .sp{flex:1}
+.ib{width:40px;height:40px;border-radius:var(--r-btn);display:grid;place-items:center;color:var(--muted);font-size:14px;font-weight:700;border:1px solid transparent}
+.ib .ico{width:18px;height:18px}
+.ib.txt{border-color:var(--hair2);color:#DCD8D3}
+.tabs3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+.tabs3 .btn2{font-size:14px;padding:0 8px;gap:7px}
+.btn2.on{background:rgba(129,182,76,.14);border-color:rgba(129,182,76,.5);color:#BFE09A}
+.two2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two2 .btn2{font-size:14px}
+.leftbot .btn2{flex:1;font-size:14px;padding:0 8px}
+.state{display:none}
+body.s-line .s-line, body.s-variant .s-variant, body.s-play .s-play, body.s-text .s-text, body.s-quiz .s-quiz, body.s-end .s-end{display:revert}
+body.s-line .s-line.flex, body.s-play .s-play.flex, body.s-text .s-text.flex, body.s-quiz .s-quiz.flex, body.s-end .s-end.flex{display:flex}
+body.s-line .s-line.grid, body.s-play .s-play.grid, body.s-text .s-text.grid, body.s-quiz .s-quiz.grid, body.s-end .s-end.grid{display:grid}
+.badge{position:absolute;width:36px;height:36px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+<aside class="side" id="side"></aside>
+<main class="main">
+  <section class="card left" data-ui="session">
+    <div class="chd"><img src="pieces/bK.svg"><div><div class="cn">Ускоренный дракон за чёрных</div><div class="cs">Курс · 8 уроков</div></div></div>
+    <div class="stats" data-ui="session-stats">
+      <div class="stat"><b class="num" style="color:var(--accent)">1/8</b><span>уроков</span></div>
+      <div class="stat"><b class="num">80%</b><span>тесты</span></div>
+      <div class="stat"><b class="num warn">2</b><span>не понял</span></div>
+    </div>
+    <div class="qlabel"><span>Уроки</span><span>1 из 8 пройден</span></div>
+    <div class="lessons" data-ui="session-list" id="lessons"></div>
+    <div class="leftbot">
+      <div class="btn2" data-ui="course-roadmap">Карта курса</div>
+      <div class="btn2" data-ui="course-cheatsheet">Шпаргалка</div>
+    </div>
+  </section>
+
+  <section class="bcol">
+    <div class="pbar" data-ui="player-top"><div class="who"><div class="ava"><img src="pieces/wP.svg"></div>Белые <span class="tg">соперник</span></div><div class="pnote" id="pnote"></div></div>
+    <div class="brow"><div class="gutter"></div><div class="board" id="board"><div class="sqs" id="sqs"></div><div class="over" id="over"></div></div></div>
+    <div class="pbar" data-ui="player-bottom"><div class="who"><div class="ava"><img src="pieces/bP.svg"></div>Чёрные <span class="tg">· ты</span></div><div class="pnote" id="pbot"></div></div>
+  </section>
+
+  <section class="card right" data-ui="panel" data-demo="course">
+    <div class="rp-h" data-ui="panel-header">
+      <div class="crumbs"><span>Урок 2 · Идея дебюта и удар ...d5</span><span class="pr num" id="stepno"></span></div>
+      <div class="lstp" data-ui="lesson-stepper" id="stepper"></div>
+      <div class="title tight step" data-ui="panel-title" id="ptitle"></div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="rb" id="rb"></div>
+    <div class="act" data-ui="panel-actions" id="act"></div>
+  </section>
+</main>
+<script src="icons.js"></script>
+<script src="_common.js"></script>
+<script>
+const S = (location.hash || '#line').slice(1);
+document.body.classList.add('s-' + S);
+MK.side('Курсы');
+const ico = MK.ico;
+const bdg = (k, s = 16) => `<img src="../../../public/icons/move-classes/${k}_128x.png" style="width:${s}px;height:${s}px">`;
+
+// ── шаги урока (как в demo-course.json) ──
+const STEPS = [
+  ['text', 'file-text', 'Вступление', ''],
+  ['line', 'git-branch', 'Схема f3 и Qd2 — удар 8...d5!', '11 ходов'],
+  ['line', 'git-branch', 'Классика 7.Be2 — тот же удар', '11 ходов'],
+  ['plan', 'list-ordered', 'План', ''],
+  ['mistakes', 'triangle-alert', 'Ошибки', ''],
+  ['quiz', 'circle-help', 'Проверь себя', '3'],
+  ['summary', 'flag', 'Итог', ''],
+];
+const CUR = { line: 1, variant: 1, play: 1, text: 3, quiz: 5, end: 6 }[S];
+const DONE = { line: [0], variant: [0], play: [0], text: [0, 1, 2], quiz: [0, 1, 2, 3, 4], end: [0, 1, 2, 3, 4, 5] }[S];
+const curMeta = { line: '16 / 22', variant: '22 / 22', play: '7 / 11', quiz: '2 / 3' };
+const LESSONS = [
+  [1, 'Ходы дебюта и главная идея', 'done', '1 линия · тест <b>4/5</b>'],
+  [2, 'Идея дебюта и удар ...d5', 'cur', `шаг ${CUR + 1} из 7`],
+  [3, '5. Nxc6: структура с c6', 'todo', '2 линии'],
+  [4, 'Мароци: 5. c4', 'todo', '3 линии'],
+  [5, 'Россолимо: 3. Bb5', 'todo', '2 линии'],
+  [6, '3. Bc4 и ловушки', 'todo', '2 линии'],
+  [7, 'Смит-Морра и 2. c3', 'todo', '3 линии'],
+  [8, 'Итог курса', 'todo', 'тест'],
+];
+document.getElementById('lessons').innerHTML = LESSONS.map(([n, t, st, sub]) => {
+  const ix = st === 'done' ? `<div class="ix done">${ico('check')}</div>` : `<div class="ix${st === 'cur' ? ' cur' : ''}">${n}</div>`;
+  let h = `<div class="lr ${st}" data-ui="lesson-row" data-lesson="${n}" data-status="${st === 'cur' ? 'current' : st}">${ix}<div style="min-width:0"><div class="nm">${t}</div><div class="sub">${sub}</div></div></div>`;
+  if (st === 'cur') h += `<div class="steps" data-ui="lesson-steps">${STEPS.map(([k, i, name, m], si) => {
+    const state = si === CUR ? 'cur' : DONE.includes(si) ? 'done' : 'todo';
+    return `<div class="sr ${state}" data-ui="lesson-step" data-step="${si + 1}" data-kind="${k}" data-state="${state === 'cur' ? 'current' : state}">${ico(state === 'done' ? 'check' : i)}<span class="t">${name}</span><span class="m">${si === CUR && curMeta[S] ? curMeta[S] : m}</span></div>`;
+  }).join('')}</div>`;
+  return h;
+}).join('');
+document.getElementById('stepper').innerHTML = STEPS.map((_, i) => `<i class="${i === CUR ? 'cur' : DONE.includes(i) ? 'ok' : ''}" title="${STEPS[i][2]}"></i>`).join('');
+document.getElementById('stepno').textContent = `шаг ${CUR + 1} из 7`;
+
+// ── ходы линии 1 ──
+const L1 = [['e4', 0], ['c5', 'book'], ['Nf3', 0], ['Nc6', 'book'], ['d4', 0], ['cxd4', 'book'], ['Nxd4', 0], ['g6', 'book'], ['Nc3', 0], ['Bg7', 0], ['Be3', 0], ['Nf6', 'book'],
+  ['f3', 0], ['O-O', 0], ['Qd2', 0], ['d5', 'great_find'], ['exd5', 0], ['Nxd5', 0], ['Nxd5', 0], ['Qxd5', 0], ['Nxc6', 0], ['Qxc6', 0]];
+const NOTE = { 16: 'n', 19: 'q' };
+function moveList(cur, upto, ask, scroll) {
+  let h = '';
+  const last = upto ?? L1.length;
+  for (let i = 0; i < last; i += 2) {
+    h += `<div class="n">${i / 2 + 1}.</div>`;
+    for (const j of [i, i + 1]) {
+      if (j >= last) { h += ask && j === last ? `<div class="c ask">?</div>` : '<div></div>'; continue; }
+      const [san, b] = L1[j], ply = j + 1;
+      const cls = ply === cur ? 'now' : (ply > cur ? 'fut' : (j % 2 === 0 ? 'opp' : ''));
+      const mk = NOTE[ply] ? `<span class="mk ${NOTE[ply]}">${NOTE[ply] === 'n' ? '✎' : '?'}</span>` : '';
+      h += `<div class="c ${cls}" data-ui="lesson-move" data-ply="${ply}">${san}${b ? bdg(b) : ''}${mk}</div>`;
+    }
+    if (ask && last % 2 === 1 && i + 2 > last) {} // ход белых сыгран, ждём чёрных
+    if (i === 20 && last >= 22) h += `<div></div><div class="vl" data-ui="lesson-variant">${ico('git-branch')}11... Qxd2+ 12. Bxd2 bxc6 13. O-O-O</div>`;
+  }
+  return `<div class="mvs"><div class="mvl" data-ui="lesson-moves" style="margin-top:${-(scroll || 0) * 32}px">${h}</div></div>`;
+}
+
+const P = id => document.getElementById(id);
+const notes = (n) => `<div class="notes" data-ui="lesson-notes">
+  ${n ? `<div class="nt">${ico('pencil')}<span>${n}</span></div>` : ''}
+  <div class="na"><div class="gb" data-ui="lesson-note-add">${ico('square-pen')}Заметка к ходу</div><div class="gb warn" data-ui="lesson-confused">${ico('circle-help')}Не понял</div></div>
+</div>`;
+const navRow = `<div class="navrow" data-ui="lesson-nav">
+  <div class="nb" data-ui="lesson-prev">${ico('chevron-left')}</div>
+  <div class="nb play" data-ui="lesson-play">${ico('play')}Авто</div>
+  <div class="nb" data-ui="lesson-next">${ico('chevron-right')}</div>
+  <div class="sp"></div>
+  <div class="ib txt" title="Скорость">1×</div>
+  <div class="ib" title="Перевернуть (F)">${ico('arrow-up-down')}</div>
+  <div class="ib" title="Звук">${ico('volume-x')}</div>
+  <div class="ib" title="Кино">${ico('maximize')}</div>
+  <div class="ib" title="Ещё">${ico('ellipsis')}</div>
+</div>`;
+const modes = on => `<div class="tabs3" data-ui="lesson-modes">
+  <div class="btn2${on ? ' on' : ''}" data-ui="lesson-mode-play">${ico('swords')}Сыграй сам</div>
+  <div class="btn2" data-ui="lesson-explain">${ico('lightbulb')}Объясни сам</div>
+  <div class="btn2" data-ui="lesson-deviation">${ico('git-fork')}Отклонения</div>
+</div>`;
+
+const ST = {
+  line: {
+    title: 'Схема f3 и Qd2 — удар 8...d5!',
+    chips: `<div class="chip"><img src="pieces/bK.svg">за чёрных</div><div class="chip">Линия 1 из 2</div><div class="chip num">ход 16 из 22</div>`,
+    body: `<div class="cmt" data-ui="lesson-comment">
+        <div class="mh"><b>8... d5</b>${bdg('great_find', 24)}<span class="lb" style="color:#749BBF">Сильный ход</span><span class="nv">ход чёрных</span></div>
+        <div class="tx">Главный удар! Пешка прошла на d5 за один ход: чёрные бьют по e4 и вскрывают центр. Позиция равная.</div>
+        ${notes('Сравнить с обычным драконом: там d5 готовят долго.')}
+      </div>
+      <div class="blk mvw" style="flex:1"><h4>Ходы линии <span class="num">16 из 22</span></h4>${moveList(16, null, false, 3)}</div>`,
+    act: `${navRow}${modes(false)}<div class="keys">← → — ходы · Пробел — авто · V — вариант · ? — все клавиши</div>`,
+    board: { fen: 'r1bq1rk1/pp2ppbp/2n2np1/3p4/3NP3/2N1BP2/PPPQ2PP/R3KB1R', last: ['d7', 'd5'],
+      arrows: [{ from: 'd5', to: 'e4', role: 'note' }, { from: 'f6', to: 'e4', role: 'note' }], badges: [['d5', 'great_find']] },
+    pnote: 'после <b>8... d5!</b> · ход белых', pbot: 'Линия 1 из 2',
+  },
+  variant: {
+    title: 'Схема f3 и Qd2 — удар 8...d5!',
+    chips: `<div class="chip"><img src="pieces/bK.svg">за чёрных</div><div class="chip">Линия 1 из 2</div><div class="chip num">ход 22 из 22</div>`,
+    body: `<div class="cmt" data-ui="lesson-comment">
+        <div class="mh"><b>11... Qxc6</b><span class="nv">ход чёрных</span></div>
+        <div class="tx">Берём ферзём, ферзи остаются на доске. Слон g7 бьёт по b2 — у чёрных чуть лучше.</div>
+        ${notes('')}
+      </div>
+      <div class="vars" data-ui="lesson-variants">
+        <div class="vr"><div class="vt"><div class="vh">Вместо <b>11... Qxc6</b> можно:</div><div class="vs"><b>11... Qxd2+</b> 12. Bxd2 bxc6 13. O-O-O</div></div><div class="btn2" data-ui="lesson-variant-open">${ico('git-branch')}Смотреть <span class="k">V</span></div></div>
+      </div>
+      <div class="fb ok" data-ui="lesson-outro" data-result="done"><div class="bi">${ico('flag')}</div><div><div class="t1">Конец линии. Удар d5 разменял фигуры в центре. Ферзь и слон g7 стоят активно — чёрные чуть лучше.</div></div></div>
+      <div class="blk mvw" style="flex:1"><h4>Ходы линии <span class="num">22 из 22</span></h4>${moveList(22, null, false, 10)}</div>`,
+    act: `<div class="btn1" data-ui="lesson-next-step">Дальше: Классика 7.Be2 <span class="k">Enter</span></div><div style="height:12px"></div>${navRow}${modes(false)}`,
+    board: { fen: 'r1b2rk1/pp2ppbp/2q3p1/8/8/4BP2/PPPQ2PP/R3KB1R', last: ['d5', 'c6'], arrows: [{ from: 'g7', to: 'b2', role: 'note' }], badges: [] },
+    pnote: 'после <b>11... Qxc6</b> · ход белых', pbot: 'Линия 1 из 2',
+  },
+  play: {
+    title: 'Не тот ход',
+    chips: `<div class="chip green">${ico('swords')}Сыграй сам</div><div class="chip">Линия 1 из 2</div><div class="chip num">с первой попытки 6 из 7</div>`,
+    body: `<div class="fb fail" data-ui="lesson-play" data-result="fail"><div class="bi">${ico('x')}</div><div><div class="t1"><b>8... d6</b> — в линии другой ход. Попробуй ещё раз.</div><div class="t2">Ещё одна ошибка — покажем стрелку. H — подсказка сразу.</div></div></div>
+      <div class="cmt" data-ui="lesson-comment">
+        <div class="mh"><b>8. Qd2</b><span class="nv">ход белых</span></div>
+        <div class="tx">Белые готовят Bh6: разменять слона g7 и атаковать короля.</div>
+      </div>
+      <div class="blk mvw" style="flex:1"><h4>Ходы линии <span class="num">твой ход 8 из 11</span></h4>${moveList(99, 15, true, 2)}</div>`,
+    act: `<div class="two2" data-ui="lesson-play-actions"><div class="btn2" data-ui="lesson-hint">${ico('lightbulb')}Подсказка <span class="k">H</span></div><div class="btn2" data-ui="lesson-restart">${ico('rotate-ccw')}Сначала <span class="k">R</span></div></div>${modes(true)}<div class="keys">Соперник ходит сам · H — подсказка · Esc — выйти</div>`,
+    board: { fen: 'r1bq1rk1/pp1pppbp/2n2np1/8/3NP3/2N1BP2/PPPQ2PP/R3KB1R', last: ['d1', 'd2'], arrows: [{ from: 'd7', to: 'd6', role: 'played' }], badges: [] },
+    pnote: 'после <b>8. Qd2</b> · ход чёрных', pbot: 'Сыграй сам · линия 1',
+  },
+  text: {
+    title: 'План',
+    chips: `<div class="chip"><img src="pieces/bK.svg">за чёрных</div><div class="chip">после линий урока</div><div class="chip">3 пункта</div>`,
+    body: `<div class="pts" data-ui="lesson-text">
+        <div class="pt"><div class="no">1</div><div class="tt">После размена в центре ставь ладьи на открытые линии c и d: там нет пешек.</div></div>
+        <div class="pt"><div class="no">2</div><div class="tt">Слон g7 — главная фигура чёрных. Не меняй его без причины.</div></div>
+        <div class="pt"><div class="no">3</div><div class="tt">Дави на ферзевый фланг: ферзь и слон g7 бьют по b2 и c2.</div></div>
+      </div>
+      <div class="note"><i class="ico" data-i="circle-help"></i><span>На доске — конец линии 2, <b>11... Qc4</b>. Проверь план в игре против движка.</span><a data-ui="lesson-play-from">Играть отсюда</a></div>`,
+    act: `<div class="btn1" data-ui="lesson-next-step">Дальше: Ошибки <span class="k">Enter</span></div><div class="keys">Enter — дальше · Backspace — назад</div>`,
+    board: { fen: 'r1b2rk1/pp2ppbp/2n3p1/8/2qN4/4BB2/PPP2PPP/R2Q1RK1', last: ['d5', 'c4'], arrows: [], badges: [] },
+    pnote: 'конец линии 2 · <b>11... Qc4</b>', pbot: 'План',
+  },
+  quiz: {
+    title: 'Проверь себя',
+    chips: `<div class="chip"><img src="pieces/bK.svg">за чёрных</div><div class="chip num">вопрос 2 из 3</div><div class="chip green">${ico('check')}1 верно</div>`,
+    body: `<div><div class="qn">Задача на доске</div><div class="qq">Белые сыграли 8. Qd2. Найди удар чёрных.</div></div>
+      <div class="fb ok" data-ui="lesson-quiz-feedback" data-result="ok"><div class="bi">${ico('check')}</div><div><div class="t1">Верно: <b>8... d5!</b> бьёт по e4 и вскрывает центр. Чёрные уравнивают.</div></div></div>
+      <div class="blk" data-ui="lesson-quiz"><h4>Вопросы <span class="num">1 верно · 1 впереди</span></h4>
+        <div class="qlist">
+          <div class="qi ok">${ico('check')}<span>Почему чёрные не спешат играть d6?</span><em>выбор</em></div>
+          <div class="qi cur">${ico('puzzle')}<span>8. Qd2 — найди удар чёрных</span><em>на доске</em></div>
+          <div class="qi">${ico('puzzle')}<span>10. Nxd5 — чем взять на d5?</span><em>на доске</em></div>
+        </div>
+      </div></div>`,
+    act: `<div class="btn1" data-ui="lesson-quiz-next">Следующий вопрос <span class="k">Enter</span></div><div class="keys">Ход — на доске · Enter — дальше</div>`,
+    board: { fen: 'r1bq1rk1/pp2ppbp/2n2np1/3p4/3NP3/2N1BP2/PPPQ2PP/R3KB1R', last: ['d7', 'd5'], arrows: [], badges: [] },
+    pnote: 'задача · после <b>8... d5!</b>', pbot: 'Проверь себя',
+  },
+  end: {
+    title: 'Итог урока',
+    chips: `<div class="chip"><img src="pieces/bK.svg">за чёрных</div><div class="chip green">${ico('check')}все шаги пройдены</div>`,
+    body: `<div class="ptx" data-ui="lesson-text">Пока пешка d стоит на d7, у чёрных есть удар d5 за один ход. Против f3 и Qd2, и против Be2 с короткой рокировкой он сразу уравнивает игру. Порядок простой: сначала рокировка, потом d5.</div>
+      <div data-ui="lesson-end"><div class="sum3"><div><b class="num">2/2</b><span>линии</span></div><div><b class="num" style="color:var(--accent)">9/11</b><span>сам, с 1-й попытки</span></div><div><b class="num">3/3</b><span>проверь себя</span></div></div></div>
+      <div class="note"><i class="ico" data-i="graduation-cap"></i><span>Урок засчитан, когда тест сдан на <b>80%</b> и выше.</span></div>`,
+    act: `<div class="btn1" data-ui="lesson-test">Пройти тест <span class="k">Enter</span></div><div class="two"><div class="btn2" data-ui="lesson-next-lesson">Следующий урок ${ico('chevron-right')}</div><div class="btn2" data-ui="lesson-play-from">${ico('circle-play')}Играть отсюда</div></div>`,
+    board: { fen: 'r1b2rk1/pp2ppbp/2n3p1/8/2qN4/4BB2/PPP2PPP/R2Q1RK1', last: ['d5', 'c4'], arrows: [], badges: [] },
+    pnote: 'конец линии 2 · <b>11... Qc4</b>', pbot: 'Итог урока',
+  },
+}[S];
+P('ptitle').innerHTML = ST.title;
+P('chips').innerHTML = ST.chips;
+P('rb').innerHTML = ST.body;
+P('act').innerHTML = ST.act;
+P('pnote').innerHTML = ST.pnote;
+P('pbot').innerHTML = ST.pbot;
+
+// ── доска + свои стрелки (ход конём — буквой Г, как в Board.tsx) и значки ──
+MK.board({ fen: ST.board.fen, flip: true, last: ST.board.last });
+const files = 'abcdefgh', Q = 774 / 8, flip = true;
+const ctr = sq => { const f = files.indexOf(sq[0]), r = +sq[1]; const col = flip ? 7 - f : f, row = flip ? r - 1 : 8 - r; return [(col + .5) * Q, (row + .5) * Q]; };
+const COL = { note: '#7FB24A', played: '#E0574A', best: '#81B64C', plan: '#4A90E2' };
+let svg = '';
+for (const a of ST.board.arrows) {
+  const color = COL[a.role];
+  const [x1, y1] = ctr(a.from), [x2, y2] = ctr(a.to);
+  const df = Math.abs(files.indexOf(a.from[0]) - files.indexOf(a.to[0])), dr = Math.abs(a.from[1] - a.to[1]);
+  const knight = (df === 1 && dr === 2) || (df === 2 && dr === 1);
+  const sw = 18, hd = 34, hw = 22;
+  if (knight) {
+    const [mx, my] = dr > df ? [x1, y2] : [x2, y1];
+    const ux = Math.sign(x2 - mx), uy = Math.sign(y2 - my);
+    const ex = x2 - ux * 14, ey = y2 - uy * 14, bx = ex - ux * hd, by = ey - uy * hd;
+    const sx = x1 + Math.sign(mx - x1) * 18, sy = y1 + Math.sign(my - y1) * 18;
+    svg += `<polyline points="${sx},${sy} ${mx},${my} ${bx},${by}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linejoin="round" opacity=".85"/>`;
+    svg += `<polygon points="${ex},${ey} ${bx - uy * hw},${by + ux * hw} ${bx + uy * hw},${by - ux * hw}" fill="${color}" opacity=".85"/>`;
+  } else {
+    const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+    const st = 18, en = L - 14, h = sw / 2;
+    const Pp = (t, o) => [(x1 + ux * t + px * o).toFixed(1), (y1 + uy * t + py * o).toFixed(1)].join(',');
+    svg += `<polygon points="${[Pp(st, -h), Pp(en - hd, -h), Pp(en - hd, -hw), Pp(en, 0), Pp(en - hd, hw), Pp(en - hd, h), Pp(st, h)].join(' ')}" fill="${color}" opacity=".85"/>`;
+  }
+}
+let bh = '';
+for (const [sq, k] of ST.board.badges) { const [x, y] = ctr(sq); bh += `<img class="badge" src="../../../public/icons/move-classes/${k}_128x.png" style="left:${(x + Q / 2 - 24).toFixed(1)}px;top:${(y - Q / 2 - 12).toFixed(1)}px">`; }
+P('over').innerHTML = `<svg width="774" height="774" style="position:absolute;inset:0">${svg}</svg>${bh}`;
+MK.icons();
+</script>
+</body>
+</html>

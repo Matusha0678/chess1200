@@ -28,11 +28,19 @@ const PAGES: SearchResult[] = (NAV as NavSection[]).flatMap(s => [
 ]);
 
 const ACTIONS: SearchResult[] = [
-  { id: 'act-opening', label: 'Добавить дебют',      sub: 'Создать новый дебют',          href: '/openings/new',    icon: '+',  group: 'action' },
-  { id: 'act-random',  label: 'Случайная игра',       sub: 'Сыграть с любым ходом',         href: '/random',          icon: '⚡', group: 'action' },
-  { id: 'act-analyze', label: 'Анализ позиции',       sub: 'Загрузить PGN для анализа',      href: '/games/analyze',   icon: '🔍', group: 'action' },
-  { id: 'act-bot',     label: 'Играть против бота',   sub: 'Выбрать режим и уровень',       href: '/play',            icon: '🤖', group: 'action' },
-  { id: 'act-sync',    label: 'Синхронизировать партии', sub: 'Загрузить партии с Lichess',  href: '/games',           icon: '↻',  group: 'action' },
+  { id: 'act-opening',  label: 'Добавить дебют',         sub: 'Создать новый дебют',               href: '/openings/new',    icon: '+',  group: 'action' },
+  { id: 'act-random',   label: 'Случайная игра',         sub: 'Сыграть с любым ходом',             href: '/random',          icon: '⚡', group: 'action' },
+  { id: 'act-analyze',  label: 'Анализ позиции',         sub: 'Загрузить PGN для анализа',         href: '/games/analyze',   icon: '🔍', group: 'action' },
+  { id: 'act-bot',      label: 'Играть против бота',     sub: 'Выбрать режим и уровень',           href: '/play',            icon: '🤖', group: 'action' },
+  { id: 'act-sync',     label: 'Синхронизировать партии', sub: 'Загрузить партии с Lichess',       href: '/games',           icon: '↻',  group: 'action' },
+  { id: 'act-eval',     label: 'Оцени позицию',          sub: 'Угадай оценку движка',              href: '/evaluate',        icon: '⚖', group: 'action' },
+  { id: 'act-warmup',   label: 'Разминка 5 минут',       sub: 'Угрозы, линия, ловушка, ошибка',    href: '/warmup',          icon: '🔥', group: 'action' },
+  { id: 'act-review',   label: 'Повторить всё',          sub: 'Все линии на повторение',           href: '/openings/review', icon: '↻',  group: 'action' },
+  { id: 'act-opr',      label: 'Дебют Рандом',           sub: 'Stockfish против твоих линий',      href: '/openings/random', icon: '🎲', group: 'action' },
+  { id: 'act-courses',  label: 'Мои заметки',            sub: 'Заметки «не понял» по урокам',      href: '/courses/notes',   icon: '📝', group: 'action' },
+  { id: 'act-import',   label: 'Импорт курса',           sub: 'Создать курс из PGN',               href: '/courses/import',  icon: '⬆', group: 'action' },
+  { id: 'act-ach',      label: 'Достижения',             sub: 'Твой прогресс и значки',           href: '/achievements',    icon: '🏆', group: 'action' },
+  { id: 'act-gameop',   label: 'Я против дебютов',       sub: 'Партии vs сохранённые линии',       href: '/games/openings',  icon: '♟', group: 'action' },
 ];
 
 const GROUP_LABELS: Record<string, string> = {

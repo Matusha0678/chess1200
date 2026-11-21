@@ -361,6 +361,10 @@ export function move(r0: Run, from: string, to: string): Run {
   if (!isMyTurn(r)) return r;
   const k = curPly(r);
   const exp = r.moves[k];
+
+  // Illegal move (not a valid chess move in this position) → snap piece back silently
+  const legal = new Chess(fenBefore(r.moves, k)).moves({ verbose: true });
+  if (!legal.some(m => m.from === from && m.to === to)) return r0;
   if (from === exp.from && to === exp.to) {
     r.wrong = null;
     r.hint = 0;

@@ -20,7 +20,6 @@ interface Note {
 interface Props {
   line: LessonLine;
   lineIdx: number;
-  totalLines: number;
   currentPly: number;
   viewingVariant: boolean;
   variantMoves: LessonMove[];
@@ -58,7 +57,7 @@ function boldify(text: string): string {
 }
 
 export function LinePanel({
-  line, lineIdx, totalLines: _totalLines, currentPly,
+  line, lineIdx, currentPly,
   viewingVariant, variantMoves, variantPly, variantFromPly,
   notes, isDemo,
   onPlyClick, onVariantOpen, onVariantClose,

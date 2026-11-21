@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Проверка угроз — макет</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@700&display=swap">
+<style>
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A; --mark:#4A90E2;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:14px 12px;display:flex;flex-direction:column}
+.item{height:40px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:15px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:16px 12px 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.grp .ico{width:14px;height:14px}
+.side .bottom{margin-top:auto;color:var(--faint)}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.left{width:280px;height:854px;display:flex;flex-direction:column}
+.left .hd{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:baseline}
+.h2{font-size:19px;font-weight:700}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.segctl{display:grid;grid-template-columns:1fr 1fr;margin:14px 20px 4px;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.segctl div{height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;color:var(--muted);font-weight:500}
+.segctl .on{background:#45423E;color:var(--text);font-weight:600}
+.segctl .ico{width:15px;height:15px}
+.qlabel{margin:14px 20px 6px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.queue{padding:0 10px;display:flex;flex-direction:column;gap:2px}
+.row{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:8px;height:50px;padding:0 10px;border-radius:10px;position:relative}
+.row .t{font-size:14px;color:#E4E1DC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .p{font-size:13px;color:var(--faint);margin-top:-1px}
+.row .res{font-size:14px;font-weight:600}
+.row .idx{font-size:13px;color:var(--faint);text-align:center}
+.row.cur{background:var(--row)}
+.row.cur::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--accent)}
+.row.cur .idx{color:var(--accent);font-weight:700}
+.row.done .t{color:#BDB9B3}
+.ok{color:var(--accent)} .bad{color:var(--danger)} .warn{color:var(--warn)}
+.left .ft{margin-top:auto;padding:16px 20px 20px;border-top:1px solid var(--hair)}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#E8E5E0}
+.btn2 .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.bcol{width:806px;height:854px;display:flex;flex-direction:column;gap:8px}
+.pbar{height:32px;display:flex;align-items:center;justify-content:space-between;padding-left:32px}
+.who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.ava{width:28px;height:28px;border-radius:6px;background:#4A4744;display:grid;place-items:center}
+.ava img{width:22px;height:22px}
+.tag{font-size:13px;font-weight:500;color:var(--muted)}
+.lastmv{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.lastmv .mv{color:var(--text)}
+.brow{display:flex;gap:8px;height:774px}
+.gutter{width:24px}
+.board{width:774px;height:774px;position:relative}
+.sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden}
+.sq{position:relative}
+.sq .hl{position:absolute;inset:0}
+.sq img{position:absolute;inset:0;width:100%;height:100%}
+.co{position:absolute;font-size:13px;font-weight:600;line-height:1}
+.co.r{left:5px;top:5px}.co.f{right:6px;bottom:4px}
+.over{position:absolute;inset:0;pointer-events:none}
+.badge{position:absolute;width:34px;height:34px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+.right{flex:1;height:854px;display:flex;flex-direction:column}
+.rp-h{padding:20px 24px 18px}
+.crumbs{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.prog{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--text);font-weight:600}
+.xp{font-size:13px;font-weight:600;color:var(--accent);background:rgba(129,182,76,.14);border-radius:6px;padding:2px 7px}
+.pbarline{height:4px;border-radius:4px;background:#3A3835;margin-top:12px;overflow:hidden}
+.pbarline i{display:block;height:100%;width:12.9%;background:var(--accent);border-radius:4px}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:14px;line-height:1.15}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:500;color:#DCD8D3}
+.chip img{width:18px;height:18px}
+.chip.ok{color:var(--accent)} .chip.warn{color:var(--warn)} .chip.bad{color:#EE8A80}
+.chip .x{color:var(--faint);margin-left:2px}
+.sec{padding:16px 24px;border-top:1px solid var(--hair)}
+.lab{font-size:13px;color:var(--muted);margin-bottom:8px}
+.rule{display:flex;align-items:center;gap:10px;height:30px;font-size:15px;color:#E2DFDA}
+.rule .ico{color:var(--muted)}
+.mv{background:rgba(255,255,255,.06);border-radius:6px;padding:2px 7px;color:#E6E3DE;font-weight:500}
+.tcard{margin:16px 24px 0;border-radius:12px;background:rgba(224,87,74,.09);border:1px solid rgba(224,87,74,.32);padding:16px 18px}
+.tcard .top{display:flex;align-items:center;gap:10px}
+.tcard .top b{font-size:19px;color:#F08277}
+.tcard p{margin-top:8px;font-size:15px;color:#E6E3DE}
+.line{display:flex;gap:6px;align-items:center;margin-top:10px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.tl{display:flex;flex-direction:column;gap:2px}
+.tr{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:8px 0}
+.tr .h{font-size:15px;font-weight:600;display:flex;gap:8px;align-items:center}
+.tr .d{font-size:14px;color:var(--muted);margin-top:1px}
+.dot{width:24px;height:24px;border-radius:12px;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:800;margin-top:1px}
+.dot .ico{width:15px;height:15px}
+.step{margin:4px 24px 0;border-radius:12px;background:var(--surface2);border:1px solid var(--hair2);padding:14px 16px;display:flex;gap:12px;align-items:center}
+.step .ic{width:36px;height:36px;border-radius:10px;background:rgba(129,182,76,.14);color:var(--accent);display:grid;place-items:center}
+.step b{font-size:15px}.step span{font-size:14px;color:var(--muted)}
+.act{margin-top:auto;padding:20px 24px 20px;border-top:1px solid var(--hair)}
+.btn1{height:52px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:12px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.hints{margin-top:14px;font-size:13px;color:var(--faint);text-align:center}
+.state-a{display:none}
+body.a .state-q{display:none}
+body.a .state-a{display:flex}
+body.a div.state-a.blk{display:block}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+
+<aside class="side" id="side"></aside>
+
+<main class="main">
+  <!-- LEFT: session -->
+  <section class="card left">
+    <div class="hd"><div class="h2">Сессия</div><div class="muted num" style="font-size:14px">осталось 27</div></div>
+    <div class="stats">
+      <div class="stat"><b class="num ok">12</b><span>нашёл</span></div>
+      <div class="stat"><b class="num warn">3</b><span>пропустил</span></div>
+      <div class="stat"><b class="num bad">2</b><span>лишних</span></div>
+    </div>
+    <div class="segctl">
+      <div class="on"><i class="ico" data-i="mouse-pointer-click"></i>Обычный</div>
+      <div><i class="ico" data-i="zap"></i>Блиц 60 с</div>
+    </div>
+    <div class="qlabel"><span>Позиции</span><span class="num">4 / 31</span></div>
+    <div class="queue" id="queue"></div>
+    <div class="ft"><div class="btn2"><i class="ico" data-i="rotate-ccw"></i>Начать заново</div></div>
+  </section>
+
+  <!-- CENTER: board -->
+  <section class="bcol">
+    <div class="pbar">
+      <div class="who"><div class="ava"><img src="pieces/wP.svg"></div>Ivan_88 <span class="tag">белые</span></div>
+      <div class="lastmv">последний ход <span class="mv">Nb5</span></div>
+    </div>
+    <div class="brow">
+      <div class="gutter"></div>
+      <div class="board"><div class="sqs" id="sqs"></div><div class="over" id="over"></div></div>
+    </div>
+    <div class="pbar">
+      <div class="who"><div class="ava"><img src="pieces/bP.svg"></div>rozt1shka <span class="tag">ты · чёрные</span></div>
+      <div class="lastmv">твой ход</div>
+    </div>
+  </section>
+
+  <!-- RIGHT -->
+  <section class="card right">
+    <div class="rp-h">
+      <div class="crumbs"><span>Тренировка · Проверка угроз</span><span class="prog"><span class="num">4 / 31</span><span class="xp num">+45 XP</span></span></div>
+      <div class="pbarline"><i></i></div>
+      <div class="title tight">Что хочет соперник?</div>
+      <div class="chips state-q">
+        <div class="chip">Ты играешь чёрными</div>
+        <div class="chip">Партия против Ivan_88</div>
+      </div>
+      <div class="chips state-a">
+        <div class="chip warn">Нашёл 1 из 2</div>
+        <div class="chip bad">1 лишняя отметка</div>
+        <div class="chip ok num">+5 XP</div>
+      </div>
+    </div>
+
+    <!-- QUESTION STATE -->
+    <div class="state-q" style="flex-direction:column">
+      <div class="sec">
+        <div class="lab">Задание</div>
+        <div>Соперник сыграл <span class="mv">Nb5</span>. Отметь свои фигуры, которые он может выиграть следующим ходом. Если угроз нет — нажми «Угроз нет».</div>
+      </div>
+      <div class="sec">
+        <div class="lab">Что считается угрозой</div>
+        <div class="rule"><i class="ico" data-i="crown"></i>Шах твоему королю</div>
+        <div class="rule"><i class="ico" data-i="triangle-alert"></i>Фигура без защиты или под ударом более дешёвой</div>
+        <div class="rule"><i class="ico" data-i="git-fork"></i>Вилка и двойной удар</div>
+      </div>
+      <div class="sec">
+        <div class="lab">Отмечено: 2</div>
+        <div class="chips" style="margin-top:0">
+          <div class="chip"><img src="pieces/bP.svg">c7 · пешка<span class="x">✕</span></div>
+          <div class="chip"><img src="pieces/bB.svg">f3 · слон<span class="x">✕</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANSWER STATE -->
+    <div class="tcard state-a blk">
+      <div class="top"><span class="dot" style="background:var(--danger)"><i class="ico" data-i="triangle-alert"></i></span><b>Угроза: Nxc7+</b></div>
+      <p>Вилка: шах королю на e8 и удар по ладье a8. Пешка c7 не защищена.</p>
+      <div class="line">Дальше: <span class="mv">Nxc7+</span><span class="mv">Kd8</span><span class="mv">Nxa8</span> — ты теряешь ладью.</div>
+    </div>
+    <div class="sec state-a blk" style="border-top:none;padding-top:14px;padding-bottom:10px">
+      <div class="lab">Твои отметки</div>
+      <div class="tl">
+        <div class="tr"><span class="dot" style="background:var(--accent)"><i class="ico" data-i="check"></i></span><div><div class="h">c7 · пешка <span class="ok" style="font-size:13px">нашёл</span></div><div class="d">Конь бьёт её с шахом.</div></div></div>
+        <div class="tr"><span class="dot" style="background:var(--warn)">!</span><div><div class="h">a8 · ладья <span class="warn" style="font-size:13px">пропустил</span></div><div class="d">Попадает под вилку после Nxc7+.</div></div></div>
+        <div class="tr"><span class="dot" style="background:var(--danger)"><i class="ico" data-i="x"></i></span><div><div class="h">f3 · слон <span class="bad" style="font-size:13px">лишняя</span></div><div class="d">Ферзь d3 бьёт f3, но слон защищён ферзём f6.</div></div></div>
+      </div>
+    </div>
+    <div class="step state-a">
+      <div class="ic"><i class="ico" data-i="shield-check"></i></div>
+      <div><b>Шаг 2. Найди защиту</b><br><span>Сделай ход на доске, который убирает угрозу.</span></div>
+    </div>
+
+    <div class="act">
+      <div class="btn1 state-q">Проверить <span class="k">Enter</span></div>
+      <div class="btn1 state-a">Дальше <span class="k">Пробел</span></div>
+      <div class="two state-q" style="display:grid">
+        <div class="btn2">Угроз нет <span class="k">N</span></div>
+        <div class="btn2"><i class="ico" data-i="lightbulb"></i>Подсказка <span class="k">H</span></div>
+      </div>
+      <div class="two state-a" style="display:none">
+        <div class="btn2"><i class="ico" data-i="lightbulb"></i>Подсказка защиты <span class="k">H</span></div>
+        <div class="btn2"><i class="ico" data-i="circle-play"></i>Сыграть отсюда</div>
+      </div>
+      <div class="hints state-q" style="display:block">Клик по фигуре — отметить · ещё клик — снять</div>
+      <div class="hints state-a" style="display:none">Защиту можно пропустить — сразу «Дальше»</div>
+    </div>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script>
+const A = location.hash === '#a';
+if (A) {
+  document.body.classList.add('a');
+  document.querySelectorAll('.two.state-q,.hints.state-q').forEach(e => e.style.display = 'none');
+  document.querySelectorAll('.two.state-a').forEach(e => e.style.display = 'grid');
+  document.querySelectorAll('.hints.state-a').forEach(e => e.style.display = 'block');
+}
+const ico = (n, s='') => `<i class="ico" data-i="${n}" style="${s}"></i>`;
+
+// sidebar
+const nav = [
+  ['calendar','Сегодня'],
+  ['#','Учиться'],['layers','Дебюты'],['book-open','Курсы'],['flag','Ловушки'],['lightbulb','Идеи позиций'],
+  ['#','Тренироваться'],['circle-alert','Ошибки'],['triangle-alert','Проверка угроз',1],['grid-3x3','Эндшпили'],['shield','Жертвы'],['search','Угадай дебют'],['circle-play','Играть'],
+  ['#','Партии'],['message-square','Мои партии'],['star','Мастера'],
+];
+document.getElementById('side').innerHTML = nav.map(([i,t,a]) => i==='#'
+  ? `<div class="grp">${t}${ico('chevron-down')}</div>`
+  : `<div class="item${a?' active':''}">${ico(i)}${t}</div>`).join('')
+  + `<div class="item bottom">${ico('panel-left-close')}Свернуть меню</div>`;
+
+// queue (no spoilers for current/upcoming)
+const Q = [
+  ['ok','Вилка конём','нашёл 2 из 2'],
+  ['warn','Зевок ладьи','нашёл 0 из 1'],
+  ['ok','Угроз нет','верно'],
+  ['cur','Позиция 4','партия против Ivan_88'],
+  ['','Позиция 5','партия против Kotik77'],
+  ['','Позиция 6','партия против A_Petrov'],
+  ['','Позиция 7','партия против Ivan_88'],
+  ['','Позиция 8','партия против chessbro'],
+  ['','Позиция 9','партия против Kotik77'],
+  ['','Позиция 10','партия против M_Lee'],
+];
+document.getElementById('queue').innerHTML = Q.map(([s,t,p],k) => {
+  const st = s==='ok' ? `<span class="ok">${ico('check')}</span>`
+           : s==='warn' ? `<span class="warn" style="font-weight:800">!</span>`
+           : `<span class="idx num">${k+1}</span>`;
+  const cls = s==='cur' ? 'row cur' : (s==='ok'||s==='warn') ? 'row done' : 'row';
+  return `<div class="${cls}"><div style="display:grid;place-items:center">${st}</div><div><div class="t">${t}</div><div class="p">${p}</div></div><div></div></div>`;
+}).join('');
+
+// board, black at the bottom
+const fen = 'r3k2r/ppp2pb1/5q2/1N1P2pp/2B1P3/3Q1b2/PP3P2/R3K1R1';
+const files = 'abcdefgh';
+const grid = {}; // square -> piece
+fen.split('/').forEach((row, ri) => {
+  let f = 0;
+  for (const ch of row) { if (/\d/.test(ch)) f += +ch; else { grid[files[f] + (8 - ri)] = ch; f++; } }
+});
+const S = 774 / 8;
+// black orientation: top row is rank 1, left column is file h
+const pos = sq => { const fi = files.indexOf(sq[0]), rk = +sq[1]; return { col: 7 - fi, row: rk - 1 }; };
+const ctr = sq => { const p = pos(sq); return [ (p.col + .5) * S, (p.row + .5) * S ]; };
+
+const lastMove = { c3: 'rgba(247,214,74,.42)', b5: 'rgba(247,214,74,.55)' };
+const marksQ = ['c7', 'f3'];
+const res = { c7: 'var(--accent)', a8: 'var(--warn)', f3: 'var(--danger)' };
+
+let html = '';
+for (let row = 0; row < 8; row++) {
+  for (let col = 0; col < 8; col++) {
+    const fi = 7 - col, rk = row + 1, sq = files[fi] + rk;
+    const isLight = (fi + rk) % 2 === 1;
+    const bg = isLight ? 'var(--light)' : 'var(--dark)';
+    const coColor = isLight ? 'var(--dark)' : 'var(--light)';
+    let inner = '';
+    if (lastMove[sq]) inner += `<div class="hl" style="background:${lastMove[sq]}"></div>`;
+    if (!A && marksQ.includes(sq)) inner += `<div class="hl" style="background:rgba(74,144,226,.28);box-shadow:inset 0 0 0 4px var(--mark)"></div>`;
+    if (A && res[sq]) inner += `<div class="hl" style="box-shadow:inset 0 0 0 4px ${res[sq]};background:${sq==='c7'?'rgba(129,182,76,.25)':sq==='a8'?'rgba(240,164,58,.25)':'rgba(224,87,74,.22)'}"></div>`;
+    const p = grid[sq];
+    if (p) { const c = p === p.toUpperCase() ? 'w' : 'b'; inner += `<img src="pieces/${c}${p.toUpperCase()}.svg">`; }
+    if (col === 0) inner += `<span class="co r" style="color:${coColor}">${rk}</span>`;
+    if (row === 7) inner += `<span class="co f" style="color:${coColor}">${files[fi]}</span>`;
+    html += `<div class="sq" style="background:${bg}">${inner}</div>`;
+  }
+}
+document.getElementById('sqs').innerHTML = html;
+
+function arrow(a, b, color, opts = {}) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const start = opts.start ?? 18, end = L - (opts.endGap ?? 14), head = opts.head ?? 34, sw = opts.sw ?? 9, hw = opts.hw ?? 22;
+  const P = (t, o) => [(x1 + ux * t + px * o).toFixed(1), (y1 + uy * t + py * o).toFixed(1)].join(',');
+  const pts = [P(start, -sw), P(end - head, -sw), P(end - head, -hw), P(end, 0), P(end - head, hw), P(end - head, sw), P(start, sw)].join(' ');
+  return `<polygon points="${pts}" fill="${color}" opacity="${opts.op ?? .85}"/>`;
+}
+function dashed(a, b, color) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const s = 30, e = L - 30, hl = 20, hw = 12;
+  const ex = x1 + ux * e, ey = y1 + uy * e;
+  const head = [[ex, ey], [ex - ux * hl + px * hw, ey - uy * hl + py * hw], [ex - ux * hl - px * hw, ey - uy * hl - py * hw]].map(p => p.map(v => v.toFixed(1)).join(',')).join(' ');
+  return `<line x1="${(x1 + ux * s).toFixed(1)}" y1="${(y1 + uy * s).toFixed(1)}" x2="${(ex - ux * hl).toFixed(1)}" y2="${(ey - uy * hl).toFixed(1)}" stroke="${color}" stroke-width="6" stroke-dasharray="12 9" stroke-linecap="round" opacity=".9"/><polygon points="${head}" fill="${color}" opacity=".9"/>`;
+}
+function badge(sq, bg, inner) {
+  const [x, y] = ctr(sq);
+  return `<div class="badge" style="left:${(x + S / 2 - 23).toFixed(1)}px;top:${(y - S / 2 - 11).toFixed(1)}px"><svg width="34" height="34" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11.5" fill="${bg}"/>${inner}</svg></div>`;
+}
+const CHECK = '<path d="M7 12.5l3.2 3.2L17 8.8" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+const XMARK = '<path d="M8.2 8.2l7.6 7.6M15.8 8.2l-7.6 7.6" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>';
+const BANG = '<text x="12" y="17" text-anchor="middle" font-family="Inter" font-weight="800" font-size="15" fill="#fff">!</text>';
+
+let over = '';
+if (A) {
+  over += `<svg width="774" height="774" style="position:absolute;inset:0">`
+    + arrow('b5', 'c7', '#E0574A')
+    + dashed('c7', 'e8', '#F0A43A')
+    + dashed('c7', 'a8', '#F0A43A')
+    + `</svg>`;
+  over += badge('c7', '#81B64C', CHECK) + badge('a8', '#F0A43A', BANG) + badge('f3', '#E0574A', XMARK);
+}
+document.getElementById('over').innerHTML = over;
+
+document.querySelectorAll('[data-i]').forEach(el => {
+  const u = window.ICONS && ICONS[el.dataset.i];
+  if (u) el.style.setProperty('--i', `url("${u}")`);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Тренажёр дебюта — живой макет</title>
+<link rel="stylesheet" href="node_modules/@fontsource/inter/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/600.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter-tight/700.css">
+<style>
+
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A; --plan:#4A90E2;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:10px 12px;display:flex;flex-direction:column}
+.item{height:35px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:14px;flex:none}
+.item .ico{width:17px;height:17px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:12px 12px 4px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);flex:none}
+.grp .ico{width:14px;height:14px}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+/* left */
+.left{width:280px;height:854px;display:flex;flex-direction:column;flex:none}
+.left .hd{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.h2{font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd img{width:26px;height:26px;flex:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.segctl{display:grid;grid-template-columns:.9fr 1.15fr 1fr;margin:14px 20px 0;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.segctl div{height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--muted);font-weight:500}
+.segctl .on{background:#45423E;color:var(--text);font-weight:600}
+.hard{margin:10px 20px 0;height:40px;border-radius:var(--r-btn);border:1px solid var(--hair2);display:flex;align-items:center;gap:10px;padding:0 12px;font-size:14px;font-weight:500;color:#E4E1DC}
+.hard .ico{width:16px;height:16px;color:#F4B45C}
+.hard b{margin-left:auto;font-size:13px;font-weight:600;color:#2A1E0B;background:var(--warn);border-radius:6px;padding:1px 7px}
+.qlabel{margin:16px 20px 6px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.secs{padding:0 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+.lrow{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;height:58px;padding:0 10px;border-radius:10px;position:relative}
+.lrow .ix{width:28px;height:28px;border-radius:8px;background:#3A3835;display:grid;place-items:center;font-size:13px;font-weight:700;color:#CFCBC6}
+.lrow .nm{font-size:14px;font-weight:600;color:#E8E5E0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .sub{display:flex;align-items:center;gap:8px;margin-top:6px}
+.mb{display:flex;gap:3px}
+.mb i{width:10px;height:4px;border-radius:2px;background:#45423E}
+.mb i.f{background:var(--accent)}
+.tag{font-size:13px;font-weight:600;color:#F4B45C;line-height:1;white-space:nowrap}
+.lrow .st{font-size:13px;color:var(--muted);white-space:nowrap}
+.lrow .st.due{color:#F4B45C;font-weight:600}
+.lrow .st.ok{color:var(--accent);font-weight:600}
+.lrow .st.new{color:#8FB4DA}
+.lrow.on{background:var(--row)}
+.lrow.on::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:3px;background:var(--accent)}
+.leftbot{padding:14px 20px 20px;border-top:1px solid var(--hair);display:flex;gap:10px}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#E8E5E0;padding:0 14px}
+.btn2 .ico{width:16px;height:16px}
+.btn2 .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.btn2.off{opacity:.45}
+.three .btn2{font-size:14px;padding:0 10px;gap:7px}
+.btn2.sq{width:44px;padding:0}
+/* board */
+.bcol{width:806px;height:854px;display:flex;flex-direction:column;gap:8px;flex:none}
+.pbar{height:32px;display:flex;align-items:center;justify-content:space-between;padding-left:32px}
+.who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.ava{width:28px;height:28px;border-radius:6px;background:#4A4744;display:grid;place-items:center}
+.ava img{width:22px;height:22px}
+.tg{font-size:13px;font-weight:500;color:var(--muted)}
+.pnote{font-size:13px;color:var(--muted)}
+.pnote b{color:var(--text);font-weight:600}
+.brow{display:flex;gap:8px;height:774px}
+.gutter{width:24px}
+.board{width:774px;height:774px;position:relative}
+.sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden}
+.sq{position:relative}
+.sq .hl{position:absolute;inset:0}
+.sq img{position:absolute;inset:0;width:100%;height:100%}
+.co{position:absolute;font-size:13px;font-weight:600;line-height:1}
+.co.r{left:5px;top:5px}.co.f{right:6px;bottom:4px}
+.over{position:absolute;inset:0;pointer-events:none}
+/* right */
+.right{flex:1;height:854px;display:flex;flex-direction:column;min-width:0}
+.rp-h{padding:20px 24px 14px}
+.crumbs{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.crumbs .pr{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--text)}
+.xp{font-size:13px;font-weight:600;color:#81B64C;background:rgba(129,182,76,.14);border-radius:6px;padding:2px 7px}
+.pb4{height:4px;border-radius:4px;background:#3A3835;margin-top:12px;overflow:hidden}
+.pb4 i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:14px;line-height:1.15}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:500;color:#DCD8D3}
+.chip img{width:16px;height:16px}
+.chip .ico{width:14px;height:14px}
+.chip.orange{color:#F4B45C;border-color:rgba(240,164,58,.35);background:rgba(240,164,58,.08)}
+.rb{flex:1;overflow:hidden;padding:4px 24px 0;display:flex;flex-direction:column;gap:16px}
+.fb{border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start}
+.fb .bi{width:30px;height:30px;border-radius:15px;display:grid;place-items:center;color:#fff}
+.fb .bi .ico{width:17px;height:17px}
+.fb .t1{font-size:16px;line-height:1.45;color:var(--text)}
+.fb .t1 b{font-weight:700;white-space:nowrap}
+.fb .t2{font-size:14px;color:var(--muted);margin-top:6px}
+.fb.fail{background:rgba(224,87,74,.10);border:1px solid rgba(224,87,74,.35)} .fb.fail .bi{background:var(--danger)}
+.fb.info{background:rgba(74,144,226,.09);border:1px solid rgba(74,144,226,.30)} .fb.info .bi{background:#3A78C2}
+.fb.ok{background:rgba(129,182,76,.10);border:1px solid rgba(129,182,76,.35)} .fb.ok .bi{background:var(--accent-press)}
+.note{border-radius:10px;background:rgba(240,164,58,.08);border:1px solid rgba(240,164,58,.28);padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#E6E3DE}
+.note .ico{width:17px;height:17px;color:#F4B45C;margin-top:2px}
+.note b{font-weight:600}
+.note a{color:#F4B45C;text-decoration:none;font-weight:600;white-space:nowrap;margin-left:auto}
+.blk h4{font-size:13px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px}
+.blk h4 span{font-weight:500;color:var(--text)}
+.stp{display:flex;gap:5px}
+.stp i{flex:1;height:10px;border-radius:5px;background:#3D3B38}
+.stp i.ok{background:var(--accent)} .stp i.fail{background:var(--danger)} .stp i.hint{background:var(--warn)}
+.stp i.cur{box-shadow:0 0 0 2px var(--surface),0 0 0 4px rgba(255,255,255,.55)}
+.stp i.now{background:#5A5753}
+.mv{display:grid;grid-template-columns:34px 104px 104px;row-gap:2px;column-gap:6px;font-size:15px}
+.mv .n{color:var(--faint);font-size:14px;line-height:30px;text-align:right;padding-right:4px}
+.mv .c{height:30px;border-radius:7px;padding:0 9px;display:flex;align-items:center;font-weight:600;color:#E4E1DC}
+.mv .c.opp{color:#CFCBC6;font-weight:500}
+.mv .c.known{color:var(--faint);font-weight:500}
+.mv .c.future{color:#6B6863;font-weight:500}
+.mv .c.now{box-shadow:inset 0 0 0 2px var(--accent);color:var(--text)}
+.mv .c.q{box-shadow:inset 0 0 0 2px var(--danger);color:#F08277;font-weight:700}
+.mv .c.bad{color:#F08277}
+.mv.wide{grid-template-columns:34px 1fr 1fr 34px 1fr 1fr}
+.act{padding:16px 24px 18px;border-top:1px solid var(--hair)}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.keys{font-size:13px;color:var(--faint);margin-top:12px;text-align:center}
+.btn1{height:52px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.btn1 .ico{width:18px;height:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.two .btn2{font-size:14px;padding:0 10px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.sum div{padding:14px 0;text-align:center;border-right:1px solid var(--hair)} .sum div:last-child{border-right:none}
+.sum b{display:block;font-size:26px;font-weight:700;line-height:1.2}
+.sum span{font-size:13px;color:var(--muted)}
+.res{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--hair)}
+.res .bi{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.res .bi .ico{width:15px;height:15px}
+.res .t1{font-size:15px;font-weight:600}
+.res .t2{font-size:13px;color:var(--muted);margin-top:2px}
+.res .t2 b{color:#F08277;font-weight:600}
+.planrow{display:flex;justify-content:space-between;font-size:14px;color:#DCD8D3;padding:8px 2px;border-bottom:1px solid var(--hair)}
+.planrow:last-child{border-bottom:none}
+.planrow span{color:var(--muted)}
+
+.lrow{cursor:pointer}
+.segctl div{cursor:pointer}
+.btn1,.btn2,.hard{cursor:pointer;user-select:none}
+.sq{cursor:pointer}
+.sq.sel .hl2{position:absolute;inset:0;background:rgba(129,182,76,.45)}
+.sq .dot{position:absolute;left:50%;top:50%;width:26%;height:26%;margin:-13% 0 0 -13%;border-radius:50%;background:rgba(0,0,0,.18)}
+.grph{margin:10px 10px 4px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.grph img{width:18px;height:18px}
+.fb .t1 .xpc{font-size:13px;font-weight:600;color:#81B64C;background:rgba(129,182,76,.14);border-radius:6px;padding:2px 7px;margin-left:6px}
+.segx{display:grid;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.segx div{height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);font-weight:500;cursor:pointer}
+.segx .on{background:#45423E;color:var(--text);font-weight:600}
+.lbl{font-size:13px;color:var(--muted);margin:2px 0 8px}
+.txt{font-size:15px;color:#DCD8D3;line-height:1.5}
+.fb.done{background:rgba(240,164,58,.08);border:1px solid rgba(240,164,58,.32)} .fb.done .bi{background:#C98424}
+.fb.hint{background:rgba(240,164,58,.08);border:1px solid rgba(240,164,58,.32)} .fb.hint .bi{background:#C98424}
+.timer{font-size:15px;font-weight:700;color:var(--text)}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+<aside class="side" id="side"></aside>
+<main class="main">
+  <section class="card left" data-ui="session" id="left"></section>
+  <section class="bcol">
+    <div class="pbar" data-ui="player-top" id="ptop"></div>
+    <div class="brow"><div class="gutter"></div>
+      <div class="board" id="op-board"><div class="sqs" id="sqs"></div><svg class="over" id="over" width="774" height="774" style="position:absolute;inset:0"></svg></div>
+    </div>
+    <div class="pbar" data-ui="player-bottom" id="pbot"></div>
+  </section>
+  <section class="card right" data-ui="panel" data-demo="openings" id="panel"></section>
+</main>
+<script src="icons.js"></script>
+<script type="module">
+import * as R from './opening-ref.mjs';
+import { Chess } from './vendor/chess.js';
+
+// ── демо-данные (как DEMO_OPENINGS в OPENINGS.md, раздел 8) ─────────────────
+const DAY = 86400000, NOW0 = Date.now();
+const now = () => Date.now();
+const iso = d => new Date(NOW0 + d * DAY).toISOString();
+const OPEN = {
+  demo: { id: 'demo', name: 'Ускоренный дракон', color: 'black' },
+  'demo-scotch': { id: 'demo-scotch', name: 'Шотландская партия', color: 'white' },
+};
+const RAW = [
+  ['L1', 'demo', 'e4 c5 Nf3 Nc6 d4 cxd4 Nxd4 g6 Nxc6 bxc6 Qd4 Nf6 e5 Nd5 e6 f6', { mastery: 4, next_review: iso(20), correct_count: 4, incorrect_count: 1, last_practiced: iso(-10) }],
+  ['L2', 'demo', 'e4 c5 Nf3 Nc6 d4 cxd4 Nxd4 g6 c4 Nf6 Nc3 d6 Be2 Nxd4 Qxd4 Bg7 Be3 O-O Qd2 Be6', { mastery: 2, next_review: iso(-1), correct_count: 2, incorrect_count: 1, last_practiced: iso(-12) }],
+  ['L3', 'demo', 'e4 c5 Nf3 Nc6 d4 cxd4 Nxd4 g6 Nc3 Bg7 Be3 Nf6 Bc4 Qa5 O-O O-O Bb3 d6', { mastery: 1, next_review: iso(-3), correct_count: 1, incorrect_count: 0, last_practiced: iso(-6) }],
+  ['L4', 'demo', 'e4 c5 Nf3 Nc6 d4 cxd4 Nxd4 g6 Nc3 Bg7 Nb3 Nf6 Be2 O-O O-O d6', { mastery: 2, next_review: iso(4), correct_count: 2, incorrect_count: 0, last_practiced: iso(-3) }],
+  ['L5', 'demo', 'e4 c5 Nf3 Nc6 Bb5 g6 Bxc6 dxc6 d3 Bg7 h3 Nf6 Nc3 O-O', null],
+  ['L6', 'demo', 'e4 c5 c3 Nf6 e5 Nd5 d4 cxd4 Nf3 Nc6 cxd4 d6', null],
+  ['S1', 'demo-scotch', 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Bc5 Nxc6 Qf6 Qd2 dxc6 Nc3', { mastery: 3, next_review: iso(9), correct_count: 3, incorrect_count: 0, last_practiced: iso(-5) }],
+  ['S2', 'demo-scotch', 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Nf6 Nxc6 bxc6 e5 Qe7 Qe2 Nd5 c4', { mastery: 1, next_review: iso(-2), correct_count: 1, incorrect_count: 1, last_practiced: iso(-5) }],
+];
+const LINES = RAW.map(([id, op, san, prog], i) => ({ id, opening: op, index: i, moves: R.toMoves(san), prog }));
+const byId = Object.fromEntries(LINES.map(l => [l.id, l]));
+const GAME_DEV = [{ lineId: 'L2', ply: 7, played: 'Nf6', played_uci: 'g8f6', opp: 'petr_k', date: '10 ноя', result: 'loss', played_at: iso(-9) }];
+const MOVE_ROWS = [
+  { line_id: 'L2', move_index: 7, incorrect_count: 2, last_missed_at: iso(-9) },
+  { line_id: 'L3', move_index: 13, incorrect_count: 1, last_missed_at: iso(-2) },
+  { line_id: 'L1', move_index: 11, incorrect_count: 1, last_missed_at: iso(-1) },
+];
+const EXAM_ORDER = ['L2', 'L1', 'L3', 'L4', 'L5', 'L6'];   // в демо порядок экзамена фиксированный
+
+const ALL = location.pathname.replace(/\/$/, '').endsWith('/openings/review');
+const params = new URLSearchParams(location.search);
+const OPENING = OPEN.demo;
+const myColorOf = L => (OPEN[L.opening].color === 'white' ? 'w' : 'b');
+const linesOf = () => ALL ? LINES : LINES.filter(l => l.opening === 'demo');
+const status = L => R.lineStatus(L.prog, now());
+const freshDev = () => new Set(GAME_DEV.filter(g => { const L = byId[g.lineId]; return !L.prog || Date.parse(g.played_at) > Date.parse(L.prog.last_practiced || 0); }).map(g => g.lineId));
+const labelsFor = list => { const lab = {}; const groups = {}; list.forEach(l => (groups[l.opening] ||= []).push(l));
+  for (const [op, ls] of Object.entries(groups)) { const all = LINES.filter(l => l.opening === op); const labs = R.lineLabels(all, OPEN[op].color === 'white' ? 'w' : OPEN[op].color === 'black' ? 'b' : null); all.forEach((l, i) => lab[l.id] = labs[i]); }
+  return lab; };
+
+// ── состояние ────────────────────────────────────────────────────────────────
+const S = { mode: null, queue: [], pos: 0, run: null, line: null, recall: false, okSet: new Set(), results: [], xp: 0, summary: false,
+  exam: null, sel: null, flip: false, timer: null, watch: null, lineDone: false, lastAr: null, studied: new Set() };
+
+function counts() { const c = R.countStatuses(linesOf().map(l => l.prog), now()); return c; }
+function defaultMode() { const c = counts(); return c.due ? 'review' : c.new ? 'learn' : 'review'; }
+function hardItems() {
+  const lb = Object.fromEntries(linesOf().map(l => [l.id, { ...l, myColor: myColorOf(l) }]));
+  return R.hardQueue(MOVE_ROWS, lb);
+}
+
+function clearTimers() { clearTimeout(S.timer); S.timer = null; clearInterval(S.watch); S.watch = null; }
+function startSession(mode, force = null) {
+  clearTimers();
+  Object.assign(S, { mode, pos: 0, results: [], xp: 0, summary: false, okSet: new Set(), run: null, line: null, recall: false, lineDone: false, sel: null });
+  const withProg = linesOf().map(l => ({ id: l.id, index: l.index, prog: l.prog }));
+  if (mode === 'review') S.queue = R.reviewQueue(withProg, now(), { freshDev: freshDev(), forceLineId: force });
+  else if (mode === 'learn') S.queue = R.learnQueue(withProg, { forceLineId: force });
+  else if (mode === 'hard') S.queue = hardItems();
+  else if (mode === 'again') { S.queue = force; S.mode = 'review'; }
+  else if (mode === 'free') S.queue = [];
+  else if (mode === 'exam') { S.queue = []; S.exam = { phase: 'setup', pool: 'all', minutes: 10, done: [], t0: 0, left: 0 }; return render(); }
+  if (mode === 'free') return pickFree();
+  if (!S.queue.length) { S.summary = true; return render(); }
+  startLine(S.queue[0]);
+}
+function pickFree() {
+  const ls = linesOf(); const w = ls.map(l => R.weight(l.prog, now())); let r = Math.random() * w.reduce((a, b) => a + b, 0);
+  let pick = ls[ls.length - 1]; for (let i = 0; i < ls.length; i++) { r -= w[i]; if (r <= 0) { pick = ls[i]; break; } }
+  S.queue.push(pick.id); S.pos = S.queue.length - 1; startLine(pick.id);
+}
+function startLine(item) {
+  clearTimers();
+  const id = typeof item === 'string' ? item : item.lineId;
+  const L = byId[id], myColor = myColorOf(L);
+  let startPly = 0, endPly = L.moves.length, runMode = S.mode;
+  if (S.mode === 'review' || S.mode === 'free') { startPly = R.sessionStart(L.moves, myColor, S.okSet); runMode = 'review'; }
+  else if (S.mode === 'learn') startPly = R.learnStart(L.moves, LINES.filter(o => o.opening === L.opening && o.id !== L.id && (o.prog || S.studied.has(o.id))));
+  else if (S.mode === 'hard') { startPly = item.ply; endPly = item.ply + 1; runMode = 'drill'; }
+  else if (S.mode === 'exam') runMode = 'exam';
+  Object.assign(S, { line: L, recall: false, lineDone: false, sel: null, lastAr: null });
+  S.run = R.createRun(L.moves, myColor, runMode, { startPly, endPly });
+  after();
+}
+function startRecall() {
+  clearTimers();
+  const L = S.line;
+  S.recall = true; S.lineDone = false; S.sel = null;
+  S.run = R.createRun(L.moves, myColorOf(L), 'review', { startPly: S.run.startPly });
+  after();
+}
+function nextLine() {
+  clearTimers();
+  if (S.mode === 'free') return pickFree();
+  S.pos++;
+  if (S.mode === 'exam') {
+    if (S.pos >= S.queue.length) return finishExam();
+    return startLine(S.queue[S.pos]);
+  }
+  if (S.pos >= S.queue.length) { S.summary = true; S.run = S.run; return render(); }
+  startLine(S.queue[S.pos]);
+}
+function effects() {
+  for (const e of S.run.effects) {
+    if (e.type === 'ok') S.okSet.add(e.key);
+    if (e.type === 'mistake') {
+      const row = MOVE_ROWS.find(r => r.line_id === S.line.id && r.move_index === e.ply);
+      if (row) { row.incorrect_count++; row.last_missed_at = new Date().toISOString(); }
+      else MOVE_ROWS.push({ line_id: S.line.id, move_index: e.ply, incorrect_count: 1, last_missed_at: new Date().toISOString() });
+    }
+  }
+}
+function after() {
+  effects();
+  if (S.run.phase === 'done' && !S.lineDone) lineDone();
+  render();
+  if (R.needsAuto(S.run) && !S.watch) S.timer = setTimeout(() => { S.run = R.auto(S.run); after(); }, S.run.mode === 'learn' ? 600 : 300);
+}
+function lineDone() {
+  S.lineDone = true;
+  const L = S.line, res = R.result(S.run);
+  if (S.run.mode === 'learn') { S.studied.add(L.id); return; }
+  if (S.run.mode === 'drill') {
+    const row = MOVE_ROWS.find(r => r.line_id === L.id && r.move_index === S.run.startPly);
+    if (row && res.perfect) row.incorrect_count = Math.max(0, row.incorrect_count - 1);
+    S.results.push({ lineId: L.id, perfect: res.perfect, ply: S.run.startPly });
+    if (res.perfect) S.timer = setTimeout(nextLine, 700);
+    return;
+  }
+  const ar = R.applyResult(L.prog, res.perfect, now(), { afterLearn: S.recall });
+  L.prog = { ...(L.prog || {}), ...ar.row };
+  S.xp += ar.xp; S.lastAr = ar;
+  S.results.push({ lineId: L.id, perfect: res.perfect, mistakes: S.run.mistakes.map(m => m.ply), failed: res.failed, ar });
+  if (S.run.mode === 'exam') S.timer = setTimeout(nextLine, res.failed ? 1500 : 800);
+}
+function startExam() {
+  const pool = S.exam.pool === 'due' ? EXAM_ORDER.filter(id => status(byId[id]) === 'due') : EXAM_ORDER;
+  S.queue = pool; S.pos = 0; S.results = [];
+  S.exam.phase = 'run'; S.exam.t0 = Date.now(); S.exam.left = S.exam.minutes * 60;
+  clearInterval(S.exam.tick);
+  S.exam.tick = setInterval(() => { S.exam.left = Math.max(0, S.exam.minutes * 60 - Math.floor((Date.now() - S.exam.t0) / 1000)); if (!S.exam.left) finishExam(); else renderPanel(); }, 1000);
+  startLine(S.queue[0]);
+}
+function finishExam() {
+  clearTimers(); clearInterval(S.exam.tick);
+  S.exam.phase = 'result'; S.exam.secs = Math.round((Date.now() - S.exam.t0) / 1000);
+  render();
+}
+function onSquare(sq) {
+  if (!S.run || S.summary || !R.isMyTurn(S.run) || S.watch) return;
+  const ch = new Chess(R.view(S.run).fen);
+  const p = ch.get(sq);
+  if (S.sel) {
+    if (sq === S.sel) { S.sel = null; return render(); }
+    if (ch.moves({ square: S.sel, verbose: true }).some(m => m.to === sq)) { const from = S.sel; S.sel = null; S.run = R.move(S.run, from, sq); return after(); }
+    S.sel = p && p.color === S.run.myColor ? sq : null; return render();
+  }
+  if (p && p.color === S.run.myColor) { S.sel = sq; render(); }
+}
+function watch() {
+  if (S.watch) { clearInterval(S.watch); S.watch = null; return render(); }
+  clearTimeout(S.timer);
+  S.watch = setInterval(() => {
+    if (S.run.phase === 'done') { clearInterval(S.watch); S.watch = null; return after(); }
+    if (R.needsAuto(S.run)) S.run = R.auto(S.run);
+    else { const e = S.run.moves[S.run.ply]; S.run = R.move(S.run, e.from, e.to); }
+    effects(); if (S.run.phase === 'done') { clearInterval(S.watch); S.watch = null; return after(); }
+    render();
+  }, 900);
+  render();
+}
+
+// ── отрисовка ────────────────────────────────────────────────────────────────
+const ico = (n, s = '') => `<i class="ico" data-i="${n}" style="${s}"></i>`;
+const plural = (n, a, b, c) => n % 10 === 1 && n % 100 !== 11 ? a : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c);
+const files = 'abcdefgh', Q = 774 / 8;
+function renderBoard() {
+  const v = S.run ? R.view(S.run) : { fen: S.line ? S.line.moves[S.line.moves.length - 1].fen : R.START, arrows: [], rings: {}, lastMove: null };
+  const fen = v.fen;
+  const flip = (S.line ? myColorOf(S.line) === 'b' : OPENING.color === 'black') !== S.flip;
+  const grid = {};
+  fen.split(' ')[0].split('/').forEach((row, ri) => { let f = 0; for (const ch of row) { if (/\d/.test(ch)) f += +ch; else { grid[files[f] + (8 - ri)] = ch; f++; } } });
+  let targets = [];
+  if (S.sel) { try { targets = new Chess(fen).moves({ square: S.sel, verbose: true }).map(m => m.to); } catch { targets = []; } }
+  let h = '';
+  for (let row = 0; row < 8; row++) for (let col = 0; col < 8; col++) {
+    const f = flip ? 7 - col : col, r = flip ? row + 1 : 8 - row, sq = files[f] + r, light = (f + r) % 2 === 0;
+    let inner = v.lastMove && (v.lastMove.from === sq || v.lastMove.to === sq) ? `<div class="hl" style="background:rgba(247,214,74,${v.lastMove.to === sq ? .38 : .26})"></div>` : '';
+    if (S.sel === sq) inner += '<div class="hl2"></div>';
+    const p = grid[sq];
+    if (p) inner += `<img data-piece="${p === p.toUpperCase() ? 'w' : 'b'}${p.toUpperCase()}" src="pieces/${p === p.toUpperCase() ? 'w' : 'b'}${p.toUpperCase()}.svg">`;
+    if (targets.includes(sq)) inner += '<div class="dot"></div>';
+    const co = light ? 'var(--dark)' : 'var(--light)';
+    if (col === 0) inner += `<span class="co r" style="color:${co}">${r}</span>`;
+    if (row === 7) inner += `<span class="co f" style="color:${co}">${files[f]}</span>`;
+    const ring = v.rings && v.rings[sq] ? `box-shadow:inset 0 0 0 4px ${v.rings[sq]};` : '';
+    h += `<div class="sq${S.sel === sq ? ' sel' : ''}" id="op-square-${sq}" data-square="${sq}" style="background:var(--${light ? 'light' : 'dark'});${ring}">${inner}</div>`;
+  }
+  document.getElementById('sqs').innerHTML = h;
+  document.getElementById('op-board').setAttribute('data-board-fen', fen);
+  const ctr = sq => { const f = files.indexOf(sq[0]), r = +sq[1]; const col = flip ? 7 - f : f, row = flip ? r - 1 : 8 - r; return [(col + .5) * Q, (row + .5) * Q]; };
+  let svg = '';
+  for (const a of v.arrows) {
+    const [x1, y1] = ctr(a.from), [x2, y2] = ctr(a.to);
+    const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+    if (a.role === 'played') {
+      const st = 18, en = L - 14, hd = 34, sw = 9, hw = 22;
+      const P = (t, o) => [(x1 + ux * t + px * o).toFixed(1), (y1 + uy * t + py * o).toFixed(1)].join(',');
+      svg += `<g data-ui="board-arrow" data-role="played"><polygon points="${[P(st, -sw), P(en - hd, -sw), P(en - hd, -hw), P(en, 0), P(en - hd, hw), P(en - hd, sw), P(st, sw)].join(' ')}" fill="#E0574A" opacity=".85"/></g>`;
+    } else {
+      const s0 = 30, e = L - 18, hl = 26, hw = 16, ex = x1 + ux * e, ey = y1 + uy * e;
+      const head = [[ex, ey], [ex - ux * hl + px * hw, ey - uy * hl + py * hw], [ex - ux * hl - px * hw, ey - uy * hl - py * hw]].map(p => p.map(q => q.toFixed(1)).join(',')).join(' ');
+      svg += `<g data-ui="board-arrow" data-role="best"><line x1="${(x1 + ux * s0).toFixed(1)}" y1="${(y1 + uy * s0).toFixed(1)}" x2="${(ex - ux * hl).toFixed(1)}" y2="${(ey - uy * hl).toFixed(1)}" stroke="#81B64C" stroke-width="9" stroke-dasharray="16 11" stroke-linecap="round" opacity=".95"/><polygon points="${head}" fill="#81B64C" opacity=".95"/></g>`;
+    }
+  }
+  document.getElementById('over').innerHTML = svg;
+  // полоски игроков
+  const me = S.line ? myColorOf(S.line) : 'b';
+  const opp = me === 'w' ? 'b' : 'w';
+  let note = '';
+  if (S.run) { const k = S.run.phase === 'done' ? S.run.ply : (S.run.phase === 'consolidate' ? S.run.consolidate[0] : S.run.ply);
+    note = k > 0 ? `после <b>${R.numSan(S.run.moves, k - 1)}</b> · ход ${new Chess(v.fen).turn() === 'w' ? 'белых' : 'чёрных'}` : 'начальная позиция'; }
+  document.getElementById('ptop').innerHTML = `<div class="who"><div class="ava"><img src="pieces/${opp}P.svg"></div>${opp === 'w' ? 'Белые' : 'Чёрные'} <span class="tg">соперник</span></div><div class="pnote">${note}</div>`;
+  document.getElementById('pbot').innerHTML = `<div class="who"><div class="ava"><img src="pieces/${me}P.svg"></div>${me === 'w' ? 'Белые' : 'Чёрные'} <span class="tg">· ты</span></div><div class="pnote">${S.line ? OPEN[S.line.opening].name : ''}</div>`;
+}
+
+function renderLeft() {
+  const c = counts();
+  const ls = linesOf();
+  const lab = labelsFor(ls);
+  const fd = freshDev();
+  const row = (L, i) => {
+    const st = status(L), m = L.prog ? L.prog.mastery : 0;
+    const txt = R.dueText(L.prog, now());
+    const cls = { due: 'due', mastered: 'ok', new: 'new' }[st] || '';
+    const active = S.line && S.line.id === L.id && !S.summary;
+    return `<div class="lrow${active ? ' on' : ''}" data-ui="op-line" data-line="${L.id}" data-status="${st}"${active ? ' data-active="true"' : ''}>
+      <div class="ix num">${i + 1}</div>
+      <div style="min-width:0"><div class="nm">${lab[L.id]}</div>
+        <div class="sub"><div class="mb">${[0, 1, 2, 3, 4].map(k => `<i class="${k < m ? 'f' : ''}"></i>`).join('')}</div>${fd.has(L.id) ? '<span class="tag">из партии</span>' : ''}</div></div>
+      <div class="st ${cls}">${st === 'mastered' ? '✓ ' : ''}${txt}</div></div>`;
+  };
+  let list = '';
+  if (ALL) {
+    const due = S.queue.map(id => byId[id]);
+    const groups = {};
+    due.forEach(L => (groups[L.opening] ||= []).push(L));
+    for (const [op, arr] of Object.entries(groups)) list += `<div class="grph"><img src="pieces/${OPEN[op].color === 'white' ? 'w' : 'b'}K.svg">${OPEN[op].name}</div>` + arr.map((L) => row(L, LINES.filter(l => l.opening === op).indexOf(L))).join('');
+  } else list = ls.map(row).join('');
+  const hard = hardItems().length;
+  const modes = [['learn', 'Учить'], ['review', 'Повторять'], ['exam', 'Экзамен']];
+  const cur = S.mode === 'free' || S.mode === 'again' ? 'review' : S.mode;
+  document.getElementById('left').innerHTML = ALL ? `
+    <div class="hd"><div class="h2">Повторение</div><span class="muted num" style="font-size:14px">${S.queue.length} ${plural(S.queue.length, 'линия', 'линии', 'линий')}</span></div>
+    <div class="stats" data-ui="session-stats">
+      <div class="stat"><b class="num">${S.results.length}</b><span>пройдено</span></div>
+      <div class="stat"><b class="num" style="color:var(--accent)">${S.results.filter(r => r.perfect).length}</b><span>без ошибок</span></div>
+      <div class="stat"><b class="num" style="color:var(--warn)">${Math.max(0, S.queue.length - S.results.length)}</b><span>осталось</span></div>
+    </div>
+    <div class="qlabel"><span>Линии к повторению</span><span class="num">${S.queue.length}</span></div>
+    <div class="secs" data-ui="session-list">${list}</div>
+    <div class="leftbot"><div class="btn2" style="flex:1" data-ui="op-back">${ico('arrow-left')}Ко всем дебютам</div></div>` : `
+    <div class="hd"><div class="h2">${OPENING.name}</div><img src="pieces/bK.svg" title="Чёрными"></div>
+    <div class="stats" data-ui="session-stats">
+      <div class="stat"><b class="num" style="color:var(--accent)">${c.mastered}</b><span>освоено</span></div>
+      <div class="stat"><b class="num" style="color:var(--warn)">${c.due}</b><span>повторить</span></div>
+      <div class="stat"><b class="num">${c.new}</b><span>новых</span></div>
+    </div>
+    <div class="segctl" data-ui="op-modes">${modes.map(([k, t]) => `<div data-mode="${k}" class="${k === cur ? 'on' : ''}">${t}</div>`).join('')}</div>
+    ${hard ? `<div class="hard${S.mode === 'hard' ? ' on' : ''}" data-ui="op-hard">${ico('flame')}Трудные ходы<b class="num">${hard}</b></div>` : ''}
+    <div class="qlabel"><span>Линии</span><span class="num">${ls.length}</span></div>
+    <div class="secs" data-ui="session-list">${list}</div>
+    <div class="leftbot"><div class="btn2" style="flex:1">${ico('pencil')}Изменить дебют</div><div class="btn2 sq" data-ui="op-menu">${ico('ellipsis')}</div></div>`;
+}
+
+function stepsHtml(r) {
+  const st = R.steps(r);
+  return `<div class="blk" data-ui="op-steps"><h4>Твои ходы в линии <span class="num">${st.label}</span></h4>
+    <div class="stp">${st.items.map(i => `<i class="${i.state === 'todo' ? '' : i.state}${i.current ? ' cur' : ''}" data-state="${i.state}"></i>`).join('')}</div></div>`;
+}
+function movesHtml(r) {
+  const items = R.moveItems(r);
+  let rows = '', cells = [];
+  // раскладываем по парам «номер · белые · чёрные»
+  for (const it of items) cells[it.ply] = it;
+  const last = items.length ? items[items.length - 1].ply : -1;
+  const knownEnd = r.mode === 'learn' ? r.startPly : 0;
+  for (let k = 0; k <= last; k += 2) {
+    const w = cells[k], b = cells[k + 1];
+    const cl = (c, p) => !c ? '' : c.state === 'now' && c.text.includes('?') ? 'q' : c.state === 'now' ? 'now' : c.state === 'future' ? 'future' : p < knownEnd ? 'known' : c.state === 'opp' ? 'opp' : c.state === 'wrong' ? 'bad' : c.state === 'hint' ? 'bad' : '';
+    const strip = (c) => !c ? '' : c.text.replace(/^\d+\.\s*/, '').replace(/^\d+\.\.\.\s*/, '');
+    rows += `<div class="n">${Math.floor(k / 2) + 1}.</div><div class="c ${cl(w, k)}" data-state="${w ? w.state : ''}">${strip(w)}</div><div class="c ${cl(b, k + 1)}" data-state="${b ? b.state : ''}">${strip(b)}</div>`;
+  }
+  return `<div class="blk" data-ui="op-moves"><h4>Ходы</h4><div class="mv">${rows}</div></div>`;
+}
+function fb(result, t1, t2 = '', ui = 'op-feedback') {
+  const icon = { fail: 'x', ok: 'check', info: 'lightbulb', done: 'repeat', hint: 'lightbulb' }[result];
+  return `<div class="fb ${result}" data-ui="${ui}" data-result="${result}"><div class="bi">${ico(icon)}</div><div><div class="t1">${t1}</div>${t2 ? `<div class="t2">${t2}</div>` : ''}</div></div>`;
+}
+const b = s => s.replace(/(\d+\.(?:\.\.)? \S+)/g, '<b>$1</b>');
+
+function renderPanel() {
+  const p = document.getElementById('panel');
+  const crumbs = ALL ? 'Дебюты · Повторение' : `Дебюты · ${OPENING.name}`;
+  const total = S.queue.length, cur = Math.min(S.pos + 1, total);
+  const prog = S.mode === 'free' ? `${S.results.length}` : `${S.summary ? total : cur} / ${total}`;
+  const pct = S.summary ? 100 : total ? Math.round(((S.lineDone ? cur : cur - 1) / total) * 100) : 0;
+  const head = (title, chips, extra = '') => `<div class="rp-h" data-ui="panel-header">
+      <div class="crumbs"><span>${crumbs}</span><span class="pr num">${extra}${total || S.mode === 'free' ? prog : ''}${S.xp ? `<span class="xp">+${S.xp} XP</span>` : ''}</span></div>
+      <div class="pb4"><i style="width:${pct}%"></i></div>
+      <div class="title tight" data-ui="panel-title">${title}</div>
+      <div class="chips">${chips}</div></div>`;
+  const colorChip = L => `<div class="chip"><img src="pieces/${myColorOf(L)}K.svg">${myColorOf(L) === 'w' ? 'Белыми' : 'Чёрными'}</div>`;
+  const modeChip = { review: [S.recall ? 'По памяти' : 'Повторение', 'repeat'], learn: ['Учить', 'graduation-cap'], exam: ['Экзамен', 'clipboard-check'], hard: ['Трудные ходы', 'flame'], free: ['Свободная тренировка', 'shuffle'] }[S.mode] || ['Повторение', 'repeat'];
+  const mchip = `<div class="chip">${ico(modeChip[1])}${modeChip[0]}</div>`;
+
+  // экзамен: выбор и итог
+  if (S.mode === 'exam' && S.exam.phase !== 'run') {
+    if (S.exam.phase === 'setup') {
+      const due = linesOf().filter(l => status(l) === 'due').length;
+      p.innerHTML = head('Экзамен', mchip) + `<div class="rb"><div data-ui="op-exam-setup" style="display:flex;flex-direction:column;gap:16px">
+        <div class="txt">Все линии подряд, без подсказок. Одна ошибка — линия не засчитана.</div>
+        <div><div class="lbl">Линии</div><div class="segx" style="grid-template-columns:1fr 1fr"><div data-pool="all" class="${S.exam.pool === 'all' ? 'on' : ''}">Все линии · ${linesOf().length}</div><div data-pool="due" class="${S.exam.pool === 'due' ? 'on' : ''}">К повторению · ${due}</div></div></div>
+        <div><div class="lbl">Время</div><div class="segx" style="grid-template-columns:repeat(4,1fr)">${[5, 10, 15, 20].map(m => `<div data-min="${m}" class="${S.exam.minutes === m ? 'on' : ''}">${m} мин</div>`).join('')}</div></div>
+        <div class="txt muted" style="font-size:14px">Лучший результат: ещё не сдавал</div></div></div>
+        <div class="act" data-ui="panel-actions"><div class="btn1" data-ui="op-exam-start">${ico('play')}Начать экзамен <span class="k">Enter</span></div></div>`;
+    } else {
+      const res = S.results, ok = res.filter(r => r.perfect).length, n = res.length;
+      const mm = Math.floor(S.exam.secs / 60), ss = String(S.exam.secs % 60).padStart(2, '0');
+      const failed = res.filter(r => !r.perfect);
+      const lab = labelsFor(linesOf());
+      p.innerHTML = head('Итог экзамена', mchip) + `<div class="rb"><div data-ui="op-exam-result" style="display:flex;flex-direction:column;gap:14px">
+        <div class="sum"><div><b class="num">${ok} из ${n}</b><span>без ошибок</span></div><div><b class="num">${n ? Math.round(ok / n * 100) : 0}%</b><span>результат</span></div><div><b class="num">${mm}:${ss}</b><span>время</span></div></div>
+        ${failed.map(r => { const L = byId[r.lineId]; const k = r.mistakes[0]; return `<div class="res"><div class="bi" style="background:var(--danger)">${ico('x')}</div><div><div class="t1">${lab[L.id]}</div><div class="t2">ошибка на <b>${k != null ? R.numSan(L.moves, k) : '—'}</b></div></div></div>`; }).join('')}
+      </div></div>
+      <div class="act" data-ui="panel-actions">${failed.length ? `<div class="btn1" data-ui="op-again">${ico('repeat')}Повторить ошибочные · ${failed.length} <span class="k">Enter</span></div>` : ''}<div class="two"><div class="btn2" data-ui="op-exam-again">Ещё раз</div><div class="btn2" data-mode="review">Повторять</div></div></div>`;
+    }
+    return iconsUp();
+  }
+
+  // итог сессии
+  if (S.summary) {
+    const res = S.results, ok = res.filter(r => r.perfect).length;
+    const lab = labelsFor(linesOf());
+    const nNew = linesOf().filter(l => !l.prog).length;
+    const bad = res.filter(r => !r.perfect).map(r => r.lineId);
+    const title = S.mode === 'learn' ? 'Новые линии выучены' : S.mode === 'hard' ? 'Трудные ходы пройдены' : res.length ? 'На сегодня всё' : 'Всё повторено';
+    const upcoming = linesOf().filter(l => l.prog && status(l) !== 'due').map(l => Math.max(1, Math.ceil((Date.parse(l.prog.next_review) - now()) / DAY))).sort((a, c) => a - c);
+    const buckets = {}; upcoming.forEach(d => buckets[d] = (buckets[d] || 0) + 1);
+    const plan = Object.entries(buckets).slice(0, 3).map(([d, n]) => `<div class="planrow">${R.inDays(+d).replace(/^./, x => x.toUpperCase())}<span>${n} ${plural(n, 'линия', 'линии', 'линий')}</span></div>`).join('');
+    p.innerHTML = head(title, mchip) + `<div class="rb"><div data-ui="op-summary" style="display:flex;flex-direction:column;gap:16px">
+      ${res.length ? `<div class="sum"><div><b class="num">${res.length}</b><span>${plural(res.length, 'линия', 'линии', 'линий')}</span></div><div><b class="num" style="color:var(--accent)">${ok}</b><span>без ошибок</span></div><div><b class="num" style="color:var(--accent)">+${S.xp}</b><span>XP</span></div></div>` : '<div class="txt">Сегодня повторять нечего — все сроки впереди.</div>'}
+      ${res.length && !ALL && S.mode !== 'hard' ? `<div class="blk"><h4>Как прошло</h4><div style="display:flex;flex-direction:column;gap:8px">${res.map(r => { const L = byId[r.lineId]; return r.perfect
+        ? `<div class="res"><div class="bi" style="background:var(--accent-press)">${ico('check')}</div><div><div class="t1">${lab[L.id]}</div><div class="t2">без ошибок · уровень ${r.ar.masteryBefore} → ${r.ar.masteryAfter} · ${R.inDays(r.ar.days)}</div></div></div>`
+        : `<div class="res"><div class="bi" style="background:var(--danger)">${r.mistakes.length}</div><div><div class="t1">${lab[L.id]}</div><div class="t2">ошибка на <b>${R.numSan(L.moves, r.mistakes[0])}</b> · снова ${R.inDays(r.ar.days)}</div></div></div>`; }).join('')}</div></div>` : ''}
+      <div class="blk"><h4>Дальше по плану</h4>${plan}${nNew && !ALL ? `<div class="planrow">Новых линий<span>${nNew} — можно учить сейчас</span></div>` : ''}</div>
+    </div></div>
+    <div class="act" data-ui="panel-actions">
+      ${ALL ? `<div class="btn1" data-ui="op-back">${ico('arrow-left')}Ко всем дебютам</div>`
+        : nNew && S.mode !== 'learn' ? `<div class="btn1" data-ui="op-next" data-mode="learn">${ico('graduation-cap')}Учить новые · ${nNew} <span class="k">Enter</span></div>`
+        : `<div class="btn1" data-ui="op-next" data-mode="review">${ico('repeat')}Повторять <span class="k">Enter</span></div>`}
+      ${ALL ? '' : `<div class="two">${bad.length ? `<div class="btn2" data-ui="op-again">Ещё раз с ошибкой · ${bad.length}</div>` : '<div class="btn2" data-mode="exam">Экзамен</div>'}<div class="btn2" data-mode="free">${ico('shuffle')}Свободная тренировка</div></div>`}
+    </div>`;
+    return iconsUp();
+  }
+
+  const r = S.run, L = S.line, v = R.view(r);
+  const dev = GAME_DEV.find(g => g.lineId === L.id);
+  const chips = mchip + colorChip(L) + (S.mode === 'review' && L.prog && !S.recall ? `<div class="chip">Уровень ${L.prog.mastery}/5</div>` : '')
+    + (S.mode === 'learn' ? '<div class="chip">Новая линия</div>' : '') + (freshDev().has(L.id) || (dev && S.mode === 'review') ? `<div class="chip orange">${ico('history')}Из партии</div>` : '');
+  let body = '';
+  // карточка
+  if (r.phase === 'done' && !r.failed) {
+    if (r.mode === 'learn') body += fb('info', v.feedback.text);
+    else if (r.mode === 'drill') body += fb(R.result(r).perfect ? 'ok' : 'done', R.result(r).perfect ? 'Верно.' : `Запомни: здесь ${b(R.numSan(r.moves, r.startPly))}.`);
+    else if (r.mode === 'exam') body += fb('ok', 'Верно — линия засчитана.');
+    else {
+      const ar = S.lastAr;
+      if (R.result(r).perfect) body += fb('ok', S.recall ? `Линия выучена. Первое повторение — ${R.inDays(ar.days)}.<span class="xpc">+${ar.xp} XP</span>` : `Без ошибок. Уровень ${ar.masteryBefore} → ${ar.masteryAfter}. Следующее повторение — ${R.inDays(ar.days)}.<span class="xpc">+${ar.xp} XP</span>`);
+      else body += fb('done', `Ошибок: ${r.mistakes.length}. Линия придёт снова ${R.inDays(ar.days)}.`, `Ход с ошибкой: ${r.mistakes.map(m => b(R.numSan(r.moves, m.ply))).join(', ')}.`);
+    }
+  } else if (v.feedback) {
+    const t2 = v.feedback.result === 'fail' && r.mode === 'review' && r.phase === 'play' ? 'Ошибка засчитана: эта линия придёт раньше.' : r.mode === 'exam' ? 'Дальше — следующая линия.' : '';
+    body += fb(v.feedback.result, b(v.feedback.text), t2);
+  } else if (r.phase === 'play') {
+    let t1, t2 = '';
+    if (r.mode === 'learn') { t1 = r.startPly ? `Начало до ${b(R.numSan(r.moves, r.startPly - 1))} ты уже знаешь — его пропускаем. Ходи по стрелке.` : 'Ходи по стрелке — так линия запоминается быстрее.'; t2 = 'В конце сыграешь эту линию по памяти.'; }
+    else if (r.mode === 'exam') t1 = 'Без подсказок. Одна ошибка — линия не засчитана.';
+    else if (r.mode === 'drill') { const row = MOVE_ROWS.find(x => x.line_id === L.id && x.move_index === r.startPly); t1 = `Трудный ход ${S.pos + 1} из ${S.queue.length}: здесь ты ошибался ${row ? row.incorrect_count : 1} ${plural(row ? row.incorrect_count : 1, 'раз', 'раза', 'раз')}.`; }
+    else if (S.recall) t1 = 'Теперь по памяти — без стрелок.';
+    else if (r.startPly) t1 = `Начало линии ты уже сыграл сегодня — продолжаем с ${Math.floor(r.startPly / 2) + 1}-го хода.`;
+    else { t1 = 'Вспомни ход из своей линии.'; t2 = 'Подсказка — H (засчитается как ошибка).'; }
+    body += fb('info', t1, t2, 'op-task');
+  }
+  // заметка о партии
+  if (dev && r.mode !== 'learn') {
+    const k = R.view(r) && (r.phase === 'consolidate' ? r.consolidate[0] : r.ply);
+    if (r.wrong && r.wrong.ply === dev.ply) body += `<div class="note" data-ui="op-game-note">${ico('history')}<div>${r.wrong.from + r.wrong.to === dev.played_uci ? 'Та же ошибка, что' : `В партии с <b>${dev.opp}</b> здесь было <b>${R.numSan(r.moves, dev.ply).replace(r.moves[dev.ply].san, dev.played)}</b> —`} в партии с <b>${dev.opp}</b> ${dev.date}${dev.result === 'loss' ? ' — там ты проиграл' : ''}.</div><a>Партия</a></div>`;
+    else if (!r.wrong && k > dev.ply && r.phase === 'play' && !r.mistakes.some(m => m.ply === dev.ply)) body += `<div class="note" data-ui="op-game-note">${ico('history')}<div>В партии с <b>${dev.opp}</b> ${dev.date} ты здесь сыграл <b>${Math.floor(dev.ply / 2) + 1}... ${dev.played}</b> — теперь верно.</div><a>Партия</a></div>`;
+  }
+  body += stepsHtml(r) + movesHtml(r);
+  // кнопки
+  let act = '';
+  if (r.phase === 'done' && !r.failed && r.mode === 'learn') act = `<div class="btn1" data-ui="op-recall">${ico('repeat')}Сыграть по памяти <span class="k">Enter</span></div>`;
+  else if (r.phase === 'done' && r.mode !== 'exam') act = `<div class="btn1" data-ui="op-next">Дальше <span class="k">Enter</span></div>`;
+  else if (r.mode === 'exam') act = `<div class="two" style="margin-top:0"><div class="btn2" data-ui="op-skip">Пропустить линию</div><div class="btn2" data-ui="op-exam-finish">Закончить экзамен</div></div>`;
+  else if (r.mode === 'learn') act = `<div class="three"><div class="btn2" data-ui="op-watch">${S.watch ? '❚❚ Пауза' : '▶ Смотреть'}</div><div class="btn2" data-ui="op-skip">Пропустить <span class="k">N</span></div><div class="btn2" data-ui="op-restart">Заново <span class="k">R</span></div></div><div class="keys">Пробел — смотреть линию · F — перевернуть доску · ? — клавиши</div>`;
+  else act = `<div class="three"><div class="btn2${r.wrong || !R.isMyTurn(r) ? ' off' : ''}" data-ui="op-hint">Подсказка <span class="k">H</span></div><div class="btn2" data-ui="op-skip">Пропустить <span class="k">N</span></div><div class="btn2" data-ui="op-restart">Заново <span class="k">R</span></div></div><div class="keys">F — перевернуть доску · ? — все клавиши</div>`;
+  const timer = S.mode === 'exam' ? `<span class="timer" data-ui="op-timer">${Math.floor(S.exam.left / 60)}:${String(S.exam.left % 60).padStart(2, '0')}</span> · ` : '';
+  p.innerHTML = head(v.title, chips, timer) + `<div class="rb">${body}</div><div class="act" data-ui="panel-actions">${act}</div>`;
+  iconsUp();
+}
+function iconsUp() {
+  document.querySelectorAll('[data-i]').forEach(el => { const u = window.ICONS && ICONS[el.dataset.i]; if (u) el.style.setProperty('--i', `url("${u}")`); });
+}
+function render() { renderLeft(); renderBoard(); renderPanel(); iconsUp(); }
+
+// ── события ──────────────────────────────────────────────────────────────────
+document.addEventListener('click', e => {
+  const sq = e.target.closest('[data-square]'); if (sq) return onSquare(sq.dataset.square);
+  const t = e.target.closest('[data-ui],[data-mode],[data-pool],[data-min],[data-line]'); if (!t) return;
+  const ui = t.dataset.ui;
+  if (t.dataset.pool) { S.exam.pool = t.dataset.pool; return render(); }
+  if (t.dataset.min) { S.exam.minutes = +t.dataset.min; return render(); }
+  if (ui === 'op-line') { if (S.mode === 'exam' || S.mode === 'hard') S.mode = 'review'; S.summary = false; S.queue = [t.dataset.line]; S.pos = 0; return startLine(t.dataset.line); }
+  if (ui === 'op-hard') return startSession('hard');
+  if (t.dataset.mode && !ui) return startSession(t.dataset.mode);
+  if (ui === 'op-next') return t.dataset.mode ? startSession(t.dataset.mode) : nextLine();
+  if (ui === 'op-recall') return startRecall();
+  if (ui === 'op-hint') { S.run = R.hint(S.run); return after(); }
+  if (ui === 'op-skip') { if (S.mode === 'exam') { S.results.push({ lineId: S.line.id, perfect: false, mistakes: [], failed: true }); } return nextLine(); }
+  if (ui === 'op-restart') { S.run = R.restart(S.run); return after(); }
+  if (ui === 'op-watch') return watch();
+  if (ui === 'op-exam-start') return startExam();
+  if (ui === 'op-exam-finish') return finishExam();
+  if (ui === 'op-exam-again') return startSession('exam');
+  if (ui === 'op-again') { const bad = S.results.filter(r => !r.perfect).map(r => r.lineId); return startSession('again', bad); }
+  if (ui === 'op-back') location.href = '/openings?demo=1';
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    const primary = document.querySelector('[data-ui="op-recall"],[data-ui="op-next"],[data-ui="op-exam-start"],[data-ui="op-again"]');
+    if (primary) { e.preventDefault(); return primary.click(); }
+    if (e.key === ' ' && S.run && S.run.mode === 'learn') { e.preventDefault(); return watch(); }
+  }
+  if (!S.run || S.summary) return;
+  if (e.key === 'h' || e.key === 'H' || e.key === 'р' || e.key === 'Р') { S.run = R.hint(S.run); after(); }
+  if (e.key === 'n' || e.key === 'N' || e.key === 'т' || e.key === 'Т') nextLine();
+  if (e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К') { S.run = R.restart(S.run); after(); }
+  if (e.key === 'f' || e.key === 'F' || e.key === 'а' || e.key === 'А') { S.flip = !S.flip; render(); }
+  if (e.key === 'Escape' && S.watch) watch();
+});
+
+// ── меню слева ──
+const nav = [
+  ['calendar', 'Сегодня'],
+  ['#', 'Учиться'], ['layers', 'Дебюты', 1], ['book-open', 'Курсы'], ['flag', 'Ловушки'], ['lightbulb', 'Идеи позиций'],
+  ['#', 'Тренироваться'], ['zap', 'Тактика'], ['eye', 'Расчёт вслепую'], ['circle-alert', 'Ошибки'], ['triangle-alert', 'Проверка угроз'], ['grid-3x3', 'Эндшпили'], ['target', 'Дожми партию'], ['shield', 'Жертвы'], ['search', 'Угадай дебют'], ['circle-play', 'Играть'],
+  ['#', 'Партии'], ['message-square', 'Мои партии'], ['book-check', 'Дебюты в партиях'], ['trending-down', 'Где я теряю очки'], ['star', 'Мастера'],
+];
+document.getElementById('side').innerHTML = nav.map(([i, t, a]) => i === '#'
+  ? `<div class="grp">${t}${ico('chevron-down')}</div>`
+  : `<div class="item${a ? ' active' : ''}">${ico(i)}${t}</div>`).join('');
+
+startSession(ALL ? 'review' : (params.get('mode') || defaultMode()), params.get('line'));
+</script>
+</body>
+</html>

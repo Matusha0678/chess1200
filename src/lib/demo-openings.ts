@@ -134,27 +134,27 @@ export const DEMO_EXAM_ORDER = ['L2', 'L1', 'L3', 'L4', 'L5', 'L6'];
 export const DEMO_CATALOG = [
   {
     id: 'demo', name: 'Ускоренный дракон', color: 'black' as const,
-    totalLines: 6, mastered: 1, learning: 1, due: 2, newLines: 2,
+    totalLines: 6, mastered: 1, learning: 1, due: 2, newLines: 2, sharpCount: 2,
     cardFen: 'r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 0 5',
   },
   {
     id: 'demo-scotch', name: 'Шотландская партия', color: 'white' as const,
-    totalLines: 8, mastered: 5, learning: 2, due: 1, newLines: 0,
+    totalLines: 8, mastered: 5, learning: 2, due: 1, newLines: 0, sharpCount: 1,
     cardFen: 'r1bqkbnr/pppp1ppp/2n5/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4',
   },
   {
     id: 'demo-italian', name: 'Итальянская партия', color: 'white' as const,
-    totalLines: 10, mastered: 2, learning: 4, due: 0, newLines: 4,
+    totalLines: 10, mastered: 2, learning: 4, due: 0, newLines: 4, sharpCount: 2,
     cardFen: 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 3',
   },
   {
     id: 'demo-stafford', name: 'Гамбит Стаффорда', color: 'black' as const,
-    totalLines: 5, mastered: 0, learning: 0, due: 0, newLines: 5,
+    totalLines: 5, mastered: 0, learning: 0, due: 0, newLines: 5, sharpCount: 3,
     cardFen: 'r1bqkb1r/pppp1ppp/2n2n2/4N3/4P3/8/PPPP1PPP/RNBQKB1R w KQkq - 2 4',
   },
   {
     id: 'demo-caro', name: 'Каро-Канн, система с e5', color: 'black' as const,
-    totalLines: 7, mastered: 7, learning: 0, due: 0, newLines: 0,
+    totalLines: 7, mastered: 7, learning: 0, due: 0, newLines: 0, sharpCount: 1,
     cardFen: 'rn1qkbnr/pp2pppp/2p5/3pPb2/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 1 4',
   },
 ];

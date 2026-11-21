@@ -77,19 +77,12 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
 
   // chess.com-like proportions (all values relative to a 96-unit square).
   // Shaft ≈ 20% of a square, head ≈ 48% wide × 36% long.
-  const isDashed = arrow.style === 'dashed';
   const startOffset = 18 * scale;
   const endOffset   = 10 * scale;
-  // Solid dimensions
   const headLen  = 35 * scale;
   const headHW   = 23 * scale;
   const shaftHW  = 10 * scale;
   const shaftStroke = 20 * scale;
-  // Dashed dimensions (thin line + small head)
-  const dHeadLen = 24 * scale;
-  const dHeadHW  = 11 * scale;
-  const dStroke  =  6 * scale;
-  const dash     = `${10 * scale} ${8 * scale}`;
 
   // Detect knight L-shape: file diff × rank diff must equal 2
   const df = Math.abs(arrow.from.charCodeAt(0) - arrow.to.charCodeAt(0));
@@ -127,22 +120,18 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
     const ux2 = dx2 / len2, uy2 = dy2 / len2;
     const nx2 = -uy2, ny2 = ux2;
 
-    const aHL = isDashed ? dHeadLen : headLen;
-    const aHW = isDashed ? dHeadHW  : headHW;
-    const aSW = isDashed ? dStroke  : shaftStroke;
-
     const startX = from.x + ux1 * startOffset;
     const startY = from.y + uy1 * startOffset;
     const tipX   = to.x - ux2 * endOffset;
     const tipY   = to.y - uy2 * endOffset;
-    const baseX  = tipX - ux2 * aHL;
-    const baseY  = tipY - uy2 * aHL;
+    const baseX  = tipX - ux2 * headLen;
+    const baseY  = tipY - uy2 * headLen;
 
     const shaftD = `M ${startX} ${startY} L ${midX} ${midY} L ${baseX} ${baseY}`;
     const headPts = [
       [tipX, tipY],
-      [baseX + nx2 * aHW, baseY + ny2 * aHW],
-      [baseX - nx2 * aHW, baseY - ny2 * aHW],
+      [baseX + nx2 * headHW, baseY + ny2 * headHW],
+      [baseX - nx2 * headHW, baseY - ny2 * headHW],
     ].map(([x, y]) => `${x},${y}`).join(' ');
 
     return (
@@ -150,11 +139,10 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
         <path
           d={shaftD}
           stroke={color}
-          strokeWidth={aSW}
+          strokeWidth={shaftStroke}
           fill="none"
           strokeLinejoin="round"
           strokeLinecap="round"
-          strokeDasharray={isDashed ? dash : undefined}
         />
         <polygon points={headPts} fill={color} />
       </g>
@@ -168,27 +156,6 @@ function Arrow({ arrow, S }: { arrow: BoardArrow; S: number }) {
   if (len < 1) return null;
   const ux = dx / len, uy = dy / len;
   const nx = -uy, ny = ux;
-
-  if (isDashed) {
-    const ex = to.x - ux * dHeadLen;
-    const ey = to.y - uy * dHeadLen;
-    const startX = from.x + ux * startOffset;
-    const startY = from.y + uy * startOffset;
-    const p1x = to.x,              p1y = to.y;
-    const p2x = ex + nx * dHeadHW, p2y = ey + ny * dHeadHW;
-    const p3x = ex - nx * dHeadHW, p3y = ey - ny * dHeadHW;
-
-    return (
-      <g opacity={opacity} data-ui="board-arrow" data-role={arrow.role} data-label={arrow.label}>
-        <line
-          x1={startX} y1={startY} x2={ex} y2={ey}
-          stroke={color} strokeWidth={dStroke}
-          strokeDasharray={dash} strokeLinecap="round"
-        />
-        <polygon points={`${p1x},${p1y} ${p2x},${p2y} ${p3x},${p3y}`} fill={color} />
-      </g>
-    );
-  }
 
   // Solid straight arrow
   const startX = from.x + ux * startOffset;

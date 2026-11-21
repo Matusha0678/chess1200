@@ -1,11 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ClassIcon } from '@/components/ClassIcon';
-import type { BadgeKind } from '@/components/ClassIcon';
-import { puzzleVerdict, choiceVerdict, puzzleMove, type QuizItem } from '@/lib/lesson';
+import { choiceVerdict, puzzleMove, type QuizItem } from '@/lib/lesson';
 import type { BoardArrow } from '@/components/board/Board';
-import type { Square } from 'chess.js';
 
 interface QuizResult {
   itemIdx: number;
@@ -14,7 +11,6 @@ interface QuizResult {
 
 interface Props {
   items: QuizItem[];
-  stepTitle: string;
   onNextStep: () => void;
   nextStepTitle: string | null;
   onBoardArrows?: (arrows: BoardArrow[]) => void;
@@ -26,7 +22,7 @@ interface Props {
 }
 
 export function QuizPanel({
-  items, stepTitle,
+  items,
   onNextStep, nextStepTitle,
   onBoardArrows, onQuizFen,
   currentQuizIdx, onQuizIdxChange,
@@ -83,7 +79,6 @@ export function QuizPanel({
   const isPuzzle = !!(puzzleAns || item.fen);
   const isReveal = item.type === 'reveal' || (!puzzleAns && !!item.fen);
 
-  const correctKeys = Object.keys(item.options ?? {});
   const feedbackResult = existingResult?.result ?? null;
 
   return (

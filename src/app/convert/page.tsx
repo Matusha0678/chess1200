@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import { DEMO_CONVERT } from '@/lib/demo-positions';
 import type { DemoConvertPos } from '@/lib/demo-positions';
@@ -110,6 +110,7 @@ function loadShow(): ShowFilter {
 
 function ConvertPageInner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isDemo = searchParams.get('demo') === '1';
   const { boardTheme, pieceStyle } = useBoardTheme();
   const pieceBaseUrl = pieceStyle.baseUrl;
@@ -121,7 +122,7 @@ function ConvertPageInner() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLevel(loadLevel());
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setShow(loadShow());
   }, []);
 
@@ -173,13 +174,13 @@ function ConvertPageInner() {
     const idx = Math.floor(Math.random() * filteredPositions.length);
     const p = filteredPositions[idx];
     const url = `/play?fen=${encodeURIComponent(p.fen)}&color=${p.myColor}&level=${level}&mode=free&from=convert`;
-    window.location.href = url;
-  }, [filteredPositions, level]);
+    router.push(url);
+  }, [filteredPositions, level, router]);
 
   const openPosition = useCallback((p: DemoConvertPos) => {
     const url = `/play?fen=${encodeURIComponent(p.fen)}&color=${p.myColor}&level=${level}&mode=free&from=convert`;
-    window.location.href = url;
-  }, [level]);
+    router.push(url);
+  }, [level, router]);
 
   const labelStyle: React.CSSProperties = {
     fontSize: 13, fontWeight: 600, color: 'var(--muted)',

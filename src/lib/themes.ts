@@ -140,9 +140,10 @@ export const PIECE_STYLES: PieceStyle[] = [
 
 export const PIECE_KEYS = ['wP','wN','wB','wR','wQ','wK','bP','bN','bB','bR','bQ','bK'] as const;
 
-export type SiteThemeFamily = 'newspaper' | 'soft' | 'cream' | 'nord' | 'sunset' | 'mono' | 'fun';
+export type SiteThemeFamily = 'executive' | 'newspaper' | 'soft' | 'cream' | 'nord' | 'sunset' | 'mono' | 'fun';
 
 export function getSiteThemeFamily(id: string): SiteThemeFamily {
+  if (id === 'executive' || id === 'executive-light') return 'executive';
   if (id.startsWith('soft'))   return 'soft';
   if (id.startsWith('cream'))  return 'cream';
   if (id.startsWith('nord'))   return 'nord';
@@ -207,6 +208,9 @@ export const FUN_THEMES: Record<string, FunThemeConfig> = {
 };
 
 export const SITE_THEMES: SiteTheme[] = [
+  // ── Executive (графит + золото, флагман) ───────────────────────────────────
+  { id: 'executive',       name: 'Executive',        bg: '#0F0F11', card: '#17171A' },
+  { id: 'executive-light', name: 'Executive Light',  bg: '#F4EFE6', card: '#FFFAF1' },
   // ── Мягкий (chess.com style) ───────────────────────────────────────────────
   { id: 'soft-dark',  name: 'Мягкий тёмный',  bg: '#302E2B', card: '#262522' },
   { id: 'soft-light', name: 'Мягкий светлый',  bg: '#F3F3F1', card: '#FFFFFF' },

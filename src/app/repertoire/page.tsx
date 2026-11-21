@@ -10,7 +10,6 @@ import { Board } from '@/components/board/Board';
 import type { BoardArrow } from '@/components/board/Board';
 import { TrainerLayout } from '@/components/trainer/TrainerLayout';
 import { useTrainerGeometry } from '@/hooks/useTrainerGeometry';
-import { useBoardTheme } from '@/contexts/BoardThemeContext';
 import {
   buildIndex, checkGameFull, repHash as computeRepHash, parsePgnMoves, posKey, fenAfterUci,
 } from '@/lib/repertoire';
@@ -346,10 +345,8 @@ function RepertoirePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const isDemo = searchParams.get('demo') === '1';
-  const gameFromUrl = searchParams.get('game');
 
   const { S } = useTrainerGeometry();
-  const { animationMs } = useBoardTheme();
 
   // ── State ──────────────────────────────────────────────────────────────────
 
@@ -646,10 +643,10 @@ function RepertoirePage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-selecting first item when groups load
       setSelected({ type: 'dev', key: devGroups[0].key });
     } else if (devGroups.length === 0 && holeNormal.length > 0 && selected === null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-selecting first item when groups load
+       
       setSelected({ type: 'hole', key: holeNormal[0].key });
     } else if (devGroups.length === 0 && holeNormal.length === 0 && nolineGroups.length > 0 && selected === null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-selecting first item when groups load
+       
       setSelected({ type: 'noline', key: nolineGroups[0].key });
     }
   }, [devGroups.length, holeNormal.length, nolineGroups.length]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -695,7 +692,6 @@ function RepertoirePage() {
         // Best approach: label by move before fenBefore
         try {
           // The prevUci itself encodes from→to, e.g. f8c5
-          const from = selDevGroup.prevUci.slice(0, 2);
           const to = selDevGroup.prevUci.slice(2, 4);
           // move number for the previous half-move
           // my color='w' deviating on N → prevUci is black's N-1; my color='b' on N → prevUci is white's N
@@ -817,9 +813,9 @@ function RepertoirePage() {
     if (!afterFen) return;
     const key = posKey(afterFen);
     const lData = (isDemo ? (DEMO_LICHESS[key as keyof typeof DEMO_LICHESS] ?? null) : (lichessCache.get(key) ?? null)) as LichessData | null;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- updating derived selection state from Lichess cache
+     
     if (lData?.moves?.[0]) setSelLichessMove(lData.moves[0]);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- updating derived selection state from Lichess cache
+     
     else setSelLichessMove(null);
   }, [selHoleGroup, selNolineGroup, lichessCache, isDemo]);
 
@@ -845,7 +841,7 @@ function RepertoirePage() {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }); // eslint-disable-line react-hooks/exhaustive-deps
+  });  
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
@@ -1255,7 +1251,7 @@ function RepertoirePage() {
                       <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)' }}>
                         <span style={{ fontWeight: 700 }}>{moveLabel(grp.moveNumber, grp.color, grp.played)}</span>
                         {' вместо '}
-                        <span style={{ fontWeight: 700 }}>{grp.expected.map((e, i) => moveLabel(grp.moveNumber, grp.color, e)).join(' / ')}</span>
+                        <span style={{ fontWeight: 700 }}>{grp.expected.map(e => moveLabel(grp.moveNumber, grp.color, e)).join(' / ')}</span>
                       </div>
                       <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>
                         {grp.openingName} · {razes} {grp.maxLoss > 0 ? `· ${clsLabel(grp.maxCls, grp.maxLoss)}` : ''}

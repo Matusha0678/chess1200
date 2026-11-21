@@ -23,7 +23,7 @@ const CARD: React.CSSProperties = {
 };
 
 export function TrainerLayout({ session, topBar, board, evalBar, bottomBar, panel, panelAttrs }: TrainerLayoutProps) {
-  const { showLeft, rightWidth } = useTrainerGeometry();
+  const { showLeft } = useTrainerGeometry();
 
   return (
     <div style={{

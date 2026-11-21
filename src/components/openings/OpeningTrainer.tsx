@@ -14,7 +14,7 @@ import {
   PanelChip, PanelBtn, TrainerPanel,
 } from './TrainerPanel';
 import {
-  toMoves, lineLabels, lineGroups, lineStatus, dueText, countStatuses,
+  lineLabels, lineGroups, lineStatus, dueText, countStatuses,
   reviewQueue, learnQueue, hardQueue, sessionStart, learnStart,
   createRun, needsAuto, isMyTurn, auto, move, hint, restart, result, view, steps, moveItems,
   applyResult, inDays,
@@ -241,10 +241,11 @@ export function OpeningTrainer({
   }, [run, mode]);
 
   // ── Handle board move ─────────────────────────────────────────────────────
-  const handleMove = useCallback((from: Square, to: Square) => {
-    if (!run || !isMyTurn(run)) return;
+  const handleMove = useCallback((from: Square, to: Square): boolean => {
+    if (!run || !isMyTurn(run)) return false;
 
     const newRun = move(run, from, to);
+    if (newRun === run) return false; // illegal move — snap piece back
     // Collect ok keys
     const newOk = new Set(okSet);
     for (const e of newRun.effects) if (e.type === 'ok' && e.key) newOk.add(e.key);
@@ -272,6 +273,7 @@ export function OpeningTrainer({
     }
 
     setRun(newRun);
+    return true;
   }, [run, okSet, currentLineId, gameDevs, getLine]);
 
   // ── After line done ───────────────────────────────────────────────────────
@@ -431,7 +433,7 @@ export function OpeningTrainer({
   const labelsMyColor = opening.color !== 'both' ? (opening.color === 'white' ? 'w' : 'b') as 'w' | 'b' : null;
   const labelsArr = useMemo(
     () => lineLabels(linesState, labelsMyColor),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [linesState, labelsMyColor],
   );
 
@@ -665,6 +667,10 @@ export function OpeningTrainer({
           <PanelBtn onClick={() => handleModeChange('review')}>
             {dueCount > 0 ? `Повторять · ${dueCount}` : 'Повторять'}
           </PanelBtn>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <PanelBtn onClick={() => router.push('/openings')}>← Все дебюты</PanelBtn>
+            <PanelBtn onClick={() => router.push('/')}>Домой</PanelBtn>
+          </div>
         </div>
       );
     }
@@ -826,7 +832,7 @@ export function OpeningTrainer({
           orientation={orientation}
           interactive={!!run && isMyTurn(run) && run.phase !== 'done'}
           movableColor={myColor}
-          onMove={({ from, to }) => { handleMove(from as Square, to as Square); return true; }}
+          onMove={({ from, to }) => handleMove(from as Square, to as Square)}
           lastMove={lastMove ?? undefined}
           arrows={boardArrows}
           rings={boardRings}
@@ -882,6 +888,17 @@ export function OpeningTrainer({
           }}>
             {opening.name}
           </div>
+          <button
+            onClick={() => { setMenuOpen(false); router.push(`/openings/${opening.id}/stats`); }}
+            style={{
+              padding: '10px 14px', fontSize: 14, fontWeight: 500, textAlign: 'left',
+              background: 'transparent', color: 'var(--ivory)',
+              border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn, 4px)',
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Статистика по дебюту
+          </button>
           <button
             onClick={handleEditOpening}
             style={{

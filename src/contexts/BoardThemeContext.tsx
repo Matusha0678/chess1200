@@ -42,12 +42,12 @@ interface BoardThemeContextValue extends BoardThemeSettings {
 }
 
 const DEFAULT_SETTINGS: BoardThemeSettings = {
-  boardThemeId: 'dark',
-  pieceStyleId: 'default',
+  boardThemeId: 'walnut',
+  pieceStyleId: 'cburnett',
   showNotation: true,
   soundEnabled: true,
   animationSpeed: 'normal',
-  siteThemeId: 'dark',
+  siteThemeId: 'executive',
 };
 
 const STORAGE_KEY = 'chess1200-board-settings';
@@ -70,6 +70,7 @@ function buildCustomPieces(style: { baseUrl: string; ext?: '.svg' | '.png'; lowe
     const fileKey = style.lowercase ? key.toLowerCase() : key;
     const url = `${style.baseUrl}/${fileKey}${ext}`;
     pieces[key] = () => (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={url}
         alt={key}
@@ -103,7 +104,7 @@ export function BoardThemeProvider({ children }: { children: ReactNode }) {
       FUN_THEME_IDS.has(id);
     document.documentElement.dataset.themeShape = isRounded ? 'rounded' : 'sharp';
     const lightModeIds = new Set([
-      'light', 'soft-light', 'cream', 'nord-light', 'sunset-warm', 'mono-light', 'easter', 'sakura',
+      'light', 'executive-light', 'soft-light', 'cream', 'nord-light', 'sunset-warm', 'mono-light', 'easter', 'sakura',
     ]);
     document.documentElement.dataset.themeMode = lightModeIds.has(id) ? 'light' : 'dark';
   }, [settings.siteThemeId]);

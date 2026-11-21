@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Тренажёр дебюта — макет</title>
+<link rel="stylesheet" href="node_modules/@fontsource/inter/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/600.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter-tight/700.css">
+<style>
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A; --plan:#4A90E2;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:10px 12px;display:flex;flex-direction:column}
+.item{height:35px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:14px;flex:none}
+.item .ico{width:17px;height:17px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:12px 12px 4px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);flex:none}
+.grp .ico{width:14px;height:14px}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+/* left */
+.left{width:280px;height:854px;display:flex;flex-direction:column;flex:none}
+.left .hd{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.h2{font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd img{width:26px;height:26px;flex:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.segctl{display:grid;grid-template-columns:.9fr 1.15fr 1fr;margin:14px 20px 0;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.segctl div{height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--muted);font-weight:500}
+.segctl .on{background:#45423E;color:var(--text);font-weight:600}
+.hard{margin:10px 20px 0;height:40px;border-radius:var(--r-btn);border:1px solid var(--hair2);display:flex;align-items:center;gap:10px;padding:0 12px;font-size:14px;font-weight:500;color:#E4E1DC}
+.hard .ico{width:16px;height:16px;color:#F4B45C}
+.hard b{margin-left:auto;font-size:13px;font-weight:600;color:#2A1E0B;background:var(--warn);border-radius:6px;padding:1px 7px}
+.qlabel{margin:16px 20px 6px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.secs{padding:0 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+.lrow{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;height:58px;padding:0 10px;border-radius:10px;position:relative}
+.lrow .ix{width:28px;height:28px;border-radius:8px;background:#3A3835;display:grid;place-items:center;font-size:13px;font-weight:700;color:#CFCBC6}
+.lrow .nm{font-size:14px;font-weight:600;color:#E8E5E0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .sub{display:flex;align-items:center;gap:8px;margin-top:6px}
+.mb{display:flex;gap:3px}
+.mb i{width:10px;height:4px;border-radius:2px;background:#45423E}
+.mb i.f{background:var(--accent)}
+.tag{font-size:13px;font-weight:600;color:#F4B45C;line-height:1;white-space:nowrap}
+.lrow .st{font-size:13px;color:var(--muted);white-space:nowrap}
+.lrow .st.due{color:#F4B45C;font-weight:600}
+.lrow .st.ok{color:var(--accent);font-weight:600}
+.lrow .st.new{color:#8FB4DA}
+.lrow.on{background:var(--row)}
+.lrow.on::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:3px;background:var(--accent)}
+.leftbot{padding:14px 20px 20px;border-top:1px solid var(--hair);display:flex;gap:10px}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#E8E5E0;padding:0 14px}
+.btn2 .ico{width:16px;height:16px}
+.btn2 .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.btn2.off{opacity:.45}
+.three .btn2{font-size:14px;padding:0 10px;gap:7px}
+.btn2.sq{width:44px;padding:0}
+/* board */
+.bcol{width:806px;height:854px;display:flex;flex-direction:column;gap:8px;flex:none}
+.pbar{height:32px;display:flex;align-items:center;justify-content:space-between;padding-left:32px}
+.who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.ava{width:28px;height:28px;border-radius:6px;background:#4A4744;display:grid;place-items:center}
+.ava img{width:22px;height:22px}
+.tg{font-size:13px;font-weight:500;color:var(--muted)}
+.pnote{font-size:13px;color:var(--muted)}
+.pnote b{color:var(--text);font-weight:600}
+.brow{display:flex;gap:8px;height:774px}
+.gutter{width:24px}
+.board{width:774px;height:774px;position:relative}
+.sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden}
+.sq{position:relative}
+.sq .hl{position:absolute;inset:0}
+.sq img{position:absolute;inset:0;width:100%;height:100%}
+.co{position:absolute;font-size:13px;font-weight:600;line-height:1}
+.co.r{left:5px;top:5px}.co.f{right:6px;bottom:4px}
+.over{position:absolute;inset:0;pointer-events:none}
+/* right */
+.right{flex:1;height:854px;display:flex;flex-direction:column;min-width:0}
+.rp-h{padding:20px 24px 14px}
+.crumbs{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.crumbs .pr{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--text)}
+.xp{font-size:13px;font-weight:600;color:#81B64C;background:rgba(129,182,76,.14);border-radius:6px;padding:2px 7px}
+.pb4{height:4px;border-radius:4px;background:#3A3835;margin-top:12px;overflow:hidden}
+.pb4 i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:14px;line-height:1.15}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:500;color:#DCD8D3}
+.chip img{width:16px;height:16px}
+.chip .ico{width:14px;height:14px}
+.chip.orange{color:#F4B45C;border-color:rgba(240,164,58,.35);background:rgba(240,164,58,.08)}
+.rb{flex:1;overflow:hidden;padding:4px 24px 0;display:flex;flex-direction:column;gap:16px}
+.fb{border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start}
+.fb .bi{width:30px;height:30px;border-radius:15px;display:grid;place-items:center;color:#fff}
+.fb .bi .ico{width:17px;height:17px}
+.fb .t1{font-size:16px;line-height:1.45;color:var(--text)}
+.fb .t1 b{font-weight:700;white-space:nowrap}
+.fb .t2{font-size:14px;color:var(--muted);margin-top:6px}
+.fb.fail{background:rgba(224,87,74,.10);border:1px solid rgba(224,87,74,.35)} .fb.fail .bi{background:var(--danger)}
+.fb.info{background:rgba(74,144,226,.09);border:1px solid rgba(74,144,226,.30)} .fb.info .bi{background:#3A78C2}
+.fb.ok{background:rgba(129,182,76,.10);border:1px solid rgba(129,182,76,.35)} .fb.ok .bi{background:var(--accent-press)}
+.note{border-radius:10px;background:rgba(240,164,58,.08);border:1px solid rgba(240,164,58,.28);padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#E6E3DE}
+.note .ico{width:17px;height:17px;color:#F4B45C;margin-top:2px}
+.note b{font-weight:600}
+.note a{color:#F4B45C;text-decoration:none;font-weight:600;white-space:nowrap;margin-left:auto}
+.blk h4{font-size:13px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px}
+.blk h4 span{font-weight:500;color:var(--text)}
+.stp{display:flex;gap:5px}
+.stp i{flex:1;height:10px;border-radius:5px;background:#3D3B38}
+.stp i.ok{background:var(--accent)} .stp i.fail{background:var(--danger)} .stp i.hint{background:var(--warn)}
+.stp i.cur{box-shadow:0 0 0 2px var(--surface),0 0 0 4px rgba(255,255,255,.55)}
+.stp i.now{background:#5A5753}
+.mv{display:grid;grid-template-columns:34px 104px 104px;row-gap:2px;column-gap:6px;font-size:15px}
+.mv .n{color:var(--faint);font-size:14px;line-height:30px;text-align:right;padding-right:4px}
+.mv .c{height:30px;border-radius:7px;padding:0 9px;display:flex;align-items:center;font-weight:600;color:#E4E1DC}
+.mv .c.opp{color:#CFCBC6;font-weight:500}
+.mv .c.known{color:var(--faint);font-weight:500}
+.mv .c.future{color:#6B6863;font-weight:500}
+.mv .c.now{box-shadow:inset 0 0 0 2px var(--accent);color:var(--text)}
+.mv .c.q{box-shadow:inset 0 0 0 2px var(--danger);color:#F08277;font-weight:700}
+.mv .c.bad{color:#F08277}
+.mv.wide{grid-template-columns:34px 1fr 1fr 34px 1fr 1fr}
+.act{padding:16px 24px 18px;border-top:1px solid var(--hair)}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.keys{font-size:13px;color:var(--faint);margin-top:12px;text-align:center}
+.btn1{height:52px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.btn1 .ico{width:18px;height:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.two .btn2{font-size:14px;padding:0 10px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.sum div{padding:14px 0;text-align:center;border-right:1px solid var(--hair)} .sum div:last-child{border-right:none}
+.sum b{display:block;font-size:26px;font-weight:700;line-height:1.2}
+.sum span{font-size:13px;color:var(--muted)}
+.res{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--hair)}
+.res .bi{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.res .bi .ico{width:15px;height:15px}
+.res .t1{font-size:15px;font-weight:600}
+.res .t2{font-size:13px;color:var(--muted);margin-top:2px}
+.res .t2 b{color:#F08277;font-weight:600}
+.planrow{display:flex;justify-content:space-between;font-size:14px;color:#DCD8D3;padding:8px 2px;border-bottom:1px solid var(--hair)}
+.planrow:last-child{border-bottom:none}
+.planrow span{color:var(--muted)}
+.state{display:none} body.s-wrong .s-wrong, body.s-learn .s-learn, body.s-done .s-done{display:revert}
+body.s-wrong .s-wrong.flex, body.s-learn .s-learn.flex, body.s-done .s-done.flex{display:flex}
+body.s-wrong .s-wrong.grid, body.s-learn .s-learn.grid, body.s-done .s-done.grid{display:grid}
+
+.lrow .nm .bdg{font-size:15px;margin-right:6px}
+.lrow .sub{flex-wrap:nowrap;overflow:hidden}
+.lrow .rt{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.lrow .lcl{font-size:13px;font-weight:600;white-space:nowrap}
+.lrow .lcl::before{content:"";display:inline-block;width:7px;height:7px;border-radius:4px;background:currentColor;margin-right:5px;vertical-align:1px}
+.lrow.hov{background:#33312E}
+.rowact{display:flex;gap:4px}
+.ra{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--muted);border:1px solid var(--hair2)}
+.ra .ico{width:15px;height:15px}
+.ra.on{color:var(--text);background:#45423E}
+.pop{position:absolute;z-index:50;width:318px;background:#2B2A27;border:1px solid var(--hair2);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:14px 16px}
+.pop h5{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 8px}
+.emo{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px}
+.emo div{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;font-size:18px;border:1px solid transparent}
+.emo div.on{background:#45423E;border-color:var(--hair2)}
+.emo div.none{font-size:13px;color:var(--muted);width:auto;padding:0 8px;border-color:var(--hair2)}
+.cls{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.cls div{height:30px;border-radius:15px;border:1px solid var(--hair2);display:flex;align-items:center;padding:0 11px;font-size:13px;font-weight:600;color:var(--muted)}
+.pbtn{display:flex;gap:8px;justify-content:flex-end}
+.pbtn div{height:36px;border-radius:9px;display:flex;align-items:center;padding:0 14px;font-size:14px;font-weight:600;border:1px solid var(--hair2);color:#DCD8D3}
+.pbtn .pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.shade{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:40}
+.modal{position:absolute;z-index:50;left:660px;top:150px;width:600px;background:#2B2A27;border:1px solid var(--hair2);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.55);padding:22px 24px}
+.modal h3{font-size:20px;font-weight:700;margin:0}
+.modal .hint{font-size:14px;color:var(--muted);margin:6px 0 14px}
+.ta{height:150px;border-radius:10px;background:#232220;border:1px solid var(--hair2);padding:10px 12px;font:14px/1.6 ui-monospace,Menlo,monospace;color:#CFCBC6;white-space:pre-wrap}
+.found{display:flex;align-items:center;gap:8px;margin:10px 0 16px;font-size:14px;color:#9BCB6A;font-weight:600}
+.found .ico{width:16px;height:16px}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+<aside class="side" id="side"></aside>
+
+<main class="main">
+  <!-- LEFT -->
+  <section class="card left" data-ui="session">
+    <div class="hd"><div class="h2">Ускоренный дракон</div><img src="pieces/bK.svg" title="Чёрными"></div>
+    <div class="stats" data-ui="session-stats" id="lstats"></div>
+    <div class="segctl" data-ui="op-modes" id="modes"></div>
+    <div class="hard" data-ui="op-hard"><i class="ico" data-i="flame"></i>Трудные ходы<b class="num">3</b></div>
+    <div class="qlabel"><span>Линии</span><span class="num">6</span></div>
+    <div class="secs" data-ui="session-list" id="lines"></div>
+    <div class="leftbot">
+      <div class="btn2" style="flex:1" data-ui="op-add-lines"><i class="ico" data-i="plus"></i>Добавить линии</div>
+      <div class="btn2 sq" data-ui="op-menu"><i class="ico" data-i="ellipsis"></i></div>
+    </div>
+  </section>
+
+  <!-- BOARD -->
+  <section class="bcol">
+    <div class="pbar" data-ui="player-top">
+      <div class="who"><div class="ava"><img src="pieces/wP.svg"></div>Белые <span class="tg">соперник</span></div>
+      <div class="pnote" id="posNote"></div>
+    </div>
+    <div class="brow">
+      <div class="gutter"></div>
+      <div class="board" id="board"><div class="sqs" id="sqs"></div><div class="over" id="over"></div></div>
+    </div>
+    <div class="pbar" data-ui="player-bottom">
+      <div class="who"><div class="ava"><img src="pieces/bP.svg"></div>Чёрные <span class="tg">· ты</span></div>
+      <div class="pnote" id="botNote"></div>
+    </div>
+  </section>
+
+  <!-- RIGHT -->
+  <section class="card right" data-ui="panel" data-demo="op-review">
+    <div class="rp-h" data-ui="panel-header">
+      <div class="crumbs"><span>Дебюты · Ускоренный дракон</span>
+        <span class="pr num"><span class="state s-wrong">1 / 2</span><span class="state s-learn">1 / 2</span><span class="state s-done">2 / 2</span><span class="xp state s-done">+5 XP</span></span></div>
+      <div class="pb4"><i id="pb"></i></div>
+      <div class="title tight" data-ui="panel-title"><span class="state s-wrong">Не тот ход</span><span class="state s-learn">Сыграй 3... g6</span><span class="state s-done">На сегодня всё</span></div>
+      <div class="chips">
+        <div class="chip state s-wrong flex"><i class="ico" data-i="repeat"></i>Повторение</div>
+        <div class="chip state s-done flex"><i class="ico" data-i="repeat"></i>Повторение</div>
+        <div class="chip state s-learn flex"><i class="ico" data-i="graduation-cap"></i>Учить</div>
+        <div class="chip state s-wrong s-learn flex"><img src="pieces/bK.svg">Чёрными</div>
+        <div class="chip state s-wrong flex">Уровень 2/5</div>
+        <div class="chip orange state s-wrong flex"><i class="ico" data-i="history"></i>Из партии</div>
+        <div class="chip state s-learn flex">Новая линия</div>
+      </div>
+    </div>
+
+    <div class="rb">
+      <!-- wrong -->
+      <div class="fb fail state s-wrong grid" data-ui="op-feedback" data-result="fail">
+        <div class="bi"><i class="ico" data-i="x"></i></div>
+        <div><div class="t1">Ты сыграл <b>4... Nf6</b>. В твоей линии здесь <b>4... g6</b> — сыграй его на доске.</div>
+          <div class="t2">Ошибка засчитана: эта линия придёт раньше.</div></div>
+      </div>
+      <div class="note state s-wrong flex" data-ui="op-game-note"><i class="ico" data-i="history"></i><div>Та же ошибка, что в партии с <b>petr_k</b> 10 ноя — там ты проиграл.</div><a>Партия</a></div>
+      <!-- learn -->
+      <div class="fb info state s-learn grid" data-ui="op-task">
+        <div class="bi"><i class="ico" data-i="lightbulb"></i></div>
+        <div><div class="t1">Начало до <b>2... Nc6</b> ты уже знаешь — его пропускаем. Ходи по стрелке.</div>
+          <div class="t2">В конце сыграешь эту линию по памяти.</div></div>
+      </div>
+
+      <div class="blk state s-wrong s-learn" data-ui="op-steps">
+        <h4>Твои ходы в линии <span class="num" id="stepLabel"></span></h4>
+        <div class="stp" id="stp"></div>
+      </div>
+      <div class="blk state s-wrong s-learn" data-ui="op-moves">
+        <h4>Ходы</h4>
+        <div class="mv" id="mv"></div>
+      </div>
+
+      <!-- done -->
+      <div class="state s-done" data-ui="op-summary" style="display:none"></div>
+      <div class="sum state s-done grid">
+        <div><b class="num">2</b><span>линии</span></div>
+        <div><b class="num" style="color:var(--accent)">1</b><span>без ошибок</span></div>
+        <div><b class="num" style="color:var(--accent)">+5</b><span>XP</span></div>
+      </div>
+      <div class="blk state s-done">
+        <h4>Как прошло</h4>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="res"><div class="bi" style="background:var(--danger)">1</div><div><div class="t1">5. c4 … 6. Nc3</div><div class="t2">ошибка на <b>4... g6</b> · снова через 3 дня</div></div></div>
+          <div class="res"><div class="bi" style="background:var(--accent-press)"><i class="ico" data-i="check"></i></div><div><div class="t1">6. Be3 … 7. Bc4</div><div class="t2">без ошибок · уровень 1 → 2 · через 7 дней</div></div></div>
+        </div>
+      </div>
+      <div class="blk state s-done">
+        <h4>Дальше по плану</h4>
+        <div class="planrow">Через 3 дня<span>1 линия</span></div>
+        <div class="planrow">Через 4 дня<span>1 линия</span></div>
+        <div class="planrow">Новых линий<span>2 — можно учить сейчас</span></div>
+      </div>
+    </div>
+
+    <div class="act" data-ui="panel-actions">
+      <div class="three state s-wrong grid">
+        <div class="btn2 off" data-ui="op-hint">Подсказка <span class="k">H</span></div>
+        <div class="btn2" data-ui="op-skip">Пропустить <span class="k">N</span></div>
+        <div class="btn2" data-ui="op-restart">Заново <span class="k">R</span></div>
+      </div>
+      <div class="three state s-learn grid">
+        <div class="btn2" data-ui="op-watch">▶ Смотреть</div>
+        <div class="btn2" data-ui="op-skip">Пропустить <span class="k">N</span></div>
+        <div class="btn2" data-ui="op-restart">Заново <span class="k">R</span></div>
+      </div>
+      <div class="keys state s-wrong">F — перевернуть доску · ? — все клавиши</div><div class="keys state s-learn">Пробел — смотреть линию · F — перевернуть доску · ? — клавиши</div>
+      <div class="state s-done">
+        <div class="btn1" data-ui="op-next"><i class="ico" data-i="graduation-cap"></i>Учить новые · 2 <span class="k">Enter</span></div>
+        <div class="two"><div class="btn2"><i class="ico" data-i="repeat"></i>Ещё раз с ошибкой</div><div class="btn2"><i class="ico" data-i="shuffle"></i>Свободная тренировка</div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script>
+const S = 'wrong'; const META = location.hash === '#add' ? 'add' : 'edit';
+document.body.classList.add('s-' + S);
+const ico = (n, s = '') => `<i class="ico" data-i="${n}" style="${s}"></i>`;
+const nav = [
+  ['calendar', 'Сегодня'],
+  ['#', 'Учиться'], ['layers', 'Дебюты', 1], ['book-open', 'Курсы'], ['flag', 'Ловушки'], ['lightbulb', 'Идеи позиций'],
+  ['#', 'Тренироваться'], ['zap', 'Тактика'], ['eye', 'Расчёт вслепую'], ['circle-alert', 'Ошибки'], ['triangle-alert', 'Проверка угроз'], ['grid-3x3', 'Эндшпили'], ['target', 'Дожми партию'], ['shield', 'Жертвы'], ['timer', 'Дебютный спринт'], ['circle-play', 'Играть'],
+  ['#', 'Партии'], ['message-square', 'Мои партии'], ['book-check', 'Дебюты в партиях'], ['trending-down', 'Где я теряю очки'], ['star', 'Мастера'],
+];
+document.getElementById('side').innerHTML = nav.map(([i, t, a]) => i === '#'
+  ? `<div class="grp">${t}${ico('chevron-down')}</div>`
+  : `<div class="item${a ? ' active' : ''}">${ico(i)}${t}</div>`).join('');
+
+// ── левая колонка ──
+const stats = { wrong: [1, 2, 2], learn: [1, 2, 2], done: [1, 0, 2] }[S];
+document.getElementById('lstats').innerHTML =
+  `<div class="stat"><b class="num" style="color:var(--accent)">${stats[0]}</b><span>освоено</span></div>` +
+  `<div class="stat"><b class="num" style="color:var(--warn)">${stats[1]}</b><span>повторить</span></div>` +
+  `<div class="stat"><b class="num">${stats[2]}</b><span>новых</span></div>`;
+const mode = S === 'learn' ? 1 : 2;
+document.getElementById('modes').innerHTML = ['Учить', 'Повторять', 'Экзамен']
+  .map((t, i) => `<div class="${i + 1 === mode ? 'on' : ''}">${t}</div>`).join('');
+// label, mastery, status text, status class, tag
+const LC = { main: ['Главная', '#81B64C'], common: ['Частая', '#5096CC'], rare: ['Редкая', '#C98424'], very_rare: ['Очень редкая', '#A04040'], sharp: ['Острая', '#E0574A'] };
+const LINES = [
+  ['5. Nxc6 … 6. Qd4', 4, 'освоена', 'ok', '', '⭐', 'main'],
+  ['5. c4 … 6. Nc3', 2, 'сегодня', 'due', 'из партии', '', 'common'],
+  ['6. Be3 … 7. Bc4', 1, 'сегодня', 'due', '', '🔥', 'sharp'],
+  ['6. Nb3 … 7. Be2', 2, 'через 4 дн.', '', '', '', 'rare'],
+  ['3. Bb5 … 4. Bxc6', 0, 'новая', 'new', '', '', 'common'],
+  ['2. c3 … 3. e5', 0, 'новая', 'new', '', '', ''],
+];
+const activeIdx = S === 'learn' ? 4 : S === 'done' ? 2 : 1;
+const statusAttr = c => ({ ok: 'mastered', due: 'due', new: 'new' }[c] || 'learning');
+document.getElementById('lines').innerHTML = LINES.map(([lab, m, st, cls, tag, badge, lc], i) => `
+  <div class="lrow${i === activeIdx ? ' on' : ''}${i === 2 && META === 'edit' ? ' hov' : ''}" data-ui="op-line" data-status="${statusAttr(cls)}" data-class="${lc}"${i === activeIdx ? ' data-active="true"' : ''}>
+    <div class="ix num">${i + 1}</div>
+    <div style="min-width:0"><div class="nm">${badge ? `<span class="bdg">${badge}</span>` : ''}${lab}</div>
+      <div class="sub"><div class="mb">${[0, 1, 2, 3, 4].map(k => `<i class="${k < m ? 'f' : ''}"></i>`).join('')}</div>${tag ? `<span class="tag">${tag}</span>` : ''}</div></div>
+    ${i === 2 && META === 'edit' ? `<div class="rowact"><div class="ra on" data-ui="op-line-edit">${ico('pencil')}</div><div class="ra" data-ui="op-line-del">${ico('trash-2')}</div></div>` : `<div class="rt"><div class="st ${cls}">${cls === 'ok' ? '✓ ' : ''}${st}</div>${lc ? `<div class="lcl" data-ui="op-line-class" style="color:${LC[lc][1]}">${LC[lc][0]}</div>` : ''}</div>`}
+  </div>`).join('');
+
+// ── правая панель: шаги и ходы ──
+document.getElementById('pb').style.width = S === 'done' ? '100%' : '50%';
+if (S === 'wrong') {
+  document.getElementById('stepLabel').textContent = 'Ход 4 из 10';
+  document.getElementById('stp').innerHTML = ['ok', 'ok', 'ok', 'fail cur', '', '', '', '', '', ''].map(c => `<i class="${c}"></i>`).join('');
+  const rows = [['1.', 'e4', 'c5'], ['2.', 'Nf3', 'Nc6'], ['3.', 'd4', 'cxd4'], ['4.', 'Nxd4', '?']];
+  document.getElementById('mv').innerHTML = rows.map(([n, w, b]) =>
+    `<div class="n">${n}</div><div class="c opp">${w}</div><div class="c ${b === '?' ? 'q' : ''}">${b}</div>`).join('');
+  document.getElementById('posNote').innerHTML = 'после <b>4. Nxd4</b> · ход чёрных';
+  document.getElementById('botNote').textContent = 'Ускоренный дракон · линия 2';
+} else if (S === 'learn') {
+  document.getElementById('stepLabel').textContent = 'Ход 1 из 5';
+  document.getElementById('stp').innerHTML = ['now cur', '', '', '', ''].map(c => `<i class="${c}"></i>`).join('');
+  const rows = [['1.', 'e4', 'c5', 'known', 'known'], ['2.', 'Nf3', 'Nc6', 'known', 'known'], ['3.', 'Bb5', 'g6', 'opp', 'now'], ['4.', 'Bxc6', 'dxc6', 'future', 'future'], ['5.', 'd3', 'Bg7', 'future', 'future'], ['6.', 'h3', 'Nf6', 'future', 'future'], ['7.', 'Nc3', 'O-O', 'future', 'future']];
+  document.getElementById('mv').innerHTML = rows.map(([n, w, b, cw, cb]) =>
+    `<div class="n">${n}</div><div class="c ${cw}">${w}</div><div class="c ${cb}">${b}</div>`).join('');
+  document.getElementById('posNote').innerHTML = 'после <b>3. Bb5</b> · ход чёрных';
+  document.getElementById('botNote').textContent = 'Ускоренный дракон · линия 5';
+} else {
+  document.getElementById('posNote').innerHTML = 'конец линии · <b>9... d6</b>';
+  document.getElementById('botNote').textContent = 'Ускоренный дракон · линия 3';
+}
+
+// ── доска (чёрные снизу) ──
+const FEN = {
+  wrong: 'r1bqkbnr/pp1ppppp/2n5/8/3NP3/8/PPP2PPP/RNBQKB1R',       // после 4. Nxd4
+  learn: 'r1bqkbnr/pp1ppppp/2n5/1Bp5/4P3/5N2/PPPP1PPP/RNBQK2R',    // после 3. Bb5
+  done: 'r1b2rk1/pp2ppbp/2np1np1/q7/3NP3/1BN1B3/PPP2PPP/R2Q1RK1',  // конец линии 3
+}[S];
+const LAST = { wrong: ['f3', 'd4'], learn: ['f1', 'b5'], done: ['d7', 'd6'] }[S];
+const flip = true;
+const files = 'abcdefgh', Q = 774 / 8;
+const grid = {};
+FEN.split('/').forEach((row, ri) => { let f = 0; for (const ch of row) { if (/\d/.test(ch)) f += +ch; else { grid[files[f] + (8 - ri)] = ch; f++; } } });
+const ctr = sq => { const f = files.indexOf(sq[0]), r = +sq[1]; const col = flip ? 7 - f : f, row = flip ? r - 1 : 8 - r; return [(col + .5) * Q, (row + .5) * Q]; };
+let html = '';
+for (let row = 0; row < 8; row++) for (let col = 0; col < 8; col++) {
+  const f = flip ? 7 - col : col, r = flip ? row + 1 : 8 - row;
+  const sq = files[f] + r, isLight = (f + r) % 2 === 0;
+  let inner = LAST.includes(sq) ? `<div class="hl" style="background:rgba(247,214,74,${sq === LAST[1] ? .38 : .26})"></div>` : '';
+  const p = grid[sq];
+  if (p) inner += `<img src="pieces/${p === p.toUpperCase() ? 'w' : 'b'}${p.toUpperCase()}.svg">`;
+  const coColor = isLight ? 'var(--dark)' : 'var(--light)';
+  if (col === 0) inner += `<span class="co r" style="color:${coColor}">${r}</span>`;
+  if (row === 7) inner += `<span class="co f" style="color:${coColor}">${files[f]}</span>`;
+  html += `<div class="sq" style="background:${isLight ? 'var(--light)' : 'var(--dark)'}">${inner}</div>`;
+}
+document.getElementById('sqs').innerHTML = html;
+function arrow(a, b, color, op = .85) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const start = 18, end = L - 14, head = 34, sw = 9, hw = 22;
+  const P = (t, o) => [(x1 + ux * t + px * o).toFixed(1), (y1 + uy * t + py * o).toFixed(1)].join(',');
+  return `<polygon points="${[P(start, -sw), P(end - head, -sw), P(end - head, -hw), P(end, 0), P(end - head, hw), P(end - head, sw), P(start, sw)].join(' ')}" fill="${color}" opacity="${op}"/>`;
+}
+function dashed(a, b, color, op = .95) {
+  const [x1, y1] = ctr(a), [x2, y2] = ctr(b);
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const s = 30, e = L - 18, hl = 26, hw = 16, ex = x1 + ux * e, ey = y1 + uy * e;
+  const head = [[ex, ey], [ex - ux * hl + px * hw, ey - uy * hl + py * hw], [ex - ux * hl - px * hw, ey - uy * hl - py * hw]].map(p => p.map(v => v.toFixed(1)).join(',')).join(' ');
+  return `<line x1="${(x1 + ux * s).toFixed(1)}" y1="${(y1 + uy * s).toFixed(1)}" x2="${(ex - ux * hl).toFixed(1)}" y2="${(ey - uy * hl).toFixed(1)}" stroke="${color}" stroke-width="9" stroke-dasharray="16 11" stroke-linecap="round" opacity="${op}"/><polygon points="${head}" fill="${color}" opacity="${op}"/>`;
+}
+let over = `<svg width="774" height="774" style="position:absolute;inset:0">`;
+if (S === 'wrong') over += arrow('g8', 'f6', '#E0574A', .85) + dashed('g7', 'g6', '#81B64C');
+if (S === 'learn') over += dashed('g7', 'g6', '#81B64C');
+over += `</svg>`;
+document.getElementById('over').innerHTML = over;
+
+document.querySelectorAll('[data-i]').forEach(el => {
+  const u = window.ICONS && ICONS[el.dataset.i];
+  if (u) el.style.setProperty('--i', `url("${u}")`);
+});
+</script>
+
+<script>
+(() => {
+  const LCN = [['main', 'Главная', '#81B64C'], ['common', 'Частая', '#5096CC'], ['rare', 'Редкая', '#C98424'], ['very_rare', 'Очень редкая', '#A04040'], ['sharp', 'Острая', '#E0574A']];
+  const EM = ['⭐', '🔥', '⚡', '💡', '🎯', '📌', '⚠️', '🏆'];
+  const emo = on => `<div class="emo">${EM.map(e => `<div class="${e === on ? 'on' : ''}">${e}</div>`).join('')}<div class="none${on ? '' : ' on'}">нет</div></div>`;
+  const cls = on => `<div class="cls">${LCN.map(([k, t, c]) => `<div style="${k === on ? `color:${c};border-color:${c};background:${c}22` : ''}">${t}</div>`).join('')}<div style="${on ? '' : 'color:var(--text);border-color:var(--hair2);background:#45423E'}">нет</div></div>`;
+  const main = document.querySelector('.main');
+  if (META === 'edit') {
+    const row = document.querySelectorAll('.lrow')[2].getBoundingClientRect();
+    const m = main.getBoundingClientRect();
+    main.insertAdjacentHTML('beforeend', `<div class="pop" data-ui="op-line-meta" style="left:${row.right - m.left + 14}px;top:${row.top - m.top - 8}px">
+      <h5>Значок линии</h5>${emo('🔥')}<h5>Класс</h5>${cls('sharp')}
+      <div class="pbtn"><div>Отмена</div><div class="pri">Сохранить</div></div></div>`);
+  } else {
+    main.insertAdjacentHTML('beforeend', `<div class="shade"></div><div class="modal" data-ui="op-add-modal">
+      <h3>Добавить линии</h3>
+      <div class="hint">Вставь PGN с вариантами в скобках — каждая вариация станет отдельной линией.</div>
+      <div class="ta">1. e4 c5 2. Nf3 Nc6 3. d4 cxd4 4. Nxd4 g6 5. Nc3 Bg7 6. Be3 Nf6 7. f3 O-O 8. Qd2 d5 (8... d6 9. O-O-O d5) 9. exd5 Nxd5 10. Nxd5 Qxd5 (10... Nxd4 11. Bxd4) *</div>
+      <div class="found">${'<i class="ico" data-i="check"></i>'}Найдено 3 вариации</div>
+      <h5 style="font-size:13px;font-weight:600;color:var(--muted);margin:0 0 8px">Значок для новых линий</h5>${emo('')}
+      <h5 style="font-size:13px;font-weight:600;color:var(--muted);margin:0 0 8px">Класс для новых линий</h5>${cls('main')}
+      <div class="pbtn"><div>Отмена</div><div class="pri" data-ui="op-add-submit">Добавить 3 линии</div></div></div>`);
+  }
+  document.querySelectorAll('[data-i]').forEach(el => { const u = window.ICONS && ICONS[el.dataset.i]; if (u) el.style.setProperty('--i', `url("${u}")`); });
+})();
+</script>
+</body>
+</html>

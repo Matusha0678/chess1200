@@ -2,11 +2,16 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import {
   fetchArchives, fetchMonthGames, parseGame, computeStats,
   type Game, type SyncState, type GameStats, type WDL,
 } from '@/lib/chesscom';
+import { ActivityHeatmap } from '@/components/stats/ActivityHeatmap';
+import { opponentList, opponentNemesis, opponentBest, monthlyBreakdown, monthLabelRu } from '@/lib/games-aggregates';
+import { evaluate as evaluateAchievements, CATEGORY_LABEL, CATEGORY_COLOR } from '@/lib/achievements';
+import { AchievementIcon } from '@/components/AchievementIcon';
 
 // ── Design tokens (inline, Ivory Dark) ───────────────────────────────────────
 
@@ -82,17 +87,66 @@ function WdlBar({ wdl }: { wdl: WDL }) {
 
 function StatsPanel({ stats }: { stats: GameStats }) {
   const maxHour = Math.max(...stats.byHour, 1);
+  const maxWd = Math.max(...stats.byWeekday.map(wdlTotal), 1);
+  const WEEKDAYS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
   const timeClasses = Object.entries(stats.byTimeClass)
     .sort((a, b) => wdlTotal(b[1]) - wdlTotal(a[1]));
 
+  const totalWdl: WDL = { win: stats.white.win + stats.black.win, draw: stats.white.draw + stats.black.draw, loss: stats.white.loss + stats.black.loss };
+  const totalGames = wdlTotal(totalWdl);
+  const winPct = totalGames > 0 ? Math.round((totalWdl.win / totalGames) * 100) : 0;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+
+      {/* ── Hero metrics strip ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
+        <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
+          <div style={{ ...HEADING, fontSize: 30, fontWeight: 800, lineHeight: 1, color: 'var(--ivory)', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>{winPct}%</div>
+          <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, letterSpacing: 0.08, textTransform: 'uppercase', fontWeight: 600 }}>побед</div>
+        </div>
+        {stats.currentRating != null && (
+          <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
+            <div style={{ ...HEADING, fontSize: 30, fontWeight: 800, lineHeight: 1, color: 'var(--ivory)', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>
+              {stats.currentRating}
+              {stats.ratingChange30d != null && stats.ratingChange30d !== 0 && (
+                <span style={{ fontSize: 14, color: stats.ratingChange30d > 0 ? 'var(--accent)' : '#F08277', marginLeft: 6 }}>
+                  {stats.ratingChange30d > 0 ? '+' : ''}{stats.ratingChange30d}
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, letterSpacing: 0.08, textTransform: 'uppercase', fontWeight: 600 }}>рейтинг{stats.ratingChange30d != null ? ' · 30д' : ''}</div>
+          </div>
+        )}
+        <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
+          <div style={{ ...HEADING, fontSize: 30, fontWeight: 800, lineHeight: 1, color: 'var(--ivory)', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>{stats.avgMoves}</div>
+          <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, letterSpacing: 0.08, textTransform: 'uppercase', fontWeight: 600 }}>средних ходов</div>
+        </div>
+        {stats.avgAccuracy != null && (
+          <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
+            <div style={{ ...HEADING, fontSize: 30, fontWeight: 800, lineHeight: 1, color: 'var(--ivory)', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>{stats.avgAccuracy}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, letterSpacing: 0.08, textTransform: 'uppercase', fontWeight: 600 }}>точность %</div>
+          </div>
+        )}
+        {stats.longestWinStreak > 1 && (
+          <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
+            <div style={{ ...HEADING, fontSize: 30, fontWeight: 800, lineHeight: 1, color: 'var(--accent)', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>+{stats.longestWinStreak}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, letterSpacing: 0.08, textTransform: 'uppercase', fontWeight: 600 }}>побед подряд</div>
+          </div>
+        )}
+        {stats.longestLossStreak > 1 && (
+          <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
+            <div style={{ ...HEADING, fontSize: 30, fontWeight: 800, lineHeight: 1, color: '#F08277', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>−{stats.longestLossStreak}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, letterSpacing: 0.08, textTransform: 'uppercase', fontWeight: 600 }}>поражений подряд</div>
+          </div>
+        )}
+      </div>
 
       {/* Row 1: color breakdown */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: 'var(--hairline)' }}>
         {([
-          ['ВСЕГО', { win: stats.white.win + stats.black.win, draw: stats.white.draw + stats.black.draw, loss: stats.white.loss + stats.black.loss }],
+          ['ВСЕГО', totalWdl],
           ['БЕЛЫЕ ♙', stats.white],
           ['ЧЁРНЫЕ ♟', stats.black],
         ] as [string, WDL][]).map(([label, wdl]) => (
@@ -158,6 +212,100 @@ function StatsPanel({ stats }: { stats: GameStats }) {
           })}
         </div>
       </div>
+
+      {/* Row 2.5: by weekday + by opponent strength */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48 }}>
+
+        {/* Weekday */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={SECTION_HEAD}>
+            <span style={SECTION_LABEL}>По дням недели</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, alignItems: 'end' }}>
+            {stats.byWeekday.map((wdl, i) => {
+              const total = wdlTotal(wdl);
+              const h = total === 0 ? 4 : Math.max(8, Math.round((total / maxWd) * 100));
+              const winPct = total > 0 ? Math.round((wdl.win / total) * 100) : 0;
+              return (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: '70%', height: h, background: total === 0 ? 'var(--hairline)' : 'color-mix(in srgb, var(--accent) 50%, var(--surface))', position: 'relative', transition: 'height 0.3s' }}>
+                    {total > 0 && (
+                      <div style={{ position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', fontSize: 11, fontWeight: 700, color: 'var(--ivory)', fontVariantNumeric: 'tabular-nums' }}>{winPct}%</div>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600 }}>{WEEKDAYS[i]}</div>
+                  <div style={{ fontSize: 10, color: 'var(--faint)', fontVariantNumeric: 'tabular-nums' }}>{total}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Opponent strength */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={SECTION_HEAD}>
+            <span style={SECTION_LABEL}>По силе соперника</span>
+          </div>
+          {([
+            ['Слабее меня (−50+)', stats.byOppStrength.weaker],
+            ['Равный (±50)', stats.byOppStrength.even],
+            ['Сильнее меня (+50+)', stats.byOppStrength.stronger],
+          ] as [string, WDL][]).map(([label, wdl]) => {
+            const total = wdlTotal(wdl);
+            const winPct = total > 0 ? Math.round((wdl.win / total) * 100) : 0;
+            return (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ivory)' }}>{label}</span>
+                  <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+                    {total} · <strong style={{ color: 'var(--ivory)' }}>{winPct}%</strong>
+                  </span>
+                </div>
+                {total > 0 && <WdlBar wdl={wdl} />}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Row 2.6: extremes (longest game, shortest win, best/worst accuracy) */}
+      {(stats.longestGame || stats.shortestWin || stats.bestAccuracyWin || stats.worstAccuracyLoss) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={SECTION_HEAD}>
+            <span style={SECTION_LABEL}>Экстремумы</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+            {stats.longestGame && (
+              <Link href={`/games/${stats.longestGame.id}`} className="ui-card" style={{ padding: '12px 14px', textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 700, letterSpacing: 0.08 }}>САМАЯ ДЛИННАЯ</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', marginTop: 4 }}>{stats.longestGame.moves_count} ходов</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>против {stats.longestGame.opp_name || '?'} · {stats.longestGame.result === 'win' ? '+' : stats.longestGame.result === 'loss' ? '−' : '='}</div>
+              </Link>
+            )}
+            {stats.shortestWin && (
+              <Link href={`/games/${stats.shortestWin.id}`} className="ui-card" style={{ padding: '12px 14px', textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, letterSpacing: 0.08 }}>БЫСТРАЯ ПОБЕДА</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ivory)', marginTop: 4 }}>{stats.shortestWin.moves_count} ходов</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>против {stats.shortestWin.opp_name || '?'}</div>
+              </Link>
+            )}
+            {stats.bestAccuracyWin && (
+              <Link href={`/games/${stats.bestAccuracyWin.id}`} className="ui-card" style={{ padding: '12px 14px', textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, letterSpacing: 0.08 }}>ЛУЧШАЯ ТОЧНОСТЬ (ПОБЕДА)</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent)', marginTop: 4 }}>{stats.bestAccuracyWin.color === 'white' ? stats.bestAccuracyWin.accuracy_white : stats.bestAccuracyWin.accuracy_black}%</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>против {stats.bestAccuracyWin.opp_name || '?'}</div>
+              </Link>
+            )}
+            {stats.worstAccuracyLoss && (
+              <Link href={`/games/${stats.worstAccuracyLoss.id}`} className="ui-card" style={{ padding: '12px 14px', textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ fontSize: 11, color: '#F08277', fontWeight: 700, letterSpacing: 0.08 }}>ХУДШАЯ ТОЧНОСТЬ (ПОРАЖЕНИЕ)</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#F08277', marginTop: 4 }}>{stats.worstAccuracyLoss.color === 'white' ? stats.worstAccuracyLoss.accuracy_white : stats.worstAccuracyLoss.accuracy_black}%</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>против {stats.worstAccuracyLoss.opp_name || '?'}</div>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Row 3: by hour */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -582,6 +730,221 @@ function GamesPageInner() {
           </button>
         </div>
       </div>
+
+      {/* ── Related pages ── */}
+      {games.length > 0 && (
+        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
+          <Link href="/games/openings" className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', textDecoration: 'none', color: 'inherit' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-btn, 4px)', background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, flexShrink: 0 }}>♟</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ivory)' }}>Я против дебютов</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>Где отхожу от сохранённых линий</div>
+            </div>
+            <span style={{ color: 'var(--muted)', fontSize: 14, opacity: 0.6 }}>→</span>
+          </Link>
+          <Link href="/stats" className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', textDecoration: 'none', color: 'inherit' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-btn, 4px)', background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, flexShrink: 0 }}>Σ</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ivory)' }}>Где я теряю очки</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>Статистика по фазам и темам</div>
+            </div>
+            <span style={{ color: 'var(--muted)', fontSize: 14, opacity: 0.6 }}>→</span>
+          </Link>
+          <Link href="/repertoire" className="ui-card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', textDecoration: 'none', color: 'inherit' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-btn, 4px)', background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, flexShrink: 0 }}>♟</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ivory)' }}>Дебюты в партиях</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>Что играю и где ухожу от линий</div>
+            </div>
+            <span style={{ color: 'var(--muted)', fontSize: 14, opacity: 0.6 }}>→</span>
+          </Link>
+        </section>
+      )}
+
+      {/* ── Personal records ── */}
+      {games.length > 0 && (() => {
+        // Max games in a single day
+        const byDay = new Map<string, number>();
+        for (const g of games) {
+          if (!g.played_at) continue;
+          const d = g.played_at.slice(0, 10);
+          byDay.set(d, (byDay.get(d) ?? 0) + 1);
+        }
+        let maxDayGames = 0, maxDay = '';
+        for (const [d, c] of byDay) if (c > maxDayGames) { maxDayGames = c; maxDay = d; }
+
+        const records = [
+          { label: 'Пик рейтинга', value: stats.maxRating?.toString() ?? '—', color: 'var(--accent)' },
+          { label: 'Серия побед', value: stats.longestWinStreak > 0 ? `+${stats.longestWinStreak}` : '—', color: 'var(--accent)' },
+          { label: 'Длиннейшая партия', value: stats.longestGame ? `${stats.longestGame.moves_count} ходов` : '—', color: 'var(--ivory)' },
+          { label: 'Пик за день', value: maxDayGames > 0 ? `${maxDayGames} партий` : '—', color: 'var(--ivory)', sub: maxDay ? maxDay : undefined },
+          { label: 'Всего ходов', value: games.reduce((s, g) => s + (g.moves_count || 0), 0).toString(), color: 'var(--ivory)' },
+          { label: 'Уникальных ЭКО', value: new Set(games.map(g => g.eco_name).filter(Boolean)).size.toString(), color: 'var(--ivory)' },
+        ];
+
+        return (
+          <section>
+            <div style={SECTION_HEAD}>
+              <span style={SECTION_LABEL}>Личные рекорды</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+              {records.map(r => (
+                <div key={r.label} style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 700, letterSpacing: 0.08, textTransform: 'uppercase' }}>{r.label}</div>
+                  <div style={{ ...HEADING, fontSize: 24, fontWeight: 800, color: r.color, letterSpacing: '-0.025em', lineHeight: 1, marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>{r.value}</div>
+                  {r.sub && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{r.sub}</div>}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* ── Activity heatmap ── */}
+      {games.length > 0 && (
+        <section style={{ padding: '18px 20px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
+          <ActivityHeatmap games={games} weeks={26} />
+        </section>
+      )}
+
+      {/* ── Monthly comparison ── */}
+      {games.length > 0 && (() => {
+        const monthly = monthlyBreakdown(games, 4);
+        if (monthly.length < 1) return null;
+        return (
+          <section>
+            <div style={SECTION_HEAD}>
+              <span style={SECTION_LABEL}>По месяцам</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+              {monthly.map((m, idx) => {
+                const prev = monthly[idx + 1];
+                const trend = prev ? m.winPct - prev.winPct : null;
+                return (
+                  <div key={m.month} style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
+                    <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 700, letterSpacing: 0.08, textTransform: 'uppercase' }}>{monthLabelRu(m.month)}</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
+                      <div style={{ ...HEADING, fontSize: 28, fontWeight: 800, color: 'var(--ivory)', letterSpacing: '-0.025em', lineHeight: 1 }}>{m.winPct}%</div>
+                      {trend != null && trend !== 0 && (
+                        <span style={{ fontSize: 13, color: trend > 0 ? 'var(--accent)' : '#F08277', fontWeight: 600 }}>
+                          {trend > 0 ? '▲' : '▼'} {Math.abs(trend)}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
+                      {m.games} партий · +{m.wins} ={m.draws} −{m.losses}
+                      {m.avgRating != null && <> · {m.avgRating}</>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* ── Achievements ── */}
+      {games.length > 0 && (() => {
+        const achievements = evaluateAchievements({ games, stats, totalLines: 0, masteredLines: 0, totalOpenings: 0, streak: 0 });
+        const earned = achievements.filter(a => a.earned);
+        const pending = achievements.filter(a => !a.earned).slice(0, 4);
+        return (
+          <section>
+            <div style={SECTION_HEAD}>
+              <span style={SECTION_LABEL}>Достижения</span>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>{earned.length} из {achievements.length}</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+              {[...earned, ...pending].map(a => (
+                <div key={a.id} style={{
+                  padding: '14px 14px',
+                  background: a.earned
+                    ? `color-mix(in srgb, ${CATEGORY_COLOR[a.category]} 12%, var(--surface))`
+                    : 'var(--surface)',
+                  border: `1px solid ${a.earned
+                    ? `color-mix(in srgb, ${CATEGORY_COLOR[a.category]} 35%, var(--hairline))`
+                    : 'var(--hairline)'}`,
+                  borderRadius: 'var(--radius-card, 0px)',
+                  opacity: a.earned ? 1 : 0.55,
+                  display: 'flex', flexDirection: 'column', gap: 4,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color: a.earned ? CATEGORY_COLOR[a.category] : 'var(--muted)', display: 'inline-flex' }}>
+                      <AchievementIcon name={a.icon} size={18} />
+                    </span>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: a.earned ? CATEGORY_COLOR[a.category] : 'var(--muted)', letterSpacing: 0.08, textTransform: 'uppercase' }}>{CATEGORY_LABEL[a.category]}</div>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ivory)', marginTop: 2 }}>{a.title}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.35 }}>{a.desc}</div>
+                  {!a.earned && a.target > 1 && (
+                    <div style={{ marginTop: 4 }}>
+                      <div style={{ height: 3, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.round((a.progress / a.target) * 100)}%`, height: '100%', background: CATEGORY_COLOR[a.category] }} />
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>{a.progress}/{a.target}</div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* ── Opponents ── */}
+      {games.length > 0 && (() => {
+        const nemesis = opponentNemesis(games);
+        const best = opponentBest(games);
+        const top = opponentList(games, 10);
+        if (top.length === 0) return null;
+        return (
+          <section>
+            <div style={SECTION_HEAD}>
+              <span style={SECTION_LABEL}>Соперники</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {(nemesis || best) && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
+                  {nemesis && nemesis.games >= 3 && (
+                    <div style={{ padding: '14px 16px', background: 'color-mix(in srgb, #E0574A 10%, var(--surface))', border: '1px solid color-mix(in srgb, #E0574A 30%, var(--hairline))', borderRadius: 'var(--radius-card, 0px)' }}>
+                      <div style={{ fontSize: 11, color: '#E0574A', fontWeight: 700, letterSpacing: 0.08, textTransform: 'uppercase' }}>НЕМЕЗИДА</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ivory)', marginTop: 4 }}>{nemesis.name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                        +{nemesis.wins} ={nemesis.draws} −{nemesis.losses} ({Math.round((nemesis.wins / nemesis.games) * 100)}% побед)
+                        {nemesis.avgRating != null && <> · {nemesis.avgRating}</>}
+                      </div>
+                    </div>
+                  )}
+                  {best && best.games >= 2 && (
+                    <div style={{ padding: '14px 16px', background: 'color-mix(in srgb, var(--accent) 10%, var(--surface))', border: '1px solid color-mix(in srgb, var(--accent) 30%, var(--hairline))', borderRadius: 'var(--radius-card, 0px)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, letterSpacing: 0.08, textTransform: 'uppercase' }}>УДОБНЫЙ СОПЕРНИК</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ivory)', marginTop: 4 }}>{best.name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                        +{best.wins} ={best.draws} −{best.losses} ({Math.round((best.wins / best.games) * 100)}% побед)
+                        {best.avgRating != null && <> · {best.avgRating}</>}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {top.map((o, i) => {
+                  const total = o.games;
+                  const winPct = total > 0 ? Math.round((o.wins / total) * 100) : 0;
+                  return (
+                    <div key={o.name} style={{ display: 'grid', gridTemplateColumns: '24px 1fr 60px 60px', gap: 10, alignItems: 'center', padding: '8px 12px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-card, 0px)' }}>
+                      <span style={{ fontSize: 11, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{String(i + 1).padStart(2, '0')}</span>
+                      <span style={{ fontSize: 13, color: 'var(--ivory)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</span>
+                      <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{total} партий</span>
+                      <span style={{ fontSize: 12, fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: winPct >= 50 ? 'var(--ivory)' : 'var(--control)' }}>{winPct}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ── Stats ── */}
       {games.length > 0 && (

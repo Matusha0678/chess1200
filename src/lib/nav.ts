@@ -15,6 +15,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: null,
     items: [
       { label: 'Сегодня', href: '/', icon: 'today' },
+      { label: 'Тренер Таль', href: '/tal', icon: 'tal' },
     ],
   },
   {
@@ -47,6 +48,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'Дебюты в партиях',     href: '/repertoire', icon: 'repertoire' },
       { label: 'Где я теряю очки',     href: '/stats',      icon: 'stats'      },
       { label: 'Мастера',              href: '/masters',    icon: 'masters'    },
+      { label: 'Достижения',           href: '/achievements', icon: 'star'     },
     ],
   },
 ];

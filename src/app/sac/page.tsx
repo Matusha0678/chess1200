@@ -550,6 +550,7 @@ function SacPageInner() {
 
   const startSolving = useCallback(() => {
     if (positions.length > 0) pickRandom(positions);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positions]);
 
   if (loading) return (

@@ -10,12 +10,22 @@ import { DEMO_CATALOG } from '@/lib/demo-openings';
 
 const FILTERS_KEY = 'op-filters';
 
+type OpCategory = 'all' | 'authored' | 'gambit' | 'defense' | 'classical' | 'sharp';
+
 interface OpFilters {
   color: 'all' | 'white' | 'black';
   show: 'all' | 'review' | 'new';
+  category: OpCategory;
 }
 
-const DEFAULT_FILTERS: OpFilters = { color: 'all', show: 'all' };
+const DEFAULT_FILTERS: OpFilters = { color: 'all', show: 'all', category: 'all' };
+
+function classifyName(name: string): 'gambit' | 'defense' | 'classical' {
+  const s = name.toLowerCase();
+  if (/гамбит|контргамбит/.test(s)) return 'gambit';
+  if (/защита|сицилианск|французск|каро|скандинавск|пирц|ал[её]хин|староинд|нимцо|грюнфельд|бенони|голланд|славянск/.test(s)) return 'defense';
+  return 'classical';
+}
 
 function loadFilters(): OpFilters {
   if (typeof window === 'undefined') return DEFAULT_FILTERS;
@@ -37,7 +47,9 @@ interface CatalogOpening {
   learning: number;
   due: number;
   newLines: number;
+  sharpCount: number;
   cardFen: string;
+  firstMoves?: string;
 }
 
 function catalogSort(a: CatalogOpening, b: CatalogOpening): number {
@@ -77,8 +89,15 @@ export default function OpeningsPage() {
   const searchRef = useRef<HTMLInputElement>(null);
   const isDemo = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === '1';
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setFilters(loadFilters()); }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFilters(loadFilters());
+    // Read initial ?q= from URL
+    if (typeof window !== 'undefined') {
+      const q = new URLSearchParams(window.location.search).get('q');
+      if (q) setSearch(q);
+    }
+  }, []);
 
   const updateFilters = useCallback((update: Partial<OpFilters>) => {
     setFilters(prev => { const next = { ...prev, ...update }; saveFilters(next); return next; });
@@ -98,17 +117,17 @@ export default function OpeningsPage() {
       if (ids.length === 0) { setOpenings([]); setLoading(false); return; }
 
       const [{ data: linesData }, { data: progData }] = await Promise.all([
-        supabase.from('opening_lines').select('id, opening_id, moves').in('opening_id', ids),
+        supabase.from('opening_lines').select('id, opening_id, moves, line_class').in('opening_id', ids),
         supabase.from('line_progress').select('line_id, mastery, next_review').in('line_id',
           ((await supabase.from('opening_lines').select('id').in('opening_id', ids)).data ?? []).map((l: { id: string }) => l.id)
         ),
       ]);
 
-      const linesByOp = new Map<string, Array<{ id: string; moves: ChessMove[] }>>();
-      for (const l of (linesData ?? []) as Array<{ id: string; opening_id: string; moves: unknown }>) {
+      const linesByOp = new Map<string, Array<{ id: string; moves: ChessMove[]; lineClass: string | null }>>();
+      for (const l of (linesData ?? []) as Array<{ id: string; opening_id: string; moves: unknown; line_class: string | null }>) {
         if (!linesByOp.has(l.opening_id)) linesByOp.set(l.opening_id, []);
         const mvs = Array.isArray(l.moves) ? l.moves as ChessMove[] : toMoves((l.moves as string) ?? '');
-        linesByOp.get(l.opening_id)!.push({ id: l.id, moves: mvs });
+        linesByOp.get(l.opening_id)!.push({ id: l.id, moves: mvs, lineClass: l.line_class ?? null });
       }
 
       const progMap = new Map<string, { mastery: number; next_review: string; last_practiced?: string }>();
@@ -142,10 +161,20 @@ export default function OpeningsPage() {
         const cardFen = plyInfo.lineIdx >= 0 && ls[plyInfo.lineIdx]?.moves[plyInfo.k - 1]
           ? ls[plyInfo.lineIdx].moves[plyInfo.k - 1].fen
           : 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+        const sharpCount = ls.filter(l => l.lineClass === 'sharp').length;
+        // Short SAN preview from the first line — up to 6 half-moves (3 full)
+        const firstLine = ls[0]?.moves ?? [];
+        const firstMoves = firstLine.slice(0, 6).map((m, i) => {
+          const mv = Math.floor(i / 2) + 1;
+          if (i % 2 === 0) return `${mv}.${m.san}`;
+          return m.san;
+        }).join(' ');
         return {
           id: op.id, name: op.name, color: op.color as 'white' | 'black' | 'both',
           totalLines: ls.length, mastered: counts.mastered, learning: counts.learning, due: counts.due, newLines: counts.new,
+          sharpCount,
           cardFen,
+          firstMoves: firstMoves || undefined,
         };
       });
       setOpenings(catalog.sort(catalogSort));
@@ -173,14 +202,34 @@ export default function OpeningsPage() {
   const totalNew = openings.reduce((s, o) => s + o.newLines, 0);
   const totalLines = openings.reduce((s, o) => s + o.totalLines, 0);
 
-  const filtered = openings
-    .filter(o => {
-      if (filters.color !== 'all' && o.color !== filters.color && o.color !== 'both') return false;
-      if (filters.show === 'review' && o.due === 0) return false;
-      if (filters.show === 'new' && o.newLines === 0) return false;
-      if (search && !o.name.toLowerCase().includes(search.toLowerCase())) return false;
-      return true;
-    })
+  const isSharp = (o: CatalogOpening) => o.totalLines > 0 && o.sharpCount / o.totalLines >= 0.5;
+  const isAuthored = (o: CatalogOpening) => /авторск/i.test(o.name);
+  const matchesCategory = (o: CatalogOpening, c: OpCategory) => {
+    if (c === 'all') return true;
+    if (c === 'sharp') return isSharp(o);
+    if (c === 'authored') return isAuthored(o);
+    return classifyName(o.name) === c;
+  };
+
+  // Counts per tab (respect other filters so counts reflect what user will see)
+  const baseFiltered = openings.filter(o => {
+    if (filters.color !== 'all' && o.color !== filters.color && o.color !== 'both') return false;
+    if (filters.show === 'review' && o.due === 0) return false;
+    if (filters.show === 'new' && o.newLines === 0) return false;
+    if (search && !o.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+  const catCounts: Record<OpCategory, number> = {
+    all: baseFiltered.length,
+    authored: baseFiltered.filter(o => matchesCategory(o, 'authored')).length,
+    gambit: baseFiltered.filter(o => matchesCategory(o, 'gambit')).length,
+    defense: baseFiltered.filter(o => matchesCategory(o, 'defense')).length,
+    classical: baseFiltered.filter(o => matchesCategory(o, 'classical')).length,
+    sharp: baseFiltered.filter(o => matchesCategory(o, 'sharp')).length,
+  };
+
+  const filtered = baseFiltered
+    .filter(o => matchesCategory(o, filters.category))
     .sort(catalogSort);
 
   const leftStyle: React.CSSProperties = {
@@ -325,32 +374,80 @@ export default function OpeningsPage() {
           data-demo={isDemo ? 'openings' : undefined}
           style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}
         >
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: 16, flexShrink: 0 }}>
-            <div>
-              <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ivory)', lineHeight: 1.1, fontFamily: "var(--font-inter-tight,'Inter Tight','Inter',sans-serif)" }}>
-                Мои дебюты
+          {/* Compact catalog header */}
+          <div className="catalog-hero-compact">
+            <div className="catalog-hero-row">
+              <div className="catalog-hero-text">
+                <h1 className="catalog-hero-h1">Дебюты</h1>
+                <div className="catalog-hero-meta">
+                  {openings.length} {openings.length === 1 ? 'дебют' : openings.length <= 4 ? 'дебюта' : 'дебютов'}
+                  <span className="dot" />
+                  <strong>{totalLines}</strong> {totalLines === 1 ? 'линия' : totalLines <= 4 ? 'линии' : 'линий'}
+                  {totalMastered > 0 && <>
+                    <span className="dot" />освоено <strong>{totalMastered}</strong>
+                  </>}
+                  {totalDue > 0 && <>
+                    <span className="dot" />
+                    <span style={{ color: 'var(--accent)' }}>
+                      <strong>{totalDue}</strong> на повтор
+                    </span>
+                  </>}
+                </div>
               </div>
-              <div style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>
-                {openings.length} {openings.length === 1 ? 'дебют' : openings.length <= 4 ? 'дебюта' : 'дебютов'} · {totalLines} линий{totalDue > 0 ? ` · ${totalDue} ждут повторения` : ' · всё повторено'}
+              <div className="catalog-hero-search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+                  <path d="M20 20L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <input
+                  ref={searchRef}
+                  data-ui="op-search"
+                  type="text"
+                  placeholder="Найти дебют…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+                <kbd>/</kbd>
               </div>
             </div>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <input
-                ref={searchRef}
-                data-ui="op-search"
-                type="text"
-                placeholder="Найти дебют /"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                style={{
-                  height: 36, padding: '0 12px', background: 'var(--surface)',
-                  border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn, 4px)',
-                  color: 'var(--ivory)', fontSize: 13, outline: 'none', fontFamily: 'inherit',
-                  width: 200,
-                }}
-              />
-            </div>
+          </div>
+
+          {/* Category tabs */}
+          <div
+            data-ui="op-categories"
+            style={{
+              display: 'flex', gap: 2, marginBottom: 16, flexShrink: 0,
+              borderBottom: '1px solid var(--hairline)',
+              overflowX: 'auto',
+            }}
+          >
+            {(['all','authored','gambit','defense','classical','sharp'] as const).map(c => {
+              const labels: Record<OpCategory, string> = {
+                all: 'Все', authored: 'Авторские', gambit: 'Гамбиты', defense: 'Защиты',
+                classical: 'Классика', sharp: 'Острые',
+              };
+              const active = filters.category === c;
+              const count = catCounts[c];
+              return (
+                <button
+                  key={c}
+                  data-category={c}
+                  onClick={() => updateFilters({ category: c })}
+                  style={{
+                    padding: '10px 16px', border: 'none',
+                    background: 'transparent',
+                    color: active ? 'var(--ivory)' : 'var(--muted)',
+                    fontSize: 14, fontWeight: active ? 700 : 500,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                    borderBottom: active ? '2px solid var(--accent, var(--ivory))' : '2px solid transparent',
+                    marginBottom: -1, whiteSpace: 'nowrap',
+                    transition: 'color 0.15s, border-color 0.15s',
+                  }}
+                >
+                  {labels[c]}{count > 0 ? ` · ${count}` : ''}
+                </button>
+              );
+            })}
           </div>
 
           {/* Grid */}
@@ -471,19 +568,24 @@ function OpeningCard({ op, isHovered, onHover, isDemo }: {
             data-ui="op-card-cta"
             style={{
               position: 'absolute', inset: 0,
-              background: 'rgba(20,20,18,.75)',
+              background: 'radial-gradient(ellipse at center, rgba(20,20,18,.72) 0%, rgba(12,12,11,.88) 100%)',
+              backdropFilter: 'blur(3px)',
+              WebkitBackdropFilter: 'blur(3px)',
               display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center',
-              gap: 14, padding: 20, textAlign: 'center', zIndex: 3,
+              gap: 16, padding: 20, textAlign: 'center', zIndex: 3,
+              animation: 'fadeIn 0.18s ease-out both',
             }}
           >
-            <p style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.45, margin: 0 }}>{ctaText(op)}</p>
+            <p style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.45, margin: 0, maxWidth: 220 }}>{ctaText(op)}</p>
             <div style={{
-              width: 48, height: 48, borderRadius: 24,
-              background: 'var(--accent)', boxShadow: '0 3px 0 var(--accent-press)',
+              width: 54, height: 54, borderRadius: 27,
+              background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 108%, #fff) 0%, var(--accent) 100%)',
+              boxShadow: '0 2px 0 var(--accent-press)',
               display: 'grid', placeItems: 'center', color: 'var(--accent-contrast)',
+              animation: 'popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both',
             }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 3 }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 3 }}>
                 <polygon points="5,3 19,12 5,21" />
               </svg>
             </div>
@@ -501,14 +603,27 @@ function OpeningCard({ op, isHovered, onHover, isDemo }: {
         }}>
           {op.name}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--muted)', marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--muted)', marginBottom: 6 }}>
           <span>{colorIcon}</span>
           <span>{colorLabel}</span>
           <span>·</span>
           <span>{op.totalLines} {op.totalLines === 1 ? 'линия' : op.totalLines <= 4 ? 'линии' : 'линий'}</span>
         </div>
+        {op.firstMoves && (
+          <div style={{
+            fontSize: 12, color: 'var(--muted)', marginBottom: 8,
+            fontFamily: 'ui-monospace, Menlo, monospace',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            opacity: 0.75,
+          }}>
+            {op.firstMoves}
+          </div>
+        )}
         {/* Progress bar — mastered (green) + learning (purple) */}
-        <div style={{ height: 5, background: 'var(--hairline)', borderRadius: 3, overflow: 'hidden', marginBottom: 4, display: 'flex' }}>
+        <div
+          title={`Освоено ${op.mastered} · Изучаю ${op.learning} · На повтор ${op.due} · Новых ${op.newLines}`}
+          style={{ height: 5, background: 'var(--hairline)', borderRadius: 3, overflow: 'hidden', marginBottom: 4, display: 'flex' }}
+        >
           <div style={{
             height: '100%',
             width: op.totalLines > 0 ? `${(op.mastered / op.totalLines) * 100}%` : '0%',

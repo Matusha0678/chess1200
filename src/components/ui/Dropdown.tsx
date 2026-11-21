@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useId } from 'react';
 
 export interface DropdownOption {
   value: string;
@@ -15,13 +15,13 @@ interface DropdownProps {
 }
 
 export function Dropdown({ value, onChange, options, style }: DropdownProps) {
+  const listboxId = useId();
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find(o => o.value === value);
-  const focusedIdx = options.findIndex(o => o.value === value);
 
   // openDropdown initializes focused to the currently-selected item
   const openDropdown = useCallback(() => {
@@ -63,6 +63,7 @@ export function Dropdown({ value, onChange, options, style }: DropdownProps) {
       <button
         type="button"
         role="combobox"
+        aria-controls={listboxId}
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => { if (open) close(); else openDropdown(); }}
@@ -93,6 +94,7 @@ export function Dropdown({ value, onChange, options, style }: DropdownProps) {
       {open && (
         <div
           ref={listRef}
+          id={listboxId}
           role="listbox"
           style={{
             position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 100,

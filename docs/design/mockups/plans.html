@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Идеи позиций — макет</title>
+<link rel="stylesheet" href="node_modules/@fontsource/inter/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/600.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter-tight/700.css">
+<style>
+
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A; --plan:#4A90E2;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:10px 12px;display:flex;flex-direction:column}
+.item{height:35px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:14px;flex:none}
+.item .ico{width:17px;height:17px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:12px 12px 4px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);flex:none}
+.grp .ico{width:14px;height:14px}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+/* left */
+.left{width:280px;height:854px;display:flex;flex-direction:column;flex:none}
+.left .hd{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.h2{font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd img{width:26px;height:26px;flex:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.segctl{display:grid;grid-template-columns:.9fr 1.15fr 1fr;margin:14px 20px 0;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.segctl div{height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--muted);font-weight:500}
+.segctl .on{background:#45423E;color:var(--text);font-weight:600}
+.hard{margin:10px 20px 0;height:40px;border-radius:var(--r-btn);border:1px solid var(--hair2);display:flex;align-items:center;gap:10px;padding:0 12px;font-size:14px;font-weight:500;color:#E4E1DC}
+.hard .ico{width:16px;height:16px;color:#F4B45C}
+.hard b{margin-left:auto;font-size:13px;font-weight:600;color:#2A1E0B;background:var(--warn);border-radius:6px;padding:1px 7px}
+.qlabel{margin:16px 20px 6px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.secs{padding:0 10px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+.lrow{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;height:58px;padding:0 10px;border-radius:10px;position:relative}
+.lrow .ix{width:28px;height:28px;border-radius:8px;background:#3A3835;display:grid;place-items:center;font-size:13px;font-weight:700;color:#CFCBC6}
+.lrow .nm{font-size:14px;font-weight:600;color:#E8E5E0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .sub{display:flex;align-items:center;gap:8px;margin-top:6px}
+.mb{display:flex;gap:3px}
+.mb i{width:10px;height:4px;border-radius:2px;background:#45423E}
+.mb i.f{background:var(--accent)}
+.tag{font-size:13px;font-weight:600;color:#F4B45C;line-height:1;white-space:nowrap}
+.lrow .st{font-size:13px;color:var(--muted);white-space:nowrap}
+.lrow .st.due{color:#F4B45C;font-weight:600}
+.lrow .st.ok{color:var(--accent);font-weight:600}
+.lrow .st.new{color:#8FB4DA}
+.lrow.on{background:var(--row)}
+.lrow.on::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:3px;background:var(--accent)}
+.leftbot{padding:14px 20px 20px;border-top:1px solid var(--hair);display:flex;gap:10px}
+.btn2{height:44px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#E8E5E0;padding:0 14px}
+.btn2 .ico{width:16px;height:16px}
+.btn2 .k{font-size:12px;font-weight:600;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.btn2.off{opacity:.45}
+.three .btn2{font-size:14px;padding:0 10px;gap:7px}
+.btn2.sq{width:44px;padding:0}
+/* board */
+.bcol{width:806px;height:854px;display:flex;flex-direction:column;gap:8px;flex:none}
+.pbar{height:32px;display:flex;align-items:center;justify-content:space-between;padding-left:32px}
+.who{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.ava{width:28px;height:28px;border-radius:6px;background:#4A4744;display:grid;place-items:center}
+.ava img{width:22px;height:22px}
+.tg{font-size:13px;font-weight:500;color:var(--muted)}
+.pnote{font-size:13px;color:var(--muted)}
+.pnote b{color:var(--text);font-weight:600}
+.brow{display:flex;gap:8px;height:774px}
+.gutter{width:24px}
+.board{width:774px;height:774px;position:relative}
+.sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden}
+.sq{position:relative}
+.sq .hl{position:absolute;inset:0}
+.sq img{position:absolute;inset:0;width:100%;height:100%}
+.co{position:absolute;font-size:13px;font-weight:600;line-height:1}
+.co.r{left:5px;top:5px}.co.f{right:6px;bottom:4px}
+.over{position:absolute;inset:0;pointer-events:none}
+/* right */
+.right{flex:1;height:854px;display:flex;flex-direction:column;min-width:0}
+.rp-h{padding:20px 24px 14px}
+.crumbs{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.crumbs .pr{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--text)}
+.xp{font-size:13px;font-weight:600;color:#81B64C;background:rgba(129,182,76,.14);border-radius:6px;padding:2px 7px}
+.pb4{height:4px;border-radius:4px;background:#3A3835;margin-top:12px;overflow:hidden}
+.pb4 i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:14px;line-height:1.15}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:500;color:#DCD8D3}
+.chip img{width:16px;height:16px}
+.chip .ico{width:14px;height:14px}
+.chip.orange{color:#F4B45C;border-color:rgba(240,164,58,.35);background:rgba(240,164,58,.08)}
+.rb{flex:1;overflow:hidden;padding:4px 24px 0;display:flex;flex-direction:column;gap:16px}
+.fb{border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start}
+.fb .bi{width:30px;height:30px;border-radius:15px;display:grid;place-items:center;color:#fff}
+.fb .bi .ico{width:17px;height:17px}
+.fb .t1{font-size:16px;line-height:1.45;color:var(--text)}
+.fb .t1 b{font-weight:700;white-space:nowrap}
+.fb .t2{font-size:14px;color:var(--muted);margin-top:6px}
+.fb.fail{background:rgba(224,87,74,.10);border:1px solid rgba(224,87,74,.35)} .fb.fail .bi{background:var(--danger)}
+.fb.info{background:rgba(74,144,226,.09);border:1px solid rgba(74,144,226,.30)} .fb.info .bi{background:#3A78C2}
+.fb.ok{background:rgba(129,182,76,.10);border:1px solid rgba(129,182,76,.35)} .fb.ok .bi{background:var(--accent-press)}
+.note{border-radius:10px;background:rgba(240,164,58,.08);border:1px solid rgba(240,164,58,.28);padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#E6E3DE}
+.note .ico{width:17px;height:17px;color:#F4B45C;margin-top:2px}
+.note b{font-weight:600}
+.note a{color:#F4B45C;text-decoration:none;font-weight:600;white-space:nowrap;margin-left:auto}
+.blk h4{font-size:13px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px}
+.blk h4 span{font-weight:500;color:var(--text)}
+.stp{display:flex;gap:5px}
+.stp i{flex:1;height:10px;border-radius:5px;background:#3D3B38}
+.stp i.ok{background:var(--accent)} .stp i.fail{background:var(--danger)} .stp i.hint{background:var(--warn)}
+.stp i.cur{box-shadow:0 0 0 2px var(--surface),0 0 0 4px rgba(255,255,255,.55)}
+.stp i.now{background:#5A5753}
+.mv{display:grid;grid-template-columns:34px 104px 104px;row-gap:2px;column-gap:6px;font-size:15px}
+.mv .n{color:var(--faint);font-size:14px;line-height:30px;text-align:right;padding-right:4px}
+.mv .c{height:30px;border-radius:7px;padding:0 9px;display:flex;align-items:center;font-weight:600;color:#E4E1DC}
+.mv .c.opp{color:#CFCBC6;font-weight:500}
+.mv .c.known{color:var(--faint);font-weight:500}
+.mv .c.future{color:#6B6863;font-weight:500}
+.mv .c.now{box-shadow:inset 0 0 0 2px var(--accent);color:var(--text)}
+.mv .c.q{box-shadow:inset 0 0 0 2px var(--danger);color:#F08277;font-weight:700}
+.mv .c.bad{color:#F08277}
+.mv.wide{grid-template-columns:34px 1fr 1fr 34px 1fr 1fr}
+.act{padding:16px 24px 18px;border-top:1px solid var(--hair)}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.keys{font-size:13px;color:var(--faint);margin-top:12px;text-align:center}
+.btn1{height:52px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.btn1 .ico{width:18px;height:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.two .btn2{font-size:14px;padding:0 10px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.sum div{padding:14px 0;text-align:center;border-right:1px solid var(--hair)} .sum div:last-child{border-right:none}
+.sum b{display:block;font-size:26px;font-weight:700;line-height:1.2}
+.sum span{font-size:13px;color:var(--muted)}
+.res{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--hair)}
+.res .bi{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.res .bi .ico{width:15px;height:15px}
+.res .t1{font-size:15px;font-weight:600}
+.res .t2{font-size:13px;color:var(--muted);margin-top:2px}
+.res .t2 b{color:#F08277;font-weight:600}
+.planrow{display:flex;justify-content:space-between;font-size:14px;color:#DCD8D3;padding:8px 2px;border-bottom:1px solid var(--hair)}
+.planrow:last-child{border-bottom:none}
+.planrow span{color:var(--muted)}
+
+.grph{margin:12px 10px 4px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.grph b{color:#DCD8D3;font-weight:600;display:flex;align-items:center;gap:8px}
+.grph img{width:18px;height:18px}
+.prow{display:grid;grid-template-columns:1fr 16px;align-items:center;gap:10px;height:54px;padding:0 12px;border-radius:10px;position:relative}
+.prow .nm{font-size:14px;font-weight:600;color:#E8E5E0}
+.prow .mt{font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .dot{width:9px;height:9px;border-radius:5px;justify-self:center}
+.prow .ok{color:var(--accent);font-weight:800;font-size:14px;justify-self:center}
+.prow.on{background:var(--row)}
+.prow.on::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:3px;background:var(--accent)}
+.ctx{font-size:15px;color:#DCD8D3;line-height:1.5}
+.ctx b{font-weight:700;white-space:nowrap}
+.mtab{display:flex;flex-direction:column;gap:6px}
+.mrow{display:grid;grid-template-columns:26px 92px 1fr 150px;align-items:center;gap:10px;height:40px;padding:0 10px;border-radius:10px;background:var(--surface2);border:1px solid var(--hair)}
+.mrow .i{width:24px;height:24px;border-radius:12px;background:#3A78C2;color:#fff;font-size:13px;font-weight:800;display:grid;place-items:center}
+.mrow .i.g{background:#4A4744}
+.mrow b{font-size:16px;font-weight:700}
+.mrow .cnt{font-size:13px;color:var(--muted)}
+.mrow .cnt span{color:var(--text);font-weight:600}
+.wdb{display:flex;height:10px;border-radius:5px;overflow:hidden}
+.wdb i{display:block;height:100%}
+.wdb .w{background:#E9E6E1} .wdb .d{background:#8A8782} .wdb .b{background:#2B2926;border:1px solid #555}
+.leg{display:flex;gap:12px;font-size:13px;color:var(--muted)}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.plan{font-size:15px;color:#DCD8D3}
+.plan b{font-weight:700;color:var(--text)}
+.games{display:flex;flex-direction:column;gap:6px}
+.grow{display:grid;grid-template-columns:1fr auto 34px;align-items:center;gap:10px;height:40px;padding:0 6px 0 12px;border-radius:10px;border:1px solid var(--hair2)}
+.grow .t{font-size:14px;color:#E6E3DE;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grow .r{font-size:13px;font-weight:600}
+.grow .p{width:30px;height:30px;border-radius:8px;background:var(--surface2);border:1px solid var(--hair2);display:grid;place-items:center}
+.grow .p .ico{width:13px;height:13px}
+.state{display:none} body.s-explore .s-explore, body.s-quiz .s-quiz{display:revert}
+body.s-explore .s-explore.grid, body.s-quiz .s-quiz.grid{display:grid}
+body.s-explore .s-explore.flex, body.s-quiz .s-quiz.flex{display:flex}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+<aside class="side" id="side"></aside>
+<main class="main">
+  <section class="card left" data-ui="session">
+    <div class="hd"><div class="h2">Идеи позиций</div><span class="muted num" style="font-size:14px">12 позиций</span></div>
+    <div class="stats" data-ui="session-stats">
+      <div class="stat"><b class="num" style="color:var(--accent)">4</b><span>изучено</span></div>
+      <div class="stat"><b class="num" style="color:var(--warn)">2</b><span>повторить</span></div>
+      <div class="stat"><b class="num">6</b><span>новых</span></div>
+    </div>
+    <div class="segctl" data-ui="idea-modes" style="grid-template-columns:1fr 1fr" id="modes"></div>
+    <div class="qlabel"><span>Где кончаются твои линии</span></div>
+    <div class="secs" data-ui="session-list" id="list"></div>
+  </section>
+
+  <section class="bcol">
+    <div class="pbar" data-ui="player-top"><div class="who"><div class="ava"><img src="pieces/wP.svg"></div>Белые <span class="tg">соперник</span></div><div class="pnote">после <b>11. O-O</b> · ход чёрных</div></div>
+    <div class="brow"><div class="gutter"></div><div class="board" id="board"><div class="sqs" id="sqs"></div><div class="over" id="over"></div></div></div>
+    <div class="pbar" data-ui="player-bottom"><div class="who"><div class="ava"><img src="pieces/bP.svg"></div>Чёрные <span class="tg">· ты</span></div><div class="pnote">Ускоренный дракон · 5. c4 … 6. Nc3</div></div>
+  </section>
+
+  <section class="card right" data-ui="panel" data-demo="plans">
+    <div class="rp-h" data-ui="panel-header">
+      <div class="crumbs"><span>Учиться · Идеи позиций</span><span class="pr num">2 / 12</span></div>
+      <div class="title tight" data-ui="panel-title"><span class="state s-explore">Что играть после 11. O-O</span><span class="state s-quiz">Мастера так почти не играли</span></div>
+      <div class="chips">
+        <div class="chip"><img src="pieces/bK.svg">Ускоренный дракон</div>
+        <div class="chip">ход чёрных</div>
+        <div class="chip"><i class="ico" data-i="trophy"></i>Мастера · 131 партия</div>
+        <div class="chip state s-quiz flex"><i class="ico" data-i="graduation-cap"></i>Проверь себя</div>
+        <div class="chip orange">демо</div>
+      </div>
+    </div>
+    <div class="rb">
+      <div class="ctx state s-explore" data-ui="idea-context">Твоя линия кончается на <b>10... Be6</b>. Чаще всего белые отвечают <b>11. O-O</b> — 55% партий. Что дальше играют мастера за чёрных:</div>
+      <div class="fb fail state s-quiz grid" data-ui="idea-feedback" data-result="fail"><div class="bi"><i class="ico" data-i="x"></i></div><div><div class="t1"><b>11... h6</b> мастера почти не играли. Чаще всего здесь <b>11... Qa5</b> (40%), <b>11... a5</b> (29%), <b>11... Rc8</b> (17%).</div><div class="t2">Сыграй один из них — стрелка показывает самый частый.</div></div></div>
+      <div class="blk" data-ui="idea-moves">
+        <h4>Ходы мастеров <span class="leg"><span><i style="background:#E9E6E1"></i>белые</span><span><i style="background:#8A8782"></i>ничья</span><span><i style="background:#2B2926;border:1px solid #555"></i>чёрные</span></span></h4>
+        <div class="mtab" id="mtab"></div>
+      </div>
+      <div class="blk state s-explore" data-ui="idea-plan">
+        <h4>План движка <span>Stockfish, глубина 18</span></h4>
+        <div class="plan"><b>11... a5 12. f4 a4 13. Bd4 Qa5 14. Rad1 Rfc8</b></div>
+      </div>
+      <div class="blk state s-explore" data-ui="idea-games">
+        <h4>Партии мастеров с этой позиции</h4>
+        <div class="games">
+          <div class="grow"><div class="t">Игрок A (2654) — Игрок B (2701) · 2019</div><div class="r" style="color:var(--muted)">0–1</div><div class="p"><i class="ico" data-i="play"></i></div></div>
+          <div class="grow"><div class="t">Игрок C (2590) — Игрок D (2622) · 2021</div><div class="r" style="color:var(--muted)">½–½</div><div class="p"><i class="ico" data-i="play"></i></div></div>
+          <div class="grow"><div class="t">Игрок E (2702) — Игрок F (2655) · 2016</div><div class="r" style="color:var(--muted)">1–0</div><div class="p"><i class="ico" data-i="play"></i></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="act" data-ui="panel-actions">
+      <div class="three state s-explore grid"><div class="btn2" data-ui="idea-quiz">Проверь себя</div><div class="btn2" data-ui="idea-watch">▶ Партия</div><div class="btn2" data-ui="idea-next">Дальше <span class="k">N</span></div></div>
+      <div class="three state s-quiz grid"><div class="btn2" data-ui="idea-hint">Подсказка <span class="k">H</span></div><div class="btn2" data-ui="idea-explore">Изучить</div><div class="btn2" data-ui="idea-next">Дальше <span class="k">N</span></div></div>
+    </div>
+  </section>
+</main>
+<script src="icons.js"></script>
+<script src="_common.js"></script>
+<script>
+const S = location.hash === '#quiz' ? 'quiz' : 'explore';
+document.body.classList.add('s-' + S);
+MK.side('Идеи позиций');
+const ico = MK.ico;
+document.getElementById('modes').innerHTML = `<div class="${S === 'explore' ? 'on' : ''}">Изучать</div><div class="${S === 'quiz' ? 'on' : ''}">Проверь себя</div>`;
+const L = [
+  ['g', 'Ускоренный дракон', 'bK', 6],
+  ['После 8... f6', '5. Nxc6 … 6. Qd4 · 214 партий', 'ok'],
+  ['После 10... Be6', '5. c4 … 6. Nc3 · 131 партия', 'due', true],
+  ['После 9... d6', '6. Be3 … 7. Bc4 · 88 партий', 'due'],
+  ['После 8... d6', '6. Nb3 … 7. Be2 · 40 партий', 'new'],
+  ['После 7... O-O', '3. Bb5 … 4. Bxc6 · 57 партий', 'new'],
+  ['После 6... d6', '2. c3 … 3. e5 · 302 партии', 'new'],
+  ['g', 'Шотландская партия', 'wK', 2],
+  ['После 7. Nc3', '4... Bc5 … 5... Qf6 · 66 партий', 'ok'],
+  ['После 8. c4', '4... Nf6 … 5... bxc6 · 412 партий', 'new'],
+];
+document.getElementById('list').innerHTML = L.map(r => {
+  if (r[0] === 'g') return `<div class="grph"><b><img src="pieces/${r[2]}.svg">${r[1]}</b><span class="num">${r[3]}</span></div>`;
+  const [nm, mt, st, on] = r;
+  const right = st === 'ok' ? '<div class="ok">✓</div>' : `<div class="dot" style="background:${st === 'due' ? 'var(--warn)' : '#8FB4DA'}"></div>`;
+  return `<div class="prow${on ? ' on' : ''}" data-ui="idea-row"${on ? ' data-active="true"' : ''}><div style="min-width:0"><div class="nm">${nm}</div><div class="mt">${mt}</div></div>${right}</div>`;
+}).join('');
+const M = [['Qa5', 52, 40, 31, 46, 23], ['a5', 38, 29, 34, 42, 24], ['Rc8', 22, 17, 36, 41, 23], ['a6', 14, 11, 43, 36, 21]];
+document.getElementById('mtab').innerHTML = M.map(([san, n, pct, w, d, b], i) => `
+  <div class="mrow"><div class="i${i > 2 ? ' g' : ''}">${i + 1}</div><b>11... ${san}</b><div class="cnt"><span>${pct}%</span> · ${n} партий</div><div class="wdb"><i class="w" style="width:${w}%"></i><i class="d" style="width:${d}%"></i><i class="b" style="width:${b}%"></i></div></div>`).join('');
+MK.board({ fen: 'r2q1rk1/pp2ppbp/3pbnp1/8/2P1P3/2N1B3/PP1QBPPP/R4RK1', flip: true, last: ['e1', 'g1'],
+  arrows: S === 'explore'
+    ? [{ from: 'd8', to: 'a5', role: 'plan', label: '1' }, { from: 'a7', to: 'a5', role: 'plan', label: '2', op: .6 }, { from: 'a8', to: 'c8', role: 'plan', label: '3', op: .6 }]
+    : [{ from: 'h7', to: 'h6', role: 'played' }, { from: 'd8', to: 'a5', role: 'best', style: 'dashed' }] });
+MK.icons();
+</script>
+</body>
+</html>

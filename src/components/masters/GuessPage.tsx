@@ -12,9 +12,8 @@ import { GuessPanel } from './GuessPanel';
 import {
   parseGame, prepareItems, selectMoments,
   scoreGuess, userCp as computeUserCp, resultArrows,
-  defaultSide, surname, sanNo, evalWhite, hintText,
-  KEY_MAX,
-  type ParsedMove, type MomentItem, type AnalysisEntry,
+  defaultSide, surname, sanNo, hintText,
+  type AnalysisEntry,
   type Verdict, type MomentKind,
 } from '@/lib/masters';
 import { supabase } from '@/lib/supabase';

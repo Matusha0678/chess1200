@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Дебюты — макет</title>
+<link rel="stylesheet" href="node_modules/@fontsource/inter/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/600.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter-tight/700.css">
+<style>
+:root{
+  --bg:#302E2B; --nav:#2A2926; --surface:#262522; --surface2:#2F2D2A; --row:#373532;
+  --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.11);
+  --text:#F1EFEC; --muted:#A8A49F; --faint:#7C7974;
+  --accent:#81B64C; --accent-press:#5E8C35; --danger:#E0574A; --warn:#F0A43A; --plan:#4A90E2;
+  --light:#DEE3E6; --dark:#8CA2AD;
+  --r-card:12px; --r-btn:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:950px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tight{font-family:'Inter Tight',Inter,sans-serif}
+.ico{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;
+  -webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.num{font-variant-numeric:tabular-nums}
+.nav{position:absolute;left:0;top:0;width:1920px;height:56px;background:var(--nav);border-bottom:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:#262522;display:grid;place-items:center}
+.logo b{font-weight:700}.logo span{color:var(--muted)}
+.navr{display:flex;gap:10px;align-items:center}
+.search{width:220px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);
+  display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--muted);font-size:14px}
+.kbd{margin-left:auto;font-size:12px;color:var(--faint);border:1px solid var(--hair2);border-radius:6px;padding:1px 6px}
+.iconbtn{width:36px;height:36px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted)}
+.side{position:absolute;left:0;top:56px;width:240px;height:894px;border-right:1px solid var(--hair);padding:10px 12px;display:flex;flex-direction:column}
+.item{height:35px;border-radius:var(--r-btn);display:flex;align-items:center;gap:12px;padding:0 12px;color:#D9D6D2;font-size:14px;flex:none}
+.item .ico{width:17px;height:17px}
+.item.active{background:rgba(129,182,76,.14);color:var(--accent);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;margin:12px 12px 4px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);flex:none}
+.grp .ico{width:14px;height:14px}
+.main{position:absolute;left:240px;top:56px;width:1680px;height:894px;padding:20px;display:flex;gap:20px}
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:0 2px 10px rgba(0,0,0,.25);border:1px solid var(--hair)}
+.muted{color:var(--muted)} .faint{color:var(--faint)} .ok{color:var(--accent)} .warn{color:var(--warn)} .bad{color:var(--danger)}
+
+/* LEFT */
+.left{width:280px;height:854px;display:flex;flex-direction:column;flex:none}
+.left .hd{padding:20px 20px 12px;display:flex;justify-content:space-between;align-items:baseline}
+.h2{font-size:19px;font-weight:700}
+.pbar6{height:6px;border-radius:3px;background:#3A3835;overflow:hidden;margin:0 20px 14px}
+.pbar6 i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.stat{padding:10px 0;text-align:center;border-right:1px solid var(--hair)} .stat:last-child{border-right:none}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
+.lab{margin:18px 20px 8px;font-size:13px;color:var(--muted)}
+.seg{display:grid;margin:0 20px;background:var(--surface2);border:1px solid var(--hair2);border-radius:var(--r-btn);padding:3px;gap:3px}
+.seg div{height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--muted);font-weight:500}
+.seg div img{width:17px;height:17px}
+.seg .on{background:#45423E;color:var(--text);font-weight:600}
+.cta{margin:16px 20px 0}
+.cta .note{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.4}
+.btn1{height:48px;border-radius:var(--r-btn);background:var(--accent);box-shadow:0 4px 0 var(--accent-press);color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn1 .ico{width:18px;height:18px}
+.btn1 .k{font-size:12px;font-weight:600;background:rgba(0,0,0,.18);border-radius:6px;padding:2px 7px}
+.btn2{height:42px;border-radius:var(--r-btn);background:var(--surface2);border:1px solid var(--hair2);display:flex;align-items:center;justify-content:center;gap:9px;font-size:14px;font-weight:600;color:#E8E5E0;padding:0 14px}
+.btn2 .ico{width:16px;height:16px}
+.leftbot{margin-top:auto;padding:16px 20px 20px;border-top:1px solid var(--hair);display:flex;flex-direction:column;gap:10px}
+.leftbot .cap{font-size:13px;color:var(--muted);line-height:1.35}
+.plan{margin:0 20px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.plan div{display:flex;justify-content:space-between;align-items:center;height:40px;padding:0 12px;font-size:14px;color:#DCD8D3;border-bottom:1px solid var(--hair)}
+.plan div:last-child{border-bottom:none}
+.plan div span{color:var(--muted);font-size:13px}
+
+/* MAIN */
+.right{flex:1;height:854px;display:flex;flex-direction:column;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:flex-end;padding:4px 2px 18px}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.sub{font-size:15px;color:var(--muted);margin-top:6px}
+.find{width:280px;height:42px;border-radius:var(--r-btn);background:var(--surface);border:1px solid var(--hair2);display:flex;align-items:center;gap:10px;padding:0 12px;color:var(--faint);font-size:14px}
+.find .ico{width:16px;height:16px;color:var(--muted)}
+.grid{flex:1;overflow:hidden;display:grid;grid-template-columns:repeat(5,255px);grid-auto-rows:max-content;gap:16px;align-content:start}
+.oc{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r-card);overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.22);position:relative}
+.oc.hov{transform:translateY(-3px);border-color:var(--hair2);box-shadow:0 10px 24px rgba(0,0,0,.4)}
+.bd{position:relative;width:100%;aspect-ratio:1/1}
+.bd .sqs{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr)}
+.bd .sq{position:relative}
+.bd .sq img{position:absolute;inset:0;width:100%;height:100%}
+.pill{position:absolute;left:10px;top:10px;height:27px;border-radius:7px;padding:0 9px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.pill.due{background:var(--warn);color:#2A1E0B}
+.pill.new{background:#3F5E7E;color:#fff}
+.pill .ico{width:14px;height:14px}
+.done{position:absolute;right:10px;top:10px;width:28px;height:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+.scrim{position:absolute;inset:0;background:rgba(24,23,22,.74);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;text-align:center}
+.scrim p{font-size:15px;color:#F1EFEC;line-height:1.45}
+.scrim p b{font-weight:700}
+.play{width:54px;height:54px;border-radius:27px;background:var(--accent);box-shadow:0 4px 0 var(--accent-press);display:grid;place-items:center;color:#fff}
+.play .ico{width:24px;height:24px;margin-left:3px}
+.eb{padding:12px 14px 14px}
+.eb .t{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:13px;color:#CFCBC6;white-space:nowrap}
+.meta img{width:17px;height:17px}
+.meta .sep{color:var(--faint)}
+.prog{display:flex;align-items:center;gap:10px;margin-top:10px}
+.prog .bar{flex:1;height:5px;border-radius:3px;background:#3A3835;overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.prog span{font-size:13px;color:var(--muted)}
+.add{border:2px dashed rgba(255,255,255,.14);border-radius:var(--r-card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--muted);font-size:15px;font-weight:600;aspect-ratio:255/356}
+.add .pl{width:52px;height:52px;border-radius:26px;background:var(--surface2);border:1px solid var(--hair2);display:grid;place-items:center;color:#E8E5E0}
+.add .pl .ico{width:22px;height:22px}
+.add small{font-size:13px;font-weight:400;color:var(--faint);text-align:center;padding:0 24px}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="logo"><div class="mark"><i class="ico" data-i="crown" style="width:18px;height:18px"></i></div><b>Chess</b><span>1200</span></div>
+  <div class="navr">
+    <div class="search"><i class="ico" data-i="search" style="width:16px;height:16px"></i>Поиск<span class="kbd">⌘K</span></div>
+    <div class="iconbtn"><i class="ico" data-i="palette"></i></div>
+  </div>
+</header>
+
+<aside class="side" id="side"></aside>
+
+<main class="main">
+  <!-- LEFT -->
+  <section class="card left" data-ui="eg-left">
+    <div class="hd"><div class="h2">Дебюты</div><div class="muted num" style="font-size:14px">15 из 36 освоено</div></div>
+    <div class="pbar6"><i style="width:42%"></i></div>
+    <div class="stats" data-ui="op-stats">
+      <div class="stat"><b class="num warn">3</b><span>повторить</span></div>
+      <div class="stat"><b class="num ok">15</b><span>освоено</span></div>
+      <div class="stat"><b class="num">11</b><span>новых</span></div>
+    </div>
+    <div class="cta">
+      <div class="btn1" data-ui="op-review-all"><i class="ico" data-i="repeat"></i>Повторить всё · 3 <span class="k">Enter</span></div>
+      <div class="note">Линии из всех дебютов, у которых подошёл срок. Займёт около 3 минут.</div>
+    </div>
+    <div class="lab">Цвет</div>
+    <div class="seg" data-ui="op-filters" style="grid-template-columns:1fr 1fr 1fr"><div class="on">Все</div><div><img src="pieces/wK.svg">Белыми</div><div><img src="pieces/bK.svg">Чёрными</div></div>
+    <div class="lab">Показать</div>
+    <div class="seg" style="grid-template-columns:.8fr 1.3fr 1fr"><div class="on">Все</div><div>Повторить</div><div>Новые</div></div>
+    <div class="lab">Дальше по плану</div>
+    <div class="plan" data-ui="op-plan">
+      <div>Завтра<span class="num">2 линии</span></div>
+      <div>За 3 дня<span class="num">4 линии</span></div>
+      <div>За неделю<span class="num">9 линий</span></div>
+    </div>
+    <div class="leftbot">
+      <div class="btn2" data-ui="op-add-btn"><i class="ico" data-i="plus"></i>Добавить дебют</div>
+      <div class="btn2"><i class="ico" data-i="shuffle"></i>Дебют Рандом</div>
+      <div class="cap">Дебют Рандом — Stockfish играет против твоих линий, ты отвечаешь.</div>
+    </div>
+  </section>
+
+  <!-- MAIN -->
+  <section class="right" data-demo="openings">
+    <div class="top">
+      <div><div class="title tight">Мои дебюты</div><div class="sub">5 дебютов · 36 линий · 3 линии ждут повторения</div></div>
+      <div class="find" data-ui="op-search"><i class="ico" data-i="search"></i>Найти дебют<span class="kbd">/</span></div>
+    </div>
+    <div class="grid" id="grid" data-ui="eg-grid"></div>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script>
+const H = location.hash === '#h';
+const ico = (n, s = '') => `<i class="ico" data-i="${n}" style="${s}"></i>`;
+const nav = [
+  ['calendar', 'Сегодня'],
+  ['#', 'Учиться'], ['layers', 'Дебюты', 1], ['book-open', 'Курсы'], ['flag', 'Ловушки'], ['lightbulb', 'Идеи позиций'],
+  ['#', 'Тренироваться'], ['zap', 'Тактика'], ['eye', 'Расчёт вслепую'], ['circle-alert', 'Ошибки'], ['triangle-alert', 'Проверка угроз'], ['grid-3x3', 'Эндшпили'], ['target', 'Дожми партию'], ['shield', 'Жертвы'], ['search', 'Угадай дебют'], ['circle-play', 'Играть'],
+  ['#', 'Партии'], ['message-square', 'Мои партии'], ['book-check', 'Дебюты в партиях'], ['trending-down', 'Где я теряю очки'], ['star', 'Мастера'],
+];
+document.getElementById('side').innerHTML = nav.map(([i, t, a]) => i === '#'
+  ? `<div class="grp">${t}${ico('chevron-down')}</div>`
+  : `<div class="item${a ? ' active' : ''}">${ico(i)}${t}</div>`).join('');
+
+// name, color, lines, mastered, due, new, fen (позиция карточки — после общего начала большинства линий), hover text
+const O = [
+  ['Ускоренный дракон', 'b', 6, 1, 2, 2, 'r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/8/PPP2PPP/RNBQKB1R'],
+  ['Шотландская партия', 'w', 8, 5, 1, 0, 'r1bqkbnr/pppp1ppp/2n5/8/3NP3/8/PPP2PPP/RNBQKB1R'],
+  ['Итальянская партия', 'w', 10, 2, 0, 4, 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R'],
+  ['Гамбит Стаффорда', 'b', 5, 0, 0, 5, 'r1bqkb1r/pppp1ppp/2n2n2/4N3/4P3/8/PPPP1PPP/RNBQKB1R'],
+  ['Каро-Канн, система с e5', 'b', 7, 7, 0, 0, 'rn1qkbnr/pp2pppp/2p5/3pPb2/3P4/8/PPP2PPP/RNBQKBNR'],
+];
+const files = 'abcdefgh';
+function board(fen, flip) {
+  const grid = {};
+  fen.split(' ')[0].split('/').forEach((row, ri) => { let f = 0; for (const ch of row) { if (/\d/.test(ch)) f += +ch; else { grid[files[f] + (8 - ri)] = ch; f++; } } });
+  let h = '';
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const file = flip ? 7 - c : c, rank = flip ? r + 1 : 8 - r;
+    const sq = files[file] + rank;
+    const light = (file + rank) % 2 === 0;
+    const p = grid[sq];
+    h += `<div class="sq" style="background:var(--${light ? 'light' : 'dark'})">${p ? `<img src="pieces/${p === p.toUpperCase() ? 'w' : 'b'}${p.toUpperCase()}.svg">` : ''}</div>`;
+  }
+  return `<div class="sqs">${h}</div>`;
+}
+const CHECK = '<svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="11.5" fill="#81B64C"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const plural = (n, a, b, c) => n % 10 === 1 && n % 100 !== 11 ? a : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c);
+function card([name, color, n, done, due, nw, fen]) {
+  const status = due ? 'due' : nw ? 'new' : done === n ? 'mastered' : 'learning';
+  const hov = H && name === 'Итальянская партия';
+  const pill = status === 'due' ? `<div class="pill due">${ico('repeat')}Повторить · ${due}</div>`
+    : status === 'new' ? `<div class="pill new">${ico('graduation-cap')}Новых · ${nw}</div>` : '';
+  const scrimText = status === 'due' ? `<b>${due} ${plural(due, 'линия ждёт', 'линии ждут', 'линий ждут')}</b> повторения`
+    : status === 'new' ? `<b>${nw} ${plural(nw, 'новая линия', 'новые линии', 'новых линий')}</b> — начни учить` : 'Всё освоено — проверь себя экзаменом';
+  return `<div class="oc${hov ? ' hov' : ''}" data-ui="eg-card" data-status="${status}">
+    <div class="bd" data-ui="eg-board">${board(fen, color === 'b')}
+      ${pill}${status === 'mastered' ? `<div class="done">${CHECK}</div>` : ''}
+      ${hov ? `<div class="scrim" data-ui="op-card-cta"><p>${scrimText}</p><div class="play">${ico('play')}</div></div>` : ''}
+    </div>
+    <div class="eb">
+      <div class="t" data-ui="eg-card-title">${name}</div>
+      <div class="meta"><img src="pieces/${color}K.svg">${color === 'w' ? 'Белыми' : 'Чёрными'}<span class="sep">·</span>${n} ${plural(n, 'линия', 'линии', 'линий')}</div>
+      <div class="prog"><div class="bar"><i style="width:${Math.round(done / n * 100)}%"></i></div><span class="num">освоено ${done}/${n}</span></div>
+    </div>
+  </div>`;
+}
+document.getElementById('grid').innerHTML = O.map(card).join('') +
+  `<div class="add" data-ui="op-add"><div class="pl">${ico('plus')}</div>Новый дебют<small>Вставь PGN с вариантами — линии появятся сами</small></div>`;
+
+if (location.protocol.startsWith('http')) {
+  document.querySelectorAll('[data-ui="eg-card"]').forEach(c => c.addEventListener('click', () => { location.href = '/openings/demo'; }));
+  document.querySelector('[data-ui="op-review-all"]').addEventListener('click', () => { location.href = '/openings/review?demo=1'; });
+}
+document.querySelectorAll('[data-i]').forEach(el => {
+  const u = window.ICONS && ICONS[el.dataset.i];
+  if (u) el.style.setProperty('--i', `url("${u}")`);
+});
+</script>
+</body>
+</html>

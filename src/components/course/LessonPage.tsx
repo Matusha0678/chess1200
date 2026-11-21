@@ -168,7 +168,10 @@ export function LessonPage({
 
   // Current line index (0 if not a line step)
   const lineIdx = step?.kind === 'line' ? (step as LessonStepLine).line : 0;
-  const currentLine: LessonLine = lines[lineIdx] ?? { moves: [], intro_md: '', outro_md: '', start_fen: null };
+  const currentLine: LessonLine = useMemo(
+    () => lines[lineIdx] ?? { moves: [], intro_md: '', outro_md: '', start_fen: null },
+    [lines, lineIdx],
+  );
 
   const nextStepTitle: string | null = safeStepIdx < steps.length - 1 ? steps[safeStepIdx + 1].title : null;
   const movableColor = course.color === 'black' ? 'b' : 'w';
@@ -548,7 +551,7 @@ export function LessonPage({
           }
         >
           <LinePanel
-            line={currentLine} lineIdx={lineIdx} totalLines={lines.length} currentPly={currentPly}
+            line={currentLine} lineIdx={lineIdx} currentPly={currentPly}
             viewingVariant={viewingVariant} variantMoves={variantMoves} variantPly={variantPly} variantFromPly={variantFromPly}
             notes={notes} isDemo={isDemo}
             onPlyClick={ply => { stopAutoPlay(); setCurrentPly(ply); }}
@@ -636,7 +639,7 @@ export function LessonPage({
       return (
         <TaskPanel breadcrumb={breadcrumb} title={quizStep.title} titleSize={26} chips={stepChip} progressBar={stepperEl} actions={null}>
           <QuizPanel
-            items={quizStep.items} stepTitle={quizStep.title}
+            items={quizStep.items}
             onNextStep={goToNextStep} nextStepTitle={nextStepTitle}
             onBoardArrows={arrows => setQuizArrows(arrows)}
             onQuizFen={f => setQuizFen(f)}
@@ -668,7 +671,6 @@ export function LessonPage({
         >
           <SummaryPanel
             summaryMd={(step as { md: string }).md ?? ''}
-            lessonTitle={lesson.title}
             linesTotal={lines.length} linesDone={sessionLinesDone.size}
             quizCorrect={sessionQuizCorrect} quizTotal={sessionQuizTotal}
             playFirstTry={sessionPlayFirstTry} playTotal={sessionPlayTotal}

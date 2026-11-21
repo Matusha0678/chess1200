@@ -132,7 +132,7 @@ export default function GameCoursesPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void compute();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, []);
 
   return (
