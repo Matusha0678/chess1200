@@ -133,10 +133,10 @@ const LIST_PAGES = {
     forbidden: [],
     titleNotIn: [],
   },
-  // v3.8: каталог дебютов (OPENINGS.md, раздел 2) — метки как в каталоге «Эндшпилей»
+  // v3.9: каталог дебютов (CATALOG-SPEC.md) — левая панель убрана, появился op-hero
   '/openings': {
-    ui: ['eg-left', 'eg-grid', 'eg-card', 'eg-board', 'eg-card-title', 'op-review-all', 'op-filters', 'op-search'],
-    minCols: { 1920: 5, 1440: 3 }, minBoard: 230,
+    ui: ['op-hero', 'eg-grid', 'eg-card', 'eg-board', 'eg-card-title', 'op-review-all', 'op-filters', 'op-search', 'op-categories'],
+    minCols: { 1920: 5, 1440: 4 }, minBoard: 230,
     forbidden: ['Репертуар и тренировка дебютных линий', 'Играй против Stockfish — он тренирует'],
     titleNotIn: [],
     // демо ?demo=1: 5 дебютов, сортировка «к повторению» → «новые» → «освоено»

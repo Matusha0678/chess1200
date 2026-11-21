@@ -409,8 +409,6 @@ function HeroBlock({
     return `Больше всего — в «${heroTitle}» (${topOp?.due ?? 0}). Займёт около ${pluralMinutes(minutes)}.`;
   })();
 
-  const reviewDisabled = due === 0;
-
   return (
     <section data-ui="op-hero" className="opcat-hero">
       <div className="opcat-hero-top">
