@@ -1028,6 +1028,15 @@ export default function HomePage() {
         )}
       </section>
 
+      {/* Цитата Таля — декоративная плашка */}
+      <Link href="/tal" className="tal-quote-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <div className="tal-quote-card-kicker">ТРЕНЕР ТАЛЬ</div>
+        <p className="tal-quote-card-text">
+          «Атакуйте там, где соперник слабее&nbsp;всего.»
+        </p>
+        <div className="tal-quote-card-sig">— M. Tal</div>
+      </Link>
+
       {/* Stats */}
       <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="bold-section-head">

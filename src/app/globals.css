@@ -4402,3 +4402,151 @@ a.ui-card:hover > [data-ui="eg-board"] {
   .catalog-hero-h1 { font-size: 22px; }
   .catalog-hero-search { width: 100%; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BRAND HERO BANNERS — для /tal и /masters (фото-ассеты как фон)
+   ══════════════════════════════════════════════════════════════════════════ */
+.tal-hero,
+.masters-hero {
+  position: relative;
+  min-height: 260px;
+  margin-bottom: 24px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-top: 2px solid color-mix(in srgb, var(--accent) 60%, var(--hairline));
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+}
+.tal-hero-bg {
+  position: absolute; inset: 0;
+  background: url('/brand/tal-portrait.png') center / cover no-repeat;
+  /* показываем левую верхнюю часть мудборда — там крупный портрет Таля */
+  background-size: 200% auto;
+  background-position: 0% 0%;
+  z-index: 0;
+}
+.masters-hero-bg {
+  position: absolute; inset: 0;
+  background: url('/brand/tal-banner.png') center top / cover no-repeat;
+  /* верхняя-правая часть мудборда — чёрные фигуры на бронзовой доске */
+  background-size: 180% auto;
+  background-position: 100% 0%;
+  z-index: 0;
+}
+.tal-hero-overlay,
+.masters-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--bg) 92%, transparent) 0%,
+    color-mix(in srgb, var(--bg) 70%, transparent) 42%,
+    color-mix(in srgb, var(--bg) 25%, transparent) 75%,
+    transparent 100%);
+  z-index: 1;
+}
+.tal-hero-text,
+.masters-hero-text {
+  position: relative; z-index: 2;
+  padding: 36px 44px 32px;
+  max-width: 620px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.tal-hero-kicker,
+.masters-hero-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.9;
+}
+.tal-hero-title,
+.masters-hero-title {
+  font-family: var(--font-serif-display, 'Playfair Display', Georgia, serif);
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 500;
+  line-height: 1;
+  margin: 0;
+  color: var(--ivory);
+  letter-spacing: -0.015em;
+}
+.tal-hero-title { font-style: italic; }
+.tal-hero-quote {
+  font-family: var(--font-serif-display, 'Playfair Display', Georgia, serif);
+  font-size: 19px;
+  font-style: italic;
+  color: var(--ivory);
+  opacity: 0.88;
+  line-height: 1.4;
+  max-width: 500px;
+  margin: 8px 0 0;
+}
+.tal-hero-sig {
+  margin-top: 6px;
+  font-family: var(--font-serif-display, 'Playfair Display', Georgia, serif);
+  font-style: italic;
+  color: var(--accent);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+.masters-hero-sub {
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 460px;
+  line-height: 1.5;
+  margin: 2px 0 0;
+}
+@media (max-width: 899px) {
+  .tal-hero, .masters-hero { min-height: 200px; }
+  .tal-hero-text, .masters-hero-text { padding: 24px 22px 22px; }
+}
+
+/* ── Цитата Таля — декоративная плашка для главной ────────────────────────── */
+.tal-quote-card {
+  position: relative;
+  padding: 28px 34px;
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--bg) 85%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 60%, transparent) 50%,
+      transparent 100%),
+    url('/brand/tal-collage.png') right center / cover no-repeat,
+    var(--surface);
+  background-size: auto, 120% auto;
+  background-position: 0 0, 100% 50%;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--accent);
+  overflow: hidden;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+.tal-quote-card-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.tal-quote-card-text {
+  font-family: var(--font-serif-display, 'Playfair Display', Georgia, serif);
+  font-size: 24px;
+  font-style: italic;
+  color: var(--ivory);
+  line-height: 1.3;
+  max-width: 560px;
+  margin: 0;
+}
+.tal-quote-card-sig {
+  font-family: var(--font-serif-display, 'Playfair Display', Georgia, serif);
+  font-style: italic;
+  color: var(--accent);
+  font-size: 14px;
+  letter-spacing: 0.1em;
+}
+@media (max-width: 599px) {
+  .tal-quote-card { padding: 20px 22px; }
+  .tal-quote-card-text { font-size: 18px; }
+}

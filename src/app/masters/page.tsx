@@ -316,6 +316,19 @@ export default function MastersPage() {
 
   return (
     <div className="page-wrap">
+      {/* Hero banner — masters */}
+      <div className="masters-hero">
+        <div className="masters-hero-bg" />
+        <div className="masters-hero-overlay" />
+        <div className="masters-hero-text">
+          <div className="masters-hero-kicker">CHESS 1200 · БИБЛИОТЕКА</div>
+          <h2 className="masters-hero-title">Партии мастеров</h2>
+          <p className="masters-hero-sub">
+            Классические образцы — от&nbsp;Ласкера до Карлсена. Разбирай, запоминай, подражай.
+          </p>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="page-header">
         <div className="ui-eyebrow">

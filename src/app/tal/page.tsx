@@ -236,6 +236,20 @@ export default function TalPage() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px 40px' }}>
 
+      {/* Hero banner — Tal portrait */}
+      <div className="tal-hero" aria-hidden="false">
+        <div className="tal-hero-bg" />
+        <div className="tal-hero-overlay" />
+        <div className="tal-hero-text">
+          <div className="tal-hero-kicker">CHESS 1200 · ТРЕНЕР</div>
+          <h1 className="tal-hero-title">Михаил Таль</h1>
+          <p className="tal-hero-quote">
+            «Атакуйте там, где соперник слабее&nbsp;всего.»
+          </p>
+          <div className="tal-hero-sig">— M. Tal</div>
+        </div>
+      </div>
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24, borderBottom: '1px solid var(--hairline)', paddingBottom: 16 }}>
         <div>
