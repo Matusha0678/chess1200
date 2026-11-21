@@ -183,17 +183,32 @@
   font-weight: 500;
 }
 
-/* ── Executive hero: тише, строже, с serif-заголовком ─────────────────────── */
+/* ── Executive hero: тише, строже, с serif-заголовком + фото-ассет ───────── */
 [data-site-theme="executive"] .hero-today,
 [data-site-theme="executive-light"] .hero-today {
   padding: 56px 56px 44px;
   background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--accent) 4%, var(--surface)) 0%,
-      var(--surface) 40%,
-      var(--bg) 100%);
+    /* тёмный gradient-overlay, чтобы текст читался */
+    linear-gradient(90deg,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg) 85%, transparent) 42%,
+      color-mix(in srgb, var(--bg) 55%, transparent) 68%,
+      transparent 100%),
+    /* фотография короля — справа */
+    url('/brand/king-scene.png') right center / cover no-repeat,
+    var(--surface);
   border: 1px solid var(--hairline);
   border-top: 2px solid color-mix(in srgb, var(--accent) 70%, var(--hairline));
+}
+[data-site-theme="executive-light"] .hero-today {
+  background:
+    linear-gradient(90deg,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg) 82%, transparent) 42%,
+      color-mix(in srgb, var(--bg) 45%, transparent) 68%,
+      transparent 100%),
+    url('/brand/king-scene.png') right center / cover no-repeat,
+    var(--surface);
 }
 [data-site-theme="executive"] .hero-today::before,
 [data-site-theme="executive-light"] .hero-today::before {
@@ -203,14 +218,13 @@
 [data-site-theme="executive"] .hero-blob,
 [data-site-theme="executive-light"] .hero-blob {
   /* приглушаем светящиеся пятна, оставляем совсем тонкие */
-  opacity: 0.35;
+  opacity: 0.25;
   filter: blur(80px);
 }
-[data-site-theme="executive"] .hero-chess-piece {
-  opacity: 0.055;
-}
+[data-site-theme="executive"] .hero-chess-piece,
 [data-site-theme="executive-light"] .hero-chess-piece {
-  opacity: 0.09;
+  /* декоративный SVG король больше не нужен — у нас реальное фото */
+  display: none;
 }
 
 [data-site-theme="executive"] .hero-title,

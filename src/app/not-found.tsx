@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function NotFound() {
   return (
@@ -9,15 +10,27 @@ export default function NotFound() {
       padding: '40px 20px', textAlign: 'center', gap: 20,
       color: 'var(--ivory)', fontFamily: 'var(--font-inter, Inter, sans-serif)',
     }}>
+      <Image
+        src="/brand/pawn-gold.png"
+        alt=""
+        width={160}
+        height={240}
+        priority
+        style={{ height: 180, width: 'auto', opacity: 0.85, marginBottom: -4 }}
+      />
       <div style={{
-        fontSize: 128, fontWeight: 800, lineHeight: 1,
-        color: 'var(--muted)', opacity: 0.4,
-        fontFamily: 'var(--font-inter-tight, Inter Tight, Inter, sans-serif)',
-        letterSpacing: '-0.04em',
+        fontSize: 72, fontWeight: 500, lineHeight: 1,
+        color: 'var(--accent)', opacity: 0.8,
+        fontFamily: 'var(--font-serif-display, Playfair Display, Georgia, serif)',
+        fontStyle: 'italic',
+        letterSpacing: '-0.02em',
       }}>
         404
       </div>
-      <div style={{ fontSize: 22, fontWeight: 700, marginTop: -10 }}>
+      <div style={{
+        fontSize: 22, fontWeight: 500, marginTop: -4,
+        fontFamily: 'var(--font-serif-display, Playfair Display, Georgia, serif)',
+      }}>
         Страница не нашлась
       </div>
       <div style={{ fontSize: 14, color: 'var(--muted)', maxWidth: 420, lineHeight: 1.5 }}>
