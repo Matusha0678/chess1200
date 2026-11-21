@@ -1,14 +1,19 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { MiniBoard } from '@/components/board/MiniBoard';
 import { supabase } from '@/lib/supabase';
-import { lineStatus, cardPly, toMoves, countStatuses } from '@/lib/opening-trainer';
+import { cardPly, toMoves, countStatuses } from '@/lib/opening-trainer';
 import type { ChessMove } from '@/lib/opening-trainer';
 import { DEMO_CATALOG } from '@/lib/demo-openings';
+import { pluralLines, pluralOpenings, pluralMinutes } from '@/lib/plural';
+
+// ── types / helpers ───────────────────────────────────────────────────────
 
 const FILTERS_KEY = 'op-filters';
+const AUTHORED_PREFIX_RE = /^\s*(📚\s*)?авторск\S*\s*[•·—-]\s*/i;
+const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 type OpCategory = 'all' | 'authored' | 'gambit' | 'defense' | 'classical' | 'sharp';
 
@@ -17,26 +22,7 @@ interface OpFilters {
   show: 'all' | 'review' | 'new';
   category: OpCategory;
 }
-
 const DEFAULT_FILTERS: OpFilters = { color: 'all', show: 'all', category: 'all' };
-
-function classifyName(name: string): 'gambit' | 'defense' | 'classical' {
-  const s = name.toLowerCase();
-  if (/гамбит|контргамбит/.test(s)) return 'gambit';
-  if (/защита|сицилианск|французск|каро|скандинавск|пирц|ал[её]хин|староинд|нимцо|грюнфельд|бенони|голланд|славянск/.test(s)) return 'defense';
-  return 'classical';
-}
-
-function loadFilters(): OpFilters {
-  if (typeof window === 'undefined') return DEFAULT_FILTERS;
-  try {
-    const raw = localStorage.getItem(FILTERS_KEY);
-    return raw ? { ...DEFAULT_FILTERS, ...JSON.parse(raw) } : DEFAULT_FILTERS;
-  } catch { return DEFAULT_FILTERS; }
-}
-function saveFilters(f: OpFilters) {
-  try { localStorage.setItem(FILTERS_KEY, JSON.stringify(f)); } catch { /* ignore */ }
-}
 
 interface CatalogOpening {
   id: string;
@@ -50,7 +36,28 @@ interface CatalogOpening {
   sharpCount: number;
   cardFen: string;
   firstMoves?: string;
+  lastMoveSan?: string;
 }
+
+function classifyName(name: string): 'gambit' | 'defense' | 'classical' {
+  const s = name.toLowerCase();
+  if (/гамбит|контргамбит/.test(s)) return 'gambit';
+  if (/защита|сицилианск|французск|каро|скандинавск|пирц|ал[её]хин|староинд|нимцо|грюнфельд|бенони|голланд|славянск/.test(s)) return 'defense';
+  return 'classical';
+}
+
+function cleanName(raw: string): string {
+  return raw.replace(AUTHORED_PREFIX_RE, '').trim();
+}
+
+function loadFilters(): OpFilters {
+  if (typeof window === 'undefined') return DEFAULT_FILTERS;
+  try {
+    const r = localStorage.getItem(FILTERS_KEY);
+    return r ? { ...DEFAULT_FILTERS, ...JSON.parse(r) } : DEFAULT_FILTERS;
+  } catch { return DEFAULT_FILTERS; }
+}
+function saveFilters(f: OpFilters) { try { localStorage.setItem(FILTERS_KEY, JSON.stringify(f)); } catch { /* */ } }
 
 function catalogSort(a: CatalogOpening, b: CatalogOpening): number {
   if (b.due !== a.due) return b.due - a.due;
@@ -67,24 +74,12 @@ function getStatus(op: CatalogOpening): 'due' | 'new' | 'mastered' | 'learning' 
   return 'learning';
 }
 
-function statusBadge(op: CatalogOpening) {
-  if (op.due > 0) return { text: `Повторить · ${op.due}`, bg: 'var(--accent)', color: 'var(--accent-contrast)' };
-  if (op.newLines > 0) return { text: `Новых · ${op.newLines}`, bg: 'color-mix(in srgb, var(--accent) 32%, var(--surface))', color: 'var(--ivory)' };
-  return null;
-}
-
-function ctaText(op: CatalogOpening): string {
-  if (op.due > 0) return `${op.due} ${op.due === 1 ? 'линия ждёт' : op.due <= 4 ? 'линии ждут' : 'линий ждут'} повторения`;
-  if (op.newLines > 0) return `${op.newLines} новых ${op.newLines === 1 ? 'линия' : op.newLines <= 4 ? 'линии' : 'линий'} — начни учить`;
-  if (op.mastered === op.totalLines && op.totalLines > 0) return 'Всё освоено — проверь себя экзаменом';
-  return 'Продолжить тренировки';
-}
+// ── page ──────────────────────────────────────────────────────────────────
 
 export default function OpeningsPage() {
   const [filters, setFilters] = useState<OpFilters>(DEFAULT_FILTERS);
   const [openings, setOpenings] = useState<CatalogOpening[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hovered, setHovered] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
   const isDemo = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === '1';
@@ -92,15 +87,14 @@ export default function OpeningsPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilters(loadFilters());
-    // Read initial ?q= from URL
     if (typeof window !== 'undefined') {
       const q = new URLSearchParams(window.location.search).get('q');
       if (q) setSearch(q);
     }
   }, []);
 
-  const updateFilters = useCallback((update: Partial<OpFilters>) => {
-    setFilters(prev => { const next = { ...prev, ...update }; saveFilters(next); return next; });
+  const updateFilters = useCallback((u: Partial<OpFilters>) => {
+    setFilters(prev => { const n = { ...prev, ...u }; saveFilters(n); return n; });
   }, []);
 
   const loadOpenings = useCallback(async () => {
@@ -135,7 +129,6 @@ export default function OpeningsPage() {
         progMap.set(p.line_id, p);
       }
 
-      // Overlay with localStorage so catalog counters stay correct even when DB writes fail silently.
       if (typeof window !== 'undefined') {
         for (const [, ls] of linesByOp) {
           for (const l of ls) {
@@ -147,7 +140,7 @@ export default function OpeningsPage() {
               const dbT = db ? Date.parse(db.last_practiced ?? '1970-01-01') : 0;
               const loT = Date.parse(local.last_practiced ?? '1970-01-01');
               if (!db || loT >= dbT) progMap.set(l.id, local);
-            } catch { /* ignore */ }
+            } catch { /* */ }
           }
         }
       }
@@ -160,21 +153,20 @@ export default function OpeningsPage() {
         const plyInfo = cardPly(ls.map(l => ({ moves: l.moves })));
         const cardFen = plyInfo.lineIdx >= 0 && ls[plyInfo.lineIdx]?.moves[plyInfo.k - 1]
           ? ls[plyInfo.lineIdx].moves[plyInfo.k - 1].fen
-          : 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+          : START_FEN;
         const sharpCount = ls.filter(l => l.lineClass === 'sharp').length;
-        // Short SAN preview from the first line — up to 6 half-moves (3 full)
         const firstLine = ls[0]?.moves ?? [];
         const firstMoves = firstLine.slice(0, 6).map((m, i) => {
           const mv = Math.floor(i / 2) + 1;
-          if (i % 2 === 0) return `${mv}.${m.san}`;
-          return m.san;
+          return i % 2 === 0 ? `${mv}.${m.san}` : m.san;
         }).join(' ');
+        const lastMoveSan = plyInfo.lineIdx >= 0 ? ls[plyInfo.lineIdx]?.moves[plyInfo.k - 1]?.san : undefined;
         return {
           id: op.id, name: op.name, color: op.color as 'white' | 'black' | 'both',
           totalLines: ls.length, mastered: counts.mastered, learning: counts.learning, due: counts.due, newLines: counts.new,
-          sharpCount,
-          cardFen,
+          sharpCount, cardFen,
           firstMoves: firstMoves || undefined,
+          lastMoveSan,
         };
       });
       setOpenings(catalog.sort(catalogSort));
@@ -185,7 +177,6 @@ export default function OpeningsPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void loadOpenings(); }, [loadOpenings]);
 
-  // keyboard /
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === '/' && document.activeElement !== searchRef.current) {
@@ -196,11 +187,15 @@ export default function OpeningsPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const totalDue = openings.reduce((s, o) => s + o.due, 0);
-  const totalMastered = openings.reduce((s, o) => s + o.mastered, 0);
-  const totalLearning = openings.reduce((s, o) => s + o.learning, 0);
-  const totalNew = openings.reduce((s, o) => s + o.newLines, 0);
-  const totalLines = openings.reduce((s, o) => s + o.totalLines, 0);
+  // ── derived ──────────────────────────────────────────────────────────────
+  const totals = useMemo(() => {
+    const due = openings.reduce((s, o) => s + o.due, 0);
+    const mastered = openings.reduce((s, o) => s + o.mastered, 0);
+    const learning = openings.reduce((s, o) => s + o.learning, 0);
+    const newN = openings.reduce((s, o) => s + o.newLines, 0);
+    const lines = openings.reduce((s, o) => s + o.totalLines, 0);
+    return { due, mastered, learning, new: newN, lines };
+  }, [openings]);
 
   const isSharp = (o: CatalogOpening) => o.totalLines > 0 && o.sharpCount / o.totalLines >= 0.5;
   const isAuthored = (o: CatalogOpening) => /авторск/i.test(o.name);
@@ -211,12 +206,12 @@ export default function OpeningsPage() {
     return classifyName(o.name) === c;
   };
 
-  // Counts per tab (respect other filters so counts reflect what user will see)
   const baseFiltered = openings.filter(o => {
     if (filters.color !== 'all' && o.color !== filters.color && o.color !== 'both') return false;
     if (filters.show === 'review' && o.due === 0) return false;
     if (filters.show === 'new' && o.newLines === 0) return false;
-    if (search && !o.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !cleanName(o.name).toLowerCase().includes(search.toLowerCase())
+             && !o.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
   const catCounts: Record<OpCategory, number> = {
@@ -232,419 +227,342 @@ export default function OpeningsPage() {
     .filter(o => matchesCategory(o, filters.category))
     .sort(catalogSort);
 
-  const leftStyle: React.CSSProperties = {
-    width: 280, flexShrink: 0,
-    background: 'var(--surface)',
-    border: '1px solid var(--hairline)',
-    borderRadius: 'var(--radius-card, 0px)',
-    display: 'flex', flexDirection: 'column', overflow: 'hidden',
-    alignSelf: 'stretch',
-  };
+  // Hero: top due opening (or first with new lines when nothing due)
+  const topDue = openings.find(o => o.due > 0) ?? null;
+  const topNew = !topDue ? openings.find(o => o.newLines > 0) ?? null : null;
+  const heroOp = topDue ?? topNew ?? openings[0] ?? null;
 
-  const segBtnStyle = (active: boolean): React.CSSProperties => ({
-    flex: 1, padding: '5px 2px', border: 'none',
-    background: active ? 'var(--surface)' : 'transparent',
-    color: active ? 'var(--ivory)' : 'var(--muted)',
-    fontSize: 13, fontWeight: active ? 600 : 400,
-    cursor: 'pointer', borderRadius: 'var(--radius-btn, 4px)',
-    fontFamily: 'inherit', transition: 'background 0.15s, color 0.15s',
-  });
+  const reviewAllHref = isDemo ? '/openings/review?demo=1' : '/openings/review';
+  const randomHref = '/openings/random';
+  const addHref = '/openings/new';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--topbar-h))', overflow: 'hidden' }}>
-      <div style={{ flex: 1, display: 'flex', gap: 20, padding: 20, overflow: 'hidden' }}>
+    <div className="page">
+      <div data-demo={isDemo ? 'openings' : undefined} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-        {/* LEFT COLUMN */}
-        <section data-ui="eg-left" style={leftStyle}>
-          <div style={{ padding: '20px 20px 0', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 19, fontWeight: 700, color: 'var(--ivory)' }}>Дебюты</span>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>{totalMastered} из {totalLines} освоено</span>
-            </div>
-            <div style={{ height: 6, background: 'var(--hairline)', borderRadius: 3, overflow: 'hidden', marginBottom: 14, display: 'flex' }}>
-              <div style={{ height: '100%', width: totalLines > 0 ? `${(totalMastered / totalLines) * 100}%` : '0%', background: 'var(--accent)', transition: 'width 0.3s' }} />
-              <div style={{ height: '100%', width: totalLines > 0 ? `${(totalLearning / totalLines) * 100}%` : '0%', background: 'color-mix(in srgb, var(--accent) 50%, var(--surface))', transition: 'width 0.3s' }} />
-            </div>
-
-            {/* Stats */}
-            <div data-ui="op-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6, marginBottom: 14 }}>
-              {[
-                { v: totalDue,      label: 'повторить', color: 'var(--accent)' },
-                { v: totalMastered, label: 'освоено',   color: 'var(--ivory)' },
-                { v: totalLearning, label: 'изучаю',    color: 'color-mix(in srgb, var(--accent) 65%, var(--ivory))' },
-                { v: totalNew,      label: 'новых',     color: 'var(--muted)' },
-              ].map(item => (
-                <div key={item.label} style={{ textAlign: 'center', padding: '8px 4px', background: 'rgba(0,0,0,0.2)', borderRadius: 6 }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: item.color }}>{item.v}</div>
-                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{item.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Review all button */}
-            <Link
-              href={isDemo ? '/openings/review?demo=1' : '/openings/review'}
-              data-ui="op-review-all"
-              style={{
-                display: 'block', width: '100%', textAlign: 'center',
-                padding: '10px 0',
-                background: totalDue > 0 ? 'var(--accent)' : 'var(--surface)',
-                border: '1px solid var(--hairline)',
-                borderRadius: 'var(--radius-btn, 4px)',
-                color: totalDue > 0 ? '#fff' : 'var(--muted)',
-                fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                marginBottom: 8,
-                pointerEvents: totalDue === 0 ? 'none' : 'auto',
-                opacity: totalDue === 0 ? 0.5 : 1,
-              }}
-            >
-              {totalDue > 0 ? `Повторить всё · ${totalDue}` : 'Всё повторено'}
-            </Link>
-            {totalDue > 0 && (
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14, lineHeight: 1.4 }}>
-                Линии из всех дебютов, у которых подошёл срок. Займёт около {totalDue} мин.
-              </div>
-            )}
-
-            {/* Color filter */}
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-              Цвет
-            </div>
-            <div data-ui="op-filters" style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-card, 4px)', padding: 3, marginBottom: 12 }}>
-              {(['all','white','black'] as const).map(c => {
-                const labels = { all: 'Все', white: 'Белыми', black: 'Чёрными' };
-                return (
-                  <button key={c} data-color={c} onClick={() => updateFilters({ color: c })} style={segBtnStyle(filters.color === c)}>
-                    {labels[c]}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Show filter */}
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-              Показать
-            </div>
-            <div style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-card, 4px)', padding: 3, marginBottom: 16 }}>
-              {(['all','review','new'] as const).map(s => {
-                const labels = { all: 'Все', review: 'Повторить', new: 'Новые' };
-                return (
-                  <button key={s} onClick={() => updateFilters({ show: s })} style={segBtnStyle(filters.show === s)}>
-                    {labels[s]}
-                  </button>
-                );
-              })}
+        {/* ── Шапка ─────────────────────────────────────────────────────── */}
+        <header className="opcat-head">
+          <div className="opcat-head-text">
+            <div className="coach-eyebrow">Учиться</div>
+            <h1 className="opcat-h1 coach-serif">Дебюты</h1>
+            <div className="opcat-head-meta">
+              Твой репертуар: <strong>{pluralOpenings(openings.length)}</strong>
+              {' '}·{' '}
+              <strong>{totals.lines}</strong> {totals.lines === 1 ? 'линия' : totals.lines <= 4 ? 'линии' : 'линий'}
+              {' '}· освоено <strong>{totals.mastered}</strong>
             </div>
           </div>
-
-          {/* Footer */}
-          <div style={{ marginTop: 'auto', padding: '16px 20px', borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
-            <Link
-              href="/openings/new"
-              style={{
-                display: 'block', width: '100%', textAlign: 'center',
-                padding: '8px 0', background: 'transparent',
-                border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn, 4px)',
-                color: 'var(--ivory)', fontSize: 13, fontWeight: 500, textDecoration: 'none',
-                marginBottom: 8,
-              }}
-            >
-              Добавить дебют
-            </Link>
-            <Link
-              href="/openings/random"
-              style={{
-                display: 'block', width: '100%', textAlign: 'center',
-                padding: '8px 0', background: 'transparent',
-                border: '1px solid var(--hairline)', borderRadius: 'var(--radius-btn, 4px)',
-                color: 'var(--muted)', fontSize: 13, fontWeight: 500, textDecoration: 'none',
-                marginBottom: 6,
-              }}
-            >
-              Дебют Рандом
-            </Link>
-            <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.4, opacity: 0.7 }}>
-              Дебют Рандом — Stockfish играет против твоих линий, ты отвечаешь.
+          <div className="opcat-head-actions">
+            <div className="opcat-search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+                <path d="M20 20L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <input
+                ref={searchRef}
+                data-ui="op-search"
+                type="text"
+                placeholder="Найти дебют…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <kbd>/</kbd>
             </div>
+            <Link href={addHref} className="opcat-add-btn">
+              + Добавить дебют
+            </Link>
           </div>
-        </section>
+        </header>
 
-        {/* RIGHT COLUMN */}
-        <section
-          data-demo={isDemo ? 'openings' : undefined}
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}
-        >
-          {/* Compact catalog header */}
-          <div className="catalog-hero-compact">
-            <div className="catalog-hero-row">
-              <div className="catalog-hero-text">
-                <h1 className="catalog-hero-h1">Дебюты</h1>
-                <div className="catalog-hero-meta">
-                  {openings.length} {openings.length === 1 ? 'дебют' : openings.length <= 4 ? 'дебюта' : 'дебютов'}
-                  <span className="dot" />
-                  <strong>{totalLines}</strong> {totalLines === 1 ? 'линия' : totalLines <= 4 ? 'линии' : 'линий'}
-                  {totalMastered > 0 && <>
-                    <span className="dot" />освоено <strong>{totalMastered}</strong>
-                  </>}
-                  {totalDue > 0 && <>
-                    <span className="dot" />
-                    <span style={{ color: 'var(--accent)' }}>
-                      <strong>{totalDue}</strong> на повтор
-                    </span>
-                  </>}
-                </div>
-              </div>
-              <div className="catalog-hero-search">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-                  <path d="M20 20L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                <input
-                  ref={searchRef}
-                  data-ui="op-search"
-                  type="text"
-                  placeholder="Найти дебют…"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-                <kbd>/</kbd>
-              </div>
-            </div>
-          </div>
+        <div className="opcat-divider" />
 
-          {/* Category tabs */}
-          <div
-            data-ui="op-categories"
-            style={{
-              display: 'flex', gap: 2, marginBottom: 16, flexShrink: 0,
-              borderBottom: '1px solid var(--hairline)',
-              overflowX: 'auto',
-            }}
-          >
+        {/* ── Hero ──────────────────────────────────────────────────────── */}
+        <HeroBlock
+          due={totals.due}
+          mastered={totals.mastered}
+          learning={totals.learning}
+          newCount={totals.new}
+          lines={totals.lines}
+          topOp={heroOp}
+          loading={loading}
+          openingsCount={openings.length}
+          reviewAllHref={reviewAllHref}
+          randomHref={randomHref}
+          addHref={addHref}
+        />
+
+        {/* ── Фильтры (категории + цвет/показать) ───────────────────────── */}
+        <div className="opcat-filters-row">
+          <div data-ui="op-categories" className="opcat-tabs">
             {(['all','authored','gambit','defense','classical','sharp'] as const).map(c => {
               const labels: Record<OpCategory, string> = {
                 all: 'Все', authored: 'Авторские', gambit: 'Гамбиты', defense: 'Защиты',
                 classical: 'Классика', sharp: 'Острые',
               };
               const active = filters.category === c;
-              const count = catCounts[c];
               return (
                 <button
                   key={c}
                   data-category={c}
                   onClick={() => updateFilters({ category: c })}
-                  style={{
-                    padding: '10px 16px', border: 'none',
-                    background: 'transparent',
-                    color: active ? 'var(--ivory)' : 'var(--muted)',
-                    fontSize: 14, fontWeight: active ? 700 : 500,
-                    cursor: 'pointer', fontFamily: 'inherit',
-                    borderBottom: active ? '2px solid var(--accent, var(--ivory))' : '2px solid transparent',
-                    marginBottom: -1, whiteSpace: 'nowrap',
-                    transition: 'color 0.15s, border-color 0.15s',
-                  }}
+                  className={`opcat-tab${active ? ' opcat-tab-active' : ''}`}
                 >
-                  {labels[c]}{count > 0 ? ` · ${count}` : ''}
+                  <span>{labels[c]}</span>
+                  <span className="opcat-tab-count">{catCounts[c]}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Grid */}
-          {loading ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: 14 }}>
-              Загрузка…
-            </div>
-          ) : (
-            <div
-              data-ui="eg-grid"
-              style={{
-                flex: 1, overflowY: 'auto',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                gridAutoRows: 'max-content',
-                gap: 16, alignContent: 'start',
-              }}
-            >
-              {filtered.map(op => (
-                <OpeningCard
-                  key={op.id} op={op} isHovered={hovered === op.id}
-                  onHover={setHovered} isDemo={isDemo}
-                />
+          <div data-ui="op-filters" className="opcat-seg-group">
+            <div className="opcat-seg-label">Цвет</div>
+            <div className="opcat-seg">
+              {(['all','white','black'] as const).map(c => (
+                <button
+                  key={c}
+                  data-color={c}
+                  onClick={() => updateFilters({ color: c })}
+                  className={`opcat-seg-btn${filters.color === c ? ' opcat-seg-btn-active' : ''}`}
+                >
+                  {c === 'all' ? 'Все' : c === 'white' ? 'Белыми' : 'Чёрными'}
+                </button>
               ))}
-              {/* Add card */}
-              <Link
-                data-ui="op-add"
-                href="/openings/new"
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  gap: 8, padding: 24, minHeight: 200,
-                  background: 'transparent',
-                  border: '2px dashed var(--hairline)',
-                  borderRadius: 'var(--radius-card, 0px)',
-                  color: 'var(--muted)', textDecoration: 'none',
-                  cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s',
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ivory)'; (e.currentTarget as HTMLElement).style.color = 'var(--ivory)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--hairline)'; (e.currentTarget as HTMLElement).style.color = 'var(--muted)'; }}
-              >
-                <span style={{ fontSize: 28 }}>＋</span>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>Новый дебют</span>
-                <span style={{ fontSize: 12, textAlign: 'center', lineHeight: 1.4, opacity: 0.7 }}>
-                  Вставь PGN с вариантами — линии появятся сами
-                </span>
-              </Link>
             </div>
-          )}
-        </section>
+            <div className="opcat-seg-label">Показать</div>
+            <div className="opcat-seg">
+              {(['all','review','new'] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => updateFilters({ show: s })}
+                  className={`opcat-seg-btn${filters.show === s ? ' opcat-seg-btn-active' : ''}`}
+                >
+                  {s === 'all' ? 'Все' : s === 'review' ? 'Повторить' : 'Новые'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Сетка ─────────────────────────────────────────────────────── */}
+        <div data-ui="eg-grid" className="opcat-grid">
+          {loading
+            ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
+            : filtered.map((op, i) => (
+                <OpeningCard key={op.id} op={op} index={i} isDemo={isDemo} />
+              ))}
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Card ──────────────────────────────────────────────────────────────────────
+// ── Hero ──────────────────────────────────────────────────────────────────
 
-function OpeningCard({ op, isHovered, onHover, isDemo }: {
-  op: CatalogOpening; isHovered: boolean; onHover: (id: string | null) => void; isDemo: boolean;
+function HeroBlock({
+  due, mastered, learning, newCount, lines, topOp, loading, openingsCount,
+  reviewAllHref, randomHref, addHref,
+}: {
+  due: number; mastered: number; learning: number; newCount: number; lines: number;
+  topOp: CatalogOpening | null; loading: boolean; openingsCount: number;
+  reviewAllHref: string; randomHref: string; addHref: string;
 }) {
-  const badge = statusBadge(op);
-  const st = getStatus(op);
-  const colorIcon = op.color === 'white' ? '♔' : op.color === 'black' ? '♚' : '♗';
-  const colorLabel = op.color === 'white' ? 'Белыми' : op.color === 'black' ? 'Чёрными' : 'За оба';
-  const href = isDemo ? `/openings/demo` : `/openings/${op.id}`;
-  const boardOrientation: 'white' | 'black' = op.color === 'black' ? 'black' : 'white';
+  if (!loading && openingsCount === 0) {
+    return (
+      <section data-ui="op-hero" className="opcat-hero">
+        <div className="opcat-hero-top opcat-hero-empty">
+          <div className="opcat-hero-left">
+            <div className="coach-eyebrow">Начни с одного дебюта</div>
+            <div className="opcat-hero-headline coach-serif">Добавь первый дебют</div>
+            <p className="opcat-hero-sub">Вставь PGN с вариантами — линии появятся сами и Таль начнёт строить план под твои партии.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Link href={addHref} className="opcat-btn-gold">+ Добавить дебют</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const headlineAccent = due > 0 ? `${due}` : `${newCount}`;
+  const verb = due > 0
+    ? (due === 1 ? 'линия ждёт' : due <= 4 ? 'линии ждут' : 'линий ждут')
+    : (newCount === 1 ? 'новая линия' : newCount <= 4 ? 'новые линии' : 'новых линий');
+  const tailWord = due > 0 ? 'повторения' : newCount > 0 ? 'в репертуаре' : '';
+  const headlineNoun = due > 0 || newCount > 0 ? verb : 'всё освоено';
+  const minutes = Math.max(1, due); // 1 линия ≈ 1 минута
+
+  const heroTitle = cleanName(topOp?.name ?? '');
+  const heroOrientation: 'white' | 'black' = topOp?.color === 'black' ? 'black' : 'white';
+
+  // Описание: откуда задачи
+  const lead = (() => {
+    if (due === 0 && newCount > 0) {
+      return `Новых линий: ${newCount}. Начни с «${heroTitle}».`;
+    }
+    if (due === 0) {
+      return `Всё по срокам. ${mastered} из ${lines} освоено, в изучении ${learning}.`;
+    }
+    // due > 0
+    if (topOp && topOp.due === due) {
+      return `Все — из «${heroTitle}». Займёт около ${pluralMinutes(minutes)}. Повторяй по сроку — так линии остаются в памяти.`;
+    }
+    return `Больше всего — в «${heroTitle}» (${topOp?.due ?? 0}). Займёт около ${pluralMinutes(minutes)}.`;
+  })();
+
+  const reviewDisabled = due === 0;
 
   return (
-    <Link
-      href={href}
-      data-ui="eg-card"
-      data-status={st}
-      onMouseEnter={() => onHover(op.id)}
-      onMouseLeave={() => onHover(null)}
-      style={{
-        background: 'var(--surface)',
-        border: `1px solid ${isHovered ? 'rgba(255,255,255,.2)' : 'var(--hairline)'}`,
-        borderRadius: 'var(--radius-card, 0px)',
-        overflow: 'hidden', cursor: 'pointer', display: 'block', textDecoration: 'none',
-        transform: isHovered ? 'translateY(-2px)' : undefined,
-        boxShadow: isHovered ? '0 8px 20px rgba(0,0,0,.35)' : undefined,
-        transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s',
-        position: 'relative',
-      }}
-    >
-      {/* Board */}
-      <div data-ui="eg-board" style={{ position: 'relative', width: '100%', aspectRatio: '1/1' }}>
-        <div style={{ width: '100%', height: '100%' }}>
-          <MiniBoard fen={op.cardFen} orientation={boardOrientation} size={240} />
+    <section data-ui="op-hero" className="opcat-hero">
+      <div className="opcat-hero-top">
+        <div className="opcat-hero-left">
+          <div className="coach-eyebrow">На повтор сегодня</div>
+          <div className="opcat-hero-headline">
+            <span className="opcat-hero-number coach-serif">{headlineAccent}</span>
+            <span className="opcat-hero-tail coach-serif">
+              {headlineNoun}{tailWord ? ' ' + tailWord : ''}
+            </span>
+          </div>
+          <p className="opcat-hero-sub">{lead}</p>
+          <div className="opcat-hero-actions">
+            {due > 0 ? (
+              <Link
+                href={reviewAllHref}
+                data-ui="op-review-all"
+                className="opcat-btn-gold"
+              >
+                Повторить всё · {due} →
+              </Link>
+            ) : newCount > 0 && topOp ? (
+              <Link
+                href={`/openings/${topOp.id}`}
+                data-ui="op-review-all"
+                className="opcat-btn-gold"
+              >
+                Учить новые →
+              </Link>
+            ) : (
+              <span
+                data-ui="op-review-all"
+                className="opcat-btn-gold opcat-btn-disabled"
+                aria-disabled="true"
+              >
+                Всё повторено
+              </span>
+            )}
+            <Link href={randomHref} className="opcat-btn-line">Дебют Рандом</Link>
+          </div>
+          <div className="opcat-hero-hint">Дебют Рандом — Stockfish играет против твоих линий, ты отвечаешь.</div>
         </div>
 
-        {/* Badge top-left */}
-        {badge && (
-          <div style={{
-            position: 'absolute', left: 10, top: 10, zIndex: 2,
-            height: 26, borderRadius: 6, padding: '0 9px',
-            display: 'flex', alignItems: 'center',
-            fontSize: 13, fontWeight: 700,
-            background: badge.bg, color: badge.color,
-            boxShadow: '0 2px 6px rgba(0,0,0,.35)',
-          }}>
-            {badge.text}
-          </div>
-        )}
-
-        {/* Mastered checkmark */}
-        {st === 'mastered' && (
-          <div style={{ position: 'absolute', right: 10, top: 10, zIndex: 2, color: 'var(--accent)' }}>
-            <svg width="28" height="28" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="11.5" fill="currentColor" />
-              <path d="M7 12.5l3.2 3.2L17 9" stroke="var(--accent-contrast)" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-        )}
-
-        {/* Hover overlay */}
-        {isHovered && (
-          <div
-            data-ui="op-card-cta"
-            style={{
-              position: 'absolute', inset: 0,
-              background: 'radial-gradient(ellipse at center, rgba(20,20,18,.72) 0%, rgba(12,12,11,.88) 100%)',
-              backdropFilter: 'blur(3px)',
-              WebkitBackdropFilter: 'blur(3px)',
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
-              gap: 16, padding: 20, textAlign: 'center', zIndex: 3,
-              animation: 'fadeIn 0.18s ease-out both',
-            }}
-          >
-            <p style={{ fontSize: 14, color: 'var(--ivory)', lineHeight: 1.45, margin: 0, maxWidth: 220 }}>{ctaText(op)}</p>
-            <div style={{
-              width: 54, height: 54, borderRadius: 27,
-              background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 108%, #fff) 0%, var(--accent) 100%)',
-              boxShadow: '0 2px 0 var(--accent-press)',
-              display: 'grid', placeItems: 'center', color: 'var(--accent-contrast)',
-              animation: 'popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both',
-            }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 3 }}>
-                <polygon points="5,3 19,12 5,21" />
-              </svg>
+        {topOp && (
+          <div className="opcat-hero-board">
+            <div className="opcat-hero-board-frame">
+              <MiniBoard fen={topOp.cardFen} orientation={heroOrientation} size={220} />
             </div>
+            <div className="opcat-hero-board-title coach-serif">{heroTitle}</div>
+            {topOp.lastMoveSan && (
+              <div className="opcat-hero-board-move">{topOp.lastMoveSan}</div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Below board */}
-      <div style={{ padding: '12px 14px 14px' }}>
-        <div data-ui="eg-card-title" style={{
-          fontSize: 15, fontWeight: 600, color: 'var(--ivory)',
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-          overflow: 'hidden', lineHeight: 1.3, minHeight: '2.6em',
-          marginBottom: 6,
-        }}>
-          {op.name}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--muted)', marginBottom: 6 }}>
-          <span>{colorIcon}</span>
-          <span>{colorLabel}</span>
-          <span>·</span>
-          <span>{op.totalLines} {op.totalLines === 1 ? 'линия' : op.totalLines <= 4 ? 'линии' : 'линий'}</span>
-        </div>
-        {op.firstMoves && (
-          <div style={{
-            fontSize: 12, color: 'var(--muted)', marginBottom: 8,
-            fontFamily: 'ui-monospace, Menlo, monospace',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            opacity: 0.75,
-          }}>
-            {op.firstMoves}
-          </div>
+      <div className="opcat-hero-stats">
+        <HeroStat label="Повторить" value={due} gold />
+        <HeroStat label="Изучаю" value={learning} />
+        <HeroStat label="Освоено" value={mastered} sub={`из ${lines}`} />
+        <HeroStat label="Новых" value={newCount} />
+      </div>
+    </section>
+  );
+}
+
+function HeroStat({ label, value, sub, gold }: { label: string; value: number; sub?: string; gold?: boolean }) {
+  return (
+    <div className="opcat-hero-stat">
+      <div className="opcat-hero-stat-label">{label}</div>
+      <div className="opcat-hero-stat-value coach-serif" style={gold ? { color: 'var(--accent)' } : undefined}>
+        {value}
+      </div>
+      {sub && <div className="opcat-hero-stat-sub">{sub}</div>}
+    </div>
+  );
+}
+
+// ── Card ──────────────────────────────────────────────────────────────────
+
+function OpeningCard({ op, index, isDemo }: { op: CatalogOpening; index: number; isDemo: boolean }) {
+  const st = getStatus(op);
+  const authored = /авторск/i.test(op.name);
+  const display = cleanName(op.name);
+  const colorIcon = op.color === 'white' ? '♔' : op.color === 'black' ? '♚' : '♗';
+  const colorLabel = op.color === 'white' ? 'Белыми' : op.color === 'black' ? 'Чёрными' : 'За оба';
+  const href = isDemo ? '/openings/demo' : `/openings/${op.id}`;
+  const orientation: 'white' | 'black' = op.color === 'black' ? 'black' : 'white';
+  const num = String(index + 1).padStart(2, '0');
+
+  let cta = 'Продолжить →';
+  let ctaGold = false;
+  if (op.due > 0) { cta = `Повторить ${op.due} →`; ctaGold = true; }
+  else if (op.newLines > 0) { cta = 'Учить →'; }
+  else if (op.mastered === op.totalLines && op.totalLines > 0) { cta = 'Экзамен →'; }
+
+  return (
+    <Link href={href} data-ui="eg-card" data-status={st} className="opcat-card">
+      <div data-ui="eg-board" className="opcat-card-board">
+        <MiniBoard fen={op.cardFen} orientation={orientation} size={240} />
+        {op.due > 0 && (
+          <div className="opcat-card-badge opcat-card-badge-gold">ПОВТОРИТЬ · {op.due}</div>
         )}
-        {/* Progress bar — mastered (green) + learning (purple) */}
-        <div
-          title={`Освоено ${op.mastered} · Изучаю ${op.learning} · На повтор ${op.due} · Новых ${op.newLines}`}
-          style={{ height: 5, background: 'var(--hairline)', borderRadius: 3, overflow: 'hidden', marginBottom: 4, display: 'flex' }}
-        >
-          <div style={{
-            height: '100%',
-            width: op.totalLines > 0 ? `${(op.mastered / op.totalLines) * 100}%` : '0%',
-            background: 'var(--accent)', transition: 'width 0.3s',
-          }} />
-          <div style={{
-            height: '100%',
-            width: op.totalLines > 0 ? `${(op.learning / op.totalLines) * 100}%` : '0%',
-            background: 'color-mix(in srgb, var(--accent) 50%, var(--surface))', transition: 'width 0.3s',
-          }} />
+        {op.due === 0 && op.mastered === op.totalLines && op.totalLines > 0 && (
+          <div className="opcat-card-badge opcat-card-badge-outline">ОСВОЕНО</div>
+        )}
+      </div>
+
+      <div className="opcat-card-body">
+        <div className="opcat-card-header">
+          <span className="opcat-card-num coach-serif">{num}</span>
+          {authored && <span className="opcat-card-chip">АВТОРСКИЙ</span>}
         </div>
-        <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-          {op.mastered > 0 && <>освоено {op.mastered}/{op.totalLines}</>}
-          {op.mastered > 0 && op.learning > 0 && <> · </>}
-          {op.learning > 0 && <span style={{ color: 'color-mix(in srgb, var(--accent) 65%, var(--ivory))' }}>изучаю {op.learning}</span>}
-          {op.mastered === 0 && op.learning === 0 && <>освоено 0/{op.totalLines}</>}
+        <div data-ui="eg-card-title" className="opcat-card-title coach-serif">{display}</div>
+        <div className="opcat-card-meta">
+          <span className="opcat-card-color">{colorIcon}</span>
+          <span>{colorLabel}</span>
+          <span className="opcat-card-sep">·</span>
+          <span>{pluralLines(op.totalLines)}</span>
+        </div>
+        {op.firstMoves && <div className="opcat-card-moves">{op.firstMoves}…</div>}
+
+        <div className="opcat-card-progress" title={`Освоено ${op.mastered} · Изучаю ${op.learning} · На повтор ${op.due} · Новых ${op.newLines}`}>
+          <div
+            className="opcat-card-progress-mastered"
+            style={{ width: op.totalLines > 0 ? `${(op.mastered / op.totalLines) * 100}%` : '0%' }}
+          />
+          <div
+            className="opcat-card-progress-learning"
+            style={{ width: op.totalLines > 0 ? `${(op.learning / op.totalLines) * 100}%` : '0%' }}
+          />
+        </div>
+        <div className="opcat-card-foot">
+          <span>освоено {op.mastered} из {op.totalLines}</span>
+          <span className={`opcat-card-cta${ctaGold ? ' opcat-card-cta-gold' : ''}`}>{cta}</span>
         </div>
       </div>
     </Link>
   );
 }
 
-// Suppress lineStatus unused import warning
-void lineStatus;
+function SkeletonCard() {
+  return (
+    <div className="opcat-card opcat-card-skeleton" aria-hidden="true">
+      <div className="opcat-card-board opcat-card-board-skeleton" />
+      <div className="opcat-card-body">
+        <div className="opcat-skeleton-line" style={{ width: '30%', marginBottom: 10 }} />
+        <div className="opcat-skeleton-line" style={{ width: '80%', marginBottom: 8 }} />
+        <div className="opcat-skeleton-line" style={{ width: '60%', marginBottom: 16 }} />
+        <div className="opcat-skeleton-line" style={{ width: '100%', height: 2, marginBottom: 10 }} />
+        <div className="opcat-skeleton-line" style={{ width: '50%' }} />
+      </div>
+    </div>
+  );
+}
