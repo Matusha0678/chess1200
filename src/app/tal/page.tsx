@@ -1,22 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import { loadCoachContext, localDateStr, type CoachContext } from '@/lib/coach/context';
-import { buildFallbackPlan, type Plan } from '@/lib/coach/plan';
+import { buildFallbackPlan, ITEM_META, type Plan, type ItemKey } from '@/lib/coach/plan';
 import { ChatHeader } from '@/components/coach/ChatHeader';
+import { PlanCard, type ItemState } from '@/components/coach/PlanCard';
+import { TodayCard } from '@/components/coach/TodayCard';
+import { FormCard } from '@/components/coach/FormCard';
+import { LeaksCard } from '@/components/coach/LeaksCard';
+import { ChangesCard } from '@/components/coach/ChangesCard';
+import { WeekCard } from '@/components/coach/WeekCard';
 
 export default function CoachPage() {
   const [ctx, setCtx] = useState<CoachContext | null>(null);
   const [plan, setPlan] = useState<Plan | null>(null);
+  const [manualMarks, setManualMarks] = useState<Record<ItemKey, boolean>>({} as Record<ItemKey, boolean>);
   const [lessonNo, setLessonNo] = useState<number>(1);
   const today = localDateStr();
 
+  // Загрузка контекста и построение fallback-плана
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const context = await loadCoachContext(today);
+        if (cancelled) return;
         setCtx(context);
-        // пока — всегда fallback-план, API подключим в следующем коммите
         const top = context.leaks.find(l => l.main) ?? context.leaks[0];
         const fb = buildFallbackPlan({
           daily_minutes: context.settings.daily_minutes,
@@ -26,31 +36,107 @@ export default function CoachPage() {
           openings_due:  context.openings_due,
         });
         setPlan(fb);
-        // Занятие № N — пока заглушка (streak + 1)
         setLessonNo(Math.max(1, context.streak + 1));
+        // Инициализируем ручные отметки из контекста
+        const marks: Record<string, boolean> = {};
+        for (const key of Object.keys(context.progress)) {
+          if (context.progress[key as ItemKey].manual_done) marks[key] = true;
+        }
+        setManualMarks(marks as Record<ItemKey, boolean>);
       } catch (e) {
         console.error('coach context load failed', e);
       }
     })();
+    return () => { cancelled = true; };
   }, [today]);
+
+  // Обработчик ручной отметки (ТЗ §1.2 — ручные item'ы переключаются повторным нажатием)
+  async function handleManualToggle(key: ItemKey, done: boolean) {
+    setManualMarks(prev => ({ ...prev, [key]: done }));
+    try {
+      if (done) {
+        await supabase.from('coach_item_marks').upsert({ date: today, item_key: key, done: true });
+      } else {
+        await supabase.from('coach_item_marks').delete().eq('date', today).eq('item_key', key);
+      }
+    } catch (e) {
+      console.warn('mark save failed', e);
+    }
+  }
+
+  // Собираем ItemState для PlanCard и totals
+  const { itemStates, totals, currentInfo, planKeyToNum } = useMemo(() => {
+    if (!plan || !ctx) return { itemStates: {} as Record<ItemKey, ItemState>, totals: null, currentInfo: null, planKeyToNum: new Map<ItemKey, string>() };
+
+    const states: Record<ItemKey, ItemState> = {} as Record<ItemKey, ItemState>;
+    const keyToNum = new Map<ItemKey, string>();
+    plan.items.forEach((it, i) => {
+      const num = String(i + 1).padStart(2, '0');
+      keyToNum.set(it.key, num);
+      const prog = ctx.progress[it.key] ?? { done_today: 0, manual_done: false, key: it.key };
+      const manual = manualMarks[it.key] ?? prog.manual_done;
+      const ratio = manual ? 1 : (it.target > 0 ? Math.min(1, prog.done_today / it.target) : 0);
+      states[it.key] = {
+        done_num: prog.done_today,
+        done_min: Math.round(it.min * ratio),
+        manual_done: manual,
+      };
+    });
+
+    const doneRows = plan.items.filter(it => (states[it.key].done_num / Math.max(1, it.target)) >= 1 || states[it.key].manual_done);
+    const doneCount = doneRows.length;
+    const doneMin = plan.items.reduce((sum, it) => {
+      const s = states[it.key];
+      const done = s.manual_done || s.done_num / Math.max(1, it.target) >= 1;
+      return sum + (done ? it.min : Math.round(it.min * Math.min(1, s.done_num / Math.max(1, it.target))));
+    }, 0);
+    const totalMin = plan.total_min;
+    const threshold = Math.round(totalMin * 0.6);
+    const remainForStreak = Math.max(0, threshold - doneMin);
+
+    // первый не сделанный
+    let currentIdx = -1;
+    for (let i = 0; i < plan.items.length; i++) {
+      const it = plan.items[i];
+      const s = states[it.key];
+      const done = s.manual_done || s.done_num / Math.max(1, it.target) >= 1;
+      if (!done) { currentIdx = i; break; }
+    }
+
+    let currentInfoVal: { href: string; label: string } | null = null;
+    if (currentIdx >= 0) {
+      const it = plan.items[currentIdx];
+      const meta = ITEM_META[it.key];
+      const num = keyToNum.get(it.key)!;
+      currentInfoVal = {
+        href: meta.href ?? `#plan-${num}`,
+        label: `${num} ${meta.title}`,
+      };
+    }
+
+    return {
+      itemStates: states,
+      totals: {
+        doneCount, totalCount: plan.items.length, doneMin, totalMin, remainForStreak,
+      },
+      currentInfo: currentInfoVal,
+      planKeyToNum: keyToNum,
+    };
+  }, [plan, ctx, manualMarks]);
+
+  const dateHuman = useMemo(() => todayHumanRu(today), [today]);
+  const dailyPlanMinutes = ctx?.settings.daily_minutes ?? 120;
 
   return (
     <div className="page">
       <div className="coach-layout">
-        <section
-          className="coach-card coach-main"
-          aria-labelledby="h-coach"
-          style={{ background: 'var(--surface)' }}
-        >
+        <section className="coach-card coach-main" aria-labelledby="h-coach" style={{ background: 'var(--surface)' }}>
           <ChatHeader lessonNo={lessonNo} />
 
           <div className="coach-thread" role="log" aria-label="Переписка с Талем">
-            {/* Пока пустое состояние для чата */}
             <div className="coach-day-divider">
               <span aria-hidden="true" />
-              <span className="coach-day-label coach-day-label-today">
-                Сегодня · {todayHumanRu(today)}
-              </span>
+              <span className="coach-day-label coach-day-label-today">Сегодня · {dateHuman}</span>
               <span aria-hidden="true" />
             </div>
 
@@ -63,41 +149,19 @@ export default function CoachPage() {
                     <span className="coach-msg-time">08:00 · утренний план</span>
                   </div>
                   <p className="coach-msg-quote">«{plan.message}»</p>
-
-                  {/* Карточка плана — рендер минимальный, детали в следующем коммите */}
-                  <div className="coach-plan">
-                    <div className="coach-plan-head">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                        <h2 className="coach-plan-title">План на сегодня</h2>
-                        <span style={{ fontSize: 13, color: 'var(--text-2, #A39B8A)', fontVariantNumeric: 'tabular-nums' }}>
-                          {formatHours(plan.total_min)} · {plan.items.length} заданий
-                        </span>
-                      </div>
-                    </div>
-                    {plan.items.map((it, i) => (
-                      <div key={it.key + i} id={`plan-${pad2(i + 1)}`} className="coach-plan-row">
-                        <span className="coach-plan-row-num">{pad2(i + 1)}</span>
-                        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          <div className="coach-plan-row-title">{taskTitle(it.key)}<span style={{ color: 'var(--text-2, #A39B8A)' }}> · {it.what}</span></div>
-                          <div className="coach-plan-row-why">{it.why}</div>
-                        </div>
-                        <div className="coach-plan-row-time">
-                          <span className="coach-plan-row-time-main">{it.min} мин</span>
-                        </div>
-                        <div className="coach-plan-row-act">
-                          <button type="button" className="coach-btn-line" style={{ height: 40, fontSize: 13, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                            Начать
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <PlanCard
+                    plan={plan}
+                    state={itemStates}
+                    tomorrow={new Set()}
+                    updatedAt={null}
+                    onManualToggle={handleManualToggle}
+                  />
                 </div>
               </div>
             )}
           </div>
 
-          {/* Composer — пока визуально; живая логика в следующем коммите */}
+          {/* Composer — функциональный блок в следующем коммите */}
           <div className="coach-composer">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {['Почему такой план?', 'Разбери вчерашнюю партию', 'Отчитаться за день'].map(q => (
@@ -106,7 +170,7 @@ export default function CoachPage() {
                 </button>
               ))}
             </div>
-            <form style={{ margin: 0, display: 'flex', gap: 8 }}>
+            <form style={{ margin: 0, display: 'flex', gap: 8 }} onSubmit={e => e.preventDefault()}>
               <label htmlFor="tal-msg" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>Сообщение Талю</label>
               <input id="tal-msg" type="text" placeholder="Написать Талю…" className="coach-composer-input" />
               <button type="submit" className="coach-btn-gold coach-composer-send" aria-label="Отправить">
@@ -120,41 +184,43 @@ export default function CoachPage() {
         </section>
 
         <aside className="coach-side" aria-label="Сводка">
-          {/* Заглушки карточек — наполнение в следующем коммите */}
-          <section className="coach-card" style={{ padding: '22px 24px' }}>
-            <div className="coach-eyebrow">Сегодня</div>
-            <div style={{ marginTop: 14, color: 'var(--muted)', fontSize: 13 }}>Карточка «Сегодня» готовится…</div>
-          </section>
-          <section className="coach-card" style={{ padding: '22px 24px' }}>
-            <h3 className="coach-serif" style={{ margin: 0, fontSize: 22, fontWeight: 500, color: 'var(--ivory)' }}>Форма</h3>
-            {ctx?.form.rating_now != null && (
-              <div style={{ marginTop: 10, fontSize: 13, color: 'var(--muted)' }}>
-                Рейтинг: <strong style={{ color: 'var(--ivory)' }}>{ctx.form.rating_now}</strong>
-                {ctx.form.rating_7d_delta != null && <> · за неделю {ctx.form.rating_7d_delta > 0 ? '+' : ''}{ctx.form.rating_7d_delta}</>}
-              </div>
-            )}
-          </section>
-          <section className="coach-card" style={{ padding: '22px 24px' }}>
-            <h3 className="coach-serif" style={{ margin: 0, fontSize: 22, fontWeight: 500, color: 'var(--ivory)' }}>Где ты теряешь очки</h3>
-            {ctx && ctx.leaks.length === 0 && (
-              <p style={{ marginTop: 10, fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
-                Синхронизируй партии рапид — тогда Таль увидит, где ты теряешь очки.
-              </p>
-            )}
-            {ctx && ctx.leaks.length > 0 && (
-              <ul style={{ margin: '10px 0 0', padding: 0, listStyle: 'none', fontSize: 13, color: 'var(--ivory)' }}>
-                {ctx.leaks.map(l => <li key={l.key}>{l.label} — {l.count}</li>)}
-              </ul>
-            )}
-          </section>
-          <section className="coach-card" style={{ padding: '22px 24px' }}>
-            <h3 className="coach-serif" style={{ margin: 0, fontSize: 22, fontWeight: 500, color: 'var(--ivory)' }}>Неделя</h3>
-            {ctx && (
-              <div style={{ marginTop: 10, fontSize: 13, color: 'var(--muted)' }}>
-                Серия: <strong style={{ color: 'var(--ivory)' }}>{ctx.streak}</strong> дн. · Дисциплина за 30 дней: <strong style={{ color: 'var(--ivory)' }}>{ctx.discipline_30d}%</strong>
-              </div>
-            )}
-          </section>
+          {totals && (
+            <TodayCard
+              dateHuman={dateHuman}
+              doneCount={totals.doneCount}
+              totalCount={totals.totalCount}
+              doneMin={totals.doneMin}
+              totalMin={totals.totalMin}
+              currentHref={currentInfo?.href ?? null}
+              currentLabel={currentInfo?.label ?? null}
+              remainForStreak={totals.remainForStreak}
+            />
+          )}
+          {ctx && (
+            <FormCard form={ctx.form} streak={ctx.streak} best_streak={ctx.best_streak} />
+          )}
+          {ctx && (
+            <LeaksCard
+              leaks={ctx.leaks}
+              totalGames={40}
+              totalLosses={ctx.leaks.reduce((s, l) => s + l.count, 0)}
+              planKeyToNum={planKeyToNum}
+            />
+          )}
+          {plan && (
+            <ChangesCard
+              changes={plan.changes}
+              planKeyToNum={planKeyToNum}
+              since={null}
+            />
+          )}
+          {ctx && (
+            <WeekCard
+              week={ctx.week}
+              dailyPlanMin={dailyPlanMinutes}
+              discipline_30d={ctx.discipline_30d}
+            />
+          )}
         </aside>
       </div>
     </div>
@@ -162,29 +228,6 @@ export default function CoachPage() {
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────
-
-function pad2(n: number): string { return String(n).padStart(2, '0'); }
-
-function formatHours(min: number): string {
-  if (min < 60) return `${min} мин`;
-  const h = Math.floor(min / 60), m = min % 60;
-  return m === 0 ? `${h} ч` : `${h} ч ${m} мин`;
-}
-
-const TASK_TITLE: Record<string, string> = {
-  tactics:  'Тактика',
-  threats:  'Проверка угроз',
-  openings: 'Дебюты',
-  convert:  'Дожми партию',
-  endgames: 'Эндшпили',
-  sac:      'Жертвы',
-  mistakes: 'Ошибки',
-  blind:    'Расчёт вслепую',
-  play:     'Партия',
-  book:     'Книга',
-  video:    'Видео',
-};
-function taskTitle(key: string): string { return TASK_TITLE[key] ?? key; }
 
 const WEEKDAY_RU = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
 const MONTH_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
