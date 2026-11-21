@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { loadCoachContext, localDateStr, type CoachContext } from '@/lib/coach/context';
-import { buildFallbackPlan, ITEM_META, type Plan, type ItemKey } from '@/lib/coach/plan';
+import { ITEM_META, type Plan, type ItemKey } from '@/lib/coach/plan';
 import { ChatHeader } from '@/components/coach/ChatHeader';
 import { PlanCard, type ItemState } from '@/components/coach/PlanCard';
 import { TodayCard } from '@/components/coach/TodayCard';
@@ -19,7 +19,7 @@ export default function CoachPage() {
   const [lessonNo, setLessonNo] = useState<number>(1);
   const today = localDateStr();
 
-  // Загрузка контекста и построение fallback-плана
+  // Загрузка контекста и плана
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -27,24 +27,33 @@ export default function CoachPage() {
         const context = await loadCoachContext(today);
         if (cancelled) return;
         setCtx(context);
-        const top = context.leaks.find(l => l.main) ?? context.leaks[0];
-        const fb = buildFallbackPlan({
-          daily_minutes: context.settings.daily_minutes,
-          top_leak_key:  top?.key,
-          top_leak_count: top?.count,
-          tactics_acc:   context.tactics_acc_7d ?? undefined,
-          openings_due:  context.openings_due,
-        });
-        setPlan(fb);
-        setLessonNo(Math.max(1, context.streak + 1));
-        // Инициализируем ручные отметки из контекста
         const marks: Record<string, boolean> = {};
         for (const key of Object.keys(context.progress)) {
           if (context.progress[key as ItemKey].manual_done) marks[key] = true;
         }
         setManualMarks(marks as Record<ItemKey, boolean>);
+
+        // POST — создаёт план если ещё нет, иначе возвращает существующий
+        const r = await fetch('/api/coach/plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: today }),
+        });
+        if (r.ok) {
+          const j = await r.json() as { plan: Plan | null };
+          if (!cancelled && j.plan) setPlan(j.plan);
+        }
+
+        // Занятие № N — сколько дней с планом было до сегодня включительно
+        const countRes = await supabase.from('coach_plans')
+          .select('date', { count: 'exact', head: false })
+          .lte('date', today);
+        if (!cancelled) {
+          const uniqueDates = new Set(((countRes.data ?? []) as Array<{ date: string }>).map(r => r.date));
+          setLessonNo(Math.max(1, uniqueDates.size));
+        }
       } catch (e) {
-        console.error('coach context load failed', e);
+        console.error('coach load failed', e);
       }
     })();
     return () => { cancelled = true; };
