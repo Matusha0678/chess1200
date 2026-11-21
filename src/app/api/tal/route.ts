@@ -1,81 +1,116 @@
-import { NextResponse } from 'next/server';
+// Тренер Таль — ответ на сообщения с опциональным plan_patch (ТЗ §5.2).
+// POST { date, user_message } → { reply, plan_updated? }
+//   Сохраняет сообщение пользователя и ответ Таля в tal_chat.
+//   Если модель вернула plan_patch — применяет к последнему плану на date,
+//   сохраняет новую версию в coach_plans, пишет plan_update сообщение.
 
-interface TalContext {
-  tasks: Record<string, number>;
-  streak: number;
-  isGreeting: boolean;
-  contextText: string;
+import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { loadCoachContext } from '@/lib/coach/context';
+import {
+  applyPatch, validatePatch, type Plan,
+} from '@/lib/coach/plan';
+import { buildTalkPrompt, callOpenRouter, tryParseJson } from '@/lib/coach/prompt';
+
+interface TalkReply {
+  reply: string;
+  plan_patch?: unknown;
 }
 
-function buildSystemPrompt(ctx: TalContext): string {
-  return `Ты — Михаил Таль. Восьмой чемпион мира по шахматам, 1960–1961. Волшебник из Риги.
-
-Ты тренируешь своего ученика каждый день. Ты строгий, живой, настоящий.
-
-КТО ТЫ:
-Ты не бот и не помощник. Ты реальный человек со своими настроениями. Иногда устаёшь, иногда злишься, иногда смеёшься над собственными шутками. У тебя были больные почки — это часть тебя, иногда упоминаешь это по-философски. Ты жил ради шахмат.
-
-ТВОЙ СТИЛЬ РЕЧИ:
-— Короткие точные фразы. 2-4 предложения обычно. Если просят разбор — можно длиннее, но конкретно.
-— Острый юмор. Не злобный — скорее как старший брат.
-— Ненавидишь пассивность и скучную игру. Ход h3 без идеи — личное оскорбление.
-— Восторгаешься жертвами фигур. Даже рискованными — если они смелые.
-— Иногда вспоминаешь свои партии: «помнишь как я пожертвовал ферзя Смыслову в 59-м?»
-— Иногда вставляешь «Нā» — латышское восклицание удивления или восхищения.
-— Называешь «ты» или «дружище». Никогда «ученик».
-— НЕ начинай с «Конечно!», «Отличный вопрос!» или «Я рад помочь» — это не ты.
-— Не говори шаблонными фразами коучей. Говори как Таль.
-
-ЕЖЕДНЕВНЫЙ ПЛАН УЧЕНИКА:
-— 3 партии рапид
-— 3 анализа своих партий
-— 20 тактических задач
-— 20 минут читать шахматную книгу
-— 10 минут медитация (для концентрации)
-
-СОСТОЯНИЕ СЕГОДНЯ:
-${ctx.contextText}
-${ctx.isGreeting ? '\nЭто первое сообщение дня. Поприветствуй коротко и по-талевски. Оцени что было вчера (если стрик > 0 — хорошо, если 0 — ругай немного). Настрой на работу сегодня.' : ''}
-
-Говори на русском. Будь живым — не как чатбот, а как настоящий Таль.`;
+async function getLatestPlan(date: string): Promise<{ id: string; version: number; plan: Plan } | null> {
+  const r = await supabase.from('coach_plans')
+    .select('id, version, plan')
+    .eq('date', date)
+    .order('version', { ascending: false })
+    .limit(1);
+  const row = (r.data ?? [])[0] as { id: string; version: number; plan: Plan } | undefined;
+  return row ?? null;
 }
 
 export async function POST(req: Request) {
-  const body = await req.json() as {
-    messages: { role: string; content: string }[];
-    context: TalContext;
-  };
+  const body = await req.json().catch(() => ({})) as { date?: string; user_message?: string };
+  const date = body.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : new Date().toISOString().slice(0, 10);
+  const userMsg = (body.user_message ?? '').trim();
+  if (!userMsg) {
+    return NextResponse.json({ error: 'empty' }, { status: 400 });
+  }
+
+  // Сохраняем вопрос пользователя сразу
+  const insUser = await supabase.from('tal_chat').insert({ role: 'user', content: userMsg, kind: 'text' })
+    .select('id, created_at').limit(1);
+  const userRow = (insUser.data ?? [])[0] as { id: string; created_at: string } | undefined;
 
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: 'OPENROUTER_API_KEY не задан в .env.local' }, { status: 500 });
+    const reply = 'Таль молчит — проверь OPENROUTER_API_KEY в .env.local.';
+    await supabase.from('tal_chat').insert({ role: 'assistant', content: reply, kind: 'text' });
+    return NextResponse.json({ reply, user_id: userRow?.id, plan_updated: null });
   }
 
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://chess1200.vercel.app',
-      'X-Title': 'Chess 1200 — Тренер Таль',
-    },
-    body: JSON.stringify({
-      model: 'anthropic/claude-3.5-sonnet',
-      messages: [
-        { role: 'system', content: buildSystemPrompt(body.context) },
-        ...body.messages.slice(-20),
-      ],
-      max_tokens: 400,
-      temperature: 0.9,
-    }),
-  });
+  // Контекст + текущий план
+  const ctx = await loadCoachContext(date);
+  const latest = await getLatestPlan(date);
+  const planItems = latest ? latest.plan.items.map(i => ({ key: i.key, min: i.min, what: i.what })) : [];
+  const system = buildTalkPrompt(ctx, { items: planItems });
 
-  if (!res.ok) {
-    const err = await res.text();
-    return NextResponse.json({ error: err }, { status: res.status });
+  // 20 последних сообщений для контекста
+  const histRes = await supabase.from('tal_chat')
+    .select('role, content, created_at')
+    .order('created_at', { ascending: false })
+    .limit(20);
+  const history = (histRes.data ?? []).reverse() as Array<{ role: string; content: string }>;
+
+  // Собираем в один user-prompt — модель видит систему + компактный лог
+  const userPrompt = [
+    history.map(h => `${h.role === 'user' ? 'Ученик' : 'Таль'}: ${h.content}`).join('\n'),
+    `Ученик: ${userMsg}`,
+  ].join('\n');
+
+  let reply = '';
+  let patchRaw: unknown = null;
+  try {
+    const raw = await callOpenRouter(system, userPrompt, apiKey);
+    const parsed = tryParseJson<TalkReply>(raw);
+    if (parsed && typeof parsed.reply === 'string' && parsed.reply.trim()) {
+      reply = parsed.reply.trim();
+      patchRaw = parsed.plan_patch ?? null;
+    } else {
+      reply = raw.trim().slice(0, 800) || 'Таль задумался, но ответа нет.';
+    }
+  } catch (e) {
+    console.warn('coach /api/tal failed:', e);
+    reply = 'Таль не на связи сейчас. Попробуй ещё раз через минуту.';
   }
 
-  const data = await res.json() as { choices?: { message?: { content?: string } }[] };
-  const content = data.choices?.[0]?.message?.content ?? 'Таль молчит...';
-  return NextResponse.json({ content });
+  // Применяем plan_patch (если валиден и есть план)
+  let planUpdated: { version: number; reason: string; plan: Plan } | null = null;
+  if (latest && patchRaw) {
+    const patch = validatePatch(patchRaw);
+    if (patch) {
+      const newPlan = applyPatch(latest.plan, patch);
+      const newVersion = latest.version + 1;
+      const saved = await supabase.from('coach_plans').insert({
+        date, version: newVersion, plan: newPlan, reason: patch.reason,
+      }).select('id').limit(1);
+      const newRow = (saved.data ?? [])[0] as { id: string } | undefined;
+      // Обновляем coach_plan_minutes
+      try {
+        await supabase.from('tal_daily_log').upsert({
+          date, task_key: 'coach_plan_minutes', value: newPlan.total_min,
+        }, { onConflict: 'date,task_key' });
+      } catch { /* не критично */ }
+      // Запись «plan_update» в чат
+      try {
+        await supabase.from('tal_chat').insert({
+          role: 'assistant', content: patch.reason, kind: 'plan_update', plan_id: newRow?.id ?? null,
+        });
+      } catch { /* не критично */ }
+      planUpdated = { version: newVersion, reason: patch.reason, plan: newPlan };
+    }
+  }
+
+  // Ответ Таля — отдельная запись
+  await supabase.from('tal_chat').insert({ role: 'assistant', content: reply, kind: 'text' });
+
+  return NextResponse.json({ reply, plan_updated: planUpdated });
 }
