@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Эталон — Тренер Таль (/tal)</title>
+<!--
+  Эталон внешнего вида страницы /tal для Claude Code.
+  Цифры, тексты сообщений и названия — пример. На сайте всё из базы.
+  Шапка сайта и левое меню уже есть в AppShell — их не переделывать, они тут только для вида.
+  Кнопки здесь не работают: как они должны работать — в COACH-SPEC.md.
+  Смотреть: Playwright, file://<проект>/docs/coach/coach-reference.html, окно 1920×950 и 1440×800.
+-->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&amp;display=swap">
+<style>
+body{margin:0;background:#0F0F11}
+a{color:#C9A961;text-decoration:none}
+a:hover{color:#E8E2D2}
+.serif{font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-variant-numeric:lining-nums}
+.chat-cover{background:linear-gradient(90deg,#17171A 0%,#17171A 44%,rgba(23,23,26,0.82) 54%,rgba(23,23,26,0.3) 70%,rgba(23,23,26,0) 88%),url('../../public/brand/king-scene.png') right 24%/58% auto no-repeat,#17171A}
+.btn-gold{transition:filter .15s}
+.btn-gold:hover{filter:brightness(1.07)}
+.btn-line{transition:border-color .15s,background-color .15s}
+.btn-line:hover{border-color:rgba(201,169,97,0.6) !important;background-color:rgba(201,169,97,0.06) !important}
+.side-link{transition:color .1s,background-color .1s}
+.side-link:hover{color:#E8E2D2 !important;background-color:#141416 !important}
+.go-link:hover{color:#E8E2D2 !important}
+:focus-visible{outline:2px solid #E8E2D2;outline-offset:2px}
+#tal-msg:focus{border-color:rgba(201,169,97,0.7) !important}
+input::placeholder{color:#8A8273}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media (max-width:899px){.c-sidebar{display:none !important}.c-search-text,.c-kbd{display:none}}
+@media (max-width:640px){
+.c-page{padding:16px 12px 32px !important}
+.c-h1{font-size:32px !important}
+.c-quote{font-size:21px !important}
+.chat-cover{padding:170px 20px 22px !important;background:linear-gradient(180deg,rgba(23,23,26,0.1) 0%,#17171A 64%),url('../../public/brand/king-scene.png') center top/100% auto no-repeat,#17171A}
+.c-plate{display:none !important}
+.c-thread{padding:20px 16px !important}
+.c-composer{padding:16px !important}
+.c-bubble{max-width:92% !important}
+.plan-row{grid-template-columns:30px minmax(0,1fr) !important;row-gap:10px}
+.plan-row .c-time,.plan-row .c-act{grid-column:2}
+}
+</style>
+</head>
+<body>
+<div style="min-height: 100vh; background: #0F0F11; color: #E8E2D2; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased">
+
+<header style="height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 24px; box-sizing: border-box; background: rgba(15,15,17,0.94); border-bottom: 1px solid #473F2C">
+<a href="#" style="display: flex; align-items: center; gap: 10px; color: #E8E2D2">
+<span aria-hidden="true" style="width: 30px; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1px solid #C9A961; color: #C9A961; font-family: 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols 2', 'DejaVu Sans', sans-serif; font-size: 18px; line-height: 1">♚</span>
+<span class="serif" style="font-size: 19px; font-weight: 500; letter-spacing: 0.01em; color: #E8E2D2">Chess <span style="font-style: italic; color: #C9A961">1200</span></span>
+</a>
+<div style="display: flex; align-items: center; gap: 8px">
+<button type="button" style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; background: #17171A; border: 1px solid #26241F; border-radius: 0; color: #8A8273; font-family: inherit; font-size: 13px; cursor: pointer">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+<span class="c-search-text">Поиск</span>
+<kbd class="c-kbd" style="font-family: ui-monospace, monospace; font-size: 10px; line-height: 1; padding: 2px 5px; border: 1px solid #26241F; border-radius: 3px; color: #8A8273">⌘K</kbd>
+</button>
+<button type="button" aria-label="Настройки темы" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; background: #17171A; border: 1px solid #26241F; border-radius: 0; color: #E8E2D2; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 100 18c1.1 0 1.5-.8 1.2-1.6-.4-1 .3-2 1.4-2H16a5 5 0 005-5c0-5-4-9.4-9-9.4z"></path><circle cx="7.5" cy="11" r="1"></circle><circle cx="10.5" cy="7.5" r="1"></circle><circle cx="15" cy="7.5" r="1"></circle></svg>
+</button>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap">
+
+<aside class="c-sidebar" style="flex: 0 0 240px; width: 240px; box-sizing: border-box; padding: 20px 0; border-right: 1px solid #3E3829">
+<nav aria-label="Основная навигация" style="display: flex; flex-direction: column; gap: 22px">
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>Сегодня</a></li>
+<li><a href="#" aria-current="page" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; font-weight: 600; color: #E8E2D2; background: rgba(201,169,97,0.07); box-shadow: inset 2px 0 0 #C9A961"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a5 5 0 0 1 5 5c0 2.5-1.5 4.5-3.5 5.4L15 22H9l1.5-9.6C8.5 11.5 7 9.5 7 7a5 5 0 0 1 5-5z"></path></svg>Тренер Таль</a></li>
+</ul>
+
+<div style="display: flex; flex-direction: column; gap: 2px">
+<button type="button" aria-expanded="true" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 24px 6px; background: none; border: none; font-family: inherit; font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #8A8273; cursor: pointer">Учиться<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate(90deg)"><path d="M9 18l6-6-6-6"></path></svg></button>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>Дебюты</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Курсы</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>Ловушки</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg>Идеи позиций</a></li>
+</ul>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 2px">
+<button type="button" aria-expanded="true" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 24px 6px; background: none; border: none; font-family: inherit; font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #8A8273; cursor: pointer">Тренироваться<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate(90deg)"><path d="M9 18l6-6-6-6"></path></svg></button>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>Тактика</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>Расчёт вслепую</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4M12 16h.01"></path></svg>Ошибки</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>Проверка угроз</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"></rect><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>Эндшпили</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>Дожми партию</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>Жертвы</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"></line><line x1="12" x2="15" y1="14" y2="11"></line><circle cx="12" cy="14" r="8"></circle></svg>Дебютный спринт</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"></polygon></svg>Играть</a></li>
+</ul>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 2px">
+<button type="button" aria-expanded="true" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 24px 6px; background: none; border: none; font-family: inherit; font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #8A8273; cursor: pointer">Партии<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate(90deg)"><path d="M9 18l6-6-6-6"></path></svg></button>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>Мои партии</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><polyline points="9 11 11 13 15 9"></polyline></svg>Дебюты в партиях</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Где я теряю очки</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Мастера</a></li>
+<li><a class="side-link" href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 24px; font-size: 14px; color: #8A8273"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Достижения</a></li>
+</ul>
+</div>
+</nav>
+</aside>
+
+<main style="flex: 999 1 560px; min-width: 0">
+<div class="c-page" style="max-width: 1400px; margin: 0 auto; padding: 32px 32px 56px; box-sizing: border-box">
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 24px">
+
+<section id="chat" aria-labelledby="h-coach" style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; background: #17171A; border: 1px solid #26241F; border-top: 2px solid #98814D">
+
+<header class="chat-cover" style="position: relative; min-height: 180px; box-sizing: border-box; padding: 30px 32px; border-bottom: 1px solid #26241F; display: flex; align-items: center">
+<div style="display: flex; align-items: center; gap: 22px; max-width: 430px">
+<div class="serif" aria-hidden="true" style="flex: 0 0 72px; width: 72px; height: 72px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1px solid #C9A961; box-shadow: inset 0 0 0 3px #17171A, inset 0 0 0 4px rgba(201,169,97,0.35); font-size: 26px; font-weight: 500; letter-spacing: 0.04em; color: #C9A961">МТ</div>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8273"><span aria-hidden="true" style="width: 2px; height: 12px; background: #C9A961"></span>Личный тренер</div>
+<h1 id="h-coach" class="serif c-h1" style="margin: 0; font-size: 40px; font-weight: 500; line-height: 1.04; letter-spacing: -0.015em; color: #E8E2D2">Михаил Таль</h1>
+<p style="margin: 0; font-size: 15px; line-height: 1.45; color: #A39B8A">Восьмой чемпион мира. Видит твои партии и каждое утро строит план.</p>
+</div>
+</div>
+<span class="c-plate" style="position: absolute; right: 24px; bottom: 20px; padding: 6px 12px; border: 1px solid rgba(201,169,97,0.5); background: rgba(15,15,17,0.62); font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #E8E2D2">Занятие № 33</span>
+</header>
+
+<div class="c-thread" role="log" aria-label="Переписка с Талем" style="flex: 1 1 auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 24px">
+
+<div style="display: flex; align-items: center; gap: 14px">
+<span aria-hidden="true" style="flex: 1 1 0; height: 1px; background: #26241F"></span>
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8273">Вчера</span>
+<span aria-hidden="true" style="flex: 1 1 0; height: 1px; background: #26241F"></span>
+</div>
+
+
+
+
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px">
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8A8273">Ты</span><span style="font-size: 13px; color: #8A8273">23:10</span></div>
+<p class="c-bubble" style="margin: 0; max-width: 72%; box-sizing: border-box; padding: 12px 16px; background: #1E1E21; border: 1px solid #2C2A25; font-size: 15px; line-height: 1.5; color: #DDD7C9">Сыграл 3 партии. В одной был +5 — и проиграл.</p>
+</div>
+
+
+
+<div style="display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 14px; align-items: start">
+<span class="serif" aria-hidden="true" style="width: 36px; height: 36px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1px solid #C9A961; box-shadow: inset 0 0 0 2px #17171A, inset 0 0 0 3px rgba(201,169,97,0.3); font-size: 14px; font-weight: 500; color: #C9A961">МТ</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #C9A961">Таль</span><span style="font-size: 13px; color: #8A8273">23:12</span></div>
+<p class="serif" style="margin: 0; font-size: 18px; font-style: italic; line-height: 1.5; color: #E8E2D2">+5 и проиграл? Нā! Это не шахматы, это благотворительность. Завтра дожимаем позиции — 20 минут, без отговорок.</p>
+</div>
+</div>
+
+
+
+
+<div style="display: flex; align-items: center; gap: 14px">
+<span aria-hidden="true" style="flex: 1 1 0; height: 1px; background: #26241F"></span>
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #E8E2D2">Сегодня · суббота, 21 ноября</span>
+<span aria-hidden="true" style="flex: 1 1 0; height: 1px; background: #26241F"></span>
+</div>
+
+<div style="display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 14px; align-items: start">
+<span class="serif" aria-hidden="true" style="width: 36px; height: 36px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1px solid #C9A961; box-shadow: inset 0 0 0 2px #17171A, inset 0 0 0 3px rgba(201,169,97,0.3); font-size: 14px; font-weight: 500; color: #C9A961">МТ</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #C9A961">Таль</span><span style="font-size: 13px; color: #8A8273">08:00 · утренний план</span></div>
+<p class="serif c-quote" style="margin: 0; font-size: 26px; font-style: italic; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em; color: #E8E2D2; text-wrap: pretty">«Вчера у тебя было +5, а на 19-м ходу ты отдал коня — и проиграл. Сегодня никакого блица. Сначала угрозы, потом атака.»</p>
+
+<div id="plan" style="margin-top: 10px; border: 1px solid #2A2823; background: #121214">
+<div style="padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 14px; border-bottom: 1px solid #26241F">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 6px 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 class="serif" style="margin: 0; font-size: 21px; font-weight: 500; line-height: 1.15; color: #E8E2D2">План на сегодня</h2>
+<span style="font-size: 13px; color: #8A8273">Обновлён в 09:41 — книга и видео на завтра</span>
+</div>
+<span style="font-size: 13px; font-variant-numeric: tabular-nums; color: #A39B8A">1 ч 30 мин · 5 заданий</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; font-size: 13px">
+<span style="color: #A39B8A"><span style="font-weight: 600; color: #E8E2D2">Выполнено 2 из 5</span> · 36 из 90 мин</span>
+<span style="display: flex; align-items: center; gap: 8px; color: #8A8273"><span aria-hidden="true" style="width: 1px; height: 12px; background: #E8E2D2"></span>Серия засчитается на 60% — ещё 18 мин</span>
+</div>
+<div style="position: relative; padding: 5px 0">
+<div style="display: flex; gap: 3px; height: 6px">
+
+<div style="position: relative; flex: 15 1 0px; min-width: 0; background: #2E2B24; overflow: hidden"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: #C9A961"></div></div>
+
+<div style="position: relative; flex: 15 1 0px; min-width: 0; background: #2E2B24; overflow: hidden"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: #C9A961"></div></div>
+
+<div style="position: relative; flex: 15 1 0px; min-width: 0; background: #2E2B24; overflow: hidden"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: 42%; background: #C9A961"></div></div>
+
+<div style="position: relative; flex: 20 1 0px; min-width: 0; background: #2E2B24; overflow: hidden"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: #C9A961"></div></div>
+
+<div style="position: relative; flex: 25 1 0px; min-width: 0; background: #2E2B24; overflow: hidden"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: #C9A961"></div></div>
+
+</div>
+<span aria-hidden="true" style="position: absolute; left: 60%; top: 0; bottom: 0; width: 1px; background: #E8E2D2"></span>
+</div>
+<div aria-hidden="true" style="display: flex; gap: 3px">
+
+<span style="flex: 15 1 0px; min-width: 0; font-size: 13px; font-variant-numeric: tabular-nums; color: #E8E2D2">01</span>
+
+<span style="flex: 15 1 0px; min-width: 0; font-size: 13px; font-variant-numeric: tabular-nums; color: #E8E2D2">02</span>
+
+<span style="flex: 15 1 0px; min-width: 0; font-size: 13px; font-variant-numeric: tabular-nums; color: #E8E2D2">03</span>
+
+<span style="flex: 20 1 0px; min-width: 0; font-size: 13px; font-variant-numeric: tabular-nums; color: #8A8273">04</span>
+
+<span style="flex: 25 1 0px; min-width: 0; font-size: 13px; font-variant-numeric: tabular-nums; color: #8A8273">07</span>
+
+</div>
+</div>
+</div>
+
+
+<div id="plan-01" class="plan-row" style="position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) 60px 112px; align-items: center; column-gap: 14px; padding: 14px 18px; border-top: 1px solid transparent; background: transparent; box-shadow: none">
+<span class="serif" style="font-size: 24px; font-style: italic; font-weight: 500; line-height: 1; color: #8A8273">01</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div class="serif" style="font-size: 18px; font-weight: 500; line-height: 1.3; color: #8A8273">Тактика<span style="color: #8A8273"> · 20 задач</span></div>
+<div style="font-size: 14px; line-height: 1.45; color: #8A8273">Точность в задачах — 71%. Разогрев.</div>
+</div>
+<div class="c-time" style="display: flex; flex-direction: column; gap: 3px; font-variant-numeric: tabular-nums">
+<span style="font-size: 15px; font-weight: 600; color: #E8E2D2">15 мин</span>
+
+</div>
+<div class="c-act" style="display: grid">
+<button type="button" aria-label="Снять отметку с задания 01" style="width: 100%; height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; background: transparent; border: 1px solid rgba(201,169,97,0.45); border-radius: 0; color: #C9A961; font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>Готово</button>
+
+
+
+</div>
+
+</div>
+
+<div id="plan-02" class="plan-row" style="position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) 60px 112px; align-items: center; column-gap: 14px; padding: 14px 18px; border-top: 1px solid #26241F; background: transparent; box-shadow: none">
+<span class="serif" style="font-size: 24px; font-style: italic; font-weight: 500; line-height: 1; color: #8A8273">02</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div class="serif" style="font-size: 18px; font-weight: 500; line-height: 1.3; color: #8A8273">Проверка угроз<span style="color: #8A8273"> · 15 позиций</span></div>
+<div style="font-size: 14px; line-height: 1.45; color: #8A8273">Вчера — зевок коня. Миттельшпиль: 5 поражений.</div>
+</div>
+<div class="c-time" style="display: flex; flex-direction: column; gap: 3px; font-variant-numeric: tabular-nums">
+<span style="font-size: 15px; font-weight: 600; color: #E8E2D2">15 мин</span>
+
+</div>
+<div class="c-act" style="display: grid">
+<button type="button" aria-label="Снять отметку с задания 02" style="width: 100%; height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; background: transparent; border: 1px solid rgba(201,169,97,0.45); border-radius: 0; color: #C9A961; font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>Готово</button>
+
+
+
+</div>
+
+</div>
+
+<div id="plan-03" class="plan-row" style="position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) 60px 112px; align-items: center; column-gap: 14px; padding: 14px 18px; border-top: 1px solid #26241F; background: rgba(201,169,97,0.055); box-shadow: inset 2px 0 0 #C9A961">
+<span class="serif" style="font-size: 24px; font-style: italic; font-weight: 500; line-height: 1; color: #C9A961">03</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div class="serif" style="font-size: 18px; font-weight: 500; line-height: 1.3; color: #E8E2D2">Дебюты<span style="color: #A39B8A"> · 12 линий Шотландского гамбита</span></div>
+<div style="font-size: 14px; line-height: 1.45; color: #A39B8A">Линии ждут повторения. Точность — 91%.</div>
+</div>
+<div class="c-time" style="display: flex; flex-direction: column; gap: 3px; font-variant-numeric: tabular-nums">
+<span style="font-size: 15px; font-weight: 600; color: #E8E2D2">15 мин</span>
+<span style="font-size: 13px; color: #C9A961">5 из 12</span>
+</div>
+<div class="c-act" style="display: grid">
+
+<button type="button" class="btn-gold" style="width: 100%; height: 40px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; background: #C9A961; border: 1px solid #B8984F; border-radius: 0; color: #0F0F11; font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,0.22)">Продолжить</button>
+
+
+</div>
+<span aria-hidden="true" style="position: absolute; z-index: 1; left: 0; bottom: -1px; height: 2px; width: 42%; background: #C9A961"></span>
+</div>
+
+<div id="plan-04" class="plan-row" style="position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) 60px 112px; align-items: center; column-gap: 14px; padding: 14px 18px; border-top: 1px solid #26241F; background: transparent; box-shadow: none">
+<span class="serif" style="font-size: 24px; font-style: italic; font-weight: 500; line-height: 1; color: #C9A961">04</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div class="serif" style="font-size: 18px; font-weight: 500; line-height: 1.3; color: #E8E2D2">Дожми партию<span style="color: #A39B8A"> · 5 позиций</span></div>
+<div style="font-size: 14px; line-height: 1.45; color: #A39B8A">Главная утечка: 6 недожатых партий из 18.</div>
+</div>
+<div class="c-time" style="display: flex; flex-direction: column; gap: 3px; font-variant-numeric: tabular-nums">
+<span style="font-size: 15px; font-weight: 600; color: #E8E2D2">20 мин</span>
+
+</div>
+<div class="c-act" style="display: grid">
+
+
+<button type="button" class="btn-line" style="width: 100%; height: 40px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; background: transparent; border: 1px solid #38342C; border-radius: 0; color: #E8E2D2; font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer">Начать</button>
+
+</div>
+
+</div>
+
+<div id="plan-05" class="plan-row" style="position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) 60px 112px; align-items: center; column-gap: 14px; padding: 14px 18px; border-top: 1px solid #26241F; background: transparent; box-shadow: none">
+<span class="serif" style="font-size: 24px; font-style: italic; font-weight: 500; line-height: 1; color: #8A8273">05</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div class="serif" style="font-size: 18px; font-weight: 500; line-height: 1.3; color: #8A8273">Книга<span style="color: #8A8273"> · «Моя система», Нимцович</span></div>
+<div style="font-size: 14px; line-height: 1.45; color: #8A8273">Каждый ход — на доске, не в голове.</div>
+</div>
+<div class="c-time" style="display: flex; flex-direction: column; gap: 3px; font-variant-numeric: tabular-nums">
+<span style="font-size: 15px; font-weight: 600; color: #8A8273">20 мин</span>
+
+</div>
+<div class="c-act" style="display: grid">
+
+
+
+<span class="serif" style="height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1px dashed #38342C; font-size: 16px; font-style: italic; color: #8A8273">на завтра</span>
+</div>
+
+</div>
+
+<div id="plan-06" class="plan-row" style="position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) 60px 112px; align-items: center; column-gap: 14px; padding: 14px 18px; border-top: 1px solid #26241F; background: transparent; box-shadow: none">
+<span class="serif" style="font-size: 24px; font-style: italic; font-weight: 500; line-height: 1; color: #8A8273">06</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div class="serif" style="font-size: 18px; font-weight: 500; line-height: 1.3; color: #8A8273">Видео<span style="color: #8A8273"> · Атака на рокированного короля</span></div>
+<div style="font-size: 14px; line-height: 1.45; color: #8A8273">Твой стиль — атака. Потом 3 позиции в «Жертвах».</div>
+</div>
+<div class="c-time" style="display: flex; flex-direction: column; gap: 3px; font-variant-numeric: tabular-nums">
+<span style="font-size: 15px; font-weight: 600; color: #8A8273">10 мин</span>
+
+</div>
+<div class="c-act" style="display: grid">
+
+
+
+<span class="serif" style="height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1px dashed #38342C; font-size: 16px; font-style: italic; color: #8A8273">на завтра</span>
+</div>
+
+</div>
+
+<div id="plan-07" class="plan-row" style="position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) 60px 112px; align-items: center; column-gap: 14px; padding: 14px 18px; border-top: 1px solid #26241F; background: transparent; box-shadow: none">
+<span class="serif" style="font-size: 24px; font-style: italic; font-weight: 500; line-height: 1; color: #C9A961">07</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div class="serif" style="font-size: 18px; font-weight: 500; line-height: 1.3; color: #E8E2D2">Партия<span style="color: #A39B8A"> · 10+0 и разбор с движком</span></div>
+<div style="font-size: 14px; line-height: 1.45; color: #A39B8A">Цейтнот — 4 поражения. Следи за часами.</div>
+</div>
+<div class="c-time" style="display: flex; flex-direction: column; gap: 3px; font-variant-numeric: tabular-nums">
+<span style="font-size: 15px; font-weight: 600; color: #E8E2D2">25 мин</span>
+
+</div>
+<div class="c-act" style="display: grid">
+
+
+<button type="button" class="btn-line" style="width: 100%; height: 40px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; background: transparent; border: 1px solid #38342C; border-radius: 0; color: #E8E2D2; font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer">Начать</button>
+
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+
+
+
+
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px">
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8A8273">Ты</span><span style="font-size: 13px; color: #8A8273">09:40</span></div>
+<p class="c-bubble" style="margin: 0; max-width: 72%; box-sizing: border-box; padding: 12px 16px; background: #1E1E21; border: 1px solid #2C2A25; font-size: 15px; line-height: 1.5; color: #DDD7C9">Тактику и угрозы сделал. Вечером гости — остался час.</p>
+</div>
+
+
+
+<div style="display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 14px; align-items: start">
+<span class="serif" aria-hidden="true" style="width: 36px; height: 36px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1px solid #C9A961; box-shadow: inset 0 0 0 2px #17171A, inset 0 0 0 3px rgba(201,169,97,0.3); font-size: 14px; font-weight: 500; color: #C9A961">МТ</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #C9A961">Таль</span><span style="font-size: 13px; color: #8A8273">09:41</span></div>
+<p class="serif" style="margin: 0; font-size: 18px; font-style: italic; line-height: 1.5; color: #E8E2D2">Час — это 60 минут шахмат, а не отговорка. Книгу и видео переношу на завтра. Дебюты, «Дожми партию» и партия — сегодня.</p>
+</div>
+</div>
+
+
+
+
+</div>
+
+<div class="c-composer" style="border-top: 1px solid #26241F; background: #141416; padding: 18px 32px 22px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+
+<button type="button" class="btn-line" style="height: 34px; padding: 0 14px; box-sizing: border-box; background: transparent; border: 1px solid #38342C; border-radius: 0; color: #E8E2D2; font-family: inherit; font-size: 13px; cursor: pointer">Почему такой план?</button>
+
+<button type="button" class="btn-line" style="height: 34px; padding: 0 14px; box-sizing: border-box; background: transparent; border: 1px solid #38342C; border-radius: 0; color: #E8E2D2; font-family: inherit; font-size: 13px; cursor: pointer">Разбери вчерашнюю партию</button>
+
+<button type="button" class="btn-line" style="height: 34px; padding: 0 14px; box-sizing: border-box; background: transparent; border: 1px solid #38342C; border-radius: 0; color: #E8E2D2; font-family: inherit; font-size: 13px; cursor: pointer">Отчитаться за день</button>
+
+</div>
+<form style="margin: 0; display: flex; gap: 8px">
+<label for="tal-msg" class="sr">Сообщение Талю</label>
+<input id="tal-msg" type="text" value="" placeholder="Написать Талю…" style="flex: 1 1 auto; min-width: 0; height: 52px; box-sizing: border-box; padding: 0 16px; background: #0F0F11; border: 1px solid #38342C; border-radius: 0; color: #E8E2D2; font-family: inherit; font-size: 15px">
+<button type="submit" class="btn-gold" aria-label="Отправить" style="flex: 0 0 52px; width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; background: #C9A961; border: 1px solid #B8984F; border-radius: 0; color: #0F0F11; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 5l7 7-7 7"></path></svg></button>
+</form>
+<span style="font-size: 13px; color: #8A8273">Таль видит твои партии, статистику и план</span>
+</div>
+</section>
+
+<aside aria-label="Сводка" style="flex: 1 1 352px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<section aria-labelledby="h-today" style="background: #17171A; border: 1px solid #26241F; border-top: 2px solid #98814D; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<h2 id="h-today" style="margin: 0; display: flex; align-items: center; gap: 10px; font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8273"><span aria-hidden="true" style="width: 2px; height: 12px; background: #C9A961"></span>Сегодня</h2>
+<span class="serif" style="font-size: 16px; font-style: italic; color: #E8E2D2">Суббота, 21 ноября</span>
+</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="serif" style="font-size: 46px; font-style: italic; font-weight: 500; line-height: 1; color: #E8E2D2">2</span><span style="font-size: 15px; color: #A39B8A">из 5 заданий</span></div>
+<span style="font-size: 13px; font-variant-numeric: tabular-nums; color: #A39B8A"><span style="font-weight: 600; color: #E8E2D2">36</span> из 90 мин</span>
+</div>
+<div aria-hidden="true" style="position: relative; height: 3px; background: #2E2B24"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 40%; background: #C9A961"></span><span style="position: absolute; left: 60%; top: -4px; bottom: -4px; width: 1px; background: #E8E2D2"></span></div>
+<a class="btn-gold" href="#plan-03" style="height: 48px; display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; background: #C9A961; border: 1px solid #B8984F; color: #0F0F11; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; box-shadow: inset 0 1px 0 rgba(255,255,255,0.22)">Продолжить · 03 Дебюты<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 5l7 7-7 7"></path></svg></a>
+<span style="font-size: 13px; color: #8A8273">Серия засчитается на 60% — ещё 18 мин</span>
+</section>
+
+<section aria-labelledby="h-form" style="background: #17171A; border: 1px solid #26241F; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h3 id="h-form" class="serif" style="margin: 0; font-size: 22px; font-weight: 500; line-height: 1.15; color: #E8E2D2">Форма</h3>
+<span style="font-size: 13px; color: #8A8273">Рапид 10+0 · chess.com</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 14px; color: #E8E2D2">Рейтинг</span><span style="font-size: 13px; color: #A39B8A"><span style="font-weight: 600; color: #C9A961">+38</span> за неделю</span></div>
+<span class="serif" style="font-size: 40px; font-style: italic; font-weight: 500; line-height: 1; color: #E8E2D2">1012</span>
+</div>
+<svg width="100%" height="44" viewBox="0 0 304 44" preserveAspectRatio="none" fill="none" aria-hidden="true" style="display: block"><polyline points="0,42 21.7,37.8 43.4,40.2 65.1,33.7 86.9,36.1 108.6,31.3 130.3,28.9 152,26.6 173.7,22.4 195.4,24.8 217.1,20 238.9,15.9 260.6,12.3 282.3,8.8 304,4" stroke="#C9A961" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 14px; border-top: 1px solid #26241F">
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 14px; color: #E8E2D2">Ближайшая цель</span><span style="font-size: 13px; color: #A39B8A">Осталось 188 · дальше 2000</span></div>
+<span class="serif" style="font-size: 28px; font-style: italic; font-weight: 500; line-height: 1; color: #E8E2D2">1200</span>
+</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 14px; border-top: 1px solid #26241F">
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 14px; color: #E8E2D2">Серия</span><span style="font-size: 13px; color: #A39B8A">Рекорд — 19 дней</span></div>
+<div style="display: flex; align-items: baseline; gap: 6px"><span class="serif" style="font-size: 28px; font-style: italic; font-weight: 500; line-height: 1; color: #E8E2D2">12</span><span style="font-size: 13px; color: #A39B8A">дней</span></div>
+</div>
+</section>
+
+<section aria-labelledby="h-leaks" style="background: #17171A; border: 1px solid #26241F; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h3 id="h-leaks" class="serif" style="margin: 0; font-size: 22px; font-weight: 500; line-height: 1.15; color: #E8E2D2">Где ты теряешь очки</h3>
+<span style="font-size: 13px; color: #8A8273">40 партий рапид · 18 поражений</span>
+</div>
+<div style="display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 24px 40px; align-items: center; column-gap: 12px; padding: 11px 0">
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<span style="display: flex; align-items: baseline; gap: 8px; font-size: 14px; color: #E8E2D2">Не дожал<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #C9A961">главное</span></span>
+<span aria-hidden="true" style="position: relative; display: block; height: 3px; background: #2E2B24"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: #C9A961"></span></span>
+</div>
+<span class="serif" style="font-size: 20px; font-style: italic; font-weight: 500; line-height: 1; text-align: right; color: #E8E2D2">6</span>
+<a class="go-link" href="#plan-04" style="justify-self: end; font-size: 13px; font-variant-numeric: tabular-nums; color: #C9A961">→ 04</a>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 24px 40px; align-items: center; column-gap: 12px; padding: 11px 0; border-top: 1px solid #26241F">
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 14px; color: #E8E2D2">Ошибки в миттельшпиле</span>
+<span aria-hidden="true" style="position: relative; display: block; height: 3px; background: #2E2B24"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 83%; background: #826F45"></span></span>
+</div>
+<span class="serif" style="font-size: 20px; font-style: italic; font-weight: 500; line-height: 1; text-align: right; color: #E8E2D2">5</span>
+<a class="go-link" href="#plan-02" style="justify-self: end; font-size: 13px; font-variant-numeric: tabular-nums; color: #C9A961">→ 02</a>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 24px 40px; align-items: center; column-gap: 12px; padding: 11px 0; border-top: 1px solid #26241F">
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 14px; color: #E8E2D2">Цейтнот</span>
+<span aria-hidden="true" style="position: relative; display: block; height: 3px; background: #2E2B24"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 67%; background: #826F45"></span></span>
+</div>
+<span class="serif" style="font-size: 20px; font-style: italic; font-weight: 500; line-height: 1; text-align: right; color: #E8E2D2">4</span>
+<a class="go-link" href="#plan-07" style="justify-self: end; font-size: 13px; font-variant-numeric: tabular-nums; color: #C9A961">→ 07</a>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 24px 40px; align-items: center; column-gap: 12px; padding: 11px 0; border-top: 1px solid #26241F">
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 14px; color: #E8E2D2">Ошибки в эндшпиле</span>
+<span aria-hidden="true" style="position: relative; display: block; height: 3px; background: #2E2B24"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 33%; background: #826F45"></span></span>
+</div>
+<span class="serif" style="font-size: 20px; font-style: italic; font-weight: 500; line-height: 1; text-align: right; color: #E8E2D2">2</span>
+<a class="go-link" href="#plan-04" style="justify-self: end; font-size: 13px; font-variant-numeric: tabular-nums; color: #C9A961">→ 04</a>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 24px 40px; align-items: center; column-gap: 12px; padding: 11px 0; border-top: 1px solid #26241F">
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 14px; color: #E8E2D2">Отход от линий</span>
+<span aria-hidden="true" style="position: relative; display: block; height: 3px; background: #2E2B24"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 17%; background: #826F45"></span></span>
+</div>
+<span class="serif" style="font-size: 20px; font-style: italic; font-weight: 500; line-height: 1; text-align: right; color: #E8E2D2">1</span>
+<a class="go-link" href="#plan-03" style="justify-self: end; font-size: 13px; font-variant-numeric: tabular-nums; color: #C9A961">→ 03</a>
+</div>
+</div>
+<a class="go-link" href="#" style="font-size: 13px; color: #C9A961">Вся статистика →</a>
+</section>
+
+<section aria-labelledby="h-changes" style="background: #17171A; border: 1px solid #26241F; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h3 id="h-changes" class="serif" style="margin: 0; font-size: 22px; font-weight: 500; line-height: 1.15; color: #E8E2D2">Что Таль поменял</h3>
+<span style="font-size: 13px; color: #8A8273">После вчерашних партий · 08:00</span>
+</div>
+<div style="display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: 60px minmax(0, 1fr) 32px; align-items: start; column-gap: 12px; padding: 12px 0">
+<div style="display: flex; align-items: baseline; gap: 3px"><span class="serif" style="font-size: 20px; font-style: italic; font-weight: 500; line-height: 1.1; color: #C9A961">+10</span><span style="font-size: 13px; color: #8A8273">мин</span></div>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; color: #E8E2D2">Дожми партию — 20 минут</span><span style="font-size: 13px; line-height: 1.45; color: #A39B8A">Вчера не дожал позицию с +5.</span></div>
+<a class="go-link" href="#plan-04" style="justify-self: end; font-size: 13px; font-variant-numeric: tabular-nums; color: #C9A961">04</a>
+</div>
+<div style="display: grid; grid-template-columns: 60px minmax(0, 1fr) 32px; align-items: start; column-gap: 12px; padding: 12px 0; border-top: 1px solid #26241F">
+<div style="display: flex; align-items: baseline; gap: 3px"><span class="serif" style="font-size: 20px; font-style: italic; font-weight: 500; line-height: 1.1; color: #C9A961">новое</span></div>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; color: #E8E2D2">Проверка угроз</span><span style="font-size: 13px; line-height: 1.45; color: #A39B8A">Зевок коня на 19-м ходу.</span></div>
+<a class="go-link" href="#plan-02" style="justify-self: end; font-size: 13px; font-variant-numeric: tabular-nums; color: #C9A961">02</a>
+</div>
+<div style="display: grid; grid-template-columns: 60px minmax(0, 1fr) 32px; align-items: start; column-gap: 12px; padding: 12px 0; border-top: 1px solid #26241F">
+<div style="display: flex; align-items: baseline; gap: 3px"><span class="serif" style="font-size: 20px; font-style: italic; font-weight: 500; line-height: 1.1; color: #E8E2D2">−5</span><span style="font-size: 13px; color: #8A8273">мин</span></div>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; color: #E8E2D2">Дебюты — 15 минут</span><span style="font-size: 13px; line-height: 1.45; color: #A39B8A">91% верных ходов за неделю.</span></div>
+<a class="go-link" href="#plan-03" style="justify-self: end; font-size: 13px; font-variant-numeric: tabular-nums; color: #C9A961">03</a>
+</div>
+<div style="display: grid; grid-template-columns: 60px minmax(0, 1fr) 32px; align-items: start; column-gap: 12px; padding: 12px 0; border-top: 1px solid #26241F">
+<div style="display: flex; align-items: baseline; gap: 3px"><span class="serif" style="font-size: 20px; font-style: italic; font-weight: 500; line-height: 1.1; color: #A39B8A">убрано</span></div>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; color: #E8E2D2">Блиц — до 28 ноября</span><span style="font-size: 13px; line-height: 1.45; color: #A39B8A">Цейтнот в 4 из 18 поражений.</span></div>
+<a class="go-link" href="#plan-07" style="justify-self: end; font-size: 13px; font-variant-numeric: tabular-nums; color: #C9A961">07</a>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="h-week" style="background: #17171A; border: 1px solid #26241F; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h3 id="h-week" class="serif" style="margin: 0; font-size: 22px; font-weight: 500; line-height: 1.15; color: #E8E2D2">Без пропусков</h3>
+<span style="font-size: 13px; color: #8A8273">Неделя 16–22 ноября · 10 ч 1 мин</span>
+</div>
+<div style="position: relative">
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); column-gap: 6px">
+
+<div style="min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; color: #8A8273">2:05</span>
+<div style="width: 100%; height: 72px; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid #38342C">
+<div style="width: 10px; height: 60px; background: #C9A961"></div>
+</div>
+<span style="font-size: 13px; line-height: 18px; font-weight: 500; color: #8A8273">Пн</span>
+</div>
+
+<div style="min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; color: #8A8273">1:50</span>
+<div style="width: 100%; height: 72px; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid #38342C">
+<div style="width: 10px; height: 53px; background: #826F45"></div>
+</div>
+<span style="font-size: 13px; line-height: 18px; font-weight: 500; color: #8A8273">Вт</span>
+</div>
+
+<div style="min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; color: #8A8273">1:15</span>
+<div style="width: 100%; height: 72px; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid #38342C">
+<div style="width: 10px; height: 36px; background: #826F45"></div>
+</div>
+<span style="font-size: 13px; line-height: 18px; font-weight: 500; color: #8A8273">Ср</span>
+</div>
+
+<div style="min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; color: #8A8273">2:00</span>
+<div style="width: 100%; height: 72px; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid #38342C">
+<div style="width: 10px; height: 58px; background: #C9A961"></div>
+</div>
+<span style="font-size: 13px; line-height: 18px; font-weight: 500; color: #8A8273">Чт</span>
+</div>
+
+<div style="min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; color: #8A8273">2:15</span>
+<div style="width: 100%; height: 72px; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid #38342C">
+<div style="width: 10px; height: 65px; background: #C9A961"></div>
+</div>
+<span style="font-size: 13px; line-height: 18px; font-weight: 500; color: #8A8273">Пт</span>
+</div>
+
+<div style="min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; color: #E8E2D2">0:36</span>
+<div style="width: 100%; height: 72px; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid #38342C">
+<div style="width: 10px; height: 17px; background: #C9A961"></div>
+</div>
+<span style="font-size: 13px; line-height: 18px; font-weight: 700; color: #C9A961">Сб</span>
+</div>
+
+<div style="min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; color: #8A8273">—</span>
+<div style="width: 100%; height: 72px; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid #38342C">
+<div style="width: 10px; height: 0px; background: transparent"></div>
+</div>
+<span style="font-size: 13px; line-height: 18px; font-weight: 500; color: #8A8273">Вс</span>
+</div>
+
+</div>
+<span aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 40px; border-top: 1px dashed rgba(232,226,210,0.35)"></span>
+<span style="position: absolute; right: 0; top: 22px; font-size: 13px; line-height: 16px; color: #8A8273">план</span>
+</div>
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: #A39B8A"><span>Дисциплина за 30 дней</span><span style="font-weight: 600; color: #E8E2D2">93%</span></div>
+</section>
+
+</aside>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body>
+</html>
